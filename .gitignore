@@ -1,0 +1,6 @@
+# 一時クローン（作業指示者の手動確認用）
+LLMs/work/tmp-clone/
+
+# Python キャッシュ
+__pycache__/
+*.pyc
