@@ -2,7 +2,7 @@
 name: generate-llms-txt
 description: リポジトリから llms.txt と llms-full.txt を自動生成する。ローカルパスまたは GitHub URL を対象にできる。--target-list でファイルから複数ターゲットを並列処理することも可能。
 allowed-tools: Agent(general-purpose), Read
-argument-hint: "[--target <local_path_or_github_url>] [--target-list <file>] [--base-url <url>] [--output <dir>] [--extract-sigs]"
+argument-hint: "[--target <local_path_or_github_url>] [--target-list <file>] [--base-url <url>] [--output <dir>] [--extract-sigs] [--cc-extensions]"
 ---
 
 ## 引数パース
@@ -16,6 +16,7 @@ argument-hint: "[--target <local_path_or_github_url>] [--target-list <file>] [--
 | `BASE_URL` | 自動検出 | `--base-url <value>` または後述の自動検出 |
 | `OUTPUT_DIR` | 自動（後述の規則） | `--output <value>` |
 | `EXTRACT_SIGS` | false | `--extract-sigs` フラグの有無 |
+| `CC_EXTENSIONS` | false | `--cc-extensions` フラグの有無 |
 
 `--target` と `--target-list` は排他。両方指定された場合は `--target-list` を優先する。
 どちらも省略された場合は `TARGET` = `.`（カレントディレクトリ）とする。
@@ -128,7 +129,8 @@ REPO_PATH が既に存在する場合: リポジトリを最新化する。
   python LLMs/scripts/gen-llms-txt/gen_llms_full.py <REPO_PATH> \
     --base-url <BASE_URL> \
     --output <OUT_DIR> \
-    [--extract-sigs（EXTRACT_SIGS が true の場合）]
+    [--extract-sigs（EXTRACT_SIGS が true の場合）] \
+    [--cc-extensions（CC_EXTENSIONS が true の場合）]
 
 終了コードが非0の場合: エラーメッセージを出力して中断する。
 
@@ -137,8 +139,15 @@ REPO_PATH が既に存在する場合: リポジトリを最新化する。
 Read ツールで <OUT_DIR>/llms-full.txt の先頭 200 行を読み込む。
 
 読み込んだ内容から以下を生成する：
+**CC_EXTENSIONS が false の場合（通常モード）**:
 - blockquote（1〜2文、必須）: このプロジェクトが「何を・誰のために・どうやって解決するか」を端的に記述する。
 - description（省略可）: llms.txt を読む LLM が文脈を正しく解釈するための補足情報。不要なら空にする。
+
+**CC_EXTENSIONS が true の場合（CC 拡張インデックスモード）**:
+- blockquote（必須）: このリポジトリが提供する Claude Code 資産の全体像を記述する。
+  例: "N 個の Skill と M 個の Rule を含む Claude Code 拡張。X・Y・Z などの用途に対応。"
+  各 Skills/Rules の description はスクリプトが frontmatter から自動生成済みなので改変しない。
+- description: 省略する（blockquote で十分）。
 
 ### 4. プレースホルダ置換
 
