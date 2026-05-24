@@ -1,0 +1,7 @@
+# 一時クローン・生成出力（作業指示者の手動確認用）
+LLMs/work/tmp-clone/
+LLMs/work/gen-out/
+
+# Python キャッシュ
+__pycache__/
+*.pyc

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## このリポジトリの性質
 
-リポジトリ名は `cc-relative-info`。リモート `https://github.com/empty-can/cc-relative-info.git`、初期コミットはまだ存在しない（`git log` は `fatal: ... no commits yet` を返す）。
+リポジトリ名は `cc-relative-info`。リモート `https://github.com/empty-can/cc-relative-info.git`。`develop` ブランチに初回コミット済み。`main` ブランチにはまだコミットなし（`main` への git log 系の調査は空が返る）。
 
 ソースコードを伴う通常のプロジェクトではなく、**`.claude/` 配下の運用設定資産を別リポジトリ `base-dev-kit-for-cc` から純粋に流用した状態のリポジトリ**。よってビルド・テスト・lint コマンドは存在しない。本リポジトリでは現時点で 2 つのコンテンツ整備テーマ（`LLMs/` と `Extensions/`）に着手する方針。各テーマの詳細は各フォルダの `CLAUDE.md` / `README.md` 参照。
 
@@ -14,11 +14,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `.claude/scripts/resolve-activity-dir.sh` が現在の git ブランチから活動フォルダを決定論的に解決する。**`/read-prompt-file` をはじめ複数の Skill がこの規約に依存する**:
 
-- 現ブランチが `feature/<X>` または `feature/<X>/<sub-branch>...` → 活動フォルダは `<X>/`
-  - `<X>` は **`feature/` 直下の先頭セグメントのみ** を採用する。深い階層（`/bar/baz` 等）は無視
-  - 例: `feature/foo` → `foo/` / `feature/foo/bar` → `foo/` / `feature/foo/bar/baz` → `foo/`
-- 現ブランチが `main`、または `feature/*` を先祖に持たないブランチ → 活動フォルダは `./`（リポジトリルート）
-- 派生サブブランチ上にいる場合（先祖に `feature/<X>` が存在）も同様に `<X>/`
+### マージルール
+
+| 方向 | ルール |
+|---|---|
+| `feature/*` → `develop` | 唯一の merge 先。**main への直接マージ禁止** |
+| `develop` → `main` | main へのマージは develop からのみ |
+| `work/*` → `feature/<X>` | work ブランチの merge 先は作成元の feature ブランチ |
+
+### ブランチ命名規則
+
+| ブランチ種別 | 命名パターン | 用途 |
+|---|---|---|
+| コンテンツ整備 | `feature/<フォルダ名>` | `LLMs/` や `Extensions/` 配下の整備作業 |
+| サブ活動 | `work/<フォルダ名>/<作業内容>` | feature ブランチ内のタスク単位の作業 |
+| 統合 | `develop` | feature ブランチの合流先・気軽な最新断面取り込み |
+| リリース | `main` | develop からのみマージ |
+
+### 活動フォルダの解決
+
+`.claude/scripts/resolve-activity-dir.sh` が現在の git ブランチから活動フォルダを決定論的に解決する。**`/read-prompt-file` をはじめ複数の Skill がこの規約に依存する**:
+
+- `feature/<X>` または `work/<X>/...`（`feature/<X>` を先祖に持つ）→ 活動フォルダは `<X>/`
+  - `<X>` は `feature/` 直下の先頭セグメントのみ採用。深い階層は無視
+  - 例: `feature/LLMs` → `LLMs/` / `work/LLMs/some-task` → `LLMs/`
+- `main` / `develop`、または `feature/*` を先祖に持たないブランチ → 活動フォルダは `./`
 
 > 流用元リポジトリは `feature/<X>` → `research-for-<X>/` という規約で運用されていた。本リポジトリでは活動フォルダ名から `research-for-` プレフィックスを外し、テーマ名そのものを使う。
 
@@ -32,6 +52,7 @@ LLMs/          # LLM 関連情報収集（llms.txt 定期取り込み・llms.txt
 
 ## このリポジトリで作業する際の注意
 
-- `main` ブランチに **コミットは 1 件も無い**。git log 系の調査は空が返る前提で進める
-- 新規ブランチ命名で活動フォルダを使い分けたい場合は `feature/<X>` の `<X>` を活動フォルダ名そのものとする（先頭セグメントのみが採用される）
+- `main` ブランチにはまだコミットなし。`main` に対する git log 系の調査は空が返る
+- 新規 feature ブランチ命名時は `<X>` をフォルダ名そのものとする（`feature/LLMs` → `LLMs/` が活動フォルダ）
+- `work/*` ブランチは必ず対応する `feature/<X>` から分岐させ、マージ先も同じ `feature/<X>` にする
 - `.claude/workspace/` 配下を新規作成・編集する作業は `.claude/settings.local.json` で個別に allow されている。共有 `settings.json` には含めない

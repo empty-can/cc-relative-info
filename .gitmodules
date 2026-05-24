@@ -1,0 +1,15 @@
+[submodule "LLMs/llms-txt-official-repos/llms-txt"]
+	path = LLMs/llms-txt-official-repos/llms-txt
+	url = https://github.com/AnswerDotAI/llms-txt.git
+[submodule "LLMs/llms-txt-official-repos/pysymbol-llm"]
+	path = LLMs/llms-txt-official-repos/pysymbol-llm
+	url = https://github.com/AnswerDotAI/pysymbol-llm.git
+[submodule "LLMs/llms-txt-official-repos/codesigs"]
+	path = LLMs/llms-txt-official-repos/codesigs
+	url = https://github.com/AnswerDotAI/codesigs.git
+[submodule "LLMs/llms-txt-official-repos/nbs2ctx"]
+	path = LLMs/llms-txt-official-repos/nbs2ctx
+	url = https://github.com/AnswerDotAI/nbs2ctx.git
+[submodule "LLMs/llms-txt-official-repos/llm-ctx"]
+	path = LLMs/llms-txt-official-repos/llm-ctx
+	url = https://github.com/AnswerDotAI/llm-ctx.git

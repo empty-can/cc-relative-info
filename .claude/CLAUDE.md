@@ -43,6 +43,7 @@
 | `read-prompt-file` | `/read-prompt-file` | ルート CLAUDE.md「ブランチ運用ルール」で決定される活動フォルダ配下の `.claude/work/prompt.txt` を読み込む |
 | `request-new-skill` | `/request-new-skill <概要>` | 新規 Skill 作成依頼書を `.claude/workspace/skill-request/<kebab-case>/` に配置 |
 | `review-skill-request` | `/review-skill-request [フォルダ名]` | 記入済み依頼書をレビューし、`skill-cc-response.md` に確認事項・指摘・提案・既存 Skill 調査結果を書き込む |
+| `generate-llms-txt` | `/generate-llms-txt [--target <path_or_url>] [--base-url <url>] [--output <dir>] [--extract-sigs]` | ローカルリポジトリまたは GitHub URL から `llms.txt` / `llms-full.txt` を自動生成。ドキュメント抽出（Type A）＋ソースシグネチャ抽出（Type C）に対応。blockquote・description は LLM が自動生成 |
 
 **Skill 追加は二段階フロー**: `/request-new-skill` → ユーザーが `skill-request-form.md` 記入 → `/review-skill-request` → 確認事項クリアで実装着手。
 
