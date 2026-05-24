@@ -18,6 +18,10 @@ SECTION_RULES = [
 ]
 SECTION_ORDER = ['Getting Started', 'Guide', 'API Reference', 'Optional']
 DOC_EXTENSIONS = ('.md', '.mdx', '.rst')
+SOURCE_EXTENSIONS = (
+    '.py', '.ts', '.tsx', '.js', '.jsx',
+    '.go', '.rs', '.java', '.kt', '.swift', '.cs', '.rb', '.php', '.lua',
+)
 SKIP_DIRS = {
     '.git', '.github', 'node_modules', 'vendor', '__pycache__',
     '.venv', 'venv', 'dist', 'build', 'site', '.tox',
@@ -271,10 +275,83 @@ def make_url(base_url: str, file_path: Path, repo_path: Path) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Source code signature extraction (Type C / --extract-sigs)
+# ---------------------------------------------------------------------------
+
+def _sig_name(sig: str) -> str:
+    """Extract the function / class name from a codesigs signature string."""
+    m = re.search(r'(?:async\s+)?(?:def|class)\s+(\w+)', sig)  # search, not match (indented methods)
+    if m:
+        return m.group(1)
+    return sig.strip().split('(')[0].split('\n')[0].strip()
+
+
+def _sig_docstring(sig: str) -> str | None:
+    """Return the first non-empty line of the docstring in a signature."""
+    m = re.search(r'"""(.+?)"""', sig, re.DOTALL) or re.search(r"'''(.+?)'''", sig, re.DOTALL)
+    if not m:
+        return None
+    for line in m.group(1).splitlines():
+        stripped = line.strip()
+        if stripped:
+            return stripped
+    return None
+
+
+def _module_title(file_path: Path, repo_path: Path) -> str:
+    """Convert a source file path to a dotted module name (e.g. mcpdoc.main)."""
+    rel = file_path.relative_to(repo_path)
+    parts = list(rel.parts[:-1]) + [rel.stem]
+    return '.'.join(parts)
+
+
+def collect_source_sections(
+    repo_path: Path,
+    base_url: str,
+) -> list[tuple[Path, str, str, list[tuple[str, str | None]]]]:
+    """Return [(file_path, module_title, url, [(name, docstring)])] for source files
+    that contain at least one public symbol.
+    """
+    try:
+        from codesigs import file_sigs
+    except ImportError:
+        print('WARNING: codesigs not installed — skipping --extract-sigs.', file=sys.stderr)
+        return []
+
+    SOURCE_SKIP_DIRS = {'tests', 'test', 'spec', '__tests__', 'e2e'}
+    SOURCE_SKIP_STEMS = re.compile(r'^(test_.*|.*_test|.*\.test|.*\.spec)$')
+
+    results = []
+    for ext in SOURCE_EXTENSIONS:
+        for f in sorted(repo_path.rglob(f'*{ext}')):
+            rel = f.relative_to(repo_path)
+            if _is_skipped(rel.parts[:-1]):
+                continue
+            # Skip test files and test directories
+            if any(p in SOURCE_SKIP_DIRS for p in rel.parts[:-1]):
+                continue
+            if SOURCE_SKIP_STEMS.match(f.stem.lower()):
+                continue
+            try:
+                sigs = file_sigs(str(f))
+            except Exception:
+                continue
+            public = [
+                (_sig_name(s), _sig_docstring(s))
+                for s in sigs
+                if not _sig_name(s).startswith('_')
+            ]
+            if public:
+                results.append((f, _module_title(f, repo_path), make_url(base_url, f, repo_path), public))
+
+    return results
+
+
+# ---------------------------------------------------------------------------
 # Generation
 # ---------------------------------------------------------------------------
 
-def generate(repo_path: Path, base_url: str, output_dir: Path) -> None:
+def generate(repo_path: Path, base_url: str, output_dir: Path, extract_sigs: bool = False) -> None:
     readme_path, readme_content = find_readme(repo_path)
     project_name = (
         (extract_h1(readme_path, readme_content) if readme_path else None)
@@ -285,11 +362,14 @@ def generate(repo_path: Path, base_url: str, output_dir: Path) -> None:
     if not sections:
         print('WARNING: No documentation files found.', file=sys.stderr)
 
-    _write_llms_full(project_name, sections, base_url, repo_path, output_dir)
-    _write_llms_txt(project_name, sections, base_url, repo_path, output_dir)
+    src_secs = collect_source_sections(repo_path, base_url) if extract_sigs else []
 
-    total = sum(len(files) for _, files in sections)
-    print(f'Processed {total} file(s) across {len(sections)} section(s).')
+    _write_llms_full(project_name, sections, src_secs, base_url, repo_path, output_dir)
+    _write_llms_txt(project_name, sections, src_secs, base_url, repo_path, output_dir)
+
+    total_docs = sum(len(files) for _, files in sections)
+    print(f'Processed {total_docs} doc file(s) across {len(sections)} section(s)'
+          + (f', {len(src_secs)} source module(s).' if src_secs else '.'))
     print(f'Generated: {output_dir / "llms-full.txt"}')
     print(f'Generated: {output_dir / "llms.txt"}')
     print('Fill {BLOCKQUOTE} and {DESCRIPTION} placeholders via Skill or manually.')
@@ -298,6 +378,7 @@ def generate(repo_path: Path, base_url: str, output_dir: Path) -> None:
 def _write_llms_full(
     project_name: str,
     sections: list[tuple[str, list[tuple[Path, str]]]],
+    src_secs: list[tuple[Path, str, str, list[tuple[str, str | None]]]],
     base_url: str,
     repo_path: Path,
     output_dir: Path,
@@ -319,12 +400,25 @@ def _write_llms_full(
                 '',
             ]
 
+    if src_secs:
+        lines += ['---', '', '## API Reference', '']
+        for f, mod_title, url, syms in src_secs:
+            rel = f.relative_to(repo_path).as_posix()
+            lines += [f'### {mod_title}', '', f'*Source: {rel} | URL: {url}*', '']
+            for name, doc in syms:
+                entry = f'- `{name}`'
+                if doc:
+                    entry += f': {doc}'
+                lines.append(entry)
+            lines.append('')
+
     (output_dir / 'llms-full.txt').write_text('\n'.join(lines), encoding='utf-8')
 
 
 def _write_llms_txt(
     project_name: str,
     sections: list[tuple[str, list[tuple[Path, str]]]],
+    src_secs: list[tuple[Path, str, str, list[tuple[str, str | None]]]],
     base_url: str,
     repo_path: Path,
     output_dir: Path,
@@ -338,6 +432,17 @@ def _write_llms_txt(
             title = link_title(f, content)
             desc = extract_first_sentence(f, content)
             entry = f'- [{title}]({url})'
+            if desc:
+                entry += f': {desc}'
+            lines.append(entry)
+        lines.append('')
+
+    if src_secs:
+        lines += ['## API Reference', '']
+        for _f, mod_title, url, syms in src_secs:
+            # Use first public symbol's docstring as the module description
+            desc = next((doc for _, doc in syms if doc), None)
+            entry = f'- [{mod_title}]({url})'
             if desc:
                 entry += f': {desc}'
             lines.append(entry)
@@ -359,6 +464,8 @@ def main() -> None:
                              '(e.g. https://github.com/org/repo/blob/main/)')
     parser.add_argument('--output', type=Path, default=None,
                         help='Output directory (default: repo_path)')
+    parser.add_argument('--extract-sigs', action='store_true',
+                        help='Extract source code signatures via codesigs (Type C)')
     args = parser.parse_args()
 
     repo_path = args.repo_path.resolve()
@@ -369,7 +476,7 @@ def main() -> None:
     output_dir = (args.output or repo_path).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    generate(repo_path, args.base_url, output_dir)
+    generate(repo_path, args.base_url, output_dir, extract_sigs=args.extract_sigs)
 
 
 if __name__ == '__main__':
