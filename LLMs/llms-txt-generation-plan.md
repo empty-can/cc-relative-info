@@ -1,191 +1,232 @@
-# llms.txt 生成ツール 構築計画
+# llms.txt 自動生成 Skill 構築計画
 
-llms.txt が存在しないリポジトリ・ドキュメントサイトに対して、llms.txt を**自動生成**する仕組みの構築計画。
+llms.txt が存在しないリポジトリに対して `llms.txt` と `llms-full.txt` を自動生成する Skill の構築計画。
 
-## 前提: 既存ツールとのギャップ
+---
 
-`llms-txt-official-repos/` に収録されているツールの役割を整理すると:
+## 設計の前提
 
-| ツール | 役割 | 本計画での位置づけ |
+### なぜ完全自動化が難しいか
+
+公式ドキュメント（`llms-txt-official-repos/llms-txt/nbs/nbdev.qmd`）が明示している通り、`llms.txt` はサイト/ライブラリオーナーが**手書きする文書**として設計されている。`pysymbol-llm` / `codesigs` は「手書きの素材」を提供するツールであり、`llms.txt` 自体の生成ツールは意図的に存在しない。
+
+自動化の可否を部分ごとに整理すると:
+
+| フィールド | 自動化 | 手段 |
 |---|---|---|
-| `pysymbol-llm` | Python パッケージの公開シンボル + docstring → Markdown | **素材抽出**（Phase 2 で使用） |
-| `codesigs` | 多言語ソースのシグネチャ抽出（12 言語以上） | **素材抽出**（Phase 3 で使用） |
-| `nbs2ctx` | Jupyter ノートブック → XML コンテキスト | **素材抽出**（Phase 4 で使用） |
-| `llm-ctx` / `llms-txt` (`llms_txt2ctx`) | llms.txt → XML コンテキスト展開 | **検証**（全フェーズで使用） |
+| `# Title` | スクリプト | README.md の最初の H1 |
+| `> blockquote` | **LLM** | README の内容を基にプロジェクト要約を生成 |
+| 本文説明 | **LLM**（省略可） | README / docs から補足情報を生成 |
+| H2 セクション分類 | スクリプト | ファイルパスのキーワードパターン |
+| リンクタイトル | スクリプト | 対象ファイルの H1 |
+| リンク URL | スクリプト | base-url + 相対パス |
+| リンク説明文 | スクリプト | 対象ファイルの H1 直後の最初の文 |
+| API シグネチャ | スクリプト | `pysymbol-llm` / `codesigs` |
 
-**ギャップ**: llms.txt の「生成」（プロジェクト情報の収集・セクション構成の決定・URL とリンク説明の自動充填）を行うツールは存在しない。ここを本計画で構築する。
+### 生成フロー（アーキテクチャ B）
 
-## 自動生成の設計方針
+`llms.txt` を先に作るのではなく、リポジトリのコンテンツから `llms-full.txt` を直接生成し、そこから `llms.txt` を導出する:
 
-各フィールドを以下の規則で自動充填し、人手介入なしで完結する llms.txt を出力する:
+```
+対象リポジトリ（ローカルパスまたは GitHub URL）
+    ↓ [スクリプト] コンテンツ抽出・セクション分類
+llms-full.txt（全コンテンツ）
+    ↓ [スクリプト] H1・最初の文・URL を抽出
+    ↓ [LLM] blockquote・本文を生成
+llms.txt（インデックス）
+    ↓ [スクリプト] llms_txt2ctx で展開確認
+検証 OK
+```
 
-| llms.txt フィールド | 自動充填ルール |
-|---|---|
-| `# Title`（H1） | リポジトリの `README.md` 最初の H1 |
-| `> description`（blockquote） | `README.md` の H1 直後の最初の段落（コードブロック・バッジを除く） |
-| H2 セクション名 | ファイルパスのキーワードパターンで分類（後述） |
-| リンクタイトル | 対象ファイルの最初の H1。存在しない場合はファイル名（拡張子除く）をタイトルケースに変換 |
-| リンク URL | `--base-url` + リポジトリ内相対パスを結合。GitHub の場合は `blob/main/` を挟む |
-| リンク説明文 | 対象ファイルの H1 直後の最初の文（1 文のみ）。取得できない場合は省略 |
+---
 
-**セクション自動分類ルール（ファイルパスのキーワード照合）**:
+## Skill 仕様
 
-| キーワード（パス中に含む） | 分類先セクション |
+### 起動方法
+
+```
+/generate-llms-txt [--target <path_or_url>] [--output <dir>] [--base-url <url>]
+```
+
+| 引数 | 説明 | デフォルト |
+|---|---|---|
+| `--target` | ローカルパスまたは GitHub URL | カレントディレクトリ |
+| `--output` | 出力先ディレクトリ | `--target` と同じディレクトリ |
+| `--base-url` | リンク URL のベース | GitHub URL から自動推定 |
+
+### 動作概要
+
+1. `--target` がローカルパスなら直接使用。GitHub URL なら一時ディレクトリに `git clone`
+2. リポジトリタイプを自動判定（Type A〜D）
+3. コンテンツ抽出スクリプトを実行 → `llms-full.txt` を生成
+4. LLM が `llms-full.txt` の内容を読んで blockquote と本文を生成
+5. `llms-full.txt` + LLM 生成ナラティブから `llms.txt` を導出
+6. `llms_txt2ctx` で検証
+7. `--output` ディレクトリに `llms.txt` / `llms-full.txt` を出力
+
+### 出力先
+
+```
+<output>/
+├── llms.txt          # インデックスファイル（軽量・URL 付き）
+└── llms-full.txt     # 全コンテンツ展開版（LLM コンテキスト用）
+```
+
+---
+
+## テンプレート仕様
+
+`scripts/gen-llms-txt/template.md` として管理。スクリプトはこのテンプレートを元に出力を生成する。
+
+```markdown
+# {PROJECT_NAME}
+{{!-- [スクリプト] README.md の最初の H1 から自動取得 --}}
+
+> {BLOCKQUOTE}
+{{!--
+[LLM 生成] このプロジェクトが「何を・誰のために・どうやって解決するか」を 1〜2 文で記述。
+参照元: README.md の冒頭説明文、About 欄、docs の introduction セクション。
+例: "A Python library for building fast web applications with minimal boilerplate."
+--}}
+
+{DESCRIPTION}
+{{!--
+[LLM 生成・省略可] llms.txt を読む LLM が文脈を正しく解釈するための補足情報。
+使い方のコツ・前提知識・よくある誤解・特記事項など。不要なら空にする。
+参照元: README.md の Note/Warning、CONTRIBUTING.md の前書き、公式ブログ記事。
+--}}
+
+## {SECTION_NAME}
+{{!-- [スクリプト] ファイルパスキーワードで Getting Started / Guide / API Reference / Optional に自動分類 --}}
+
+- [{LINK_TITLE}]({URL}): {LINK_DESCRIPTION}
+{{!--
+  LINK_TITLE: 対象ファイルの最初の H1。なければファイル名をタイトルケースに変換
+  URL: --base-url + ファイルの相対パス
+  LINK_DESCRIPTION: H1 直後の最初の文（1文）。取得できない場合は省略
+--}}
+```
+
+---
+
+## セクション自動分類ルール
+
+ファイルパスに含まれるキーワードでセクションを機械的に決定する:
+
+| キーワード（パス中に含む） | 分類先 |
 |---|---|
 | `install`, `setup`, `quickstart`, `getting-started`, `start` | Getting Started |
 | `api`, `reference`, `spec` | API Reference |
 | `guide`, `tutorial`, `how-to`, `howto`, `example` | Guide |
 | `changelog`, `release`, `faq`, `contributing`, `license`, `security` | Optional |
 | それ以外 | Guide（フォールバック） |
-| `README.md` | セクションに含めない（blockquote に使用済み） |
+| `README.md` | セクションに含めない（ナラティブ生成の参照元として使用） |
 
-## 対象リポジトリの分類
+---
 
-| タイプ | 説明 | 使用ツール |
+## 対象リポジトリのタイプと処理の違い
+
+| タイプ | 判定条件 | 追加処理 |
 |---|---|---|
-| **Type A** ドキュメント系 | Markdown/rst ファイル中心、コードは少 or なし | 自作スクリプト |
-| **Type B** Python パッケージ | pip インストール可能な Python ライブラリ | `pysymbol-llm` |
-| **Type C** 多言語ソース | Python 以外を含む一般ソースコードリポジトリ | `codesigs` |
-| **Type D** nbdev/Jupyter | `.ipynb` ファイル中心（nbdev プロジェクト） | `nbs2ctx` |
+| **Type A** ドキュメント系 | `.md` / `.rst` が多数、ソースコード少 | なし |
+| **Type B** Python パッケージ | `pyproject.toml` / `setup.py` が存在 | `pysymbol-llm` で API 抽出 → API Reference セクションに追加 |
+| **Type C** 多言語ソース | Type B 以外でソースコードが多数 | `codesigs` でシグネチャ抽出 → API Reference セクションに追加 |
+| **Type D** nbdev/Jupyter | `nbs/` 配下に `.ipynb` が多数 | `nbs2ctx` で XML 生成 → セクション構成に使用 |
+
+タイプは排他ではない（Type B は Type A の処理も行う）。
+
+---
 
 ## フェーズ計画
 
 ### Phase 0: 共通基盤の整備
 
-**目的**: 全フェーズで共通して使う検証ツールを整備する
+**成果物**:
 
-| 成果物 | 内容 |
+| ファイル | 内容 |
 |---|---|
-| `scripts/gen-llms-txt/validate.sh` | `llms_txt2ctx <file>` で展開できるかを確認するヘルパー |
-| `scripts/gen-llms-txt/README.md` | スクリプト群の使い方・フェーズ説明 |
+| `scripts/gen-llms-txt/template.md` | llms.txt テンプレート（上記仕様） |
+| `scripts/gen-llms-txt/validate.sh` | `llms_txt2ctx <file>` で展開確認するヘルパー |
+| `scripts/gen-llms-txt/README.md` | スクリプト群の使い方 |
 
-**validate.sh の動作**:
-```bash
-# 使用例: bash validate.sh llms.txt
-# 成功: "OK: <ファイル名>" を出力してexit 0
-# 失敗: エラー内容を出力してexit 1
-llms_txt2ctx "$1" > /dev/null && echo "OK: $1" || { echo "FAIL: $1"; exit 1; }
+---
+
+### Phase 1: Type A（ドキュメント系）のスクリプト実装
+
+**スクリプト**: `scripts/gen-llms-txt/gen_llms_full.py`
+
+```
+入力: <repo_path> --base-url <url>
+出力: llms-full.txt（セクション構造 + 全ファイルのコンテンツ）
 ```
 
+**処理**:
+1. ドキュメントファイル（`.md` / `.rst`）を列挙
+2. セクション自動分類ルールを適用
+3. 各ファイルのコンテンツを構造化して `llms-full.txt` に出力
+4. `llms-full.txt` から H1 + 最初の文 + URL を抽出し `llms.txt` の骨格を生成
+5. blockquote / 本文は `{BLOCKQUOTE}` / `{DESCRIPTION}` プレースホルダのまま出力
+
+（プレースホルダの充填は Skill の LLM ステップで行う）
+
 ---
 
-### Phase 1: Type A（ドキュメント系リポジトリ）
+### Phase 2: Type B（Python パッケージ）の対応追加
 
-**目的**: Markdown/rst ドキュメントが中心のリポジトリから llms.txt を自動生成する
+`gen_llms_full.py` に `--python-package <name>` オプションを追加:
 
-**入力**:
-- `<repo_path>`: リポジトリのローカルクローンパス
-- `--base-url <url>`: 公開 URL のベース（例: `https://github.com/org/repo/blob/main/`）
+1. `pysym2md <package> --output_file /tmp/api-list.md` を実行
+2. 各シンボルのシグネチャ + docstring 1行目を抽出
+3. API Reference セクションとして `llms-full.txt` に追加
 
-**スクリプト**: `scripts/gen-llms-txt/gen_doc_repo.py <repo_path> --base-url <url>`
+---
 
-**処理ステップ**:
-1. `README.md` の H1 を抽出 → `# Title`
-2. `README.md` の H1 直後の最初の段落を抽出（バッジ行・空行はスキップ）→ `> blockquote`
-3. ドキュメントファイルを列挙（`.md` / `.rst`）。`README.md` は除外
-4. 各ファイルに対してセクション自動分類ルールを適用
-5. 各ファイルから H1（リンクタイトル）と H1 直後の最初の文（リンク説明文）を抽出
-6. セクション内でパスのアルファベット順にソート
-7. llms.txt を出力
-8. `validate.sh` で `llms_txt2ctx` 展開を確認、exit 0 でなければエラーとして終了
+### Phase 3: Type C（多言語ソース）の対応追加
 
-**出力例**:
-```markdown
-# MyProject
+`gen_llms_full.py` に `--extract-sigs` オプションを追加:
 
-> A library for doing X and Y efficiently.
+1. ソースファイルを列挙し `codesigs` の `file_sigs()` で一括処理
+2. `_` 始まりの非公開シンボルを除外
+3. シグネチャ + docstring 1行目を API Reference セクションとして追加
 
-## Getting Started
+---
 
-- [Installation](https://github.com/org/repo/blob/main/docs/install.md): Install MyProject using pip.
-- [Quickstart](https://github.com/org/repo/blob/main/docs/quickstart.md): Run your first example in 5 minutes.
+### Phase 4: Type D（nbdev/Jupyter）の対応追加
 
-## Guide
+`scripts/gen-llms-txt/gen_nb_llms_full.py` として実装:
 
-- [Configuration](https://github.com/org/repo/blob/main/docs/configuration.md): Configure MyProject for your use case.
+1. `nbs_to_ctx <nbs_dir> /tmp/ctx.xml` を実行
+2. XML から各ノートブックのタイトルと先頭セルを抽出
+3. セクション構成を生成して `llms-full.txt` に出力
 
-## API Reference
+---
 
-- [API Overview](https://github.com/org/repo/blob/main/docs/api.md): Complete API reference for MyProject.
+### Phase 5: Skill 化
 
-## Optional
+`.claude/skills/generate-llms-txt/SKILL.md` として実装:
 
-- [Changelog](https://github.com/org/repo/blob/main/CHANGELOG.md): Version history and release notes.
+**Skill の処理フロー**:
+
+```
+1. --target を解決
+   - ローカルパス → そのまま使用
+   - GitHub URL → git clone して一時ディレクトリに展開
+2. リポジトリタイプを自動判定
+3. gen_llms_full.py（または gen_nb_llms_full.py）を実行
+   → llms-full.txt 生成（プレースホルダあり）
+4. LLM ステップ:
+   - llms-full.txt の冒頭〜数セクションを読み込む
+   - blockquote（1〜2文の要約）を生成して {BLOCKQUOTE} を置換
+   - 必要に応じて本文補足を生成して {DESCRIPTION} を置換
+5. llms.txt を導出（H1 + ナラティブ + リンクインデックス）
+6. llms_txt2ctx で検証（exit 非0 なら Skill がエラー報告）
+7. --output に llms.txt / llms-full.txt を書き出し
 ```
 
----
-
-### Phase 2: Type B（Python パッケージ）
-
-**目的**: `pysymbol-llm` で Python パッケージの公開 API を自動抽出し、API Reference セクションに充填する
-
-**入力**:
-- Phase 1 の入力に加えて `--python-package <name>`: pip インストール済みのパッケージ名
-
-**スクリプト**: `gen_doc_repo.py` に `--python-package <name>` オプションを追加
-
-**追加処理ステップ**:
-1. Phase 1 の処理でドキュメント部分のセクション構成を生成
-2. `pysym2md <package_name> --output_file /tmp/api-list.md` を実行
-3. `api-list.md` の各エントリを解析:
-   - シンボル名 → リンクタイトル
-   - docstring の最初の文 → リンク説明文
-   - URL → `--base-url` から `api/<module>.md` 等を構築（または GitHub ソースへの直リンク）
-4. Phase 1 で生成した API Reference セクションを本データで置き換え（またはマージ）
-5. 検証
-
-**注意点**: `pysymbol-llm` はインストール済みパッケージを入力とする。スクリプト実行前に `pip install <package>` が完了していることが前提。
-
----
-
-### Phase 3: Type C（多言語ソースリポジトリ）
-
-**目的**: `codesigs` で多言語のソースからシグネチャを自動抽出し、API Reference セクションに充填する
-
-**入力**:
-- Phase 1 の入力に加えて `--extract-sigs`: シグネチャ抽出モードを有効化
-
-**スクリプト**: `gen_doc_repo.py` に `--extract-sigs` オプションを追加
-
-**追加処理ステップ**:
-1. Phase 1 の処理でドキュメント部分のセクション構成を生成
-2. ソースファイルを拡張子別に列挙（`.py`, `.ts`, `.js`, `.go`, `.rs`, `.java` 等）
-3. `codesigs` の `file_sigs()` で各ファイルのシグネチャを抽出:
-   ```python
-   from codesigs import file_sigs
-   for f in source_files:
-       sigs.extend(file_sigs(str(f)))
-   ```
-4. シグネチャをフィルタリング:
-   - `_` 始まりの非公開シンボルは除外
-   - シグネチャ行をリンクタイトルとして使用
-   - 直後の docstring 最初の文をリンク説明文として使用
-5. ファイルパス別にグルーピングし、H2 "API Reference" セクションとして追加
-6. 検証
-
----
-
-### Phase 4: Type D（nbdev/Jupyter リポジトリ）
-
-**目的**: `nbs2ctx` で Jupyter ノートブック系リポジトリの構造を解析し、llms.txt を自動生成する
-
-**入力**:
-- `<nbs_dir>`: `.ipynb` ファイルを含むディレクトリパス
-- `--base-url <url>`: 公開 URL のベース
-
-**スクリプト**: `scripts/gen-llms-txt/gen_nb_repo.py <nbs_dir> --base-url <url>`
-
-**処理ステップ**:
-1. `nbs_to_ctx <nbs_dir> /tmp/ctx.xml` で XML コンテキストを生成
-2. XML を解析し、各ノートブックから以下を自動取得:
-   - タイトル（最初の markdown セルの H1）→ リンクタイトル
-   - 先頭の非コードセルの最初の文 → リンク説明文
-3. ファイル名の番号プレフィックスでセクションをグルーピング:
-   - `00_*.ipynb`, `01_*.ipynb` → 番号が小さい = Getting Started
-   - `*_core.ipynb`, `*_api.ipynb` → API Reference
-   - その他 → Guide
-4. llms.txt を出力
-5. 検証
+**allowed-tools**（想定）:
+- `Bash`: git clone、Python スクリプト実行、llms_txt2ctx 実行
+- `Read`: llms-full.txt の読み込み（LLM ステップ用）
+- `Write`: llms.txt / llms-full.txt の書き出し
 
 ---
 
@@ -193,28 +234,38 @@ llms_txt2ctx "$1" > /dev/null && echo "OK: $1" || { echo "FAIL: $1"; exit 1; }
 
 | 優先度 | フェーズ | 理由 |
 |---|---|---|
-| 1 | Phase 0（共通基盤） | 全フェーズの前提。validate.sh は小さく即作れる |
-| 2 | Phase 1（ドキュメント系） | 最汎用。他フェーズの骨格になる。ツール依存なし |
-| 3 | Phase 2（Python パッケージ） | pysymbol-llm が成熟しており実装コスト低 |
-| 4 | Phase 3（多言語ソース） | codesigs の Python API 経由で実装。Phase 1 の拡張 |
-| 5 | Phase 4（nbdev/Jupyter） | 対象が限定的（nbdev プロジェクト向け） |
+| 1 | Phase 0（共通基盤） | template.md と validate.sh は小さく即作れる |
+| 2 | Phase 1（ドキュメント系スクリプト） | 最汎用。Skill の骨格になる |
+| 3 | Phase 5（Skill 化） | Phase 1 完了後、LLM ステップを組み込んで Skill として完結させる |
+| 4 | Phase 2（Python パッケージ） | Skill の拡張オプション |
+| 5 | Phase 3（多言語ソース） | 同上 |
+| 6 | Phase 4（nbdev/Jupyter） | 対象が限定的 |
+
+---
 
 ## 成果物配置
 
 ```
 LLMs/
 └── scripts/
-    └── gen-llms-txt/           # llms.txt 自動生成ツール群
-        ├── README.md             # 使い方・フェーズ説明（人間向け）
-        ├── validate.sh           # 検証ヘルパー（llms_txt2ctx 展開チェック）
-        ├── gen_doc_repo.py       # Phase 1〜3 統合スクリプト
-        └── gen_nb_repo.py        # Phase 4 スクリプト（nbdev/Jupyter 向け）
+    └── gen-llms-txt/               # llms.txt 自動生成スクリプト群
+        ├── README.md                 # 使い方（人間向け）
+        ├── template.md               # llms.txt テンプレート（プレースホルダ付き）
+        ├── validate.sh               # 検証ヘルパー
+        ├── gen_llms_full.py          # Type A/B/C 向け llms-full.txt 生成
+        └── gen_nb_llms_full.py       # Type D 向け（nbdev/Jupyter）
+
+.claude/
+└── skills/
+    └── generate-llms-txt/
+        └── SKILL.md                  # Skill 定義（Phase 5 で作成）
 ```
+
+---
 
 ## 留意事項
 
-- **URL の解決**: `--base-url` の指定が必須。GitHub リポジトリの場合は `https://github.com/{owner}/{repo}/blob/main/` を指定する
-- **スクリプトの実行環境**: Python 3.10+、および各ツールの pip install が前提（`pip install codesigs pysymbol_llm nbs2ctx llm-ctx`）
-- **codesigs の依存**: 内部で `ast-grep` バイナリを使用。pip install 時に同梱されるが、実行環境によっては別途確認が必要
-- **llms.txt の仕様制約**: H1 は必須。H2 セクション内のリンクは `[title](url): description` 形式。URL は絶対 URL が望ましい
-- **説明文が取得できないファイル**: リンク説明文を省略（`: description` 部分なし）して出力する。llms.txt 仕様上、説明文は任意のため仕様違反にならない
+- **GitHub URL 指定時**: `git clone` を使用。認証が必要なプライベートリポジトリは PAT 設定が前提
+- **base-url の自動推定**: `git remote get-url origin` から GitHub URL を検出し `blob/main/` を補完。ローカル専用リポジトリは `--base-url` の明示指定が必要
+- **Python ツールの事前インストール**: `pip install codesigs pysymbol_llm nbs2ctx llm-ctx` が前提
+- **llms-full.txt のフォーマット**: `llms_txt2ctx` の XML 形式ではなく、Markdown の平文結合形式で生成する（ローカルファイルを直接読むためHTTP fetch 不要）
