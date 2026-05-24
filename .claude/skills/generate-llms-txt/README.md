@@ -21,9 +21,9 @@
 | `--target` | ローカルパスまたは GitHub URL | カレントディレクトリ |
 | `--target-list` | ターゲット一覧ファイルのパス | — |
 | `--base-url` | リンク URL のベース | git remote から自動検出 |
-| `--output` | 出力先ディレクトリ（単一ターゲット時のみ有効） | `LLMs/work/gen-out/<owner>/<repo>/` |
+| `--output` | 出力先ディレクトリ（単一ターゲット時のみ有効） | 通常: `LLMs/work/gen-out/<owner>/<repo>/`、CC モード: `LLMs/work/gen-out/cc-extensions/<owner>/<repo>/` |
 | `--extract-sigs` | codesigs によるソースコードシグネチャ抽出を有効化 | なし（ドキュメントのみ） |
-| `--cc-extensions` | Claude Code 拡張リポジトリ向けモード（後述） | なし |
+| `--cc-extensions` | Claude Code 拡張リポジトリ向けモード（後述）。ソースシグネチャ抽出を自動実行 | なし |
 
 ### ターゲット一覧ファイルの形式
 
@@ -45,13 +45,25 @@ Claude Code の Skill・Rule・Agent 等を収録したリポジトリから、*
 - `skills/<name>/SKILL.md`（スタンドアローン形式: anthropics/skills 等）
 - `.claude/skills/<name>/SKILL.md`（embedded 形式: プロジェクト内の .claude/）
 - `rules/*.md`, `agents/*.md` 等の Claude Code 拡張ファイル
+- ソースコードファイル（`.py` / `.ts` 等）のシグネチャ（常に自動抽出）
 
-各 `SKILL.md` の frontmatter `description:` が「Use when...」「TRIGGER when...」形式で既に検索最適化されているため、LLM はリポジトリ全体の概要（blockquote）のみを生成する。
+各 `SKILL.md` の frontmatter `description:` が既に検索最適化されているため、LLM はリポジトリ全体の概要（blockquote）のみを生成する。
+
+出力先は通常モードと分離: `LLMs/work/gen-out/cc-extensions/<owner>/<repo>/`
 
 ```
 # Skill・Rule・Agent リポジトリの検索インデックスを作成
 /generate-llms-txt --target https://github.com/anthropics/skills --cc-extensions
 /generate-llms-txt --target https://github.com/myorg/my-claude-extensions --cc-extensions
+```
+
+### メタ llms.txt の生成
+
+複数の CC 拡張リポジトリを生成した後、`cc-extensions/` 配下の全 llms.txt を集約したメタインデックスを作成できる（URL の代わりに個別 llms.txt への相対パスを使用）:
+
+```bash
+python LLMs/scripts/gen-llms-txt/gen_cc_extensions_meta.py
+# → LLMs/work/gen-out/cc-extensions/llms.txt を生成
 ```
 
 ## 生成ファイル
@@ -61,7 +73,7 @@ Claude Code の Skill・Rule・Agent 等を収録したリポジトリから、*
 | `llms.txt` | URL インデックス（軽量・LLM ナビゲーション用） |
 | `llms-full.txt` | 全コンテンツ展開版（LLM コンテキスト用） |
 
-出力先は git 管理外（`.gitignore` 対象）の `LLMs/work/gen-out/` 配下。
+出力先は git 管理外（`.gitignore` 対象）の `LLMs/work/gen-out/` 配下。CC モードは `LLMs/work/gen-out/cc-extensions/` 配下。
 
 ## 使用例
 

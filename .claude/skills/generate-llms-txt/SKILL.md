@@ -40,18 +40,22 @@ LLMs/work/tmp-clone/somelocal --base-url https://example.com/docs/blob/main/
 
 `--output` が指定された場合はその値を使用する（単一ターゲット時のみ有効）。それ以外：
 
+**出力先ルート（`<ROOT>`）**:
+- 通常モード（`CC_EXTENSIONS` が false）: `LLMs/work/gen-out/`
+- `--cc-extensions` モード（`CC_EXTENSIONS` が true）: `LLMs/work/gen-out/cc-extensions/`
+
 **GitHub URL の場合**（`https://github.com/` で始まる）：
 - URL から `OWNER` / `REPO_NAME` / `BRANCH`（任意）を抽出する
   - 例: `https://github.com/langchain-ai/mcpdoc` → owner=`langchain-ai`, repo=`mcpdoc`
   - 例: `https://github.com/org/repo/tree/develop` → branch=`develop`
-- `OUT_DIR` = `LLMs/work/gen-out/<OWNER>/<REPO_NAME>/`
-- ブランチが指定されかつデフォルト（`main`/`master`）でない場合: `LLMs/work/gen-out/<OWNER>/<REPO_NAME>/<BRANCH>/`
+- `OUT_DIR` = `<ROOT><OWNER>/<REPO_NAME>/`
+- ブランチが指定されかつデフォルト（`main`/`master`）でない場合: `<ROOT><OWNER>/<REPO_NAME>/<BRANCH>/`
 - `REPO_PATH` = `LLMs/work/tmp-clone/<OWNER>/<REPO_NAME>`
 - `BASE_URL` が未指定の場合: `https://github.com/<OWNER>/<REPO_NAME>/blob/<BRANCH_OR_MAIN>/`
 
 **ローカルパスの場合**：
 - `git -C <TARGET> remote get-url origin` で GitHub リモート URL を取得して上記と同様に扱う
-- リモートが取得できない / GitHub 以外の場合: `OUT_DIR` = `LLMs/work/gen-out/<TARGET のディレクトリ名>/`
+- リモートが取得できない / GitHub 以外の場合: `OUT_DIR` = `<ROOT><TARGET のディレクトリ名>/`
 
 ---
 

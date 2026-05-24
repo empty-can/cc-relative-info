@@ -16,22 +16,24 @@ _REPO_ROOT = _SCRIPT_DIR.parent.parent.parent          # cc-relative-info/
 _DEFAULT_OUTPUT_BASE = _REPO_ROOT / 'LLMs' / 'work' / 'gen-out'
 
 
-def _infer_output_dir(base_url: str, repo_path: Path) -> Path:
+def _infer_output_dir(base_url: str, repo_path: Path, cc_extensions: bool = False) -> Path:
     """Compute default output directory from base_url.
 
-    GitHub URL  → LLMs/work/gen-out/<owner>/<repo>/
-    Other URL   → LLMs/work/gen-out/<repo_path.name>/
+    Normal mode:        LLMs/work/gen-out/<owner>/<repo>/
+    CC extensions mode: LLMs/work/gen-out/cc-extensions/<owner>/<repo>/
     """
+    root = _DEFAULT_OUTPUT_BASE / 'cc-extensions' if cc_extensions else _DEFAULT_OUTPUT_BASE
     m = re.match(r'https://github\.com/([^/]+)/([^/]+?)(?:/|$)', base_url)
     if m:
-        return _DEFAULT_OUTPUT_BASE / m.group(1) / m.group(2)
-    return _DEFAULT_OUTPUT_BASE / repo_path.name
+        return root / m.group(1) / m.group(2)
+    return root / repo_path.name
 
 # ---------------------------------------------------------------------------
 # CC Extensions mode: section map for .claude/ subdirectories
 # Add entries here to support new .claude/ subdirectory types.
 # ---------------------------------------------------------------------------
 CC_SECTION_MAP: dict[str, str] = {
+    'plugins':   'Plugins',
     'skills':    'Skills',
     'rules':     'Rules',
     'agents':    'Agents',
@@ -39,7 +41,9 @@ CC_SECTION_MAP: dict[str, str] = {
     'hooks':     'Hooks',
     'scripts':   'Optional',
 }
-CC_SECTION_ORDER = ['Skills', 'Rules', 'Agents', 'Templates', 'Hooks', 'Optional', 'Guide']
+# Sections whose subdirectories each contain a SKILL.md (one entry per subdirectory)
+CC_SKILL_LIKE_SECTIONS = {'skills', 'plugins'}
+CC_SECTION_ORDER = ['Plugins', 'Skills', 'Rules', 'Agents', 'Templates', 'Hooks', 'Optional', 'Guide']
 
 SECTION_RULES = [
     (['install', 'setup', 'quickstart', 'getting-started', 'getting_started', 'start'], 'Getting Started'),
@@ -403,8 +407,8 @@ def _scan_cc_base(base: Path, buckets: dict[str, list[tuple[Path, str]]]) -> Non
         if not section_dir.is_dir():
             continue
 
-        if section_key == 'skills':
-            # Each subdirectory is one skill; SKILL.md is the canonical entry.
+        if section_key in CC_SKILL_LIKE_SECTIONS:
+            # Each subdirectory is one skill/plugin; SKILL.md is the canonical entry.
             for skill_dir in sorted(d for d in section_dir.iterdir() if d.is_dir()):
                 skill_md = skill_dir / 'SKILL.md'
                 if skill_md.exists():
@@ -550,7 +554,7 @@ def generate(
 
     if cc_extensions:
         sections = collect_cc_sections(repo_path)
-        src_secs: list = []  # --extract-sigs not applicable in CC mode
+        src_secs = collect_source_sections(repo_path, base_url)  # always enabled in CC mode
         if not sections:
             print('WARNING: No .claude/ files found.', file=sys.stderr)
     else:
@@ -673,7 +677,7 @@ def main() -> None:
         print(f'ERROR: Not a directory: {repo_path}', file=sys.stderr)
         sys.exit(1)
 
-    output_dir = (args.output or _infer_output_dir(args.base_url, repo_path)).resolve()
+    output_dir = (args.output or _infer_output_dir(args.base_url, repo_path, args.cc_extensions)).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
     generate(repo_path, args.base_url, output_dir,
