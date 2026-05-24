@@ -79,6 +79,25 @@ git submodule update --remote LLMs/llms-txt-official
 - [llmstxt.site](https://llmstxt.site/)
 - [directory.llmstxt.cloud](https://directory.llmstxt.cloud/)
 
+## フォルダ構成
+
+```
+LLMs/
+├── CLAUDE.md
+├── README.md
+├── llms-txt-official/          # llms.txt 仕様公式リポジトリ（git submodule）
+├── official-llms-txts/         # 各公式サイトからダウンロードした llms.txt 等
+│   ├── CLAUDE.md               # フォルダ構成・参照ガイド（Claude Code 向け）
+│   ├── code.claude.com/        # Claude Code 公式ドキュメント
+│   └── modelcontextprotocol.io/# MCP 公式ドキュメント
+└── scripts/
+    ├── dl_llms.sh              # official-llms-txts へのダウンロードスクリプト
+    └── download_list.csv       # ダウンロード対象一覧
+```
+
 ## 現状
 
-サブモジュール `llms-txt-official` を追加。取り込み対象一覧・自動更新スクリプト・生成仕組みは未整備。
+- `llms-txt-official` サブモジュール追加済み
+- `official-llms-txts/` に Claude Code・MCP の公式 llms.txt / llms-full.txt を取得済み
+- `scripts/dl_llms.sh` で手動更新可能（実行: `bash LLMs/scripts/dl_llms.sh`）
+- 自動更新（GitHub Actions）・llms.txt 生成仕組みは未整備
