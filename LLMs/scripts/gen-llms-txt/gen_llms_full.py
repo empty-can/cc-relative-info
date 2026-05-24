@@ -15,6 +15,18 @@ _SCRIPT_DIR = Path(__file__).resolve().parent          # gen-llms-txt/
 _REPO_ROOT = _SCRIPT_DIR.parent.parent.parent          # cc-relative-info/
 _DEFAULT_OUTPUT_BASE = _REPO_ROOT / 'LLMs' / 'work' / 'gen-out'
 
+
+def _infer_output_dir(base_url: str, repo_path: Path) -> Path:
+    """Compute default output directory from base_url.
+
+    GitHub URL  → LLMs/work/gen-out/<owner>/<repo>/
+    Other URL   → LLMs/work/gen-out/<repo_path.name>/
+    """
+    m = re.match(r'https://github\.com/([^/]+)/([^/]+?)(?:/|$)', base_url)
+    if m:
+        return _DEFAULT_OUTPUT_BASE / m.group(1) / m.group(2)
+    return _DEFAULT_OUTPUT_BASE / repo_path.name
+
 SECTION_RULES = [
     (['install', 'setup', 'quickstart', 'getting-started', 'getting_started', 'start'], 'Getting Started'),
     (['api', 'reference', 'spec'], 'API Reference'),
@@ -542,7 +554,9 @@ def main() -> None:
                         help='Base URL for links '
                              '(e.g. https://github.com/org/repo/blob/main/)')
     parser.add_argument('--output', type=Path, default=None,
-                        help='Output directory (default: LLMs/work/gen-out/<repo_name>/)')
+                        help='Output directory '
+                             '(default: LLMs/work/gen-out/<owner>/<repo>/ for GitHub URLs, '
+                             'LLMs/work/gen-out/<repo_name>/ otherwise)')
     parser.add_argument('--extract-sigs', action='store_true',
                         help='Extract source code signatures via codesigs (Type C)')
     args = parser.parse_args()
@@ -552,7 +566,7 @@ def main() -> None:
         print(f'ERROR: Not a directory: {repo_path}', file=sys.stderr)
         sys.exit(1)
 
-    output_dir = (args.output or (_DEFAULT_OUTPUT_BASE / repo_path.name)).resolve()
+    output_dir = (args.output or _infer_output_dir(args.base_url, repo_path)).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
     generate(repo_path, args.base_url, output_dir, extract_sigs=args.extract_sigs)
