@@ -1,19 +1,40 @@
 # generate-llms-txt Skill
 
-ローカルリポジトリまたは GitHub URL を対象に `llms.txt` と `llms-full.txt` を自動生成する。
+ローカルリポジトリまたは GitHub URL を対象に `llms.txt` と `llms-full.txt` を自動生成する。単一ターゲットも、ファイルで指定した複数ターゲットの並列処理も可能。
 
 ## 使い方
+
+### 単一ターゲット
 
 ```
 /generate-llms-txt [--target <path_or_url>] [--base-url <url>] [--output <dir>] [--extract-sigs]
 ```
 
+### 複数ターゲット（並列処理）
+
+```
+/generate-llms-txt --target-list <file>
+```
+
 | オプション | 説明 | デフォルト |
 |---|---|---|
 | `--target` | ローカルパスまたは GitHub URL | カレントディレクトリ |
+| `--target-list` | ターゲット一覧ファイルのパス | — |
 | `--base-url` | リンク URL のベース | git remote から自動検出 |
-| `--output` | 出力先ディレクトリ | `LLMs/work/gen-out/<repo_name>/` |
+| `--output` | 出力先ディレクトリ（単一ターゲット時のみ有効） | `LLMs/work/gen-out/<owner>/<repo>/` |
 | `--extract-sigs` | codesigs によるソースコードシグネチャ抽出を有効化 | なし（ドキュメントのみ） |
+
+### ターゲット一覧ファイルの形式
+
+1行1ターゲット。`#` コメント・空行は無視。各行に `--extract-sigs` / `--base-url` を付与可能。
+
+```
+# 例: targets.txt
+https://github.com/langchain-ai/mcpdoc
+https://github.com/google-gemini/genai-processors --extract-sigs
+https://github.com/sammchardy/python-binance --extract-sigs
+LLMs/work/tmp-clone/mylocal --base-url https://example.com/docs/blob/main/
+```
 
 ## 生成ファイル
 
