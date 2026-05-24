@@ -23,10 +23,10 @@ if ! command -v llms_txt2ctx &>/dev/null; then
     exit 1
 fi
 
-if llms_txt2ctx "$TARGET" > /dev/null 2>&1; then
+if PYTHONUTF8=1 llms_txt2ctx "$TARGET" > /dev/null 2>&1; then
     echo "OK: $TARGET"
 else
     echo "FAIL: $TARGET"
-    llms_txt2ctx "$TARGET" 2>&1 || true
+    PYTHONUTF8=1 llms_txt2ctx "$TARGET" 2>&1 || true
     exit 1
 fi
