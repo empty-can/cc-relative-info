@@ -17,5 +17,6 @@
 
 ## 関連
 
+- **`llms-txt-official/`**: AnswerDotAI/llms-txt の git submodule（リポジトリルート直下）。llms.txt 仕様の公式実装・CLI ツール・仕様書（`nbs/index.qmd`）を含む。更新: `git submodule update --remote llms-txt-official`
 - WebFetch で `llms.txt` を取得する場合、参照頻度の高いドメインは `.claude/settings.json` の allow リストに既登録あり（`code.claude.com` / `docs.claude.com` / `github.com/anthropics`）。他ドメインは個別に追加する
 - 取り込み・生成スクリプトを実装する場合は、汎用 `.claude/scripts/` ではなく本フォルダ配下に配置する案を第一に検討する（用途がこのフォルダに閉じるため）

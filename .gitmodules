@@ -1,0 +1,3 @@
+[submodule "llms-txt-official"]
+	path = llms-txt-official
+	url = https://github.com/AnswerDotAI/llms-txt.git
