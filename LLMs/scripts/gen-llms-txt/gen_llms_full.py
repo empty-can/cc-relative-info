@@ -101,40 +101,82 @@ def classify_section(file_path: Path, repo_path: Path) -> str | None:
 
 
 # ---------------------------------------------------------------------------
-# Content extraction
+# Content extraction — chain-of-responsibility pattern
+#
+# Each _try_* function has the signature:
+#   (file_path, content, lines, fm_end) -> str | None
+# Extractors are tried in order; first non-None result wins.
+#
+# To support a new file format or add a heuristic:
+#   1. Define a _try_* function below.
+#   2. Insert it in _TITLE_EXTRACTORS or _DESC_EXTRACTORS for the target
+#      extension(s). No other code needs to change.
 # ---------------------------------------------------------------------------
 
-def _md_h1(content: str) -> str | None:
-    lines = content.splitlines()
-    start = _frontmatter_end(lines)
-    for line in lines[start:]:
+# Number of lines from body start to search for a document-level H1.
+# Intentionally short to avoid picking up headings buried inside body text.
+H1_SEARCH_WINDOW = 20
+
+
+# --- Title extractors -------------------------------------------------------
+
+def _try_frontmatter_title(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    return parse_frontmatter(content).get('title') or None
+
+
+def _try_head_h1(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    """Return the first H1 within H1_SEARCH_WINDOW lines after frontmatter."""
+    for line in lines[fm_end:fm_end + H1_SEARCH_WINDOW]:
         stripped = line.strip()
-        if stripped.startswith('# '):
+        if stripped.startswith('# ') and not stripped.startswith('## '):
             return stripped[2:].strip()
     return None
 
 
-def _rst_h1(content: str) -> str | None:
-    lines = content.splitlines()
-    for i, line in enumerate(lines):
+def _try_rst_h1(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    for i, line in enumerate(lines[fm_end:fm_end + H1_SEARCH_WINDOW], fm_end):
         stripped = line.strip()
         if not stripped or not stripped[0].isalpha():
             continue
         if i + 1 < len(lines):
             underline = lines[i + 1].strip()
-            if underline and len(underline) >= len(stripped) and all(c in '=-~^"\'`#*+' for c in underline):
+            if (underline and len(underline) >= len(stripped)
+                    and all(c in '=-~^"\'`#*+' for c in underline)):
                 return stripped
     return None
 
 
-def extract_h1(file_path: Path, content: str) -> str | None:
-    if file_path.suffix == '.rst':
-        return _rst_h1(content)
-    return _md_h1(content)  # handles both .md and .mdx
+def _try_filename_title(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    return file_path.stem.replace('-', ' ').replace('_', ' ').title()
+
+
+# Extension → ordered title extractors (first non-None wins)
+_TITLE_EXTRACTORS: dict[str, list] = {
+    '.md':  [_try_frontmatter_title, _try_head_h1,  _try_filename_title],
+    '.mdx': [_try_frontmatter_title, _try_head_h1,  _try_filename_title],
+    '.rst': [_try_rst_h1,            _try_filename_title],
+}
+_DEFAULT_TITLE_EXTRACTORS = [_try_head_h1, _try_filename_title]
+
+
+# --- Description extractors -------------------------------------------------
+
+def _try_frontmatter_desc(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    return parse_frontmatter(content).get('description') or None
 
 
 def _has_real_h1(lines: list[str], start: int) -> bool:
-    """Detect H1 heading outside code blocks."""
+    """Detect a real H1 outside code blocks (full-file scan, used for desc extraction)."""
     in_code = False
     for line in lines[start:]:
         stripped = line.strip()
@@ -146,34 +188,28 @@ def _has_real_h1(lines: list[str], start: int) -> bool:
     return False
 
 
-def extract_first_sentence(file_path: Path, content: str) -> str | None:
-    """Return a one-line description for a file.
+def _clean_prose(text: str) -> str:
+    """Strip common Markdown formatting from a prose string."""
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    text = re.sub(r'\*(.+?)\*',     r'\1', text)
+    text = re.sub(r'`(.+?)`',       r'\1', text)
+    text = re.sub(r'\[(.+?)\]\(.+?\)', r'\1', text)
+    return text
 
-    Priority:
-    1. frontmatter 'description:' field (used by MDX / Mintlify docs)
-    2. first prose paragraph after H1 (plain Markdown)
-    3. first prose paragraph after frontmatter when no H1 exists
-    """
-    if file_path.suffix not in ('.md', '.mdx'):
-        return None
 
-    fm = parse_frontmatter(content)
-    if fm.get('description'):
-        return fm['description']
-
-    lines = content.splitlines()
-    body_start = _frontmatter_end(lines)
-    has_h1 = _has_real_h1(lines, body_start)
-
+def _try_body_first_sentence(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    """First prose sentence after H1 (or body start if no H1), skipping code/JSX."""
+    has_h1 = _has_real_h1(lines, fm_end)
     after_h1 = False
     in_code = False
-    jsx_depth = 0  # depth counter for uppercase JSX blocks like <Note>, <Info>
+    jsx_depth = 0
     paragraph: list[str] = []
 
-    for line in lines[body_start:]:
+    for line in lines[fm_end:]:
         stripped = line.strip()
 
-        # Track code block state; skip lines inside blocks
         if stripped.startswith('```'):
             in_code = not in_code
             if paragraph:
@@ -182,13 +218,12 @@ def extract_first_sentence(file_path: Path, content: str) -> str | None:
         if in_code:
             continue
 
-        # Track JSX component blocks (e.g. <Note>, <Info>, <Steps>)
-        if re.match(r'^<[A-Z][A-Za-z]*[\s>]', stripped):  # opening tag
+        if re.match(r'^<[A-Z][A-Za-z]*[\s>]', stripped):
             jsx_depth += 1
             if paragraph:
                 break
             continue
-        if re.match(r'^</[A-Z]', stripped):  # closing tag
+        if re.match(r'^</[A-Z]', stripped):
             jsx_depth = max(0, jsx_depth - 1)
             continue
         if jsx_depth > 0:
@@ -211,26 +246,62 @@ def extract_first_sentence(file_path: Path, content: str) -> str | None:
     if not paragraph:
         return None
 
-    text = ' '.join(paragraph)
-    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
-    text = re.sub(r'\*(.+?)\*', r'\1', text)
-    text = re.sub(r'`(.+?)`', r'\1', text)
-    text = re.sub(r'\[(.+?)\]\(.+?\)', r'\1', text)
-
+    text = _clean_prose(' '.join(paragraph))
     m = re.match(r'(.+?[.!?])(?:\s|$)', text)
     if m:
         return m.group(1).strip()
     return (text[:150] + '…').strip() if len(text) > 150 else text.strip()
 
 
+# Extension → ordered description extractors
+# Add '.rst': [...] or other extensions here to extend support.
+_DESC_EXTRACTORS: dict[str, list] = {
+    '.md':  [_try_frontmatter_desc, _try_body_first_sentence],
+    '.mdx': [_try_frontmatter_desc, _try_body_first_sentence],
+    '.rst': [],  # rst body extraction not implemented; add _try_* here to enable
+}
+_DEFAULT_DESC_EXTRACTORS: list = []
+
+
+# --- Dispatch engine --------------------------------------------------------
+
+def _run_extractors(
+    extractors: list,
+    file_path: Path,
+    content: str,
+    lines: list[str],
+    fm_end: int,
+) -> str | None:
+    for extractor in extractors:
+        result = extractor(file_path, content, lines, fm_end)
+        if result:
+            return result
+    return None
+
+
 def link_title(file_path: Path, content: str) -> str:
-    fm = parse_frontmatter(content)
-    if fm.get('title'):
-        return fm['title']
-    h1 = extract_h1(file_path, content)
-    if h1:
-        return h1
-    return file_path.stem.replace('-', ' ').replace('_', ' ').title()
+    lines = content.splitlines()
+    fm_end = _frontmatter_end(lines)
+    extractors = _TITLE_EXTRACTORS.get(file_path.suffix, _DEFAULT_TITLE_EXTRACTORS)
+    return _run_extractors(extractors, file_path, content, lines, fm_end) or file_path.stem
+
+
+def extract_first_sentence(file_path: Path, content: str) -> str | None:
+    lines = content.splitlines()
+    fm_end = _frontmatter_end(lines)
+    extractors = _DESC_EXTRACTORS.get(file_path.suffix, _DEFAULT_DESC_EXTRACTORS)
+    return _run_extractors(extractors, file_path, content, lines, fm_end)
+
+
+def extract_h1(file_path: Path, content: str) -> str | None:
+    """Convenience wrapper used for README project-name extraction."""
+    lines = content.splitlines()
+    fm_end = _frontmatter_end(lines)
+    return (
+        _try_rst_h1(file_path, content, lines, fm_end)
+        if file_path.suffix == '.rst'
+        else _try_head_h1(file_path, content, lines, fm_end)
+    )
 
 
 # ---------------------------------------------------------------------------
