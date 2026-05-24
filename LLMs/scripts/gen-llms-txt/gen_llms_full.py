@@ -121,6 +121,19 @@ def extract_h1(file_path: Path, content: str) -> str | None:
     return _md_h1(content)  # handles both .md and .mdx
 
 
+def _has_real_h1(lines: list[str], start: int) -> bool:
+    """Detect H1 heading outside code blocks."""
+    in_code = False
+    for line in lines[start:]:
+        stripped = line.strip()
+        if stripped.startswith('```'):
+            in_code = not in_code
+            continue
+        if not in_code and stripped.startswith('# ') and not stripped.startswith('## '):
+            return True
+    return False
+
+
 def extract_first_sentence(file_path: Path, content: str) -> str | None:
     """Return a one-line description for a file.
 
@@ -138,15 +151,39 @@ def extract_first_sentence(file_path: Path, content: str) -> str | None:
 
     lines = content.splitlines()
     body_start = _frontmatter_end(lines)
-    has_h1 = any(l.strip().startswith('# ') for l in lines[body_start:])
+    has_h1 = _has_real_h1(lines, body_start)
 
     after_h1 = False
+    in_code = False
+    jsx_depth = 0  # depth counter for uppercase JSX blocks like <Note>, <Info>
     paragraph: list[str] = []
 
     for line in lines[body_start:]:
         stripped = line.strip()
+
+        # Track code block state; skip lines inside blocks
+        if stripped.startswith('```'):
+            in_code = not in_code
+            if paragraph:
+                break
+            continue
+        if in_code:
+            continue
+
+        # Track JSX component blocks (e.g. <Note>, <Info>, <Steps>)
+        if re.match(r'^<[A-Z][A-Za-z]*[\s>]', stripped):  # opening tag
+            jsx_depth += 1
+            if paragraph:
+                break
+            continue
+        if re.match(r'^</[A-Z]', stripped):  # closing tag
+            jsx_depth = max(0, jsx_depth - 1)
+            continue
+        if jsx_depth > 0:
+            continue
+
         if has_h1 and not after_h1:
-            if stripped.startswith('# '):
+            if stripped.startswith('# ') and not stripped.startswith('## '):
                 after_h1 = True
             continue
         if not stripped:
@@ -228,6 +265,8 @@ def find_readme(repo_path: Path) -> tuple[Path | None, str]:
 
 def make_url(base_url: str, file_path: Path, repo_path: Path) -> str:
     rel = file_path.relative_to(repo_path).as_posix()
+    if rel.endswith('.mdx'):
+        rel = rel[:-4] + '.md'
     return f"{base_url.rstrip('/')}/{rel}"
 
 
