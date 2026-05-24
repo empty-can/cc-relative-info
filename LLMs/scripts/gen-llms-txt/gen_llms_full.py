@@ -90,9 +90,12 @@ def classify_section(file_path: Path, repo_path: Path) -> str | None:
     stem = file_path.stem.lower()
     if stem == 'readme':
         return None
-    rel_str = ' '.join(p.lower() for p in file_path.relative_to(repo_path).parts)
+    rel = file_path.relative_to(repo_path)
+    # Split each path component by word separators to avoid substring false-matches
+    # e.g. "rapid" must not match "api"; "reference" must match exactly
+    segments = set(re.split(r'[\-_./]', ' '.join(p.lower() for p in rel.parts)))
     for keywords, section in SECTION_RULES:
-        if any(kw in rel_str for kw in keywords):
+        if any(kw in segments for kw in keywords):
             return section
     return 'Guide'
 
@@ -406,7 +409,7 @@ def _write_llms_full(
             ]
 
     if src_secs:
-        lines += ['---', '', '## API Reference', '']
+        lines += ['---', '', '## Source Modules', '']
         for f, mod_title, url, syms in src_secs:
             rel = f.relative_to(repo_path).as_posix()
             lines += [f'### {mod_title}', '', f'*Source: {rel} | URL: {url}*', '']
@@ -443,7 +446,7 @@ def _write_llms_txt(
         lines.append('')
 
     if src_secs:
-        lines += ['## API Reference', '']
+        lines += ['## Source Modules', '']
         for _f, mod_title, url, syms in src_secs:
             # Use first public symbol's docstring as the module description
             desc = next((doc for _, doc in syms if doc), None)
