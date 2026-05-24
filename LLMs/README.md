@@ -50,20 +50,16 @@ Optional details go here
 
 ## 公式リポジトリ（サブモジュール）
 
-```
-LLMs/
-└── llms-txt-official/   ← AnswerDotAI/llms-txt の git submodule
-```
+`llms-txt-official-repos/` に AnswerDotAI の公式リポジトリを git submodule として管理。
+詳細・ツール間の関係は `llms-txt-official-repos/README.md` 参照。
 
-- **GitHub**: https://github.com/AnswerDotAI/llms-txt
-- **公式サイト**: https://llmstxt.org/
-- **ライセンス**: Apache-2.0
-- **Python パッケージ**: `llms-txt`（`pip install llms-txt`）
-
-サブモジュールを最新化する場合（リポジトリルートから実行）:
-```bash
-git submodule update --remote LLMs/llms-txt-official
-```
+| submodule | 用途 |
+|---|---|
+| `llms-txt-official-repos/llms-txt` | 仕様本体・`llms_txt2ctx` CLI |
+| `llms-txt-official-repos/llm-ctx` | `llms.txt` → XML コンテキスト（軽量版） |
+| `llms-txt-official-repos/pysymbol-llm` | Python API ドキュメント抽出 |
+| `llms-txt-official-repos/codesigs` | 多言語コードシグネチャ抽出 |
+| `llms-txt-official-repos/nbs2ctx` | Jupyter ノートブック → LLM 用 XML |
 
 ## 関連ツール
 
@@ -85,7 +81,7 @@ git submodule update --remote LLMs/llms-txt-official
 LLMs/
 ├── CLAUDE.md
 ├── README.md
-├── llms-txt-official/          # llms.txt 仕様公式リポジトリ（git submodule）
+├── llms-txt-official-repos/    # AnswerDotAI 公式リポジトリ群（git submodule × 5）
 ├── official-llms-txts/         # 各公式サイトからダウンロードした llms.txt 等
 │   ├── CLAUDE.md               # フォルダ構成・参照ガイド（Claude Code 向け）
 │   ├── code.claude.com/        # Claude Code 公式ドキュメント

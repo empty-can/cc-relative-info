@@ -4,7 +4,7 @@
 
 ## llms.txt と llms-full.txt について
 
-[公式仕様（llms-txt-official/nbs/index.qmd）](../llms-txt-official/nbs/index.qmd) に基づく。
+[公式仕様（llms-txt-official-repos/llms-txt/nbs/index.qmd）](../llms-txt-official-repos/llms-txt/nbs/index.qmd) に基づく。
 
 - **`llms.txt`**: サイト名（H1）・概要（blockquote）・ページリスト（URL＋1行説明）で構成された軽量なインデックスファイル。コンテキスト消費を抑えたい場合や「どのページがあるか」を把握したいときに参照する（約 100〜150 行）
 - **`llms-full.txt`**: `llms.txt` にリストされた各 URL の全文を展開・結合した完全版。`llms_txt2ctx` ツールで生成される。特定機能の詳細仕様・設定値・コード例を検索したいときに参照する（数万行になる場合あり）
