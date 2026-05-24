@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate llms-full.txt and llms.txt from a local repository.
 
-Type A: documentation files (.md / .rst)
+Type A: documentation files (.md / .mdx / .rst)
 Type C: source code signatures via codesigs (add --extract-sigs)
 """
 
@@ -17,11 +17,59 @@ SECTION_RULES = [
     (['changelog', 'release', 'faq', 'contributing', 'license', 'security', 'migration'], 'Optional'),
 ]
 SECTION_ORDER = ['Getting Started', 'Guide', 'API Reference', 'Optional']
-DOC_EXTENSIONS = ('.md', '.rst')
+DOC_EXTENSIONS = ('.md', '.mdx', '.rst')
 SKIP_DIRS = {
     '.git', '.github', 'node_modules', 'vendor', '__pycache__',
     '.venv', 'venv', 'dist', 'build', 'site', '.tox',
 }
+
+
+# ---------------------------------------------------------------------------
+# Frontmatter helpers
+# ---------------------------------------------------------------------------
+
+def parse_frontmatter(content: str) -> dict[str, str]:
+    """Extract key-value pairs from YAML frontmatter (--- block at file top)."""
+    lines = content.splitlines()
+    if not lines or lines[0].strip() != '---':
+        return {}
+    end = -1
+    for i, line in enumerate(lines[1:], 1):
+        if line.strip() == '---':
+            end = i
+            break
+    if end == -1:
+        return {}
+    fm: dict[str, str] = {}
+    for line in lines[1:end]:
+        if ':' in line:
+            key, _, val = line.partition(':')
+            fm[key.strip()] = val.strip().strip('"\'')
+    return fm
+
+
+def _frontmatter_end(lines: list[str]) -> int:
+    """Return index of the line *after* the closing --- of frontmatter, or 0 if none."""
+    if not lines or lines[0].strip() != '---':
+        return 0
+    for i, line in enumerate(lines[1:], 1):
+        if line.strip() == '---':
+            return i + 1
+    return 0
+
+
+def _is_non_prose(stripped: str) -> bool:
+    """Return True for lines that are not readable prose (skip in description extraction)."""
+    return (
+        stripped.startswith('[![')
+        or stripped.startswith('<!--')
+        or stripped.startswith('> ')
+        or re.match(r'^[-*_]{3,}$', stripped) is not None
+        or stripped.startswith('```')
+        or stripped.startswith('|')
+        or stripped.startswith('#')
+        or bool(re.match(r'^<[A-Z/]', stripped))  # JSX / HTML block tags
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -45,7 +93,9 @@ def classify_section(file_path: Path, repo_path: Path) -> str | None:
 # ---------------------------------------------------------------------------
 
 def _md_h1(content: str) -> str | None:
-    for line in content.splitlines():
+    lines = content.splitlines()
+    start = _frontmatter_end(lines)
+    for line in lines[start:]:
         stripped = line.strip()
         if stripped.startswith('# '):
             return stripped[2:].strip()
@@ -68,21 +118,34 @@ def _rst_h1(content: str) -> str | None:
 def extract_h1(file_path: Path, content: str) -> str | None:
     if file_path.suffix == '.rst':
         return _rst_h1(content)
-    return _md_h1(content)
+    return _md_h1(content)  # handles both .md and .mdx
 
 
 def extract_first_sentence(file_path: Path, content: str) -> str | None:
-    """Extract first meaningful sentence from the paragraph following H1 (Markdown only)."""
-    if file_path.suffix != '.md':
+    """Return a one-line description for a file.
+
+    Priority:
+    1. frontmatter 'description:' field (used by MDX / Mintlify docs)
+    2. first prose paragraph after H1 (plain Markdown)
+    3. first prose paragraph after frontmatter when no H1 exists
+    """
+    if file_path.suffix not in ('.md', '.mdx'):
         return None
 
+    fm = parse_frontmatter(content)
+    if fm.get('description'):
+        return fm['description']
+
     lines = content.splitlines()
+    body_start = _frontmatter_end(lines)
+    has_h1 = any(l.strip().startswith('# ') for l in lines[body_start:])
+
     after_h1 = False
     paragraph: list[str] = []
 
-    for line in lines:
+    for line in lines[body_start:]:
         stripped = line.strip()
-        if not after_h1:
+        if has_h1 and not after_h1:
             if stripped.startswith('# '):
                 after_h1 = True
             continue
@@ -90,11 +153,7 @@ def extract_first_sentence(file_path: Path, content: str) -> str | None:
             if paragraph:
                 break
             continue
-        # Skip badges, HTML comments, blockquotes, rules, code fences, tables, headings
-        if (stripped.startswith('[![') or stripped.startswith('<!--')
-                or stripped.startswith('> ') or re.match(r'^[-*_]{3,}$', stripped)
-                or stripped.startswith('```') or stripped.startswith('|')
-                or stripped.startswith('#')):
+        if _is_non_prose(stripped):
             if paragraph:
                 break
             continue
@@ -104,7 +163,6 @@ def extract_first_sentence(file_path: Path, content: str) -> str | None:
         return None
 
     text = ' '.join(paragraph)
-    # Strip markdown formatting
     text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
     text = re.sub(r'\*(.+?)\*', r'\1', text)
     text = re.sub(r'`(.+?)`', r'\1', text)
@@ -117,6 +175,9 @@ def extract_first_sentence(file_path: Path, content: str) -> str | None:
 
 
 def link_title(file_path: Path, content: str) -> str:
+    fm = parse_frontmatter(content)
+    if fm.get('title'):
+        return fm['title']
     h1 = extract_h1(file_path, content)
     if h1:
         return h1
