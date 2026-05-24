@@ -22,5 +22,18 @@
       "WebFetch(domain:docs.claude.com)",
       "WebFetch(domain:github.com/anthropics)"
     ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/pre-task-reminder.sh"
+          }
+        ]
+      }
+    ]
   }
 }
