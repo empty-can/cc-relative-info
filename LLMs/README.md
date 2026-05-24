@@ -51,7 +51,8 @@ Optional details go here
 ## 公式リポジトリ（サブモジュール）
 
 ```
-llms-txt-official/   ← AnswerDotAI/llms-txt の git submodule
+LLMs/
+└── llms-txt-official/   ← AnswerDotAI/llms-txt の git submodule
 ```
 
 - **GitHub**: https://github.com/AnswerDotAI/llms-txt
@@ -59,9 +60,9 @@ llms-txt-official/   ← AnswerDotAI/llms-txt の git submodule
 - **ライセンス**: Apache-2.0
 - **Python パッケージ**: `llms-txt`（`pip install llms-txt`）
 
-サブモジュールを最新化する場合:
+サブモジュールを最新化する場合（リポジトリルートから実行）:
 ```bash
-git submodule update --remote llms-txt-official
+git submodule update --remote LLMs/llms-txt-official
 ```
 
 ## 関連ツール
