@@ -10,14 +10,14 @@
 # 注意: CSV の DL先フォルダ列は LLMs/official-llms-txts/ からの相対パス。
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-CSV_FILE="${SCRIPT_DIR}/download_list.csv"
+TSV_FILE="${SCRIPT_DIR}/download_list.tsv"
 OUTPUT_BASE="${SCRIPT_DIR}/../official-llms-txts"
 
-# CSV の相対パス解決のため出力ベースに cd
+# TSV の相対パス解決のため出力ベースに cd
 cd "$OUTPUT_BASE" || { echo "ERROR: cannot cd to $OUTPUT_BASE"; exit 1; }
 
-# ヘッダ行をスキップして読み込み
-tail -n +2 "$CSV_FILE" | while IFS=',' read -r url filename folder overwrite_flag
+# ヘッダ行をスキップして読み込み（タブ区切り）
+tail -n +2 "$TSV_FILE" | while IFS=$'\t' read -r url filename folder overwrite_flag
 do
     # 空行スキップ
     [ -z "$url" ] && continue
