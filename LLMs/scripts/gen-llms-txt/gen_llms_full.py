@@ -7,6 +7,7 @@ Type C: source code signatures via codesigs (add --extract-sigs)
 
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -16,16 +17,34 @@ _REPO_ROOT = _SCRIPT_DIR.parent.parent.parent          # cc-relative-info/
 _DEFAULT_OUTPUT_BASE = _REPO_ROOT / 'LLMs' / 'work' / 'gen-out'
 
 
-def _infer_output_dir(base_url: str, repo_path: Path) -> Path:
+def _infer_output_dir(base_url: str, repo_path: Path, cc_extensions: bool = False) -> Path:
     """Compute default output directory from base_url.
 
-    GitHub URL  → LLMs/work/gen-out/<owner>/<repo>/
-    Other URL   → LLMs/work/gen-out/<repo_path.name>/
+    Normal mode:        LLMs/work/gen-out/<owner>/<repo>/
+    CC extensions mode: LLMs/work/gen-out/cc-extensions/<owner>/<repo>/
     """
+    root = _DEFAULT_OUTPUT_BASE / 'cc-extensions' if cc_extensions else _DEFAULT_OUTPUT_BASE
     m = re.match(r'https://github\.com/([^/]+)/([^/]+?)(?:/|$)', base_url)
     if m:
-        return _DEFAULT_OUTPUT_BASE / m.group(1) / m.group(2)
-    return _DEFAULT_OUTPUT_BASE / repo_path.name
+        return root / m.group(1) / m.group(2)
+    return root / repo_path.name
+
+# ---------------------------------------------------------------------------
+# CC Extensions mode: section map for .claude/ subdirectories
+# Add entries here to support new .claude/ subdirectory types.
+# ---------------------------------------------------------------------------
+CC_SECTION_MAP: dict[str, str] = {
+    'plugins':   'Plugins',
+    'skills':    'Skills',
+    'rules':     'Rules',
+    'agents':    'Agents',
+    'templates': 'Templates',
+    'hooks':     'Hooks',
+    'scripts':   'Optional',
+}
+# Sections whose subdirectories each contain a SKILL.md (one entry per subdirectory)
+CC_SKILL_LIKE_SECTIONS = {'skills', 'plugins'}
+CC_SECTION_ORDER = ['Plugins', 'Skills', 'Rules', 'Agents', 'Templates', 'Hooks', 'Optional', 'Guide']
 
 SECTION_RULES = [
     (['install', 'setup', 'quickstart', 'getting-started', 'getting_started', 'start'], 'Getting Started'),
@@ -138,6 +157,13 @@ def _try_frontmatter_title(
     return parse_frontmatter(content).get('title') or None
 
 
+def _try_frontmatter_name(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    # 'name:' is used in Skill frontmatter (vs 'title:' in MDX docs)
+    return parse_frontmatter(content).get('name') or None
+
+
 def _try_head_h1(
     file_path: Path, content: str, lines: list[str], fm_end: int
 ) -> str | None:
@@ -172,7 +198,8 @@ def _try_filename_title(
 
 # Extension → ordered title extractors (first non-None wins)
 _TITLE_EXTRACTORS: dict[str, list] = {
-    '.md':  [_try_frontmatter_title, _try_head_h1,  _try_filename_title],
+    # .md: check 'title:' then 'name:' (used in SKILL.md frontmatter) then H1
+    '.md':  [_try_frontmatter_title, _try_frontmatter_name, _try_head_h1, _try_filename_title],
     '.mdx': [_try_frontmatter_title, _try_head_h1,  _try_filename_title],
     '.rst': [_try_rst_h1,            _try_filename_title],
 }
@@ -354,6 +381,77 @@ def find_readme(repo_path: Path) -> tuple[Path | None, str]:
     return None, ''
 
 
+def _read_md(path: Path) -> str | None:
+    """Read a Markdown file, return None on error or empty content."""
+    try:
+        content = path.read_text(encoding='utf-8', errors='replace')
+        return content if content.strip() else None
+    except OSError:
+        return None
+
+
+def _scan_cc_base(base: Path, buckets: dict[str, list[tuple[Path, str]]]) -> None:
+    """Scan one base directory (root or .claude/) for CC extension files.
+
+    Layout handled:
+    - skills/<name>/SKILL.md  → Skills section (primary entry per skill)
+    - rules/*.md              → Rules section
+    - agents/*.md             → Agents section
+    - templates/*.md          → Templates section
+    - hooks/*.md / scripts/*  → Optional section
+    """
+    if not base.is_dir():
+        return
+
+    for section_key, section_name in CC_SECTION_MAP.items():
+        section_dir = base / section_key
+        if not section_dir.is_dir():
+            continue
+
+        if section_key in CC_SKILL_LIKE_SECTIONS:
+            # Each subdirectory is one skill/plugin; SKILL.md is the canonical entry.
+            for skill_dir in sorted(d for d in section_dir.iterdir() if d.is_dir()):
+                skill_md = skill_dir / 'SKILL.md'
+                if skill_md.exists():
+                    content = _read_md(skill_md)
+                    if content:
+                        buckets[section_name].append((skill_md, content))
+        else:
+            # Other sections: collect .md files directly in the section directory.
+            for ext in DOC_EXTENSIONS:
+                for f in sorted(section_dir.glob(f'*{ext}')):
+                    content = _read_md(f)
+                    if content:
+                        buckets[section_name].append((f, content))
+
+
+def collect_cc_sections(repo_path: Path) -> list[tuple[str, list[tuple[Path, str]]]]:
+    """Collect Claude Code extension files for search-optimized indexing.
+
+    Supports two common layouts automatically:
+
+    Standalone extension repo (e.g. anthropics/skills):
+      skills/<name>/SKILL.md, rules/*.md, agents/*.md at repo root
+
+    Project-embedded (e.g. .claude/ inside a project):
+      .claude/skills/<name>/SKILL.md, .claude/rules/*.md, etc.
+    """
+    buckets: dict[str, list[tuple[Path, str]]] = {s: [] for s in CC_SECTION_ORDER}
+
+    # Pattern A: standalone extension repo (skills/ at repo root)
+    _scan_cc_base(repo_path, buckets)
+
+    # Pattern B: embedded in project (.claude/ directory)
+    _scan_cc_base(repo_path / '.claude', buckets)
+
+    if not any(buckets.values()):
+        print('WARNING: No CC extension files found '
+              '(checked skills/, .claude/skills/, rules/, .claude/rules/)',
+              file=sys.stderr)
+
+    return [(s, buckets[s]) for s in CC_SECTION_ORDER if buckets[s]]
+
+
 # ---------------------------------------------------------------------------
 # URL construction
 # ---------------------------------------------------------------------------
@@ -442,24 +540,36 @@ def collect_source_sections(
 # Generation
 # ---------------------------------------------------------------------------
 
-def generate(repo_path: Path, base_url: str, output_dir: Path, extract_sigs: bool = False) -> None:
+def generate(
+    repo_path: Path,
+    base_url: str,
+    output_dir: Path,
+    extract_sigs: bool = False,
+    cc_extensions: bool = False,
+) -> None:
     readme_path, readme_content = find_readme(repo_path)
     project_name = (
         (extract_h1(readme_path, readme_content) if readme_path else None)
         or repo_path.name.replace('-', ' ').replace('_', ' ').title()
     )
 
-    sections = collect_doc_sections(repo_path)
-    if not sections:
-        print('WARNING: No documentation files found.', file=sys.stderr)
-
-    src_secs = collect_source_sections(repo_path, base_url) if extract_sigs else []
+    if cc_extensions:
+        sections = collect_cc_sections(repo_path)
+        src_secs = collect_source_sections(repo_path, base_url)  # always enabled in CC mode
+        if not sections:
+            print('WARNING: No .claude/ files found.', file=sys.stderr)
+    else:
+        sections = collect_doc_sections(repo_path)
+        if not sections:
+            print('WARNING: No documentation files found.', file=sys.stderr)
+        src_secs = collect_source_sections(repo_path, base_url) if extract_sigs else []
 
     _write_llms_full(project_name, sections, src_secs, base_url, repo_path, output_dir)
     _write_llms_txt(project_name, sections, src_secs, base_url, repo_path, output_dir)
 
     total_docs = sum(len(files) for _, files in sections)
-    print(f'Processed {total_docs} doc file(s) across {len(sections)} section(s)'
+    mode_label = 'CC extension file(s)' if cc_extensions else 'doc file(s)'
+    print(f'Processed {total_docs} {mode_label} across {len(sections)} section(s)'
           + (f', {len(src_secs)} source module(s).' if src_secs else '.'))
     print(f'Generated: {output_dir / "llms-full.txt"}')
     print(f'Generated: {output_dir / "llms.txt"}')
@@ -559,6 +669,10 @@ def main() -> None:
                              'LLMs/work/gen-out/<repo_name>/ otherwise)')
     parser.add_argument('--extract-sigs', action='store_true',
                         help='Extract source code signatures via codesigs (Type C)')
+    parser.add_argument('--cc-extensions', action='store_true',
+                        help='Index .claude/ Skills/Rules/Agents for Claude Code extension search')
+    parser.add_argument('--skip-if-unchanged', action='store_true',
+                        help='Skip generation if llms.txt is newer than the latest commit')
     args = parser.parse_args()
 
     repo_path = args.repo_path.resolve()
@@ -566,10 +680,28 @@ def main() -> None:
         print(f'ERROR: Not a directory: {repo_path}', file=sys.stderr)
         sys.exit(1)
 
-    output_dir = (args.output or _infer_output_dir(args.base_url, repo_path)).resolve()
+    output_dir = (args.output or _infer_output_dir(args.base_url, repo_path, args.cc_extensions)).resolve()
+
+    if args.skip_if_unchanged:
+        llms_txt = output_dir / 'llms.txt'
+        if llms_txt.exists():
+            try:
+                result = subprocess.run(
+                    ['git', '-C', str(repo_path), 'log', '-1', '--format=%ct'],
+                    capture_output=True, text=True, check=True,
+                )
+                commit_ts = int(result.stdout.strip())
+                if llms_txt.stat().st_mtime > commit_ts:
+                    print(f'SKIPPED: {llms_txt.name} is up to date'
+                          f' (commit={commit_ts}, mtime={int(llms_txt.stat().st_mtime)})')
+                    sys.exit(0)
+            except Exception:
+                pass  # fall through to normal generation on any error
+
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    generate(repo_path, args.base_url, output_dir, extract_sigs=args.extract_sigs)
+    generate(repo_path, args.base_url, output_dir,
+             extract_sigs=args.extract_sigs, cc_extensions=args.cc_extensions)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,183 @@
+# generate-llms-txt --target-list 用ターゲット一覧テンプレート
+#
+# 使い方:
+#   /generate-llms-txt --target-list LLMs/scripts/gen-llms-txt/targets.example.txt
+#
+# 形式: 1行1ターゲット。# で始まる行・空行は無視される。
+# 各行の先頭トークンが TARGET、残りが行専用オプションとなる。
+# 行ごとのオプションは --target-list 呼び出し時のグローバルオプションより優先される。
+#
+# ──────────────────────────────────────────────────────
+# 行ごとに指定可能なオプション
+# ──────────────────────────────────────────────────────
+#
+#   --extract-sigs
+#       ソースコードのシグネチャ（関数・クラス定義等）を抽出して
+#       API Reference セクションに追加する。
+#       対応言語: Python / TypeScript / JavaScript / Go / Java / Rust 等
+#       省略時: ドキュメントファイル（.md / .rst）のみ処理
+#
+#   --base-url <url>
+#       llms.txt 内リンクのベース URL を手動指定する。
+#       省略時: GitHub URL ターゲットは自動設定。
+#              ローカルパスは git remote から自動検出。
+#       必須ケース: git remote がない / GitHub 以外のローカルリポジトリ
+#
+#   --cc-extensions
+#       Claude Code の Skill / Rule / Agent 等を収録したリポジトリ向けモード。
+#       SKILL.md の frontmatter description を検索インデックスとして活用する。
+#       ソースシグネチャ抽出（--extract-sigs 相当）は常に有効（省略しても自動実行）。
+#
+# 注意: --output はターゲット一覧形式では使用不可（単一ターゲット時のみ有効）
+#
+# ──────────────────────────────────────────────────────
+# 出力先の自動決定ルール
+# ──────────────────────────────────────────────────────
+#
+#   GitHub URL（デフォルトブランチ）
+#     → LLMs/work/gen-out/<owner>/<repo>/
+#   GitHub URL（非デフォルトブランチ）
+#     → LLMs/work/gen-out/<owner>/<repo>/<branch>/
+#   ローカルパス（GitHub remote あり）
+#     → LLMs/work/gen-out/<owner>/<repo>/  ※remote の owner/repo を使用
+#   ローカルパス（remote なし / GitHub 以外）
+#     → LLMs/work/gen-out/<ディレクトリ名>/
+#
+
+
+# ══════════════════════════════════════════════════════
+# GitHub URL ─ 基本パターン
+# ══════════════════════════════════════════════════════
+
+# パターン 1: オプションなし（ドキュメントのみ、BASE_URL 自動）
+#   OUT_DIR : LLMs/work/gen-out/langchain-ai/mcpdoc/
+#   BASE_URL: https://github.com/langchain-ai/mcpdoc/blob/main/（自動）
+# https://github.com/langchain-ai/mcpdoc
+
+# パターン 2: --extract-sigs（ドキュメント + ソースシグネチャ）
+#   OUT_DIR : LLMs/work/gen-out/google-gemini/genai-processors/
+#   BASE_URL: https://github.com/google-gemini/genai-processors/blob/main/（自動）
+# https://github.com/google-gemini/genai-processors --extract-sigs
+
+# パターン 3: --base-url 手動指定（GitHub Pages 等、別 URL で公開されている場合）
+#   OUT_DIR : LLMs/work/gen-out/org/repo/
+#   BASE_URL: 指定値をそのまま使用
+# https://github.com/org/repo --base-url https://docs.example.com/
+
+# パターン 4: --base-url + --extract-sigs（複合）
+# https://github.com/org/repo --base-url https://docs.example.com/ --extract-sigs
+
+# パターン 5: --cc-extensions（Claude Code 拡張リポジトリの検索インデックス生成）
+#   SKILL.md frontmatter の description を自動活用。blockquote のみ LLM 生成。
+#   OUT_DIR : LLMs/work/gen-out/cc-extensions/anthropics/skills/
+#   ソースシグネチャ抽出は常に自動実行（--extract-sigs の明示指定は不要）
+# https://github.com/anthropics/skills --cc-extensions
+
+
+## Anthropic
+https://github.com/anthropics/claude-plugins-official --cc-extensions
+https://github.com/anthropics/claude-quickstarts --cc-extensions
+https://github.com/anthropics/knowledge-work-plugins --cc-extensions
+https://github.com/anthropics/claude-code-action --cc-extensions
+https://github.com/anthropics/claude-code-base-action --cc-extensions
+https://github.com/anthropics/claude-code-security-review --cc-extensions
+https://github.com/anthropics/anthropic-cli --cc-extensions
+https://github.com/anthropics/claude-plugins-community --cc-extensions
+https://github.com/anthropics/cwc-workshops --cc-extensions
+https://github.com/anthropics/cwc-long-running-agents --cc-extensions
+https://github.com/anthropics/html-effectiveness --cc-extensions
+https://github.com/anthropics/claude-quickstarts --extract-sigs
+https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo --cc-extensions
+https://github.com/anthropics/prompt-eng-interactive-tutorial --extract-sigs
+https://github.com/anthropics/claude-ai-mcp --cc-extensions
+https://github.com/anthropics/claude-for-legal --extract-sigs
+https://github.com/anthropics/claude-constitution
+
+
+## Model Context Protocol
+https://github.com/modelcontextprotocol/modelcontextprotocol --extract-sigs
+https://github.com/modelcontextprotocol/servers --cc-extensions
+https://github.com/modelcontextprotocol/inspector --cc-extensions
+https://github.com/modelcontextprotocol/registry --cc-extensions
+https://github.com/modelcontextprotocol/ext-apps --cc-extensions
+https://github.com/modelcontextprotocol/quickstart-resources --cc-extensions
+https://github.com/modelcontextprotocol/use-mcp --extract-sigs
+
+
+## Cloud Native inc.
+https://github.com/cloudnative-co/claude-code-starter-kit --cc-extensions
+
+
+## Answer.AI
+https://github.com/AnswerDotAI/fasthtml --extract-sigs
+https://github.com/AnswerDotAI/nbdev --extract-sigs
+https://github.com/AnswerDotAI/llms-txt --extract-sigs
+https://github.com/AnswerDotAI/ModernBERT --extract-sigs
+https://github.com/AnswerDotAI/rerankers --extract-sigs
+https://github.com/AnswerDotAI/fastprogress --extract-sigs
+https://github.com/AnswerDotAI/fastcore --extract-sigs
+https://github.com/AnswerDotAI/fasthtml-example --extract-sigs
+https://github.com/AnswerDotAI/ghapi --extract-sigs
+https://github.com/AnswerDotAI/MonsterUI --extract-sigs
+https://github.com/AnswerDotAI/shell_sage --extract-sigs
+https://github.com/AnswerDotAI/claudette --extract-sigs
+https://github.com/AnswerDotAI/fastlite --extract-sigs
+https://github.com/AnswerDotAI/clipmd --extract-sigs
+https://github.com/AnswerDotAI/execnb --extract-sigs
+https://github.com/AnswerDotAI/nbdev-template --extract-sigs
+https://github.com/AnswerDotAI/fastsql --extract-sigs
+https://github.com/AnswerDotAI/toolslm --extract-sigs
+https://github.com/AnswerDotAI/mojokernel --extract-sigs
+https://github.com/AnswerDotAI/markdown_merge --extract-sigs
+
+
+## Spring Projects
+https://github.com/spring-projects/spring-boot --extract-sigs
+https://github.com/spring-projects/spring-framework --extract-sigs
+
+
+
+
+# ══════════════════════════════════════════════════════
+# GitHub URL ─ ブランチ指定パターン
+# ══════════════════════════════════════════════════════
+
+# パターン 6: 非デフォルトブランチ（develop 等）
+#   OUT_DIR : LLMs/work/gen-out/org/repo/develop/
+#   BASE_URL: https://github.com/org/repo/blob/develop/（自動）
+# https://github.com/org/repo/tree/develop
+
+# パターン 7: 非デフォルトブランチ + --extract-sigs
+# https://github.com/org/repo/tree/develop --extract-sigs
+
+# パターン 8: 非デフォルトブランチ + --base-url
+# https://github.com/org/repo/tree/develop --base-url https://docs.example.com/
+
+# パターン 9: デフォルトブランチ（main / master）を明示 ─ OUT_DIR は通常形式と同じ
+#   OUT_DIR : LLMs/work/gen-out/org/repo/  ※ブランチサブディレクトリなし
+# https://github.com/org/repo/tree/main
+
+
+# ══════════════════════════════════════════════════════
+# ローカルパス ─ 基本パターン
+# ══════════════════════════════════════════════════════
+
+# パターン 10: git remote あり（GitHub）→ BASE_URL / OUT_DIR を remote から自動決定
+#   git -C <path> remote get-url origin で GitHub URL を取得して GitHub URL 扱いに準ずる
+# LLMs/work/tmp-clone/langchain-ai/mcpdoc
+
+# パターン 11: ローカルパス + --extract-sigs
+# LLMs/work/tmp-clone/google-gemini/genai-processors --extract-sigs
+
+# パターン 12: git remote なし / GitHub 以外 → --base-url 必須
+#   OUT_DIR : LLMs/work/gen-out/mylocal/  ※ディレクトリ名を使用
+# LLMs/work/tmp-clone/mylocal --base-url https://example.com/docs/blob/main/
+
+# パターン 13: ローカルパス + --base-url + --extract-sigs（複合）
+# LLMs/work/tmp-clone/mylocal --base-url https://example.com/docs/blob/main/ --extract-sigs
+
+# パターン 14: ローカルパス + --cc-extensions
+#   ローカルにクローン済みの CC 拡張リポジトリに適用
+#   OUT_DIR : LLMs/work/gen-out/cc-extensions/<owner>/<repo>/（git remote から決定）
+#   ソースシグネチャ抽出は常に自動実行（--extract-sigs の明示指定は不要）
+# LLMs/work/tmp-clone/myorg/my-claude-extensions --cc-extensions

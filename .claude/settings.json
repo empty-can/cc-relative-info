@@ -20,7 +20,13 @@
       "Bash(wc:*)",
       "WebFetch(domain:code.claude.com)",
       "WebFetch(domain:docs.claude.com)",
-      "WebFetch(domain:github.com/anthropics)"
+      "WebFetch(domain:github.com/anthropics)",
+      "Bash(git clone:*)",
+      "Bash(git -C:*)",
+      "Bash(python LLMs:*)",
+      "Bash(python3 LLMs:*)",
+      "Bash(bash LLMs:*)",
+      "Bash(mkdir -p:*)"
     ]
   },
   "hooks": {
