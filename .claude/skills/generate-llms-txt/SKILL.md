@@ -134,9 +134,15 @@ REPO_PATH が既に存在する場合: リポジトリを最新化する。
     --base-url <BASE_URL> \
     --output <OUT_DIR> \
     [--extract-sigs（EXTRACT_SIGS が true の場合）] \
-    [--cc-extensions（CC_EXTENSIONS が true の場合）]
+    [--cc-extensions（CC_EXTENSIONS が true の場合）] \
+    --skip-if-unchanged
 
 終了コードが非0の場合: エラーメッセージを出力して中断する。
+
+出力の先頭が `SKIPPED:` で始まる場合（終了コード 0）: 手順 3〜5 をスキップし、以下の完了報告を行う:
+  完了（スキップ）: リポジトリに更新がないため生成をスキップしました。
+    llms.txt     : <OUT_DIR>/llms.txt
+    llms-full.txt: <OUT_DIR>/llms-full.txt
 
 ### 3. ナラティブ生成
 

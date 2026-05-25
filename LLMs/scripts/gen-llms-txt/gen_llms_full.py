@@ -7,6 +7,7 @@ Type C: source code signatures via codesigs (add --extract-sigs)
 
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -670,6 +671,8 @@ def main() -> None:
                         help='Extract source code signatures via codesigs (Type C)')
     parser.add_argument('--cc-extensions', action='store_true',
                         help='Index .claude/ Skills/Rules/Agents for Claude Code extension search')
+    parser.add_argument('--skip-if-unchanged', action='store_true',
+                        help='Skip generation if llms.txt is newer than the latest commit')
     args = parser.parse_args()
 
     repo_path = args.repo_path.resolve()
@@ -678,6 +681,23 @@ def main() -> None:
         sys.exit(1)
 
     output_dir = (args.output or _infer_output_dir(args.base_url, repo_path, args.cc_extensions)).resolve()
+
+    if args.skip_if_unchanged:
+        llms_txt = output_dir / 'llms.txt'
+        if llms_txt.exists():
+            try:
+                result = subprocess.run(
+                    ['git', '-C', str(repo_path), 'log', '-1', '--format=%ct'],
+                    capture_output=True, text=True, check=True,
+                )
+                commit_ts = int(result.stdout.strip())
+                if llms_txt.stat().st_mtime > commit_ts:
+                    print(f'SKIPPED: {llms_txt.name} is up to date'
+                          f' (commit={commit_ts}, mtime={int(llms_txt.stat().st_mtime)})')
+                    sys.exit(0)
+            except Exception:
+                pass  # fall through to normal generation on any error
+
     output_dir.mkdir(parents=True, exist_ok=True)
 
     generate(repo_path, args.base_url, output_dir,
