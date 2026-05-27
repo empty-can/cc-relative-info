@@ -9,6 +9,7 @@
 - [Contributing to MCP](https://modelcontextprotocol.io/community/contributing.md): How to contribute to the Model Context Protocol project
 - [Contributor Ladder](https://modelcontextprotocol.io/community/contributor-ladder.md): Roles, responsibilities, and advancement criteria for MCP contributors, from first contribution to Core Maintainer
 - [Design Principles](https://modelcontextprotocol.io/community/design-principles.md): The core design principles that guide the development of the Model Context Protocol.
+- [Feature Lifecycle and Deprecation Policy](https://modelcontextprotocol.io/community/feature-lifecycle.md): How individual MCP specification features move through Active, Deprecated, and Removed states, and the timeline implementers can plan against.
 - [File Uploads Charter](https://modelcontextprotocol.io/community/file-uploads/charter.md): Charter for the MCP File Uploads Working Group.
 - [Governance and Stewardship](https://modelcontextprotocol.io/community/governance.md): Learn about the Model Context Protocol's governance structure and how to participate in the community
 - [Inspector V2 Working Group Charter](https://modelcontextprotocol.io/community/inspector-v2/charter.md): Charter for the Inspector V2 Working Group, a Working Group of the Model Context Protocol community.
@@ -18,6 +19,7 @@
 - [SEP Guidelines](https://modelcontextprotocol.io/community/sep-guidelines.md): Specification Enhancement Proposal (SEP) guidelines for proposing changes to the Model Context Protocol
 - [Server Card Charter](https://modelcontextprotocol.io/community/server-card/charter.md): Charter for the MCP Server Card Working Group.
 - [Skills Over MCP Charter](https://modelcontextprotocol.io/community/skills-over-mcp/charter.md): Charter for the MCP Skills Over MCP Working Group.
+- [Tool Annotations Charter](https://modelcontextprotocol.io/community/tool-annotations/charter.md): Charter for the MCP Tool Annotations Interest Group.
 - [Triggers and Events Charter](https://modelcontextprotocol.io/community/triggers-events/charter.md): Charter for the MCP Triggers and Events Working Group.
 - [Working and Interest Groups](https://modelcontextprotocol.io/community/working-interest-groups.md): Governance rules for the two forms of collaborative groups within the Model Context Protocol community — Working Groups and Interest Groups.
 - [Roadmap](https://modelcontextprotocol.io/development/roadmap.md): Our plans for evolving Model Context Protocol
