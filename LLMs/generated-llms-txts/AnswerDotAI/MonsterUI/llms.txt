@@ -1,12 +1,16 @@
 # MonsterUI
 
-> Python UI framework for FastHTML that turns Python code into polished web apps using Tailwind CSS, Franken UI, and DaisyUI — with zero frontend complexity.
-
-MonsterUI is a batteries-included UI component library built on top of FastHTML. It integrates Tailwind-based component suites (Franken UI and DaisyUI), Mistletoe for Markdown rendering, HighlightJS for code syntax highlighting, and KaTeX for LaTeX math. Designed for data scientists, ML engineers, and Python developers, it provides high-level Python components (Card, NavBar, Form, Accordion, etc.) that follow semantic HTML patterns and are styled via a theme system (`Theme.blue.headers()`). Install with `pip install MonsterUI` and start building immediately — no JavaScript framework knowledge required.
+> FastHTML 向け Python UI フレームワーク。データサイエンティストや ML エンジニアが最小限のコードで洗練された Web アプリを構築できるよう、Tailwind ベースのコンポーネント群と Markdown・コードハイライト・LaTeX サポートを提供する。
 
 ## Guide
 
 - [MonsterUI](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/getting_started/GettingStarted.md): MonsterUI is a UI framework for FastHTML for building beautiful web interfaces with minimal code.
+- [MonterUI Page Layout Guide](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/guides/Layout.ipynb): This guide will discuss 3 tools for laying out your app pages, Grid, Flexbox, and Columns.
+- [Padding & Margin & Spacing, Oh my! (MonsterUI Spacing Guide)](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/guides/Spacing.ipynb): This guide will cover some essentials about how to properly space apps and what the differences are between:
+- [Foundation](https://github.com/AnswerDotAI/MonsterUI/blob/main/nbs/00_foundation.ipynb): Data Structures and Utilties
+- [01 Core](https://github.com/AnswerDotAI/MonsterUI/blob/main/nbs/01_core.ipynb)
+- [02 Franken](https://github.com/AnswerDotAI/MonsterUI/blob/main/nbs/02_franken.ipynb)
+- [Loading](https://github.com/AnswerDotAI/MonsterUI/blob/main/nbs/03_daisy.ipynb): Note: We use NotStr(f"<script>{js}</script>") instead of Script(js) to prevent the js from being escaped.
 
 ## Optional
 

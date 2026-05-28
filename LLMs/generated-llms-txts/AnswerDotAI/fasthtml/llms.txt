@@ -1,12 +1,69 @@
 # FastHTML
 
-> Python と HTMX を組み合わせ、HTML ファーストのアプローチで Web アプリを素早く構築したい開発者向けに、シンプルな記法で完全な Web アプリケーションを提供するフレームワーク。
+> Python と HTMX を組み合わせ、Starlette ベースの薄いフレームワークを通じて、開発者がサーバーサイド Python だけでリアクティブな Web アプリを迅速に構築できるよう提供する Web フレームワーク。
 
 ## Guide
 
 - [Contributor Covenant Code of Conduct](https://github.com/AnswerDotAI/fasthtml/blob/main/CODE_OF_CONDUCT.md): In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to make participation in our project and our community a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+- [Core](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/api/00_core.ipynb): The FastHTML subclass of Starlette.
+- [Components](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/api/01_components.ipynb): ft_html and ft_hx functions to add some conveniences to ft, along with a full set of basic HTML components, and functions to work with forms and FT conversion
+- [Component extensions](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/api/02_xtend.ipynb): Simple extensions to standard HTML components, such as adding sensible defaults
+- [Javascript examples](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/api/03_js.ipynb): Basic external Javascript lib wrappers
+- [Pico.css components](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/api/04_pico.ipynb): Basic components for generating Pico CSS tags
+- [SVG](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/api/05_svg.ipynb): Simple SVG FT elements
+- [Jupyter compatibility](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/api/06_jupyter.ipynb): Use FastHTML in Jupyter notebooks
+- [OAuth](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/api/08_oauth.ipynb): Basic scaffolding for handling OAuth
+- [09 Cli](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/api/09_cli.ipynb)
+- [Background Tasks](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/explains/background_tasks.ipynb): Background tasks are functions run after handlers return a response.
+- [**FT** Components](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/explains/explaining_xt_components.ipynb): FT components turn Python objects into HTML.
+- [FAQ](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/explains/faq.ipynb): Frequently Asked Questions
+- [MiniDataAPI Spec](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/explains/minidataapi.ipynb): The MiniDataAPI is a persistence API specification that designed to be small and relatively easy to implement across a wide range of datastores.
+- [OAuth](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/explains/oauth.ipynb): OAuth is an open standard for 'access delegation', commonly used as a way for Internet users to grant websites or applications access to their information on other websites but without giving them the passwords.
+- [Routes](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/explains/routes.ipynb): Behaviour in FastHTML apps is defined by routes.
+- [Stripe](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/explains/Stripe.ipynb): This guide will walk through a minimal example of working with a Stripe one-time payment link and webhook for secure reconciliation of payments.
+- [WebSockets](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/explains/websockets.ipynb): Websockets are a protocol for two-way, persistent communication between a client and server.
+- [FastHTML](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/index.ipynb): The fastest, most powerful way to create an HTML app
+- [Concise reference](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/ref/concise_guide.ipynb): An information-dense guide showing LLMs how to create FastHTML apps with MonsterUI and Fastlite
+- [Defining Xt Component](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/ref/defining_xt_component.ipynb)
+- [Handling handlers](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/ref/handlers.ipynb): How handlers work in FastHTML
+- [Live Reloading](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/ref/live_reload.ipynb): When building your app it can be useful to view your changes in a web browser as you make them.
+- [Response Types](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/ref/response_types.ipynb): A list of the different HTTP response types available to your FastHTML route handlers.
+- [FastHTML By Example](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/tutorials/by_example.ipynb): An introduction to FastHTML from the ground up, with four complete examples
+- [JS App Walkthrough](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/tutorials/e2e.ipynb): How to build a website with custom JavaScript in FastHTML step-by-step
+- [Using Jupyter to write FastHTML](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/tutorials/jupyter_and_fasthtml.ipynb): Writing FastHTML applications in Jupyter notebooks requires a slightly different process than normal Python applications.
+- [Web Devs Quickstart](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/tutorials/quickstart_for_web_devs.ipynb): A fast introduction to FastHTML for experienced web developers.
+- [BYO Blog](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/unpublished/tutorial_for_web_devs.ipynb): Learn the foundations of FastHTML by creating your own blogging system from scratch.
 
 ## Optional
 
 - [Release notes](https://github.com/AnswerDotAI/fasthtml/blob/main/CHANGELOG.md): The following imports have been removed from fasthtml.common:
 - [How to contribute](https://github.com/AnswerDotAI/fasthtml/blob/main/CONTRIBUTING.md): Make sure you have read the doc on code style first.
+
+## Source Modules
+
+- [demo.main](https://github.com/AnswerDotAI/fasthtml/blob/main/demo/main.py)
+- [examples.basic_ws](https://github.com/AnswerDotAI/fasthtml/blob/main/examples/basic_ws.py)
+- [examples.chat_ws](https://github.com/AnswerDotAI/fasthtml/blob/main/examples/chat_ws.py)
+- [examples.minimal](https://github.com/AnswerDotAI/fasthtml/blob/main/examples/minimal.py)
+- [examples.todos1](https://github.com/AnswerDotAI/fasthtml/blob/main/examples/todos1.py)
+- [examples.todos2](https://github.com/AnswerDotAI/fasthtml/blob/main/examples/todos2.py)
+- [examples.todos3](https://github.com/AnswerDotAI/fasthtml/blob/main/examples/todos3.py)
+- [examples.todos4](https://github.com/AnswerDotAI/fasthtml/blob/main/examples/todos4.py)
+- [fasthtml.authmw](https://github.com/AnswerDotAI/fasthtml/blob/main/fasthtml/authmw.py)
+- [fasthtml.cli](https://github.com/AnswerDotAI/fasthtml/blob/main/fasthtml/cli.py): Deploy a FastHTML app to Railway
+- [fasthtml.components](https://github.com/AnswerDotAI/fasthtml/blob/main/fasthtml/components.py): Convert HTML to an `ft` expression
+- [fasthtml.core](https://github.com/AnswerDotAI/fasthtml/blob/main/fasthtml/core.py)
+- [fasthtml.fastapp](https://github.com/AnswerDotAI/fasthtml/blob/main/fasthtml/fastapp.py)
+- [fasthtml.js](https://github.com/AnswerDotAI/fasthtml/blob/main/fasthtml/js.py)
+- [fasthtml.jupyter](https://github.com/AnswerDotAI/fasthtml/blob/main/fasthtml/jupyter.py)
+- [fasthtml.live_reload](https://github.com/AnswerDotAI/fasthtml/blob/main/fasthtml/live_reload.py): `FastHTMLWithLiveReload` enables live reloading.
+- [fasthtml.oauth](https://github.com/AnswerDotAI/fasthtml/blob/main/fasthtml/oauth.py): Get the host, preferring X-Forwarded-Host if available
+- [fasthtml.pico](https://github.com/AnswerDotAI/fasthtml/blob/main/fasthtml/pico.py)
+- [fasthtml.svg](https://github.com/AnswerDotAI/fasthtml/blob/main/fasthtml/svg.py)
+- [fasthtml.toaster](https://github.com/AnswerDotAI/fasthtml/blob/main/fasthtml/toaster.py)
+- [fasthtml.xtend](https://github.com/AnswerDotAI/fasthtml/blob/main/fasthtml/xtend.py): Embed a YouTube video
+- [nbs.explains.stripe_otp](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/explains/stripe_otp.py)
+- [nbs.tutorials.01_quickdraw](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/tutorials/01_quickdraw.py)
+- [nbs.tutorials.02_quickdraw](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/tutorials/02_quickdraw.py)
+- [nbs.tutorials.03_quickdraw](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/tutorials/03_quickdraw.py)
+- [nbs.tutorials.hello_world](https://github.com/AnswerDotAI/fasthtml/blob/main/nbs/tutorials/hello_world.py)

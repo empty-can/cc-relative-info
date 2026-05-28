@@ -1,8 +1,6 @@
 # Getting Started
 
-> nbdev lets Python developers write, test, and document packages entirely inside Jupyter notebooks, automatically exporting clean source modules, running tests, and publishing documentation from a single notebook-centric workflow.
-
-
+> Jupyter Notebook を唯一のソースとしてコード・テスト・ドキュメントを同時管理できる Python ライブラリ開発フレームワーク。開発者がノートブック上で記述した内容を自動的に Python モジュール・テスト・Quarto ドキュメントサイトへ変換し、ノートブック駆動開発（NDD）を実現する。
 
 ## Guide
 
@@ -10,11 +8,58 @@
 - [An Example Markdown Post](https://github.com/AnswerDotAI/nbdev/blob/main/tests/2020-01-14-test-markdown-post.md): A minimal example of using markdown with fastpages.
 - [Essential Work-From-Home Advice: Cheap and Easy Ergonomic Setups](https://github.com/AnswerDotAI/nbdev/blob/main/tests/2022-09-06-homeschooling.md): Lorem ipsum
 - [Todo](https://github.com/AnswerDotAI/nbdev/blob/main/TODO.md): - show_doc changes: - support #default_cls_lvl - pick header level for functions/methods - implement stuff from nbdev export2html, e.g.(?): - remove_w…
+- [config](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/01_config.ipynb): Configuring nbdev and bootstrapping notebook export
+- [maker](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/02_maker.ipynb): Create one or more modules from selected notebook cells
+- [process](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/03_process.ipynb): A notebook processor
+- [export](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/04_export.ipynb): Exporting a notebook to a library
+- [doclinks](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/05_doclinks.ipynb): Generating a documentation index from a module
+- [sync](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/06_sync.ipynb): Propagate small changes in the library back to notebooks
+- [merge](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/07_merge.ipynb): Fix merge conflicts in jupyter notebooks
+- [showdoc](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/08_showdoc.ipynb): Display symbol documentation in notebook and website
+- [frontmatter](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/09_frontmatter.ipynb): A YAML and formatted-markdown frontmatter processor
+- [processors](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/10_processors.ipynb): Some processors for NBProcessor
+- [clean](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/11_clean.ipynb): Strip superfluous metadata from notebooks
+- [test](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/12_test.ipynb): Run unit tests on notebooks in parallel
+- [cli](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/13_cli.ipynb): CLI commands
+- [quarto](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/14_quarto.ipynb): Install and interact with Quarto from nbdev
+- [qmd](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/15_qmd.ipynb): Basic qmd generation helpers (experimental)
+- [migrate](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/16_migrate.ipynb): Utilities for migrating to nbdev
+- [serve](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/17_serve.ipynb): A parallel ipynb processor (experimental)
+- [diff](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/19_diff.ipynb): Get ipynb diffs by cell
+- [Configuration](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/explanations/config.ipynb): The nbdev configuration file
+- [Directives](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/explanations/directives.ipynb): A cheat sheet of directives available in nbdev.
+- [Docs Website](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/explanations/docs.ipynb): How nbdev renders a documentation website for your project.
+- [Why nbdev](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/explanations/why_nbdev.ipynb): Why we develop software with nbdev
+- [Getting Started](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/getting_started.ipynb): Create delightful software with Jupyter Notebooks
+- [Notebook Best Practices](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/tutorials/best_practices.ipynb): How to write great nbdev notebooks
+- [Blogging](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/tutorials/blogging.ipynb): Creating a blog with notebooks
+- [Documentation Only Sites](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/tutorials/docs_only.ipynb): How to create nbdev powered docs without a library!
+- [Writing nbdev plugins](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/tutorials/extensions.ipynb): How to customize nbdev processors to do what you want
+- [Git-Friendly Jupyter](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/tutorials/git_friendly_jupyter.ipynb): How to use nbdev hooks for git-friendly Jupyter notebooks
+- [nbdev1 Migration](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/tutorials/migrating.ipynb): How to change your nbdev1 repo to work with nbdev2
+- [Modular nbdev](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/tutorials/modular_nbdev.ipynb): How to use nbdev's various tools separately
+- [Pre-Commit Hooks](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/tutorials/pre_commit.ipynb): How to use nbdev's git pre-commit hooks
+- [End-To-End Walkthrough](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/tutorials/tutorial.ipynb): A step-by-step guide to using nbdev
+- [Test Module some.thing](https://github.com/AnswerDotAI/nbdev/blob/main/tests/00_some.thing.ipynb): Test module some.thing
+- [A Title](https://github.com/AnswerDotAI/nbdev/blob/main/tests/01_everything.ipynb): A description
+- [Fastpages Notebook Blog Post](https://github.com/AnswerDotAI/nbdev/blob/main/tests/2020-02-20-test.ipynb): A tutorial of fastpages for Jupyter notebooks.
+- ["fastcore: An Underrated Python Library"](https://github.com/AnswerDotAI/nbdev/blob/main/tests/2020-09-01-fastcore.ipynb): A unique python library that extends the python programming language and provides utilities that enhance productivity.
+- [Apl](https://github.com/AnswerDotAI/nbdev/blob/main/tests/APL.ipynb)
+- [Directives](https://github.com/AnswerDotAI/nbdev/blob/main/tests/directives.ipynb)
+- [a title](https://github.com/AnswerDotAI/nbdev/blob/main/tests/docs_test.ipynb): A description
+- [Export Procs](https://github.com/AnswerDotAI/nbdev/blob/main/tests/export_procs.ipynb)
+- [Image](https://github.com/AnswerDotAI/nbdev/blob/main/tests/image.ipynb)
+- [Metadata](https://github.com/AnswerDotAI/nbdev/blob/main/tests/metadata.ipynb)
+- [Minimal](https://github.com/AnswerDotAI/nbdev/blob/main/tests/minimal.ipynb)
+- [Nb Ignore](https://github.com/AnswerDotAI/nbdev/blob/main/tests/notest/nb_ignore.ipynb)
+- [Old Directives](https://github.com/AnswerDotAI/nbdev/blob/main/tests/old_directives.ipynb)
+- [Showdoc Test](https://github.com/AnswerDotAI/nbdev/blob/main/tests/showdoc_test.ipynb)
 
 ## Optional
 
 - [Release notes](https://github.com/AnswerDotAI/nbdev/blob/main/CHANGELOG.md): - feat: add docs URL to exported module docstrings (#1593), thanks to @RensDimmendaal - Register faulthandler on SIGINT in nbdev-test for tracebacks o…
 - [How to contribute](https://github.com/AnswerDotAI/nbdev/blob/main/CONTRIBUTING.md): Install nbdev in editable mode with development dependencies:
+- [release](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/api/18_release.ipynb): Auto-generated tagged releases and release notes from GitHub issues
 
 ## Source Modules
 

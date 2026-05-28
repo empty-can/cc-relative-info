@@ -1,6 +1,21 @@
 # ghapi
 
-> GitHub API 全体を Python から利用できる fast.ai 製ラッパーライブラリ。型安全なクライアント `GhApi` により、Issues・PR・ファイル操作・Actions・GraphQL クエリ等の全エンドポイントを Pythonic に操作できる。
+> GitHub API 全操作を Python から型安全・直感的に呼び出せる完全クライアント。開発者向けに認証・ページネーション・GitHub Actions 連携・GraphQL サポートをワンパッケージで提供する。
+
+## Guide
+
+- [GhApi details](https://github.com/AnswerDotAI/ghapi/blob/main/00_core.ipynb): Detailed information on the GhApi API
+- [GitHub Actions details](https://github.com/AnswerDotAI/ghapi/blob/main/01_actions.ipynb): Functionality for helping to create GitHub Actions workflows in Python
+- [Authentication](https://github.com/AnswerDotAI/ghapi/blob/main/02_auth.ipynb): Helpers for creating GitHub API tokens
+- [Pagination](https://github.com/AnswerDotAI/ghapi/blob/main/03_page.ipynb): Parallel and serial pagination
+- [The events API](https://github.com/AnswerDotAI/ghapi/blob/main/04_event.ipynb): Helpers for getting GitHub API events
+- [graphql](https://github.com/AnswerDotAI/ghapi/blob/main/05_graphql.ipynb): GitHub GraphQL API support for ghapi
+- [Command line interface](https://github.com/AnswerDotAI/ghapi/blob/main/10_cli.ipynb): Access to the GitHub API from the command line
+- [Full GitHub API reference](https://github.com/AnswerDotAI/ghapi/blob/main/50_fullapi.ipynb): All operations available through the GitHub API
+- [Internal - OpenAPI Parser](https://github.com/AnswerDotAI/ghapi/blob/main/90_build_lib.ipynb): This library leverages the OpenAPI Specification to create a python client for the GitHub API.
+- [ Create Examples](https://github.com/AnswerDotAI/ghapi/blob/main/examples/_create_examples.ipynb)
+- [ghapi](https://github.com/AnswerDotAI/ghapi/blob/main/index.ipynb): A delightful and complete interface to GitHub's amazing API
+- [Getting started with GitHub Actions](https://github.com/AnswerDotAI/ghapi/blob/main/tutorials/tutorial_actions.ipynb): GitHub Actions help you automate tasks within your software development life cycle.
 
 ## Optional
 

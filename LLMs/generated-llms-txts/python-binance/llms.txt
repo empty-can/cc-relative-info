@@ -1,8 +1,6 @@
 # Welcome to python-binance v1.0.36
 
-> {BLOCKQUOTE}
-
-{DESCRIPTION}
+> Binance 取引所の REST API・WebSocket を Python から利用するための非公式クライアントライブラリ。スポット・マージン・先物取引から口座管理・リアルタイムストリームまで、開発者向けに Binance API 全機能をシンプルなインターフェースで提供する。
 
 ## Guide
 

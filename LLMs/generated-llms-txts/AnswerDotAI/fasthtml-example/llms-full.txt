@@ -1,8 +1,6 @@
 # FastHTML Example Apps
 
-> A curated collection of FastHTML example applications covering real-time features, AI integrations, authentication patterns, and interactive UI components — ideal for learning how to build modern Python web apps with HTMX.
-
-This repository contains 78 example modules demonstrating the breadth of FastHTML capabilities. Examples range from foundational patterns (hello world, echo, form handling) to real-time communication (WebSocket, SSE, chunked transfer), interactive games (Game of Life, Pictionary, chess), AI-powered chatbots, OAuth and passkey authentication, image classification, infinite scroll, a code editor, 3D card components, and deployment guides for PythonAnywhere. Each example is self-contained and serves as a practical reference for specific FastHTML features.
+> FastHTML フレームワークを使った実践的なサンプルアプリ集。チャットボット・チェスゲーム・OAuth・SSE・WebSocket など多彩なユースケースを、開発者がすぐに動かして学べる形で提供する。
 
 ---
 
@@ -17,6 +15,361 @@ This repository contains 78 example modules demonstrating the breadth of FastHTM
 You can easily create and deploy FastHTML sites on PythonAnywhere; support
 for it is being continuously improved, and you'll find the latest instructions
 on [this help page](https://help.pythonanywhere.com/pages/FastHTML/).
+
+### Chess App
+
+*Source: chess_app/chess_app.ipynb | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/chess_app/chess_app.ipynb*
+
+# Chess App
+
+```python
+#| default_exp chess_app
+```
+
+```python
+! uv pip install chess stockfish
+```
+
+## Todos
+- ~~Use websockets to alert player when another one has joined (opened a second browser and connected)~~
+- ~~Use websockets to alert player when another one has left (closed the browser)~~
+- ~~Use websockets to alert player when another one has made a move~~
+- Allow capturing of pieces, handling checks, draws, and checkmates
+- Add evaluation bar via stockfish chess engine to show who is winning
+
+```python
+#| export
+from fasthtml.common import *
+from fastcore.utils import *
+from fastcore.xml import to_xml
+from starlette.endpoints import WebSocketEndpoint
+from starlette.routing import WebSocketRoute
+
+import chess
+import chess.svg
+
+cboard = chess.Board()
+# move e2e4
+cboard.push_san('e4')
+cboard.push_san('e5')
+css = Style(
+    '''\
+    #chess-board { display: grid; grid-template-columns: repeat(8, 64px); grid-template-rows: repeat(8, 64px);gap: 1px; }
+    .board-cell { width: 64px; height: 64px; border: 1px solid black; }
+    .black { background-color: grey; }
+    .white { background-color: white; }
+    .active { background-color: green; }
+    '''
+)
+# Flexbox CSS (http://flexboxgrid.com/)
+gridlink = Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/flexboxgrid/6.3.1/flexboxgrid.min.css", type="text/css")
+htmx_ws = Script(src="https://unpkg.com/htmx-ext-ws@2.0.0/ws.js")
+
+app = FastHTML(hdrs=(gridlink, css, htmx_ws,))
+rt = app.route
+```
+
+```python
+#| export
+player_queue = []
+class WS(WebSocketEndpoint):
+    encoding = 'text'
+
+    async def on_connect(self, websocket):
+        global player_queue
+        player_queue.append(websocket)
+        await websocket.accept()
+        print(f'There are {len(player_queue)} players in the queue')
+        await websocket.send_text("<div id='user-message'>Hello, you connected!</div>")
+        if len(player_queue) == 2:
+            await player_queue[0].send_text("<div id='user-message'>Opponent joined! Let the game begin!</div>")
+            await player_queue[1].send_text("<div id='user-message'>You joined! Let the game begin!</div>")
+
+    async def on_receive(self, websocket, data):
+        await websocket.send_text("hi")
+
+    async def on_disconnect(self, websocket, close_code):
+        global player_queue
+        player_queue.remove(websocket)
+        for player in player_queue:
+            await player.send_text("<div id='user-message'>Opponent disconnected!</div>")
+
+app.routes.append(WebSocketRoute('/chess', WS))
+```
+
+```python
+#| export
+ROWS = '87654321'
+COLS = 'abcdefgh'
+def Board(lmoves: list[str] = [], selected: str = ''):
+    board = []
+    for row in ROWS:
+        board_row = []
+        for col in COLS:
+            pos = f"{col}{row}"
+            cell_color = "black" if (ROWS.index(row) + COLS.index(col)) % 2 == 0 else "white"
+            cell_color = 'active' if pos in lmoves else cell_color
+            cell_cls = f'board-cell {cell_color}'
+            if pos == selected:
+                cell_cls += ' selected'
+            piece = cboard.piece_at(chess.parse_square(pos))
+            if piece:
+                piece = NotStr(chess.svg.piece(piece))
+                board_row.append(
+                    Div(
+                        piece, id=pos, cls=cell_cls, hx_post="/select", hx_vals={'col': col, 'row': row},
+                        hx_swap='outerHTML', hx_target='#chess-board', hx_trigger='click'
+                    )
+                )
+            else:
+                cell = Div(id=pos, cls=cell_cls)
+                if selected != '':
+                    move = f'{selected}{pos}'
+                    print(move)
+                    if chess.Move.from_uci(move) in cboard.legal_moves:
+                        cell = Div(id=pos, cls=cell_cls, hx_put="/move", hx_vals={'move': move},
+                            hx_swap='outerHTML', hx_target='#chess-board', hx_trigger='click'
+                        )
+                board_row.append(cell)
+        board.append(Div(*board_row, cls="board-row"))
+    return Div(*board, id="chess-board")
+```
+
+```python
+#| export
+def Home():
+    return Div(
+        Div('Hello, still waiting on an opponent!', id='user-message'),
+        Board(),
+        hx_ext="ws", ws_connect="/chess"
+    )
+```
+
+```python
+#| export
+@rt("/")
+def get():
+    return Home()
+```
+
+```python
+#| export
+@rt('/select')
+async def post(col: str, row: str):
+    global cboards
+    lmoves = []
+    for m in cboard.legal_moves:
+        if str(m).startswith(f'{col}{row}'):
+            lmoves.append(str(m)[2:])
+    return Board(lmoves=lmoves, selected=f'{col}{row}')
+```
+
+```python
+#| export
+@rt('/move')
+async def put(move: str):
+    global cboards
+    cboard.push_san(move)
+    for player in player_queue:
+        await player.send_text(to_xml(Board()))
+```
+
+```python
+#| eval: false
+#| hide
+from nbdev.export import nb_export
+nb_export('chess_app.ipynb', '.')
+```
+
+### Code Editor
+
+*Source: code_editor/code_editor.ipynb | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/code_editor/code_editor.ipynb*
+
+# Code Editor
+
+```python
+#| default_exp code_editor
+```
+
+## Todos
+- ~~Full page editable area for writing code~~
+- ~~Syntax highlighting~~
+- ~~Line number side bar~~
+- auto-language detection
+- inline autocompletion
+- ~~save files~~
+- ~~handle multiple files~~
+- execute code and show output
+
+```python
+#| export
+from fasthtml.fastapp import *
+
+# Ace Editor (https://ace.c9.io/)
+ace_editor = Script(src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.35.0/ace.min.js")
+# Flexbox CSS (http://flexboxgrid.com/)
+gridlink = Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/flexboxgrid/6.3.1/flexboxgrid.min.css", type="text/css")
+
+css = Style('''\
+.sidebar {
+    background-color: #f4f4f4;
+    overflow-y: auto;
+    padding: 10px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    height: calc(100vh - 40px);
+}
+
+#editor-container {
+    flex: 1;
+    height: calc(100vh - 40px);
+}
+
+#editor {
+    height: 100%;
+    width: 100%;
+}
+
+.box-row {
+    border: 1px solid #ccc;
+}
+''')
+
+app,rt,files, File = fast_app('data/files.db', hdrs=(ace_editor, gridlink, css), id=int, filename=str, content=str, pk='id')
+
+id_curr = 'current-file'
+id_list = 'file-list'
+```
+
+```python
+files.insert(File(filename='file1.txt', content='Hello, World!'))
+```
+
+```python
+#| export
+js_code = """\
+function renderEditor() {
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+}
+
+function getFileContent() {
+    var editor = ace.edit("editor");
+    return editor.getValue();
+}
+
+renderEditor();
+"""
+
+example_code = """\
+function foo(items) {
+    var x = "All this is syntax highlighted";
+    return x;
+}"""
+```
+
+```python
+#| export
+def SaveFile():
+    return Form(
+        Input(type="text", id="filename", name="filename", placeholder="Filename", required=True),
+        Button("Save", type="submit", hx_post="/save", target_id=id_list, hx_swap="beforeend", hx_vals="js:{content: getFileContent(), filename: filename.value}"),
+        cls="col-xs-12"
+    )
+    ...
+def Toolbar():
+    return Div(
+        Div(
+            Select(
+                Option("JavaScript", value="javascript"),
+                Option("Python", value="python"),
+                Option("HTML", value="html"),
+                Option("CSS", value="css"),
+                Option("Markdown", value="markdown"),
+                id="language"
+            ),
+            Button("Run", id="run"),
+            SaveFile(),
+            cls="col-xs-12 toolbar"
+        ),
+        cls="row"
+    )
+```
+
+```python
+#| export
+def FileRow(file: File):
+    return Li(
+        A(
+            file.filename, hx_get=f'/files/{file.id}', target_id="editor-container", hx_swap="innerHTML",
+            hx_on="htmx:afterSwap: renderEditor()",
+          ),
+        id=f'file-{file.id}'
+    )
+```
+
+```python
+#| export
+def Sidebar():
+    return Div(
+        Div(
+            Ul(*map(FileRow, files()), id=id_list), cls="sidebar"
+        ),
+        cls="col-xs-12 col-sm-3"
+    )
+```
+
+```python
+#| export
+def CodeEditor():
+    toolbar = Toolbar()
+    main = Div(
+        Sidebar(),
+        Div(
+            Div(example_code, id="editor"),
+            id="editor-container", cls="col-xs-12 col-sm-9", hx_on="htmx:afterSwap: renderEditor()"
+        ),
+        cls="row"
+    )
+    return Title("Code Editor",), Div(toolbar, main, cls="container-fluid"), Script(NotStr(js_code))
+```
+
+```python
+show(CodeEditor())
+```
+
+**Outputs:**
+<IPython.core.display.HTML object>
+
+```python
+#| export
+@rt("/")
+def get():
+    return CodeEditor()
+```
+
+```python
+#| export
+@rt("/files/{id}")
+def get(id:int):
+    return Div(files[id].content, id="editor", cls="ace_editor ace-tm")#, hx_on="htmx:afterSwap: renderEditor()"),
+```
+
+```python
+#| export
+@rt("/save")
+def post(filename: str, content: str):
+    file = File(filename=filename, content=content, id=len(files()) + 1)
+    files.insert(file)
+    return FileRow(file)
+```
+
+```python
+#| eval: false
+#| hide
+from nbdev.export import nb_export
+nb_export('code_editor.ipynb', '.')
+```
 
 ---
 

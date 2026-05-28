@@ -1,6 +1,14 @@
 # claudette
 
-> claudette is a Pythonic wrapper around Anthropic's Claude API that simplifies multi-turn conversations, tool use, and agentic workflows for Python developers, abstracting away low-level API details into a clean `Client` and `Chat` interface.
+> AnswerDotAI が開発した Python ライブラリ。Anthropic Claude API を薄くラップし、ツールループ・非同期・テキストエディタ等の高度な機能を開発者が手軽に利用できるインターフェースとして提供する。
+
+## Guide
+
+- [Claudette's source](https://github.com/AnswerDotAI/claudette/blob/main/00_core.ipynb): This is the 'literate' source code for Claudette.
+- [Tool loop](https://github.com/AnswerDotAI/claudette/blob/main/01_toolloop.ipynb): Outputs: 'claude-sonnet-4-5'
+- [The async version](https://github.com/AnswerDotAI/claudette/blob/main/02_async.ipynb): Outputs: Message(id='msg_01Q3123HGtAxWnUraLL65H24', container=None, content=[TextBlock(citations=None, text='Hi Jeremy!
+- [Text Editor](https://github.com/AnswerDotAI/claudette/blob/main/03_text_editor.ipynb): Implements functions for Anthropic's Text Editor Tool API, allowing Claude to view and edit files.
+- [claudette](https://github.com/AnswerDotAI/claudette/blob/main/index.ipynb): Claudette is Claude's friend
 
 ## Optional
 

@@ -1,12 +1,11 @@
 # Welcome!
 
-> ModernBERT is a research repository by Answer.AI and LightOn that modernises the BERT encoder architecture—through Flash Attention, Rotary Position Embeddings, RMSNorm, and the modular FlexBERT framework—to deliver state-of-the-art encoder performance for NLP practitioners who need efficient masked language model pre-training and fine-tuning at scale.
-
-This is the full pre-training and evaluation codebase used to produce ModernBERT. It is not intended as an end-user library; for production use, see the HuggingFace model collection. The repository covers the complete training pipeline (Composer-based, YAML-configured), dataset utilities, GLUE/SuperGLUE/retrieval evaluations, and conversion scripts for exporting to HuggingFace format.
+> ModernBERT は AnswerDotAI が提供する次世代エンコーダ専用モデルで、FlashAttention と 8192 トークン長文脈対応により、テキスト分類・NER・検索など従来の BERT 用途を高速かつ高精度に実現します。
 
 ## Guide
 
 - [How to Run Evaluations](https://github.com/AnswerDotAI/ModernBERT/blob/main/RunEvals.md): This document explains how to run fine-tuning evaluations for pre-trained models using the scripts run_evals.py and generate_eval_config.py.
+- [Getting Started with ModernBERT & GLUE](https://github.com/AnswerDotAI/ModernBERT/blob/main/examples/finetune_modernbert_on_glue.ipynb): Created by: Wayde Gilliam
 
 ## Source Modules
 

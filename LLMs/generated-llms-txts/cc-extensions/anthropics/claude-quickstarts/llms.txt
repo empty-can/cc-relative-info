@@ -1,8 +1,6 @@
 # Claude Quickstarts
 
-> {BLOCKQUOTE}
-
-{DESCRIPTION}
+> Anthropic 公式のクイックスタート集。Skill/Rule/Agent などの CC 拡張資産は含まず、エージェント・コンピューターユース・ブラウザ操作・カスタマーサポートなど複数の Claude API デモアプリを収録したサンプルリポジトリ。
 
 ## Agents
 

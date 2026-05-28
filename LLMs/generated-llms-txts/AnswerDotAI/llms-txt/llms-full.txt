@@ -1,6 +1,6 @@
 # Llms Txt
 
-> llms.txt is an open standard that gives LLM-powered tools a concise, structured entry point into any website or project, enabling AI assistants and editors to retrieve relevant documentation without scraping raw HTML.
+> LLM が Web サイトのドキュメントを効率的に読み取れるよう、サイト所有者が構造化テキスト（llms.txt）を公開するための仕様を定義し、Python モジュール・CLI・パーサーとして実装したエコシステムプロジェクト。
 
 ---
 
@@ -154,6 +154,551 @@ The editor analyzes the loaded context along with the provided prompt, generates
 ```
 
 Finally, our user saves the app to a file and quits `ed`, presumably to run their new FastHTML app and reflect on the unexpected productivity boost provided by their trusty line editor.
+
+### Python module & CLI
+
+*Source: nbs/00_intro.ipynb | URL: https://github.com/AnswerDotAI/llms-txt/blob/main/nbs/00_intro.ipynb*
+
+# Python module & CLI
+
+> Read llms.txt files and create XML context documents for LLMs
+
+```python
+#| hide
+from fastcore.utils import *
+```
+
+Given an `llms.txt` file, this provides a CLI and Python API to parse the file and create an XML context file from it. The input file should follow this format:
+
+```
+# FastHTML
+
+> FastHTML is a python library which...
+
+When writing FastHTML apps remember to:
+
+- Thing to remember
+
+## Docs
+
+- [Surreal](https://host/README.md): Tiny jQuery alternative with Locality of Behavior
+- [FastHTML quick start](https://host/quickstart.html.md): An overview of FastHTML features
+
+## Examples
+
+- [Todo app](https://host/adv_app.py)
+
+## Optional
+
+- [Starlette docs](https://host/starlette-sml.md): A subset of the Starlette docs
+```
+
+## Install
+
+```sh
+pip install llms-txt
+```
+
+## How to use
+
+### CLI
+
+After installation, `llms_txt2ctx` is available in your terminal.
+
+To get help for the CLI:
+
+```sh
+llms_txt2ctx -h
+```
+
+To convert an `llms.txt` file to XML context and save to `llms.md`:
+
+```sh
+llms_txt2ctx llms.txt > llms.md
+```
+
+Pass `--optional True` to add the 'optional' section of the input file.
+
+### Python module
+
+```python
+from llms_txt import *
+```
+
+```python
+samp = Path('llms-sample.txt').read_text()
+```
+
+Use `parse_llms_file` to create a data structure with the sections of an llms.txt file (you can also add `optional=True` if needed):
+
+```python
+parsed = parse_llms_file(samp)
+list(parsed)
+```
+
+**Outputs:**
+['title', 'summary', 'info', 'sections']
+
+```python
+parsed.title,parsed.summary
+```
+
+**Outputs:**
+('FastHTML',
+ 'FastHTML is a python library which brings together Starlette, Uvicorn, HTMX, and fastcore\'s `FT` "FastTags" into a library for creating server-rendered hypermedia applications.')
+
+```python
+list(parsed.sections)
+```
+
+**Outputs:**
+['Docs', 'Examples', 'Optional']
+
+```python
+parsed.sections.Optional[0]
+```
+
+**Outputs:**
+{'title': 'Starlette full documentation',
+ 'url': 'https://gist.githubusercontent.com/jph00/809e4a4808d4510be0e3dc9565e9cbd3/raw/9b717589ca44cedc8aaf00b2b8cacef922964c0f/starlette-sml.md',
+ 'desc': 'A … (truncated)
+
+Use `create_ctx` to create an LLM context file with XML sections, suitable for systems such as Claude (this is what the CLI calls behind the scenes).
+
+```python
+ctx = create_ctx(samp)
+```
+
+```python
+print(ctx[:300])
+```
+
+**Outputs:**
+<project title="FastHTML" summary='FastHTML is a python library which brings together Starlette, Uvicorn, HTMX, and fastcore&#39;s `FT` "FastTags" into a library for creating server-rendered hypermedi … (truncated)
+
+### Implementation and tests
+
+To show how simple it is to parse `llms.txt` files, here's a complete parser in <20 lines of code with no dependencies:
+
+```python
+from pathlib import Path
+import re,itertools
+
+def chunked(it, chunk_sz):
+    it = iter(it)
+    return iter(lambda: list(itertools.islice(it, chunk_sz)), [])
+
+def parse_llms_txt(txt):
+    "Parse llms.txt file contents in `txt` to a `dict`"
+    def _p(links):
+        link_pat = '-\s*\[(?P<title>[^\]]+)\]\((?P<url>[^\)]+)\)(?::\s*(?P<desc>.*))?'
+        return [re.search(link_pat, l).groupdict()
+                for l in re.split(r'\n+', links.strip()) if l.strip()]
+
+    start,*rest = re.split(fr'^##\s*(.*?$)', txt, flags=re.MULTILINE)
+    sects = {k: _p(v) for k,v in dict(chunked(rest, 2)).items()}
+    pat = '^#\s*(?P<title>.+?$)\n+(?:^>\s*(?P<summary>.+?$)$)?\n+(?P<info>.*)'
+    d = re.search(pat, start.strip(), (re.MULTILINE|re.DOTALL)).groupdict()
+    d['sections'] = sects
+    return d
+```
+
+We have provided a test suite in `tests/test-parse.py` and confirmed that this implementation passes all tests.
+
+### Python source
+
+*Source: nbs/01_core.ipynb | URL: https://github.com/AnswerDotAI/llms-txt/blob/main/nbs/01_core.ipynb*
+
+# Python source
+
+> Source code for `llms_txt` Python module, containing helpers to create and use llms.txt files
+
+```python
+#| default_exp core
+```
+
+```python
+#| export
+import re
+```
+
+```python
+#| hide
+from nbdev.showdoc import *
+import nbdev; nbdev.nbdev_export()
+```
+
+```python
+#| export
+from fastcore.utils import *
+from fastcore.xml import *
+from fastcore.script import *
+import httpx
+from urllib.parse import urlparse
+```
+
+## Introduction
+
+The llms.txt file spec is for files located in the path `llms.txt` of a website (or, optionally, in a subpath). `llms-sample.txt` is a simple example. A file following the spec contains the following sections as markdown, in the specific order:
+
+- An H1 with the name of the project or site. This is the only required section
+- A blockquote with a short summary of the project, containing key information necessary for understanding the rest of the file
+- Zero or more markdown sections (e.g. paragraphs, lists, etc) of any type, except headings, containing more detailed information about the project and how to interpret the provided files
+- Zero or more markdown sections delimited by H2 headers, containing "file lists" of URLs where further detail is available
+  - Each "file list" is a markdown list, containing a required markdown hyperlink `[name](url)`, then optionally a `:` and notes about the file.
+
+Here's the start of a sample llms.txt file we'll use for testing:
+
+```python
+samp = Path('llms-sample.txt').read_text()
+print(samp[:480])
+```
+
+**Outputs:**
+# FastHTML
+
+> FastHTML is a python library which brings together Starlette, Uvicorn, HTMX, and fastcore's `FT` "FastTags" into a library for creating server-rendered hypermedia applications.
+
+Remember … (truncated)
+
+## Reading
+
+We'll implement `parse_llms_file` to pull out the sections of llms.txt into a simple data structure.
+
+```python
+#| export
+def opt_re(s):
+    "Pattern to optionally match `s`"
+    return f'(?:{s})?'
+
+def named_re(nm, pat):
+    "Pattern to match `pat` in a named capture group"
+    return f'(?P<{nm}>{pat})'
+
+def search(pat, txt, flags=0):
+    "Dictionary of matched groups in `pat` within `txt`"
+    res = re.search(pat, txt, flags=flags)
+    return res.groupdict() if res else None
+```
+
+We'll work "outside in" so we can test the innermost matches as we go.
+
+### Parse links
+
+```python
+link = '- [FastHTML quick start](https://fastht.ml/docs/tutorials/quickstart_for_web_devs.html.md): A brief overview of FastHTML features'
+```
+
+```python
+title = named_re('title', r'[^\]]+')
+pat =  fr'-\s*\[{title}\]'
+search(pat, samp)
+```
+
+**Outputs:**
+{'title': 'FastHTML quick start'}
+
+```python
+url = named_re('url', r'[^\)]+')
+pat += fr'\({url}\)'
+search(pat, samp)
+```
+
+**Outputs:**
+{'title': 'FastHTML quick start',
+ 'url': 'https://fastht.ml/docs/tutorials/quickstart_for_web_devs.html.md'}
+
+```python
+desc = named_re('desc', r'.*')
+pat += opt_re(fr':\s*{desc}')
+search(pat, link)
+```
+
+**Outputs:**
+{'title': 'FastHTML quick start',
+ 'url': 'https://fastht.ml/docs/tutorials/quickstart_for_web_devs.html.md',
+ 'desc': 'A brief overview of FastHTML features'}
+
+```python
+#| export
+def parse_link(txt):
+    "Parse a link section from llms.txt"
+    title = named_re('title', r'[^\]]+')
+    url = named_re('url', r'[^\)]+')
+    desc = named_re('desc', r'.*')
+    desc_pat = opt_re(fr":\s*{desc}")
+    pat = fr'-\s*\[{title}\]\({url}\){desc_pat}'
+    return re.search(pat, txt).groupdict()
+```
+
+```python
+parse_link(link)
+```
+
+**Outputs:**
+{'title': 'FastHTML quick start',
+ 'url': 'https://fastht.ml/docs/tutorials/quickstart_for_web_devs.html.md',
+ 'desc': 'A brief overview of FastHTML features'}
+
+```python
+parse_link('-[foo](http://foo)')
+```
+
+**Outputs:**
+{'title': 'foo', 'url': 'http://foo', 'desc': None}
+
+### Parse sections
+
+```python
+sections = '''First bit.
+
+## S1
+
+-[foo](http://foo)
+- [foo2](http://foo2): stuff
+
+## S2
+
+- [foo3](http://foo3)'''
+```
+
+```python
+start,*rest = re.split(fr'^##\s*(.*?$)', sections, flags=re.MULTILINE)
+start
+```
+
+**Outputs:**
+'First bit.\n\n'
+
+```python
+rest
+```
+
+**Outputs:**
+['S1',
+ '\n\n-[foo](http://foo)\n- [foo2](http://foo2): stuff\n\n',
+ 'S2',
+ '\n\n- [foo3](http://foo3)']
+
+```python
+d = dict(chunked(rest, 2))
+d
+```
+
+**Outputs:**
+{'S1': '\n\n-[foo](http://foo)\n- [foo2](http://foo2): stuff\n\n',
+ 'S2': '\n\n- [foo3](http://foo3)'}
+
+```python
+links = d['S1']
+links.strip()
+```
+
+**Outputs:**
+'-[foo](http://foo)\n- [foo2](http://foo2): stuff'
+
+```python
+#| export
+def _parse_links(links):
+    return [parse_link(l) for l in re.split(r'\n+', links.strip()) if l.strip()]
+```
+
+```python
+_parse_links(links)
+```
+
+**Outputs:**
+[{'title': 'foo', 'url': 'http://foo', 'desc': None},
+ {'title': 'foo2', 'url': 'http://foo2', 'desc': 'stuff'}]
+
+```python
+#| export
+def _parse_llms(txt):
+    start,*rest = re.split(fr'^##\s*(.*?$)', txt, flags=re.MULTILINE)
+    d = dict(chunked(rest, 2))
+    sects = {k: _parse_links(v) for k,v in d.items()}
+    return start.strip(),sects
+```
+
+```python
+start, sects = _parse_llms(samp)
+start
+```
+
+**Outputs:**
+'# FastHTML\n\n> FastHTML is a python library which brings together Starlette, Uvicorn, HTMX, and fastcore\'s `FT` "FastTags" into a library for creating server-rendered hypermedia applications.\n\nRe … (truncated)
+
+```python
+title = named_re('title', r'.+?$')
+summ = named_re('summary', '.+?$')
+summ_pat = opt_re(fr"^>\s*{summ}$")
+info = named_re('info', '.*')
+```
+
+```python
+pat = fr'^#\s*{title}\n+{summ_pat}\n+{info}'
+search(pat, start, (re.MULTILINE|re.DOTALL))
+```
+
+**Outputs:**
+{'title': 'FastHTML',
+ 'summary': 'FastHTML is a python library which brings together Starlette, Uvicorn, HTMX, and fastcore\'s `FT` "FastTags" into a library for creating server-rendered hypermedia a … (truncated)
+
+```python
+#| export
+def parse_llms_file(txt):
+    "Parse llms.txt file contents in `txt` to an `AttrDict`"
+    start,sects = _parse_llms(txt)
+    title = named_re('title', r'.+?$')
+    summ = named_re('summary', '.+?$')
+    summ_pat = opt_re(fr"^>\s*{summ}$")
+    info = named_re('info', '.*')
+    pat = fr'^#\s*{title}\n+{summ_pat}\n+{info}'
+    d = search(pat, start, (re.MULTILINE|re.DOTALL))
+    d['sections'] = sects
+    return dict2obj(d)
+```
+
+```python
+llmsd = parse_llms_file(samp)
+llmsd.summary
+```
+
+**Outputs:**
+'FastHTML is a python library which brings together Starlette, Uvicorn, HTMX, and fastcore\'s `FT` "FastTags" into a library for creating server-rendered hypermedia applications.'
+
+```python
+llmsd.sections.Examples
+```
+
+**Outputs:**
+[{'title': 'Todo list application', 'url': 'https://raw.githubusercontent.com/AnswerDotAI/fasthtml/main/examples/adv_app.py', 'desc': 'Detailed walk-thru of a complete CRUD app in FastHTML showing idi … (truncated)
+
+## XML conversion
+
+For some LLMs such as Claude, XML format is preferred, so we'll provide a function to create that format.
+
+```python
+#| export
+from fastcore.xml import Sections,Project,Doc
+```
+
+```python
+#| export
+def _local_docs_pth(path): return path/'_proc'
+def _get_config(): return find_file_parents('pyproject.toml')
+
+def get_doc_content(url):
+    "Fetch content from local file if in nbdev repo."
+    if (path:=_get_config()):
+        relative_path = urlparse(url).path.lstrip('/')
+        local_path = _local_docs_pth(path) / relative_path
+        if local_path.exists(): return local_path.read_text()
+    return httpx.get(url).text
+```
+
+```python
+#| export
+def _doc(kw):
+    "Create a `Doc` FT object with the text retrieved from `url` as the child, and `kw` as attrs."
+    print(dict(kw))
+    url = kw.pop('url')
+    txt = get_doc_content(url)
+    re_comment = re.compile('^<!--.*-->$', flags=re.MULTILINE)
+    re_base64_img = re.compile(r'<img[^>]*src="data:image/[^"]*"[^>]*>')
+    txt = '\n'.join([o for o in txt.splitlines() if not re_comment.search(o) and not re_base64_img.search(o)])
+    return Doc(txt, **kw)
+```
+
+```python
+#| export
+def _section(nm, items, n_workers=None):
+    "Create a section containing a `Doc` object for each child."
+    return ft(nm, *parallel(_doc, items, n_workers=n_workers, threadpool=True))
+```
+
+```python
+#| export
+def mk_ctx(d, optional=True, n_workers=None):
+    "Create a `Project` with a `Section` for each H2 part in `d`, optionally skipping the 'optional' section."
+    skip = '' if optional else 'Optional'
+    sections = [_section(k, v, n_workers=n_workers) for k,v in d.sections.items() if k!=skip]
+    return Project(title=d.title, summary=d.summary)(d.info, *sections)
+```
+
+```python
+ctx = mk_ctx(llmsd)
+print(to_xml(ctx, do_escape=False)[:260]+'...')
+```
+
+**Outputs:**
+{'title': 'FastHTML quick start', 'url': 'https://fastht.ml/docs/tutorials/quickstart_for_web_devs.html.md', 'desc': 'A brief overview of FastHTML features'}{'title': 'HTMX reference', 'url': 'https:/ … (truncated)
+{'title': 'Todo list application', 'url': 'https://raw.githubusercontent.com/AnswerDotAI/fasthtml/main/examples/adv_app.py', 'desc': 'Detailed walk-thru of a complete CRUD app in FastHTML showing idio … (truncated)
+{'title': 'Starlette full documentation', 'url': 'https://gist.githubusercontent.com/jph00/809e4a4808d4510be0e3dc9565e9cbd3/raw/9b717589ca44cedc8aaf00b2b8cacef922964c0f/starlette-sml.md', 'desc': 'A s … (truncated)
+<project title="FastHTML" summary='FastHTML is a python library which brings together Starlette, Uvicorn, HTMX, and fastcore&#39;s `FT` "FastTags" into a library for creating server-rendered hypermedi … (truncated)
+
+```python
+#| export
+def get_sizes(ctx):
+    "Get the size of each section of the LLM context"
+    return {o.tag:{p.title:len(p.children[0]) for p in o.children} for o in ctx.children if hasattr(o,'tag')}
+```
+
+```python
+get_sizes(ctx)
+```
+
+**Outputs:**
+{'docs': {'FastHTML quick start': 35321,
+  'HTMX reference': 28365,
+  'Starlette quick guide': 7936},
+ 'examples': {'Todo list application': 16032},
+ 'optional': {'Starlette full documentation': 48331 … (truncated)
+
+```python
+Path('../fasthtml.md').write_text(to_xml(ctx, do_escape=False))
+```
+
+**Outputs:**
+137125
+
+```python
+#| export
+def create_ctx(txt, optional=False, n_workers=None):
+    "A `Project` with a `Section` for each H2 part in `txt`, optionally skipping the 'optional' section."
+    d = parse_llms_file(txt)
+    ctx = mk_ctx(d, optional=optional, n_workers=n_workers)
+    return to_xml(ctx, do_escape=False)
+```
+
+```python
+#| export
+@call_parse
+def llms_txt2ctx(
+    fname:str, # File name to read
+    optional:bool_arg=False, # Include 'optional' section?
+    n_workers:int=None, # Number of threads to use for parallel downloading
+    save_nbdev_fname:str=None #save output to nbdev `{docs_path}` instead of emitting to stdout
+):
+    "Print a `Project` with a `Section` for each H2 part in file read from `fname`, optionally skipping the 'optional' section."
+    ctx = create_ctx(Path(fname).read_text(), optional=optional, n_workers=n_workers)
+    if save_nbdev_fname and (cfg:=_get_config()):
+        (_local_docs_pth(cfg) / save_nbdev_fname).mk_write(ctx)
+    else: print(ctx)
+```
+
+```python
+!llms_txt2ctx llms-sample.txt > ../fasthtml.md
+```
+
+## Export -
+
+```python
+#| hide
+#| eval: false
+from nbdev import nbdev_export
+nbdev_export()
+```
 
 ---
 

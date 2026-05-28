@@ -1,8 +1,6 @@
 # fastprogress
 
-> A fast and simple progress bar for Jupyter Notebook and console, supporting nested (master/child) bars, real-time graph plotting, and both interactive and non-interactive environments.
-
-fastprogress is a lightweight Python library by Sylvain Gugger (fast.ai) that provides `master_bar` and `progress_bar` iterators for tracking nested loops. It renders smoothly in Jupyter notebooks and terminals, supports inline loss-curve plotting via `update_graph`, and gracefully falls back to plain text output when stdout is redirected.
+> Jupyter Notebookとコンソール向けの軽量プログレスバーライブラリで、fast.aiのSylvain Guggerが開発し、ネスト表示やコメント付き進捗管理をシンプルなAPIで提供する。
 
 ---
 
@@ -10,7 +8,7 @@ fastprogress is a lightweight Python library by Sylvain Gugger (fast.ai) that pr
 
 ### Contributor Covenant Code of Conduct
 
-*Source: CODE-OF-CONDUCT.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/CODE-OF-CONDUCT.md*
+*Source: CODE-OF-CONDUCT.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/CODE-OF-CONDUCT.md*
 
 # Contributor Covenant Code of Conduct
 
@@ -88,7 +86,7 @@ available at https://www.contributor-covenant.org/version/1/4/code-of-conduct.ht
 
 ### Contributor Covenant Code of Conduct
 
-*Source: CODE_OF_CONDUCT.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/CODE_OF_CONDUCT.md*
+*Source: CODE_OF_CONDUCT.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/CODE_OF_CONDUCT.md*
 
 # Contributor Covenant Code of Conduct
 
@@ -170,7 +168,7 @@ available at https://www.contributor-covenant.org/version/1/4/code-of-conduct.ht
 
 ### fastprogress
 
-*Source: docs/index.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/docs/index.md*
+*Source: docs/index.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/docs/index.md*
 
 # fastprogress
 
@@ -305,13 +303,1153 @@ And the output:
 
 Copyright 2017 onwards, fast.ai. Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. A copy of the License is provided in the LICENSE file in this repository.
 
+### Example
+
+*Source: Example.ipynb | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/Example.ipynb*
+
+```python
+from fastprogress.fastprogress import master_bar, progress_bar
+import time
+```
+
+## Basic use
+
+```python
+mb = master_bar(range(10))
+for i in mb:
+    for j in progress_bar(range(100), parent=mb):
+        time.sleep(0.01)
+        mb.child.comment = f'second bar stat'
+    mb.main_bar.comment = f'first bar stat'
+    mb.write(f'Finished loop {i}.')
+```
+
+**Outputs:**
+<IPython.core.display.HTML object>
+
+## Adding the graph
+
+```python
+import numpy as np
+```
+
+```python
+mb = master_bar(range(10))
+#Name of the curves to put in the legend box.
+mb.names = ['cos', 'sin']
+for i in mb:
+    for j in progress_bar(range(100), parent=mb):
+        time.sleep(0.01)
+        mb.child.comment = f'second bar stat'
+    mb.main_bar.comment = f'first bar stat'
+    mb.write(f'Finished loop {i}.')
+    x = np.arange(0, 2*(i+1)*np.pi/10, 0.01)
+    y1, y2 = np.cos(x), np.sin(x)
+    graphs = [[x,y1], [x,y2]]
+    #Specifying the boundaries is better to have the box at the right size.
+    x_bounds = [0, 2*np.pi]
+    y_bounds = [-1,1]
+    mb.update_graph(graphs, x_bounds, y_bounds)
+```
+
+**Outputs:**
+<IPython.core.display.HTML object>
+<Figure size 432x288 with 1 Axes>
+
+Updating every iteration in the inner loop is possible but slower
+
+```python
+mb = master_bar(range(10))
+mb.names = ['cos', 'sin']
+for i in mb:
+    for j in progress_bar(range(100), parent=mb):
+        if j%10 == 0:
+            k = 100 * i + j
+            x = np.arange(0, 2*k*np.pi/1000, 0.01)
+            y1, y2 = np.cos(x), np.sin(x)
+            graphs = [[x,y1], [x,y2]]
+            x_bounds = [0, 2*np.pi]
+            y_bounds = [-1,1]
+            mb.update_graph(graphs, x_bounds, y_bounds)
+            mb.child.comment = f'second bar stat'
+    mb.main_bar.comment = f'first bar stat'
+    mb.write(f'Finished loop {i}.')
+```
+
+**Outputs:**
+<IPython.core.display.HTML object>
+<Figure size 432x288 with 1 Axes>
+
+## Console rendering
+
+```python
+from fastprogress.fastprogress import ConsoleMasterBar, ConsoleProgressBar 
+```
+
+```python
+mb = ConsoleMasterBar(range(10))
+for i in mb:
+    for j in ConsoleProgressBar(range(100), parent=mb):
+        time.sleep(0.01)
+        mb.child.comment = f'second bar stat'
+    mb.write(f'Finished loop {i}.')
+```
+
+**Outputs:**
+Finished loop 0.                                                                                                
+Finished loop 1.                                                                        … (truncated)
+
+You can force the console rendering without changing your code by using the following command:
+
+```python
+from fastprogress import force_console_behavior
+master_bar,progress_bar = force_console_behavior()
+```
+
+```python
+mb = master_bar(range(10))
+for i in mb:
+    for j in progress_bar(range(100), parent=mb):
+        time.sleep(0.01)
+        mb.child.comment = f'second bar stat'
+    mb.main_bar.comment = f'first bar stat'
+    mb.write(f'Finished loop {i}.')
+    #mb.update_graph(graphs, x_bounds, y_bounds)
+```
+
+**Outputs:**
+Finished loop 0.                                                                                                
+Finished loop 1.                                                                        … (truncated)
+
+### Core
+
+*Source: nbs/00_core.ipynb | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/nbs/00_core.ipynb*
+
+```python
+#| default_exp core
+```
+
+# Core
+
+> Utility functions for fastprogress
+
+### 01 Fastprogress
+
+*Source: nbs/01_fastprogress.ipynb | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/nbs/01_fastprogress.ipynb*
+
+```python
+#| default_exp fastprogress
+```
+
+```python
+#| export
+import time,shutil
+from sys import stdout
+from warnings import warn
+
+from fastcore.utils import *
+from fasthtml.common import *
+
+```
+
+## Display
+
+```python
+#| export
+def format_time(t):
+    "Format `t` (in seconds) to (h):mm:ss"
+    t = int(t)
+    h,m,s = t//3600, (t//60)%60, t%60
+    if h!= 0: return f'{h}:{m:02d}:{s:02d}'
+    else:     return f'{m:02d}:{s:02d}'
+```
+
+```python
+assert format_time(12) == '00:12'
+assert format_time(512) == '08:32'
+assert format_time(3712) == '1:01:52'
+```
+
+```python
+#| export
+html_styles = """
+<style>
+    progress { appearance: none; border: none; border-radius: 4px; width: 300px;
+        height: 20px; vertical-align: middle; background: #e0e0e0; }
+
+    progress::-webkit-progress-bar { background: #e0e0e0; border-radius: 4px; }
+    progress::-webkit-progress-value { background: #2196F3; border-radius: 4px; }
+    progress::-moz-progress-bar { background: #2196F3; border-radius: 4px; }
+
+    progress:not([value]) {
+        background: repeating-linear-gradient(45deg, #7e7e7e, #7e7e7e 10px, #5c5c5c 10px, #5c5c5c 20px); }
+
+    progress.progress-bar-interrupted::-webkit-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-value { background: #F44336; }
+    progress.progress-bar-interrupted::-webkit-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted::-moz-progress-bar { background: #F44336; }
+    progress.progress-bar-interrupted { background: #F44336; }    
+
+    table.fastprogress { border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
+    table.fastprogress th, table.fastprogress td { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }
+    table.fastprogress thead tr { background: #f8f9fa; font-weight: bold; }
+    table.fastprogress tbody tr:nth-of-type(even) { background: #f8f9fa; }
+</style>
+"""
+```
+
+```python
+#| export
+_style_shown = False
+def show_styles():
+    "Add the styles to the nb/dialog"
+    from IPython.display import display,HTML
+    global _style_shown
+    if _style_shown: return
+    display(HTML(html_styles))
+    _style_shown=True
+```
+
+```python
+show_styles()
+```
+
+**Outputs:**
+HTML(
+<style>
+    progress { appearance: none; border: none; border-radius: 4px; width: 300px;
+        height: 20px; vertical-align: middle; background: #e0e0e0; }
+
+    progress::-webkit-progress-bar  … (truncated)
+
+```python
+#| export
+def html_progress_bar(value, total, label, interrupted=False):
+    "Html code for a progress bar `value`/`total` with `label`"
+    cls = 'progress-bar-interrupted' if interrupted else None
+    attrs = dict(max=total, cls=cls)
+    if total is not None: attrs['value'] = value
+    return Div(Progress(**attrs), ' ', label)
+```
+
+```python
+html_progress_bar(45, 100, '45/100 [00:23<00:28]')
+```
+
+**Outputs:**
+<div><progress max="100" value="45"></progress> 45/100 [00:23&lt;00:28]</div>
+
+```python
+#| export
+def text2html_table(items):
+    "Put the texts in `items` in an HTML table."
+    hdr = Tr(map(Th, items[0]))
+    rows = [Tr(map(Td, line)) for line in items[1:]]
+    return Table(Thead(hdr), Tbody(*rows), cls='fastprogress')
+```
+
+```python
+test_data = [['epoch', 'train_loss', 'valid_loss', 'time'], 
+             ['0', '0.365241', '0.186934', '00:12'],
+             ['1', '0.165239', '0.142865', '00:11'],
+             ['2', '0.125647', '0.138421', '00:11']]
+```
+
+```python
+text2html_table(test_data)
+```
+
+**Outputs:**
+<table class="fastprogress"><thead><tr><th>epoch</th><th>train_loss</th><th>valid_loss</th><th>time</th></tr></thead><tbody><tr><td>0</td><td>0.365241</td><td>0.186934</td><td>00:12</td></tr><tr><td>1 … (truncated)
+
+## Base class
+
+```python
+#| export
+class ProgressBar:
+    update_every,first_its,lt = 0.2,5,'<'
+    def __init__(self, gen, total=None, display=True, leave=True, parent=None, master=None, comment=''):
+        store_attr()
+        self.total = None if total=='noinfer' else len(gen) if total is None else total
+        if parent is None: self.leave,self.display = leave,display
+        else:
+            self.leave,self.display = False,False
+            parent.add_child(self)
+        self.last_v = None
+
+    def on_update(self, val, text): pass
+
+    def update_bar(self, val):
+        if self.total == 0:
+            warn("Your generator is empty.")
+            return self.on_update(0, '100% [0/0]')
+        pct = '' if self.total is None else f'{100 * val/self.total:.2f}% '
+        tot = '?' if self.total is None else str(self.total)
+        elapsed_t = self.last_t - self.start_t
+        remaining_t = '?' if self.pred_t is None else format_time(self.pred_t - elapsed_t)
+        elapsed_t = format_time(elapsed_t)
+        end = f'... {self.comment}' if self.comment else ''
+        self.on_update(val, f'{pct}[{val}/{tot} {elapsed_t}{self.lt}{remaining_t}{end}]')
+```
+
+```python
+class PrintProgressBar(ProgressBar):
+    def on_update(self, val, text): print(text)
+```
+
+```python
+pb = PrintProgressBar(range(10))
+pb.start_t = pb.last_t = time.time()
+pb.pred_t = 5.0
+pb.update_bar(3)
+```
+
+**Outputs:**
+30.00% [3/10 00:00<00:05]
+
+
+```python
+pb.update_bar(4)
+```
+
+**Outputs:**
+40.00% [4/10 00:00<00:05]
+
+
+```python
+#| export
+@patch
+def update(self:ProgressBar, val):
+    if self.last_v is None: 
+        self.on_iter_begin()
+        self.last_v = 0
+    if val == 0:
+        self.start_t = self.last_t = time.time()
+        self.pred_t,self.last_v,self.wait_for = None,0,1
+        self.update_bar(0)
+    elif val<=self.first_its or val>=self.last_v+self.wait_for or (self.total and val>=self.total):
+        cur_t = time.time()
+        avg_t = (cur_t-self.start_t) / val
+        self.wait_for = max(int(self.update_every/(avg_t+1e-8)),1)
+        self.pred_t = None if self.total is None else avg_t * self.total
+        self.last_v,self.last_t = val,cur_t
+        self.update_bar(val)
+        if self.total is not None and val >= self.total:
+            self.on_iter_end()
+            self.last_v = None
+
+@patch
+def on_iter_begin(self:ProgressBar):
+    if self.master is not None: self.master.on_iter_begin()
+
+@patch
+def on_interrupt(self:ProgressBar):
+    if self.master is not None: self.master.on_interrupt()
+
+@patch
+def on_iter_end(self:ProgressBar):
+    if self.master is not None: self.master.on_iter_end()
+```
+
+```python
+pb = PrintProgressBar(range(5))
+for i in range(6): pb.update(i); time.sleep(0.02)
+```
+
+**Outputs:**
+0.00% [0/5 00:00<?]
+20.00% [1/5 00:00<00:00]
+40.00% [2/5 00:00<00:00]
+60.00% [3/5 00:00<00:00]
+80.00% [4/5 00:00<00:00]
+100.00% [5/5 00:00<00:00]
+
+
+```python
+#| export
+@patch
+def __iter__(self:ProgressBar):
+    if self.total != 0: self.update(0)
+    try:
+        for i,o in enumerate(self.gen):
+            if self.total and i >= self.total: break
+            yield o
+            self.update(i+1)
+        if self.total is None and self.last_v is not None:
+            self.total = i+1
+            self.update(self.total)
+    except Exception as e:
+        self.on_interrupt()
+        raise e
+```
+
+```python
+for i in PrintProgressBar(range(5)): time.sleep(0.02)
+```
+
+**Outputs:**
+0.00% [0/5 00:00<?]
+
+20.00% [1/5 00:00<00:00]
+40.00% [2/5 00:00<00:00]
+60.00% [3/5 00:00<00:00]
+80.00% [4/5 00:00<00:00]
+100.00% [5/5 00:00<00:00]
+
+
+```python
+#| export
+class MasterBar(ProgressBar):
+    def __init__(self, gen, cls, total=None): self.main_bar = cls(gen, total=total, display=False, master=self)
+    def on_iter_begin(self): pass
+    def on_interrupt(self):  pass
+    def on_iter_end(self):   pass
+    def add_child(self, child): pass
+    def write(self, line):      pass
+    def update_graph(self, graphs, x_bounds, y_bounds): pass
+    def __iter__(self): yield from self.main_bar
+    def update(self, val): self.main_bar.update(val)
+    def progress(self, *args, **kwargs): return self.pcls(*args, parent=self, **kwargs)
+```
+
+## Notebook progress bars
+
+```python
+#| export
+class NBProgressBar(ProgressBar):
+    def on_iter_begin(self):
+        from IPython.display import display
+        super().on_iter_begin()
+        self.progress = html_progress_bar(0, self.total, "")
+        if self.display:
+            show_styles()
+            self.out = display(self.progress, display_id=True)
+        self.is_active=True
+
+    def on_interrupt(self):
+        self.on_update(0, 'Interrupted', interrupted=True)
+        super().on_interrupt()
+        self.on_iter_end()
+
+    def on_iter_end(self):
+        from IPython.display import HTML
+        if not self.leave and self.display: self.out.update(HTML(''))
+        self.is_active=False
+        super().on_iter_end()
+        
+    def on_update(self, val, text, interrupted=False):
+        self.progress = html_progress_bar(val, self.total, text, interrupted)
+        if self.display: self.out.update(self.progress)
+        elif self.parent is not None: self.parent.show()
+        elif hasattr(self, '_parent_show'): self._parent_show()
+```
+
+```python
+tst = NBProgressBar(range(30))
+for i in tst: time.sleep(0.02)
+```
+
+**Outputs:**
+<div><progress max="30" value="30"></progress> 100.00% [30/30 00:00&lt;00:00]</div>
+
+```python
+tst = NBProgressBar(range(50))
+for i in range(30): 
+    time.sleep(0.02)
+    tst.update(i)
+tst.on_interrupt()
+```
+
+**Outputs:**
+<div><progress max="50" value="0" class="progress-bar-interrupted"></progress> Interrupted</div>
+
+```python
+tst = NBProgressBar(range(30), total='noinfer')
+for i in range(30):
+    time.sleep(0.02)
+    tst.update(i)
+```
+
+**Outputs:**
+<div><progress></progress> [29/? 00:00&lt;?]</div>
+
+```python
+#| hide
+for i in NBProgressBar([]): pass
+```
+
+```python
+#| export
+class NBMasterBar(MasterBar):
+    pcls = NBProgressBar
+    def __init__(self, gen, total=None, hide_graph=False, order=None, clean_on_interrupt=False, total_time=False,
+            names=('train', 'valid'), hdrs=None):
+        super().__init__(gen, NBProgressBar, total)
+        if order is None: order = ['pb1', 'text', 'pb2']
+        store_attr('hide_graph,order,clean_on_interrupt,total_time,names,hdrs')
+        self.report,self.lines,self.text_parts = [],[],[]
+        self.inner_dict = dict(pb1=self.main_bar)
+        
+    def on_iter_begin(self):
+        from IPython.display import display
+        show_styles()
+        self.out = display(Div(html_progress_bar(0, self.main_bar.total, "")), display_id=True)
+        self.main_bar._parent_show = self.show
+        if self.hdrs is not None: self.write(self.hdrs, table=True)
+
+    def on_interrupt(self):
+        from IPython.display import HTML
+        if self.clean_on_interrupt: self.out.update(HTML(''))
+
+    def on_iter_end(self):
+        import matplotlib.pyplot as plt
+        if hasattr(self, 'imgs_fig'): plt.close(); self.imgs_out.update(self.imgs_fig)
+        if hasattr(self, 'graph_fig'): plt.close(); self.graph_out.update(self.graph_fig)
+        hdr = [P(f'Total time: {format_time(time.time() - self.main_bar.start_t)}')] if self.total_time else []
+        if hasattr(self, 'out'): self.out.update(Div(*hdr, *self.text_parts))
+
+    def add_child(self, child):
+        self.child = child
+        self.inner_dict['pb2'] = self.child
+
+    def show(self):
+        self.inner_dict['text'] = Div(*self.text_parts)
+        children = [getattr(item, 'progress', None) or item for n in self.order
+            if (item := self.inner_dict.get(n))]
+        if hasattr(self, 'out'): self.out.update(Div(*children))
+
+    def write(self, line, table=False):
+        if table: self.lines.append(line); self.text_parts = [text2html_table(self.lines)]
+        else: self.text_parts.append(P(line))
+        self.show()
+```
+
+```python
+for i in (mb := NBMasterBar(range(5), hdrs=['epoch', 'train_loss', 'valid_loss'])):
+    mb.main_bar.comment = f'first bar stat'
+    for j in mb.progress(range(10)):
+        time.sleep(0.02)
+        mb.child.comment = f'second bar stat'
+    mb.write([str(i), f'{1/(i+1):.3f}', f'{1.2/(i+1):.3f}'], table=True)
+```
+
+**Outputs:**
+<div><table class="fastprogress"><thead><tr><th>epoch</th><th>train_loss</th><th>valid_loss</th></tr></thead><tbody><tr><td>0</td><td>1.000</td><td>1.200</td></tr><tr><td>1</td><td>0.500</td><td>0.600 … (truncated)
+
+```python
+#| export
+@patch
+def show_imgs(self:NBMasterBar, imgs, titles=None, cols=4, imgsize=4, figsize=None):
+    if self.hide_graph: return
+    from IPython.display import display
+    import matplotlib.pyplot as plt
+    rows = len(imgs)//cols if len(imgs)%cols == 0 else len(imgs)//cols + 1
+    if figsize is None: figsize = (imgsize*cols, imgsize*rows)
+    self.imgs_fig, imgs_axs = plt.subplots(rows, cols, figsize=figsize)
+    if titles is None: titles = [None] * len(imgs)
+    for img, ax, title in zip(imgs, imgs_axs.flatten(), titles): img.show(ax=ax, title=title)
+    for ax in imgs_axs.flatten()[len(imgs):]: ax.axis('off')
+    if not hasattr(self, 'imgs_out'): self.imgs_out = display(self.imgs_fig, display_id=True)
+    else: self.imgs_out.update(self.imgs_fig)
+    plt.close(self.imgs_fig)
+```
+
+```python
+import numpy as np
+```
+
+```python
+class Img:
+    def __init__(self, data): self.data = data
+    def show(self, ax, title=None):
+        ax.imshow(self.data)
+        if title: ax.set_title(title)
+```
+
+```python
+for i in (mb := NBMasterBar(range(5))):
+    imgs = [Img(np.random.rand(28,28)) for _ in range(6)]
+    mb.show_imgs(imgs, cols=3, imgsize=2)
+    time.sleep(0.2)
+```
+
+**Outputs:**
+<div></div>
+<Figure size 600x400 with 6 Axes>
+
+```python
+#| export
+@patch
+def update_graph(self:NBMasterBar, graphs, x_bounds=None, y_bounds=None, figsize=(6,4)):
+    if self.hide_graph: return
+    from IPython.display import display
+    import matplotlib.pyplot as plt
+    if not hasattr(self, 'graph_fig'):
+        self.graph_fig, self.graph_ax = plt.subplots(1, figsize=figsize)
+        self.graph_out = display(self.graph_ax.figure, display_id=True)
+    self.graph_ax.clear()
+    if len(self.names) < len(graphs): self.names += [''] * (len(graphs) - len(self.names))
+    for g,n in zip(graphs,self.names): self.graph_ax.plot(*g, label=n)
+    self.graph_ax.legend(loc='upper right')
+    if x_bounds is not None: self.graph_ax.set_xlim(*x_bounds)
+    if y_bounds is not None: self.graph_ax.set_ylim(*y_bounds)
+    self.graph_out.update(self.graph_ax.figure)
+```
+
+```python
+train_losses, valid_losses = [], []
+for i in (mb:=NBMasterBar(range(10))):
+    mb.write(['epoch', 'train_loss', 'valid_loss'], table=True) if i==0 else None
+    tl = 1.0/(i+1) + np.random.rand()*0.1
+    vl = 1.2/(i+1) + np.random.rand()*0.1
+    train_losses.append((i, tl))
+    valid_losses.append((i, vl))
+    graphs = [list(zip(*train_losses)), list(zip(*valid_losses))]
+    mb.update_graph(graphs, y_bounds=(0,1.5))
+    mb.write([str(i), f'{tl:.3f}', f'{vl:.3f}'], table=True)
+    time.sleep(0.3)
+```
+
+**Outputs:**
+<div><table class="fastprogress"><thead><tr><th>epoch</th><th>train_loss</th><th>valid_loss</th></tr></thead><tbody><tr><td>0</td><td>1.029</td><td>1.231</td></tr><tr><td>1</td><td>0.556</td><td>0.610 … (truncated)
+<Figure size 600x400 with 1 Axes>
+
+## Console progress bars
+
+```python
+#| export
+NO_BAR = False
+WRITER_FN = print
+FLUSH = True
+SAVE_PATH = None
+SAVE_APPEND = False
+MAX_COLS = 160
+```
+
+```python
+#| export
+def printing():
+    "`True` if we want to print progress"
+    if NO_BAR: return False
+    return getattr(stdout, 'isatty', False) or IN_NOTEBOOK or 'PYCHARM_HOSTED' in os.environ
+```
+
+```python
+#| export
+class ConsoleProgressBar(ProgressBar):
+    fill:str='█'
+    end:str=''
+
+    def __init__(self, gen, total=None, display=True, leave=True, parent=None, master=None, txt_len=60):
+        self.cols,_ = shutil.get_terminal_size((100, 40))
+        if self.cols > MAX_COLS: self.cols=MAX_COLS
+        self.length = self.cols-txt_len
+        self.max_len,self.prefix = 0,''
+        #In case the filling char returns an encoding error
+        try: print(self.fill, end='\r', flush=FLUSH)
+        except: self.fill = 'X'
+        super().__init__(gen, total, display, leave, parent, master)
+
+    def on_interrupt(self):
+        super().on_interrupt()
+        self.on_iter_end()
+
+    def on_iter_end(self):
+        if not self.leave and printing():
+            print(f'\r{self.prefix}' + ' ' * (self.max_len - len(f'\r{self.prefix}')), end='\r', flush=FLUSH)
+        super().on_iter_end()
+
+    def on_update(self, val, text):
+        if self.display:
+            if self.length > self.cols-len(text)-len(self.prefix)-4:
+                self.length = self.cols-len(text)-len(self.prefix)-4
+            filled_len = int(self.length * val // self.total) if self.total else 0
+            bar = self.fill * filled_len + '-' * (self.length - filled_len)
+            to_write = f'\r{self.prefix} |{bar}| {text}'
+            # if self.total and val >= self.total: end = '\r'
+            # else: end = self.end
+            if len(to_write) > self.max_len: self.max_len=len(to_write)
+            if printing(): WRITER_FN(to_write, end='', flush=FLUSH)
+```
+
+```python
+tst = ConsoleProgressBar(range(50))
+for i in tst: time.sleep(0.02)
+```
+
+**Outputs:**
+█
+ |----------------------------------------| 0.00% [0/50 00:00<?]
+ |----------------------------------------| 2.00% [1/50 00:00<00:01]
+ |█---------------------------------------| 4.00% [2/50 00:00<00:01]
+ |██--------------------------------------| 6.00% [3/50 00:00<00:01]
+ |███-------------------------------------| 8.00% [4/50 00:00<00:01]
+ |████------------------------------------| 10.00% [5/50 00:00<00:01]
+ |██████████------------------------------| 26.00% [13/50 00:00<00:00]
+ |████████████████------------------------| 42.00% [21/50 00:00<00:00]
+ |███████████████████████-----------------| 58.00% [29/50 00:00<00:00]
+ |█████████████████████████████-----------| 74.00% [37/50 00:00<00:00]
+ |████████████████████████████████████----| 90.00% [45/50 00:01<00:00]
+ |████████████████████████████████████████| 100.00% [50/50 00:01<00:00]
+
+```python
+tst = ConsoleProgressBar(range(100))
+for i in range(50): 
+    time.sleep(0.02)
+    tst.update(i)
+tst.on_interrupt()
+```
+
+**Outputs:**
+█
+ |----------------------------------------| 0.00% [0/100 00:00<?]
+ |----------------------------------------| 1.00% [1/100 00:00<00:02]
+ |----------------------------------------| 2.00% [2/100 00:00<00:02]
+ |█---------------------------------------| 3.00% [3/100 00:00<00:02]
+ |█---------------------------------------| 4.00% [4/100 00:00<00:02]
+ |██--------------------------------------| 5.00% [5/100 00:00<00:02]
+ |█████-----------------------------------| 13.00% [13/100 00:00<00:02]
+ |████████--------------------------------| 21.00% [21/100 00:00<00:01]
+ |███████████-----------------------------| 29.00% [29/100 00:00<00:01]
+ |██████████████--------------------------| 37.00% [37/100 00:00<00:01]
+ |██████████████████----------------------| 45.00% [45/100 00:01<00:01]
+
+```python
+tst = ConsoleProgressBar(range(100), total='noinfer')
+for i in range(50):
+    time.sleep(0.02)
+    tst.update(i)
+```
+
+**Outputs:**
+█
+ |----------------------------------------| [0/? 00:00<?]
+ |----------------------------------------| [1/? 00:00<?]
+ |----------------------------------------| [2/? 00:00<?]
+ |----------------------------------------| [3/? 00:00<?]
+ |----------------------------------------| [4/? 00:00<?]
+ |----------------------------------------| [5/? 00:00<?]
+ |----------------------------------------| [13/? 00:00<?]
+ |----------------------------------------| [21/? 00:00<?]
+ |----------------------------------------| [29/? 00:00<?]
+ |----------------------------------------| [37/? 00:00<?]
+ |----------------------------------------| [45/? 00:01<?]
+
+```python
+#| export
+def print_and_maybe_save(line):
+    WRITER_FN(line)
+    if SAVE_PATH is not None:
+        attr = "a" if os.path.exists(SAVE_PATH) else "w"
+        with open(SAVE_PATH, attr) as f: f.write(line + '\n')
+```
+
+```python
+#| export
+class ConsoleMasterBar(MasterBar):
+    pcls = ConsoleProgressBar
+    def __init__(self, gen, total=None, hide_graph=False, order=None, clean_on_interrupt=False, total_time=False):
+        super().__init__(gen, ConsoleProgressBar, total)
+        self.total_time = total_time
+
+    def add_child(self, child):
+        self.child = child
+        v = 0 if self.main_bar.last_v is None else self.main_bar.last_v
+        self.child.prefix = f'Epoch {v+1}/{self.main_bar.total} :'
+        self.child.display = True
+
+    def on_iter_begin(self):
+        super().on_iter_begin()
+        if SAVE_PATH is not None and os.path.exists(SAVE_PATH) and not SAVE_APPEND:
+            with open(SAVE_PATH, 'w') as f: f.write('')
+
+    def write(self, line, table=False):
+        if table:
+            text = ''
+            if not hasattr(self, 'names'):
+                self.names = [name + ' ' * (8-len(name)) if len(name) < 8 else name for name in line]
+                text = '  '.join(self.names)
+            else:
+                for (t,name) in zip(line,self.names): text += t + ' ' * (2 + len(name)-len(t))
+            print_and_maybe_save(text)
+        else: print_and_maybe_save(line)
+        if self.total_time:
+            total_time = format_time(time() - self.start_t)
+            print_and_maybe_save(f'Total time: {total_time}')
+
+    def show_imgs(*args, **kwargs): pass
+    def update_graph(*args, **kwargs): pass
+```
+
+```python
+for i in (mb := ConsoleMasterBar(range(5))):
+    for j in mb.progress(range(10)):
+        time.sleep(0.02)
+        mb.child.comment = f'second bar stat'
+    mb.main_bar.comment = f'first bar stat'
+    mb.write(f'Finished loop {i}.')
+```
+
+**Outputs:**
+█
+█
+Epoch 1/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 1/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 1/5 :                                                                                         
+Finished loop 0.
+█
+Epoch 2/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 2/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 2/5 :                                                                                         
+Finished loop 1.
+█
+Epoch 3/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 3/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 3/5 :                                                                                         
+Finished loop 2.
+█
+Epoch 4/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 4/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 4/5 :                                                                                         
+Finished loop 3.
+█
+Epoch 5/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 5/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 5/5 :                                                                                         
+Finished loop 4.
+
+
+```python
+mb = ConsoleMasterBar(range(5))
+mb.update(0)  
+for i in range(5):
+    for j in ConsoleProgressBar(range(10), parent=mb):
+        time.sleep(0.02)
+        mb.child.comment = f'second bar stat'
+    mb.main_bar.comment = f'first bar stat'
+    mb.write(f'Finished loop {i}.')
+    mb.update(i+1)
+```
+
+**Outputs:**
+█
+█
+Epoch 1/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 1/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 1/5 :                                                                                         
+Finished loop 0.
+█
+Epoch 2/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 2/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 2/5 :                                                                                         
+Finished loop 1.
+█
+Epoch 3/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 3/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 3/5 :                                                                                         
+Finished loop 2.
+█
+Epoch 4/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 4/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 4/5 :                                                                                         
+Finished loop 3.
+█
+Epoch 5/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 5/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 5/5 :                                                                                         
+Finished loop 4.
+
+
+```python
+#| export
+if IN_NOTEBOOK: master_bar, progress_bar = NBMasterBar, NBProgressBar
+else:           master_bar, progress_bar = ConsoleMasterBar, ConsoleProgressBar
+```
+
+```python
+#| export
+def force_console_behavior():
+    "Return the console progress bars"
+    return ConsoleMasterBar, ConsoleProgressBar
+```
+
+```python
+#| export
+_all_ = ['master_bar', 'progress_bar']
+```
+
+## Export -
+
+```python
+from nbdev import nbdev_export
+nbdev_export()
+```
+
+### Index
+
+*Source: nbs/index.ipynb | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/nbs/index.ipynb*
+
+```python
+from fastprogress import *
+import time
+
+import numpy as np
+```
+
+```python
+for i in progress_bar(range(30)): time.sleep(0.02)
+```
+
+**Outputs:**
+<IPython.core.display.HTML object>
+div((progress((),{'max': 30, 'value': 30}), ' ', '100.00% [30/30 00:01<00:00]'),{})
+
+```python
+for i in (mb := master_bar(range(5))):
+    mb.write(['epoch', 'train_loss', 'valid_loss'], table=True) if i==0 else None
+    mb.main_bar.comment = f'first bar stat'
+    for j in mb.progress(range(10)):
+        time.sleep(0.02)
+        mb.child.comment = f'second bar stat'
+    mb.write([str(i), f'{1/(i+1):.3f}', f'{1.2/(i+1):.3f}'], table=True)
+```
+
+**Outputs:**
+<IPython.core.display.HTML object>
+div((table((thead((tr((th(('epoch',),{}), th(('train_loss',),{}), th(('valid_loss',),{})),{}),),{}), tbody((tr((td(('0',),{}), td(('1.000',),{}), td(('1.200',),{})),{}), tr((td(('1',),{}), td(('0.500' … (truncated)
+
+```python
+class Img:
+    def __init__(self, data): self.data = data
+    def show(self, ax, title=None):
+        ax.imshow(self.data)
+        if title: ax.set_title(title)
+```
+
+```python
+for i in (mb := master_bar(range(5))):
+    imgs = [Img(np.random.rand(28,28)) for _ in range(6)]
+    mb.show_imgs(imgs, cols=3, imgsize=2)
+    time.sleep(0.2)
+```
+
+**Outputs:**
+<IPython.core.display.HTML object>
+div((),{})
+<Figure size 600x400 with 6 Axes>
+
+```python
+class Training:
+    def __init__(self): self.epoch, self.train_losses, self.valid_losses = 0, [], []
+
+    def step(self):
+        tl = 1.0/(self.epoch+1) + np.random.rand()*0.1
+        vl = 1.2/(self.epoch+1) + np.random.rand()*0.1
+        self.train_losses.append((self.epoch, tl))
+        self.valid_losses.append((self.epoch, vl))
+        self.epoch += 1
+    
+    @property
+    def graphs(self): return [list(zip(*self.train_losses)), list(zip(*self.valid_losses))]
+
+    @property
+    def stats(self):
+        return [str(self.epoch-1), f'{self.train_losses[-1][1]:.3f}', f'{self.valid_losses[-1][1]:.3f}']
+```
+
+```python
+trainer = Training()
+for i in (mb:=master_bar(range(5))):
+    mb.write(['epoch', 'train_loss', 'valid_loss'], table=True) if i==0 else None
+    trainer.step()
+    mb.update_graph(trainer.graphs, y_bounds=(0,1.5))
+    mb.write(trainer.stats, table=True)
+    time.sleep(0.3)
+```
+
+**Outputs:**
+<IPython.core.display.HTML object>
+div((table((thead((tr((th(('epoch',),{}), th(('train_loss',),{}), th(('valid_loss',),{})),{}),),{}), tbody((tr((td(('0',),{}), td(('1.023',),{}), td(('1.215',),{})),{}), tr((td(('1',),{}), td(('0.599' … (truncated)
+<Figure size 600x400 with 1 Axes>
+
+```python
+master_bar,progress_bar = force_console_behavior()
+```
+
+```python
+for i in progress_bar(range(50)): time.sleep(0.02)
+```
+
+**Outputs:**
+█
+ |----------------------------------------| 0.00% [0/50 00:00<?]
+ |----------------------------------------| 2.00% [1/50 00:00<00:04]
+ |█---------------------------------------| 4.00% [2/50 00:00<00:04]
+ |██--------------------------------------| 6.00% [3/50 00:00<00:04]
+ |███-------------------------------------| 8.00% [4/50 00:00<00:03]
+ |████------------------------------------| 10.00% [5/50 00:00<00:03]
+ |█████-----------------------------------| 14.00% [7/50 00:00<00:03]
+ |███████---------------------------------| 18.00% [9/50 00:00<00:03]
+ |████████--------------------------------| 22.00% [11/50 00:00<00:02]
+ |██████████------------------------------| 26.00% [13/50 00:00<00:02]
+ |████████████----------------------------| 30.00% [15/50 00:01<00:02]
+ |█████████████---------------------------| 34.00% [17/50 00:01<00:02]
+ |███████████████-------------------------| 38.00% [19/50 00:01<00:02]
+ |████████████████------------------------| 42.00% [21/50 00:01<00:01]
+ |██████████████████----------------------| 46.00% [23/50 00:01<00:01]
+ |████████████████████--------------------| 50.00% [25/50 00:01<00:01]
+ |█████████████████████-------------------| 54.00% [27/50 00:01<00:01]
+ |███████████████████████-----------------| 58.00% [29/50 00:01<00:01]
+ |████████████████████████----------------| 62.00% [31/50 00:02<00:01]
+ |██████████████████████████--------------| 66.00% [33/50 00:02<00:01]
+ |████████████████████████████------------| 70.00% [35/50 00:02<00:01]
+ |█████████████████████████████-----------| 74.00% [37/50 00:02<00:00]
+ |███████████████████████████████---------| 78.00% [39/50 00:02<00:00]
+ |█████████████████████████████████-------| 84.00% [42/50 00:02<00:00]
+ |███████████████████████████████████-----| 88.00% [44/50 00:02<00:00]
+ |████████████████████████████████████----| 92.00% [46/50 00:03<00:00]
+ |██████████████████████████████████████--| 96.00% [48/50 00:03<00:00]
+ |████████████████████████████████████████| 100.00% [50/50 00:03<00:00]
+
+```python
+for i in (mb := master_bar(range(5))):
+    for j in mb.progress(range(10)):
+        time.sleep(0.02)
+        mb.child.comment = f'second bar stat'
+    mb.main_bar.comment = f'first bar stat'
+    mb.write(f'Finished loop {i}.')
+```
+
+**Outputs:**
+█
+█
+Epoch 1/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 1/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████████████████████████------------| 70.00% [7/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |████████████████████████████████████----| 90.00% [9/10 00:00<00:00... second bar stat]
+Epoch 1/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 1/5 :                                                                                         
+Finished loop 0.
+█
+Epoch 2/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 2/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |████████████████████████████████--------| 80.00% [8/10 00:00<00:00... second bar stat]
+Epoch 2/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 2/5 :                                                                                         
+Finished loop 1.
+█
+Epoch 3/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 3/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |████████████████████████████████████----| 90.00% [9/10 00:00<00:00... second bar stat]
+Epoch 3/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 3/5 :                                                                                         
+Finished loop 2.
+█
+Epoch 4/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 4/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████████████████████████------------| 70.00% [7/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |████████████████████████████████████----| 90.00% [9/10 00:00<00:00... second bar stat]
+Epoch 4/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 4/5 :                                                                                         
+Finished loop 3.
+█
+Epoch 5/5 : |----------------------------------------| 0.00% [0/10 00:00<?]
+Epoch 5/5 : |████------------------------------------| 10.00% [1/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |████████--------------------------------| 20.00% [2/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |████████████----------------------------| 30.00% [3/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |████████████████------------------------| 40.00% [4/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |████████████████████--------------------| 50.00% [5/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |████████████████████████████████--------| 80.00% [8/10 00:00<00:00... second bar stat]
+Epoch 5/5 : |███████████████████████████████████████| 100.00% [10/10 00:00<00:00... second bar stat]
+Epoch 5/5 :                                                                                         
+Finished loop 4.
+
+
+```python
+for i in (mb := master_bar(range(5))):
+    imgs = [Img(np.random.rand(28,28)) for _ in range(6)]
+    for _ in mb.progress(range(8)): time.sleep(0.05)
+    mb.show_imgs(imgs, cols=3, imgsize=2)
+```
+
+**Outputs:**
+<IPython.core.display.HTML object>
+div((),{})
+<Figure size 600x400 with 6 Axes>
+
 ---
 
 ## Optional
 
 ### Release notes
 
-*Source: CHANGELOG.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/CHANGELOG.md*
+*Source: CHANGELOG.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/CHANGELOG.md*
 
 # Release notes
 
@@ -383,7 +1521,7 @@ Copyright 2017 onwards, fast.ai. Licensed under the Apache License, Version 2.0 
 
 ### How to contribute to fastprogress
 
-*Source: CONTRIBUTING.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/CONTRIBUTING.md*
+*Source: CONTRIBUTING.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/CONTRIBUTING.md*
 
 # How to contribute to fastprogress
 
@@ -407,7 +1545,7 @@ First, thanks a lot for wanting to help!
 
 ### Build and Release Instructions
 
-*Source: RELEASE.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/RELEASE.md*
+*Source: RELEASE.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/RELEASE.md*
 
 # Build and Release Instructions
 
@@ -624,13 +1762,13 @@ To build a Conda package and release it on [anaconda.org](https://anaconda.org/f
 
 ### fastprogress._nbdev
 
-*Source: fastprogress/_nbdev.py | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/fastprogress/_nbdev.py*
+*Source: fastprogress/_nbdev.py | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/fastprogress/_nbdev.py*
 
 - `custom_doc_links`
 
 ### fastprogress.core
 
-*Source: fastprogress/core.py | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/fastprogress/core.py*
+*Source: fastprogress/core.py | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/fastprogress/core.py*
 
 - `format_time`
 - `html_progress_bar`
@@ -640,7 +1778,7 @@ To build a Conda package and release it on [anaconda.org](https://anaconda.org/f
 
 ### docs.js.jekyll-search
 
-*Source: docs/js/jekyll-search.js | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/docs/js/jekyll-search.js*
+*Source: docs/js/jekyll-search.js | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/docs/js/jekyll-search.js*
 
 - `function s`
 - `function receivedResponse`
@@ -670,7 +1808,7 @@ To build a Conda package and release it on [anaconda.org](https://anaconda.org/f
 
 ### docs.js.jquery.ba-throttle-debounce.min
 
-*Source: docs/js/jquery.ba-throttle-debounce.min.js | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/docs/js/jquery.ba-throttle-debounce.min.js*
+*Source: docs/js/jquery.ba-throttle-debounce.min.js | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/docs/js/jquery.ba-throttle-debounce.min.js*
 
 - `function g`
 - `function l`
@@ -678,7 +1816,7 @@ To build a Conda package and release it on [anaconda.org](https://anaconda.org/f
 
 ### docs.js.jquery.shuffle.min
 
-*Source: docs/js/jquery.shuffle.min.js | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/docs/js/jquery.shuffle.min.js*
+*Source: docs/js/jquery.shuffle.min.js | URL: https://github.com/AnswerDotAI/fastprogress/blob/master/docs/js/jquery.shuffle.min.js*
 
 - `function z`
 - `function A`

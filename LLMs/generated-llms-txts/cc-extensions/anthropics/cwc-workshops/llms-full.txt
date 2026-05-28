@@ -1,8 +1,6 @@
 # cwc-workshops
 
-> {BLOCKQUOTE}
-
-{DESCRIPTION}
+> Anthropic の Code with Claude ワークショップ教材集。エージェント分解・eval 駆動開発・本番投入・記憶層追加など 8 テーマのハンズオン実装例を収録する。
 
 ---
 

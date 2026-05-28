@@ -1,12 +1,12 @@
 # FastHTML Example Apps
 
-> A curated collection of FastHTML example applications covering real-time features, AI integrations, authentication patterns, and interactive UI components — ideal for learning how to build modern Python web apps with HTMX.
-
-This repository contains 78 example modules demonstrating the breadth of FastHTML capabilities. Examples range from foundational patterns (hello world, echo, form handling) to real-time communication (WebSocket, SSE, chunked transfer), interactive games (Game of Life, Pictionary, chess), AI-powered chatbots, OAuth and passkey authentication, image classification, infinite scroll, a code editor, 3D card components, and deployment guides for PythonAnywhere. Each example is self-contained and serves as a practical reference for specific FastHTML features.
+> FastHTML フレームワークを使った実践的なサンプルアプリ集。チャットボット・チェスゲーム・OAuth・SSE・WebSocket など多彩なユースケースを、開発者がすぐに動かして学べる形で提供する。
 
 ## Guide
 
 - [Deploying a FastHTML site to PythonAnywhere](https://github.com/AnswerDotAI/fasthtml-example/blob/main/deploying-to-pythonanywhere.md): You can easily create and deploy FastHTML sites on PythonAnywhere; support for it is being continuously improved, and you'll find the latest instructions on this help page.
+- [Chess App](https://github.com/AnswerDotAI/fasthtml-example/blob/main/chess_app/chess_app.ipynb)
+- [Code Editor](https://github.com/AnswerDotAI/fasthtml-example/blob/main/code_editor/code_editor.ipynb): Outputs:
 
 ## Source Modules
 

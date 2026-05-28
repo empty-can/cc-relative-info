@@ -1,8 +1,6 @@
 # Cc Relative Info
 
-> {BLOCKQUOTE}
-
-{DESCRIPTION}
+> Claude Code の運用設定資産（Skill・Rule・Agent）を集約し、LLM 補助開発ワークフローを効率化するリポジトリ。`llms.txt` 収集・生成の仕組みも整備中。
 
 ---
 

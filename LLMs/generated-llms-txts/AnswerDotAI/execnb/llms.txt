@@ -1,6 +1,16 @@
 # execnb
 
-> execnb provides a lightweight IPython kernel wrapper (`CaptureShell`) that lets developers execute Jupyter notebook cells programmatically and capture their outputs — enabling CI pipelines, doc generators, and notebook-based tools to run notebooks without a full Jupyter server.
+> Jupyter ノートブックをサーバーなしで高速実行したい開発者・CI/CD 環境向けに、IPython の CaptureShell をベースとした軽量な実行エンジンを提供するライブラリ。
+
+## Guide
+
+- [shell](https://github.com/AnswerDotAI/execnb/blob/main/nbs/00_shell.ipynb): A shell for running notebook code without a notebook server
+- [execnb](https://github.com/AnswerDotAI/execnb/blob/main/nbs/index.ipynb): Execute a jupyter notebook, fast, without needing jupyter
+- [Clean](https://github.com/AnswerDotAI/execnb/blob/main/tests/clean.ipynb)
+- [Error](https://github.com/AnswerDotAI/execnb/blob/main/tests/error.ipynb)
+- [Minimal](https://github.com/AnswerDotAI/execnb/blob/main/tests/minimal.ipynb)
+- [Params](https://github.com/AnswerDotAI/execnb/blob/main/tests/params.ipynb)
+- [Ran](https://github.com/AnswerDotAI/execnb/blob/main/tests/ran.ipynb)
 
 ## Optional
 

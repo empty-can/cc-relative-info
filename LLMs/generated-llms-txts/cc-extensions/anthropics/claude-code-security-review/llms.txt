@@ -1,8 +1,6 @@
 # Claude Code Security Reviewer
 
-> {BLOCKQUOTE}
-
-{DESCRIPTION}
+> Claude Code を使って GitHub PR の差分をセキュリティ審査し、SAST 検出結果のフォルスポジティブをフィルタリングする GitHub Actions 向け Python ツール。CC 拡張（Skill/Rule/Agent）は含まない。
 
 ## Source Modules
 

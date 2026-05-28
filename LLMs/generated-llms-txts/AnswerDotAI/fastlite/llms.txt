@@ -1,6 +1,14 @@
 # fastlite
 
-> fastlite は Python 開発者向けの SQLite ラッパーライブラリで、データクラスやキーワード引数を活用した直感的な API により、SQLite データベースの CRUD 操作・スキーマ管理・型安全なクエリを簡潔に記述できるようにする。
+> SQLite を Python から扱う開発者向けに、テーブル・カラムのオートコンプリートや dataclass との統合など快適な操作性を薄いラッパーで提供するライブラリ。
+
+## Guide
+
+- [Source](https://github.com/AnswerDotAI/fastlite/blob/main/nbs/00_core.ipynb): Source code for fastlite
+- [fastlite](https://github.com/AnswerDotAI/fastlite/blob/main/nbs/index.ipynb): A bit of extra usability for sqlite
+- [Test Insert Operations](https://github.com/AnswerDotAI/fastlite/blob/main/nbs/test_insert.ipynb): Note: Make sure to use fastlite's database() here
+- [Test Update Operations](https://github.com/AnswerDotAI/fastlite/blob/main/nbs/test_update.ipynb): Note: Make sure to use fastlite's database() here
+- [Test Upsert Operations](https://github.com/AnswerDotAI/fastlite/blob/main/nbs/test_upsert.ipynb): Note: Make sure to use fastlite's database() here
 
 ## Optional
 

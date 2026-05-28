@@ -1,5 +1,3 @@
 # The unreasonable effectiveness of HTML — examples
 
-> {BLOCKQUOTE}
-
-{DESCRIPTION}
+> HTML を AI の柔軟な出力フォーマットとして活用するブログ記事に付随するサンプル集。コードレビュー・スライドデッキ・インタラクティブエディタなど多用途のスタンドアロン HTML ファイル群をビルド不要で提供する。

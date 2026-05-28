@@ -1,8 +1,6 @@
 # Long-Horizon Coding Agent Demo
 
-> {BLOCKQUOTE}
-
-{DESCRIPTION}
+> AWS re:Invent 2025 向けに公開されたデモリポジトリ。GitHub Issue を受け取り AWS Bedrock AgentCore 上の Claude Agent がフルスタックアプリを自律的にビルド・デプロイするエンドツーエンドパイプラインの参照実装。
 
 ---
 

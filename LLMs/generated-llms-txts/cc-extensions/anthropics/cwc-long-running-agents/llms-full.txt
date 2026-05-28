@@ -1,5 +1,3 @@
 # Harness Primitives for Long-Running Claude Agents
 
-> {BLOCKQUOTE}
-
-{DESCRIPTION}
+> 長期実行エージェント向けのハーネス部品として、4 種のフック（kill-switch / steer / verify-gate / commit-on-stop）と 1 つの evaluator サブエージェントを提供する Claude Code 設定サンプル。

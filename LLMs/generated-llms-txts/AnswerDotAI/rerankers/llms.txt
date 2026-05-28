@@ -1,8 +1,16 @@
 # rerankers
 
-> A lightweight, unified Python API for reranking models — from cross-encoders and ColBERT to LLM-based rankers and multi-modal VLMs — enabling seamless integration of state-of-the-art reranking into any retrieval pipeline.
+> 検索パイプラインを構築する開発者向けに、クロスエンコーダー・ColBERT・LLM ベース・API 呼び出し型など多様なリランカーを統一インターフェースで差し替え可能にする Python ライブラリ。
 
-`rerankers` unifies cross-encoder, ColBERT/late-interaction, FlashRank, RankGPT, RankLLM, MonoVLM, MxBai, and API-based rerankers (Cohere, Jina, Pinecone, etc.) behind a single `Reranker` interface. The core package ships dependency-free; extras are installed only for the backends you need.
+## Guide
+
+- [Langchain Integration](https://github.com/AnswerDotAI/rerankers/blob/main/examples/langchain_integration.ipynb)
+- [Hello there.](https://github.com/AnswerDotAI/rerankers/blob/main/examples/overview.ipynb): _Version 0.3 of this notebook.
+- [Introduction: The models have eyes: reranking goes multi-modal!](https://github.com/AnswerDotAI/rerankers/blob/main/examples/reranker_images.ipynb): Welcome to this short introductory notebook!
+- [Test Colbert](https://github.com/AnswerDotAI/rerankers/blob/main/tests/consistency_notebooks/test_colbert.ipynb)
+- [Test Crossenc](https://github.com/AnswerDotAI/rerankers/blob/main/tests/consistency_notebooks/test_crossenc.ipynb)
+- [Test Inranker](https://github.com/AnswerDotAI/rerankers/blob/main/tests/consistency_notebooks/test_inranker.ipynb)
+- [Test T5](https://github.com/AnswerDotAI/rerankers/blob/main/tests/consistency_notebooks/test_t5.ipynb)
 
 ## Source Modules
 

@@ -1,8 +1,12 @@
 # ShellSage
 
-> ShellSage is an AI-powered command-line assistant that helps developers and shell users get instant, context-aware answers and execute shell commands — leveraging the current terminal session history, file system, and web search as live context.
+> シェルコマンドとシステム管理を学びたいユーザー向けに、LLM を活用したコマンドライン教育アシスタント ssage を CLI で提供するツール。
 
-A Python CLI tool (`ssage`) built on top of the Claude/LLM API via the `lisette` library, providing an interactive REPL and single-shot query modes with optional tool-use permissions and reasoning support.
+## Guide
+
+- [Core](https://github.com/AnswerDotAI/shell_sage/blob/main/nbs/00_core.ipynb): Jupyter does work with rich.live.Live, this fixes it.
+- [Configuration](https://github.com/AnswerDotAI/shell_sage/blob/main/nbs/01_config.ipynb): Outputs: Path('/Users/keremturgutlu/.config/shell_sage/shell_sage.conf')
+- [ShellSage](https://github.com/AnswerDotAI/shell_sage/blob/main/nbs/index.ipynb): ShellSage saves sysadmins' sanity by solving shell script snafus super swiftly
 
 ## Optional
 
