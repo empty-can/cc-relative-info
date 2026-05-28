@@ -15,6 +15,17 @@ from pathlib import Path
 _SCRIPT_DIR = Path(__file__).resolve().parent          # gen-llms-txt/
 _REPO_ROOT = _SCRIPT_DIR.parent.parent.parent          # cc-relative-info/
 _DEFAULT_OUTPUT_BASE = _REPO_ROOT / 'LLMs' / 'work' / 'gen-out'
+# Error logs mirror the gen-out tree under a sibling gen-error/ directory.
+_DEFAULT_ERROR_BASE = _REPO_ROOT / 'LLMs' / 'work' / 'gen-error'
+
+# Generation warnings collected during a run, flushed to the error log at the end.
+_WARNINGS: list[str] = []
+
+
+def _warn(msg: str) -> None:
+    """Print a warning to stderr and record it for the error log."""
+    _WARNINGS.append(msg)
+    print(f'WARNING: {msg}', file=sys.stderr)
 
 
 def _infer_output_dir(base_url: str, repo_path: Path, cc_extensions: bool = False) -> Path:
@@ -53,7 +64,7 @@ SECTION_RULES = [
     (['changelog', 'release', 'faq', 'contributing', 'license', 'security', 'migration'], 'Optional'),
 ]
 SECTION_ORDER = ['Getting Started', 'Guide', 'API Reference', 'Optional']
-DOC_EXTENSIONS = ('.md', '.mdx', '.rst')
+DOC_EXTENSIONS = ('.md', '.mdx', '.rst', '.adoc', '.asciidoc', '.ipynb')
 SOURCE_EXTENSIONS = (
     '.py', '.ts', '.tsx', '.js', '.jsx',
     '.go', '.rs', '.java', '.kt', '.swift', '.cs', '.rb', '.php', '.lua',
@@ -190,6 +201,36 @@ def _try_rst_h1(
     return None
 
 
+def _try_asciidoc_h1(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    """Return the AsciiDoc level-0 document title (a line starting with '= ')."""
+    for line in lines[fm_end:fm_end + H1_SEARCH_WINDOW]:
+        stripped = line.strip()
+        if stripped.startswith('= '):
+            return stripped[2:].strip()
+    return None
+
+
+def _try_notebook_h1(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    """First Markdown H1 in a converted notebook, ignoring '#' inside code blocks.
+
+    Notebooks often place export/import code cells before the title cell, so the
+    document H1 can appear well past the usual head window.
+    """
+    in_code = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('```'):
+            in_code = not in_code
+            continue
+        if not in_code and stripped.startswith('# ') and not stripped.startswith('## '):
+            return stripped[2:].strip()
+    return None
+
+
 def _try_filename_title(
     file_path: Path, content: str, lines: list[str], fm_end: int
 ) -> str | None:
@@ -202,6 +243,9 @@ _TITLE_EXTRACTORS: dict[str, list] = {
     '.md':  [_try_frontmatter_title, _try_frontmatter_name, _try_head_h1, _try_filename_title],
     '.mdx': [_try_frontmatter_title, _try_head_h1,  _try_filename_title],
     '.rst': [_try_rst_h1,            _try_filename_title],
+    '.adoc':     [_try_asciidoc_h1, _try_filename_title],
+    '.asciidoc': [_try_asciidoc_h1, _try_filename_title],
+    '.ipynb':    [_try_notebook_h1, _try_filename_title],
 }
 _DEFAULT_TITLE_EXTRACTORS = [_try_head_h1, _try_filename_title]
 
@@ -292,12 +336,109 @@ def _try_body_first_sentence(
     return (text[:150] + '…').strip() if len(text) > 150 else text.strip()
 
 
+def _clean_asciidoc_prose(text: str) -> str:
+    """Strip common AsciiDoc inline formatting from a prose string."""
+    text = re.sub(r'(?:link|xref):[^\[\]\s]*\[([^\]]*)\]', r'\1', text)  # link:url[text]
+    text = re.sub(r'https?://\S*?\[([^\]]*)\]', r'\1', text)             # https://url[text]
+    text = re.sub(r'`(.+?)`', r'\1', text)
+    text = re.sub(r'\*(.+?)\*', r'\1', text)
+    text = re.sub(r'_(.+?)_', r'\1', text)
+    return text
+
+
+def _try_asciidoc_first_sentence(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    """First prose sentence in an AsciiDoc file, skipping headings/attributes/macros."""
+    paragraph: list[str] = []
+    for raw in lines[fm_end:]:
+        stripped = raw.strip()
+        if not stripped:
+            if paragraph:
+                break
+            continue
+        if (stripped.startswith('=')          # doc title or section heading
+                or stripped.startswith(':')   # attribute entry
+                or stripped.startswith('//')  # comment
+                or stripped.startswith('[')   # block attribute / anchor
+                or stripped.startswith('*')   # list item / nav
+                or stripped.startswith('.')   # block title / ordered list
+                or stripped.startswith('|')   # table cell
+                or stripped.startswith('image:')
+                or stripped.startswith('xref:')
+                or stripped.startswith('include::')  # transclusion directive
+                or re.match(r'^[-=~^*_.+]{3,}$', stripped)):  # block delimiter
+            if paragraph:
+                break
+            continue
+        paragraph.append(stripped)
+
+    if not paragraph:
+        return None
+
+    text = _clean_asciidoc_prose(' '.join(paragraph))
+    m = re.match(r'(.+?[.!?])(?:\s|$)', text)
+    if m:
+        return m.group(1).strip()
+    return (text[:150] + '…').strip() if len(text) > 150 else text.strip()
+
+
+def _try_notebook_desc(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    """Description for a converted notebook.
+
+    Prefers the nbdev-style '> summary' blockquote right after the title; falls
+    back to the first prose sentence. '#' inside code blocks is ignored.
+    """
+    seen_h1 = False
+    in_code = False
+    paragraph: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('```'):
+            in_code = not in_code
+            if paragraph:
+                break
+            continue
+        if in_code:
+            continue
+        if not seen_h1:
+            if stripped.startswith('# ') and not stripped.startswith('## '):
+                seen_h1 = True
+            continue
+        if stripped.startswith('> '):
+            return _clean_prose(stripped[2:].strip())
+        if not stripped:
+            if paragraph:
+                break
+            continue
+        if (stripped.startswith('#')
+                or stripped.startswith('- ') or stripped.startswith('* ')
+                or _is_non_prose(stripped)):
+            if paragraph:
+                break
+            continue
+        paragraph.append(stripped)
+
+    if not paragraph:
+        return None
+    text = _clean_prose(' '.join(paragraph))
+    m = re.match(r'(.+?[.!?])(?:\s|$)', text)
+    if m:
+        return m.group(1).strip()
+    return (text[:150] + '…').strip() if len(text) > 150 else text.strip()
+
+
 # Extension → ordered description extractors
 # Add '.rst': [...] or other extensions here to extend support.
 _DESC_EXTRACTORS: dict[str, list] = {
     '.md':  [_try_frontmatter_desc, _try_body_first_sentence],
     '.mdx': [_try_frontmatter_desc, _try_body_first_sentence],
     '.rst': [],  # rst body extraction not implemented; add _try_* here to enable
+    '.adoc':     [_try_asciidoc_first_sentence],
+    '.asciidoc': [_try_asciidoc_first_sentence],
+    '.ipynb':    [_try_notebook_desc],
 }
 _DEFAULT_DESC_EXTRACTORS: list = []
 
@@ -351,6 +492,81 @@ def _is_skipped(rel_parts: tuple[str, ...]) -> bool:
     return any(p in SKIP_DIRS or p.startswith('.') for p in rel_parts)
 
 
+# Antora navigation files are pure menus (xref link lists) with no prose content.
+_DOC_NOISE_NAMES = {'nav.adoc', 'local-nav.adoc'}
+
+
+def _is_noise_doc(f: Path) -> bool:
+    """Skip navigation-only docs that carry no standalone prose."""
+    return f.name.lower() in _DOC_NOISE_NAMES
+
+
+_NBFORMAT = None  # cached nbformat module; False once an import attempt has failed
+
+
+def _get_nbformat():
+    """Lazily import nbformat, warning once if it is unavailable."""
+    global _NBFORMAT
+    if _NBFORMAT is None:
+        try:
+            import nbformat
+            _NBFORMAT = nbformat
+        except ImportError:
+            _NBFORMAT = False
+            _warn('nbformat not installed — .ipynb files skipped. Install: pip install nbformat')
+    return _NBFORMAT or None
+
+
+def _render_notebook(path: Path) -> str | None:
+    """Convert a Jupyter notebook to Markdown for indexing.
+
+    Markdown cells verbatim, code cells in fenced blocks, short text outputs.
+    Logic mirrors AnswerDotAI nbs2ctx (render_notebook_to_markdown); reimplemented
+    here so .ipynb support needs no extra runtime dependency beyond nbformat.
+    """
+    nbformat = _get_nbformat()
+    if not nbformat:
+        return None
+    try:
+        nb = nbformat.read(str(path), as_version=4)
+    except Exception:
+        return None
+    language = nb.metadata.get('kernelspec', {}).get('language', 'python')
+    parts: list[str] = []
+    for cell in nb.cells:
+        if cell.cell_type == 'markdown':
+            parts.append(''.join(cell.source))
+        elif cell.cell_type == 'code':
+            code = ''.join(cell.source)
+            if not code.strip():
+                continue
+            parts.append(f'```{language}\n{code}\n```')
+            outputs: list[str] = []
+            for output in cell.get('outputs', []):
+                otype = output.get('output_type')
+                if otype == 'stream':
+                    text = ''.join(output.get('text', ''))
+                elif otype in ('execute_result', 'display_data'):
+                    text = ''.join(output.get('data', {}).get('text/plain', ''))
+                else:
+                    continue
+                if text:
+                    outputs.append(text[:200] + (' … (truncated)' if len(text) > 200 else ''))
+            if outputs:
+                parts.append('**Outputs:**\n' + '\n'.join(outputs))
+    return '\n\n'.join(parts)
+
+
+def _read_doc_content(f: Path) -> str | None:
+    """Read a doc file as text, converting notebooks to Markdown."""
+    if f.suffix == '.ipynb':
+        return _render_notebook(f)
+    try:
+        return f.read_text(encoding='utf-8', errors='replace')
+    except OSError:
+        return None
+
+
 def collect_doc_sections(repo_path: Path) -> list[tuple[str, list[tuple[Path, str]]]]:
     """Return [(section_name, [(file_path, content)])] ordered by SECTION_ORDER."""
     buckets: dict[str, list[tuple[Path, str]]] = {s: [] for s in SECTION_ORDER}
@@ -360,14 +576,13 @@ def collect_doc_sections(repo_path: Path) -> list[tuple[str, list[tuple[Path, st
             rel = f.relative_to(repo_path)
             if _is_skipped(rel.parts[:-1]):
                 continue
+            if _is_noise_doc(f):
+                continue
             section = classify_section(f, repo_path)
             if section is None:
                 continue
-            try:
-                content = f.read_text(encoding='utf-8', errors='replace')
-            except OSError:
-                continue
-            if content.strip():
+            content = _read_doc_content(f)
+            if content and content.strip():
                 buckets[section].append((f, content))
 
     return [(s, buckets[s]) for s in SECTION_ORDER if buckets[s]]
@@ -445,9 +660,8 @@ def collect_cc_sections(repo_path: Path) -> list[tuple[str, list[tuple[Path, str
     _scan_cc_base(repo_path / '.claude', buckets)
 
     if not any(buckets.values()):
-        print('WARNING: No CC extension files found '
-              '(checked skills/, .claude/skills/, rules/, .claude/rules/)',
-              file=sys.stderr)
+        _warn('No CC extension files found '
+              '(checked skills/, .claude/skills/, rules/, .claude/rules/)')
 
     return [(s, buckets[s]) for s in CC_SECTION_ORDER if buckets[s]]
 
@@ -504,7 +718,7 @@ def collect_source_sections(
     try:
         from codesigs import file_sigs
     except ImportError:
-        print('WARNING: codesigs not installed — skipping --extract-sigs.', file=sys.stderr)
+        _warn('codesigs not installed — skipping --extract-sigs.')
         return []
 
     SOURCE_SKIP_DIRS = {'tests', 'test', 'spec', '__tests__', 'e2e'}
@@ -557,11 +771,11 @@ def generate(
         sections = collect_cc_sections(repo_path)
         src_secs = collect_source_sections(repo_path, base_url)  # always enabled in CC mode
         if not sections:
-            print('WARNING: No .claude/ files found.', file=sys.stderr)
+            _warn('No .claude/ files found.')
     else:
         sections = collect_doc_sections(repo_path)
         if not sections:
-            print('WARNING: No documentation files found.', file=sys.stderr)
+            _warn('No documentation files found.')
         src_secs = collect_source_sections(repo_path, base_url) if extract_sigs else []
 
     _write_llms_full(project_name, sections, src_secs, base_url, repo_path, output_dir)
@@ -653,6 +867,50 @@ def _write_llms_txt(
 
 
 # ---------------------------------------------------------------------------
+# Error log (mirrored under gen-error/, sibling of gen-out/)
+# ---------------------------------------------------------------------------
+
+def _error_log_dir(output_dir: Path) -> Path:
+    """Mirror output_dir under the gen-error tree so logs never collide with output."""
+    try:
+        rel = output_dir.relative_to(_DEFAULT_OUTPUT_BASE)
+        return _DEFAULT_ERROR_BASE / rel
+    except ValueError:
+        # Custom --output not under the default gen-out base.
+        parts = list(output_dir.parts)
+        if 'gen-out' in parts:
+            parts[parts.index('gen-out')] = 'gen-error'
+            return Path(*parts)
+        # Last resort: a gen-error sibling next to the output directory.
+        return output_dir.parent / 'gen-error' / output_dir.name
+
+
+def _write_error_log(output_dir: Path, *, cc_extensions: bool, extract_sigs: bool) -> None:
+    """Flush collected warnings to error-log.md under the gen-error tree."""
+    error_dir = _error_log_dir(output_dir)
+    error_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        target_id = output_dir.relative_to(_DEFAULT_OUTPUT_BASE).as_posix()
+    except ValueError:
+        target_id = output_dir.name
+    lines = [
+        f'# Error Log: {target_id}',
+        f'CC_EXTENSIONS={str(cc_extensions).lower()}',
+        f'EXTRACT_SIGS={str(extract_sigs).lower()}',
+        '',
+    ]
+    if _WARNINGS:
+        lines += [f'## Result: completed with {len(_WARNINGS)} warning(s)', '', '## Warnings']
+        lines += [f'- {w}' for w in _WARNINGS]
+    else:
+        lines += ['## Result: SUCCESS (no warnings)', '',
+                  'No errors encountered. Generation completed successfully.']
+    lines.append('')
+    (error_dir / 'error-log.md').write_text('\n'.join(lines), encoding='utf-8')
+    print(f'Error log: {error_dir / "error-log.md"}')
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
@@ -702,6 +960,9 @@ def main() -> None:
 
     generate(repo_path, args.base_url, output_dir,
              extract_sigs=args.extract_sigs, cc_extensions=args.cc_extensions)
+
+    _write_error_log(output_dir, cc_extensions=args.cc_extensions,
+                     extract_sigs=args.extract_sigs)
 
 
 if __name__ == '__main__':

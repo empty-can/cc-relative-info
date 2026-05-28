@@ -135,7 +135,9 @@ https://github.com/AnswerDotAI/markdown_merge --extract-sigs
 https://github.com/spring-projects/spring-boot --extract-sigs
 https://github.com/spring-projects/spring-framework --extract-sigs
 
+## Gradle 
 
+https://github.com/gradle/gradle --extract-sigs
 
 
 # ══════════════════════════════════════════════════════
