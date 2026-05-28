@@ -1,0 +1,12 @@
+# fastlite
+
+> fastlite は Python 開発者向けの SQLite ラッパーライブラリで、データクラスやキーワード引数を活用した直感的な API により、SQLite データベースの CRUD 操作・スキーマ管理・型安全なクエリを簡潔に記述できるようにする。
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/fastlite/blob/main/CHANGELOG.md): - Fix KeyError in insert when ignore=True and duplicate key exists (#78), thanks to @dienhoa
+
+## Source Modules
+
+- [fastlite.core](https://github.com/AnswerDotAI/fastlite/blob/main/fastlite/core.py)
+- [fastlite.kw](https://github.com/AnswerDotAI/fastlite/blob/main/fastlite/kw.py)

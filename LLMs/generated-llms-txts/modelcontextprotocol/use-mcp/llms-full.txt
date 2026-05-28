@@ -1,0 +1,417 @@
+# 🦑 use-mcp 🦑
+
+> use-mcp is a React library that provides the `useMcp` hook, enabling web applications to connect to Model Context Protocol (MCP) servers with built-in browser-side OAuth authentication and seamless tool integration.
+
+A TypeScript/React package from the Model Context Protocol organization that abstracts MCP server connectivity—including OAuth PKCE flows, multi-server management, and tool discovery—so front-end developers can add AI tool-calling capabilities to any React app with minimal boilerplate.
+
+---
+
+## Guide
+
+### use-mcp Project Guidelines
+
+*Source: AGENT.md | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/AGENT.md*
+
+# use-mcp Project Guidelines
+
+## Build, Lint, and Test Commands
+- `pnpm dev`: Run development build with watch mode and start all examples/servers
+  - Chat UI: http://localhost:5002
+  - Inspector: http://localhost:5001
+  - Hono MCP Server: http://localhost:5101
+  - CF Agents MCP Server: http://localhost:5102
+- `pnpm build`: Build the project
+- `pnpm check`: Run prettier checks and TypeScript type checking
+
+### Integration Tests (in /test directory)
+- `cd test && pnpm test`: Run integration tests headlessly (default)
+- `cd test && pnpm test:headed`: Run integration tests with visible browser
+- `cd test && pnpm test:headless`: Run integration tests headlessly 
+- `cd test && pnpm test:watch`: Run integration tests in watch mode
+- `cd test && pnpm test:ui`: Run integration tests with interactive UI
+
+## Code Style Guidelines
+
+### Imports
+- Use explicit .js extensions in imports (ES modules style)
+- Group imports: SDK imports first, followed by React/external deps, then local imports
+
+### Formatting
+- Single quotes for strings
+- No semicolons at line ends
+- 140 character line width
+- Use 2 space indentation
+
+### Types and Naming
+- Strong typing with TypeScript
+- Descriptive interface names with camelCase for variables/functions and PascalCase for types
+- Comprehensive JSDoc comments for public API functions and types
+
+### Error Handling
+- Use assertions with descriptive messages
+- Log errors with appropriate levels (debug, info, warn, error)
+- Defensive error handling with specific error types when available
+
+## Development Workflow
+- **Commit changes frequently** after each logical change or debugging step
+- Use descriptive commit messages that explain what was changed and why
+
+### React Patterns
+- Use React hooks with useRef for mutable values
+- Stable callbacks with useCallback and appropriate dependencies
+
+### AI Chat Template - Development Guide
+
+*Source: examples/chat-ui/AGENT.md | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/AGENT.md*
+
+# AI Chat Template - Development Guide
+
+## Commands
+- **Dev server**: `pnpm dev`
+- **Build**: `pnpm build` (runs TypeScript compilation then Vite build)
+- **Lint**: `pnpm lint` (ESLint)
+- **Deploy**: `pnpm deploy` (builds and deploys with Wrangler)
+- **Test**: `pnpm test` (Playwright E2E tests)
+- **Test UI**: `pnpm test:ui` (Playwright test runner with UI)
+- **Test headed**: `pnpm test:headed` (Run tests in visible browser)
+
+## Code Style
+- **Formatting**: Prettier with 2-space tabs, single quotes, no semicolons, 140 char line width
+- **Imports**: Use `.tsx`/`.ts` extensions in imports, group by external/internal
+- **Components**: React FC with explicit typing, PascalCase names
+- **Hooks**: Custom hooks start with `use`, camelCase
+- **Types**: Define interfaces in `src/types/index.ts`, use `type` for unions
+- **Files**: Use PascalCase for components, camelCase for hooks/utilities
+- **State**: Use proper TypeScript typing for all state variables
+- **Error handling**: Use try/catch blocks with proper error propagation
+- **Database**: IndexedDB with typed interfaces, async/await pattern
+- **Styling**: Tailwind CSS classes, responsive design patterns
+
+## Tech Stack
+React 19, TypeScript, Vite, Tailwind CSS, Hono API, Cloudflare Workers, IndexedDB, React Router, use-mcp
+
+## Chat UI Specific Guidelines
+
+### Background Animation
+- Use CSS `hue-rotate` filter for color cycling (more performant than gradient animation)
+- Isolate animations to `::before` pseudo-elements with `z-index: -1` to prevent inheritance
+- Use `background-size: 100% 100vh` and `background-repeat: repeat-y` for repeating patterns
+- Initialize with random animation delay using CSS custom properties
+
+### Modal Patterns
+- Use `rgba(0,0,0,0.8)` for modal backdrops (avoid gradients that cause banding)
+- Implement click-outside-to-dismiss with `onClick` on backdrop and `stopPropagation` on content
+- Add `cursor-pointer` to all clickable elements including close buttons
+- Use `document.body.style.overflow = 'hidden'` to prevent background scrolling
+
+### MCP Server Management
+- Store multiple servers in localStorage as JSON array (`mcpServers`)
+- Track tool counts separately (`mcpServerToolCounts`) for disabled servers
+- Use server-specific IDs for state management
+- Each MCP server gets unique `useMcp` hook instance for proper isolation
+- OAuth state parameter automatically handles multiple server differentiation
+
+### State Persistence
+- Use localStorage for user preferences (model selection, server configurations)
+- Use sessionStorage for temporary state (single server URL in legacy components)
+- Clear related data when removing servers or models
+
+### UI Indicators
+- Use emoji-based indicators (🧠 for models, 🔌 for MCP servers)
+- Format counts as `enabled/total` (e.g., "1/2 servers, 3/5 tools")
+- Place model selector on left, MCP servers on right for balance
+- Show "none" instead of red symbols for cleaner unconfigured states
+
+### Component Organization
+- Keep disabled components in React tree but hidden with CSS (`{false && ...}`)
+- This prevents MCP connections from being destroyed when modals close
+- Use conditional rendering sparingly, prefer CSS visibility for stateful components
+
+### Routing and OAuth
+- Use React Router for OAuth callback routes (`/oauth/callback`)
+- OAuth callback should match main app styling with loading indicators
+- use-mcp library handles multiple server OAuth flows automatically via state parameters
+
+### Performance Considerations
+- Avoid animating gradients directly (causes repainting)
+- Use transform and filter animations (hardware accelerated)
+- Aggregate tools from multiple sources efficiently
+- Minimize localStorage reads in render loops
+
+### Model Selector Guide
+
+*Source: examples/chat-ui/MODEL_SELECTOR_GUIDE.md | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/MODEL_SELECTOR_GUIDE.md*
+
+# Model Selector Guide
+
+This guide explains how to use the new favorites-based model selector system.
+
+## Overview
+
+The chat UI now supports:
+- **39 models** from 3 providers (Anthropic, Groq, OpenRouter)
+- **Favorites system** - star your preferred models
+- **Search functionality** - find models by name or provider
+- **Tool filtering** - show only models that support tool calling
+- **OAuth authentication** - seamless OpenRouter integration
+
+## Features
+
+### Model Selection
+- Click the model selector to view all available models
+- Models are loaded from the live models.dev API
+- Each model shows provider logo, name, and capabilities
+
+### Favorites System
+- ⭐ Star models to add them to your favorites
+- Starred models are saved to local storage
+- Use the "Favorites" filter to show only starred models
+
+### Search & Filtering
+- 🔍 Search box to find models by name or provider
+- 🔧 "Tools Only" filter (appears when MCP tools are available)
+- ⭐ "Favorites" filter to show only starred models
+
+### Authentication
+- **API Keys**: Enter manually for Anthropic and Groq
+- **OAuth**: One-click authentication for OpenRouter
+- Authentication status shown with icons (✓ or ⚠️)
+
+## Provider Support
+
+### Anthropic
+- **Models**: 9 models including Claude 4 Sonnet
+- **Auth**: API key (requires manual entry)
+- **Tools**: All models support tool calling
+
+### Groq
+- **Models**: 13 models including Llama and Qwen variants
+- **Auth**: API key (requires manual entry)
+- **Tools**: 11 models support tool calling
+
+### OpenRouter
+- **Models**: 17 models from various providers
+- **Auth**: OAuth PKCE flow (one-click authentication)
+- **Tools**: All models support tool calling
+
+## Setting Up OpenRouter OAuth
+
+1. Create an OpenRouter account at https://openrouter.ai
+2. Go to your dashboard and create an OAuth app
+3. Set the redirect URI to: `http://localhost:5002/oauth/openrouter/callback`
+4. Copy your client ID to your `.env` file:
+   ```
+   VITE_OPENROUTER_CLIENT_ID=your_client_id_here
+   ```
+
+## Usage Tips
+
+1. **Star your favorites** - This makes model selection much faster
+2. **Use search** - With 39 models, search helps find what you need
+3. **Filter by tools** - When using MCP tools, enable "Tools Only" filter
+4. **Try different providers** - Each has unique models with different strengths
+
+## Model Data Updates
+
+Model data is fetched from models.dev API and can be updated with:
+
+```bash
+pnpm update-models
+```
+
+This will refresh the model list with the latest information from the API.
+
+## Local Storage
+
+The following preferences are saved locally:
+- **Favorites**: `aiChatTemplate_favorites_v1`
+- **Tokens**: `aiChatTemplate_token_[provider]`
+- **Selected Model**: `aiChatTemplate_selectedModel`
+
+## Troubleshooting
+
+- **OAuth popup blocked**: Allow popups for this site
+- **Authentication failed**: Check your API keys or re-authenticate
+- **Model not working**: Verify the model supports the features you're using
+- **Tools not showing**: Enable "Tools Only" filter when MCP tools are configured
+
+### AI Chat Template - Development Guide
+
+*Source: examples/inspector/AGENT.md | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/inspector/AGENT.md*
+
+# AI Chat Template - Development Guide
+
+## Commands
+- **Dev server**: `pnpm dev`
+- **Build**: `pnpm build` (runs TypeScript compilation then Vite build)
+- **Lint**: `pnpm lint` (ESLint)
+- **Deploy**: `pnpm deploy` (builds and deploys with Wrangler)
+- **Test**: `pnpm test` (Playwright E2E tests)
+- **Test UI**: `pnpm test:ui` (Playwright test runner with UI)
+- **Test headed**: `pnpm test:headed` (Run tests in visible browser)
+
+## Code Style
+- **Formatting**: Prettier with 2-space tabs, single quotes, no semicolons, 140 char line width
+- **Imports**: Use `.tsx`/`.ts` extensions in imports, group by external/internal
+- **Components**: React FC with explicit typing, PascalCase names
+- **Hooks**: Custom hooks start with `use`, camelCase
+- **Types**: Define interfaces in `src/types/index.ts`, use `type` for unions
+- **Files**: Use PascalCase for components, camelCase for hooks/utilities
+- **State**: Use proper TypeScript typing for all state variables
+- **Error handling**: Use try/catch blocks with proper error propagation
+- **Database**: IndexedDB with typed interfaces, async/await pattern
+- **Styling**: Tailwind CSS classes, responsive design patterns
+
+## Tech Stack
+React 19, TypeScript, Vite, Tailwind CSS, Hono API, Cloudflare Workers, IndexedDB
+
+---
+
+## Source Modules
+
+### examples.chat-ui.api.index
+
+*Source: examples/chat-ui/api/index.ts | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/api/index.ts*
+
+- `transform`
+
+### examples.chat-ui.src.hooks.useIndexedDB
+
+*Source: examples/chat-ui/src/hooks/useIndexedDB.ts | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/hooks/useIndexedDB.ts*
+
+- `function useIndexedDB`
+- `upgrade`
+
+### examples.chat-ui.src.hooks.useModels
+
+*Source: examples/chat-ui/src/hooks/useModels.ts | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/hooks/useModels.ts*
+
+- `function useModels`
+
+### examples.chat-ui.src.hooks.useTheme
+
+*Source: examples/chat-ui/src/hooks/useTheme.ts | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/hooks/useTheme.ts*
+
+- `function useTheme`
+
+### examples.chat-ui.src.utils.auth
+
+*Source: examples/chat-ui/src/utils/auth.ts | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/utils/auth.ts*
+
+- `function generateCodeVerifier`
+- `function generateCodeChallenge`
+- `function hasApiKey`
+- `function getApiKey`
+- `function setApiKey`
+- `function clearApiKey`
+- `function hasOAuthToken`
+- `function getOAuthToken`
+- `function setOAuthToken`
+- `function clearOAuthToken`
+- `function beginOAuthFlow`
+- `function completeOAuthFlow`
+- `function getAuthHeaders`
+- `function getRedirectUri`
+- `function testPKCEImplementation`
+
+### examples.chat-ui.src.utils.modelOptions
+
+*Source: examples/chat-ui/src/utils/modelOptions.ts | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/utils/modelOptions.ts*
+
+- `function supportsReasoning`
+- `function getProviderOptions`
+
+### examples.chat-ui.src.utils.modelPreferences
+
+*Source: examples/chat-ui/src/utils/modelPreferences.ts | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/utils/modelPreferences.ts*
+
+- `function getAvailableModels`
+
+### examples.servers.cf-agents.src.index
+
+*Source: examples/servers/cf-agents/src/index.ts | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/servers/cf-agents/src/index.ts*
+
+- `init`
+- `fetch`
+
+### src.auth.browser-provider
+
+*Source: src/auth/browser-provider.ts | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/src/auth/browser-provider.ts*
+
+- `constructor`
+- `redirectUrl`
+- `clientMetadata`
+- `clientInformation`
+- `saveClientInformation`
+- `tokens`
+- `saveTokens`
+- `saveCodeVerifier`
+- `codeVerifier`
+- `prepareAuthorizationUrl`
+- `redirectToAuthorization`
+- `getLastAttemptedAuthUrl`
+- `clearStorage`
+- `hashString`
+- `getKey`
+
+### src.auth.callback
+
+*Source: src/auth/callback.ts | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/src/auth/callback.ts*
+
+- `function onMcpAuthorization`
+
+### src.react.useMcp
+
+*Source: src/react/useMcp.ts | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/src/react/useMcp.ts*
+
+- `function useMcp`
+
+### src.utils.assert
+
+*Source: src/utils/assert.ts | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/src/utils/assert.ts*
+
+- `function assert`
+
+### examples.chat-ui.src.App
+
+*Source: examples/chat-ui/src/App.tsx | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/App.tsx*
+
+- `function App`
+
+### examples.chat-ui.src.components.McpServerModal
+
+*Source: examples/chat-ui/src/components/McpServerModal.tsx | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/components/McpServerModal.tsx*
+
+- `function McpConnection`
+
+### examples.chat-ui.src.components.McpServers
+
+*Source: examples/chat-ui/src/components/McpServers.tsx | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/components/McpServers.tsx*
+
+- `function McpConnection`
+- `function McpServers`
+
+### examples.chat-ui.src.components.OAuthCallback
+
+*Source: examples/chat-ui/src/components/OAuthCallback.tsx | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/components/OAuthCallback.tsx*
+
+- `function OAuthCallback`
+
+### examples.inspector.src.App
+
+*Source: examples/inspector/src/App.tsx | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/inspector/src/App.tsx*
+
+- `function App`
+
+### examples.inspector.src.components.McpServers
+
+*Source: examples/inspector/src/components/McpServers.tsx | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/inspector/src/components/McpServers.tsx*
+
+- `function McpConnection`
+- `function McpServers`
+
+### examples.inspector.src.components.OAuthCallback
+
+*Source: examples/inspector/src/components/OAuthCallback.tsx | URL: https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/inspector/src/components/OAuthCallback.tsx*
+
+- `function OAuthCallback`

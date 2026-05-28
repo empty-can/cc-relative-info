@@ -1,0 +1,24 @@
+# Model Context Protocol servers
+
+> MCP 公式リファレンスサーバー群のリポジトリ。fetch・git・time（Python 実装）および everything・filesystem・sequentialthinking（TypeScript 実装）の 6 種のサーバーを収録し、Claude Code から MCP 経由で HTTP フェッチ・Git 操作・時刻変換・ファイルシステム操作・段階的思考を利用するための実装基盤を提供する。
+
+## Source Modules
+
+- [scripts.release](https://github.com/modelcontextprotocol/servers/blob/main/scripts/release.py): Check if any files changed between current state and git hash
+- [src.fetch.src.mcp_server_fetch.__init__](https://github.com/modelcontextprotocol/servers/blob/main/src/fetch/src/mcp_server_fetch/__init__.py): MCP Fetch Server - HTTP fetching functionality for MCP
+- [src.fetch.src.mcp_server_fetch.server](https://github.com/modelcontextprotocol/servers/blob/main/src/fetch/src/mcp_server_fetch/server.py): Extract and convert HTML content to Markdown format.
+- [src.git.src.mcp_server_git.__init__](https://github.com/modelcontextprotocol/servers/blob/main/src/git/src/mcp_server_git/__init__.py): MCP Git Server - Git functionality for MCP
+- [src.git.src.mcp_server_git.server](https://github.com/modelcontextprotocol/servers/blob/main/src/git/src/mcp_server_git/server.py): Validate that repo_path is within the allowed repository path.
+- [src.time.src.mcp_server_time.__init__](https://github.com/modelcontextprotocol/servers/blob/main/src/time/src/mcp_server_time/__init__.py): MCP Time Server - Time and timezone conversion functionality for MCP
+- [src.everything.index](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/index.ts)
+- [src.everything.resources.files](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/resources/files.ts)
+- [src.everything.resources.index](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/resources/index.ts)
+- [src.everything.tools.gzip-file-as-resource](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/tools/gzip-file-as-resource.ts)
+- [src.everything.transports.stdio](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/transports/stdio.ts)
+- [src.everything.transports.streamableHttp](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/transports/streamableHttp.ts)
+- [src.filesystem.index](https://github.com/modelcontextprotocol/servers/blob/main/src/filesystem/index.ts)
+- [src.filesystem.lib](https://github.com/modelcontextprotocol/servers/blob/main/src/filesystem/lib.ts)
+- [src.filesystem.path-utils](https://github.com/modelcontextprotocol/servers/blob/main/src/filesystem/path-utils.ts)
+- [src.filesystem.path-validation](https://github.com/modelcontextprotocol/servers/blob/main/src/filesystem/path-validation.ts)
+- [src.filesystem.roots-utils](https://github.com/modelcontextprotocol/servers/blob/main/src/filesystem/roots-utils.ts)
+- [src.sequentialthinking.index](https://github.com/modelcontextprotocol/servers/blob/main/src/sequentialthinking/index.ts)

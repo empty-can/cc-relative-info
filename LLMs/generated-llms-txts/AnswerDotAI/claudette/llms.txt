@@ -1,0 +1,13 @@
+# claudette
+
+> claudette is a Pythonic wrapper around Anthropic's Claude API that simplifies multi-turn conversations, tool use, and agentic workflows for Python developers, abstracting away low-level API details into a clean `Client` and `Chat` interface.
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/claudette/blob/main/CHANGELOG.md): - Add Claude 4.6 models, web_fetch support (#109)
+
+## Source Modules
+
+- [claudette.asink](https://github.com/AnswerDotAI/claudette/blob/main/claudette/asink.py)
+- [claudette.core](https://github.com/AnswerDotAI/claudette/blob/main/claudette/core.py)
+- [claudette.toolloop](https://github.com/AnswerDotAI/claudette/blob/main/claudette/toolloop.py)

@@ -1,0 +1,21 @@
+# Model Context Protocol servers
+
+> MCP 公式リファレンスサーバー実装群（TypeScript 4 本・Python 3 本）を npm ワークスペースモノレポで提供し、開発者が MCP プロトコルの全機能を実際のコードで学・検証・統合できるようにする。
+
+## Guide
+
+- [CLAUDE.md](https://github.com/modelcontextprotocol/servers/blob/main/CLAUDE.md): This file provides guidance to Claude Code when working with code in this repository.
+- [Contributor Covenant Code of Conduct](https://github.com/modelcontextprotocol/servers/blob/main/CODE_OF_CONDUCT.md): We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+- [MCP "Everything" Server - Development Guidelines](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/AGENTS.md): - Build: npm run build - Compiles TypeScript to JavaScript - Watch mode: npm run watch - Watches for changes and rebuilds automatically - Run STDIO se…
+- [Everything Server – Architecture](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/architecture.md): **Architecture
+- [Everything Server - Extension Points](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/extension.md): **Architecture
+- [Everything Server - Features](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/features.md): **Architecture
+- [Everything Server - How It Works](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/how-it-works.md): **Architecture
+- [Everything Server – Server Instructions](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/instructions.md): Audience: These instructions are written for an LLM or autonomous agent integrating with the Everything MCP Server.
+- [Everything Server - Startup Process](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/startup.md): **Architecture
+- [Everything Server - Project Structure](https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/structure.md): **Architecture
+
+## Optional
+
+- [Contributing to MCP Servers](https://github.com/modelcontextprotocol/servers/blob/main/CONTRIBUTING.md): Thanks for your interest in contributing!
+- [Security Policy](https://github.com/modelcontextprotocol/servers/blob/main/SECURITY.md): Thank you for helping keep the Model Context Protocol and its ecosystem secure.

@@ -1,0 +1,3 @@
+# Claude.ai MCP Integration
+
+> Anthropic の公式コミュニケーションハブ。Claude.ai における MCP（Model Context Protocol）統合に関する技術的変更のアナウンス・バグ報告・機能リクエストを一元管理し、プロトコル変更・セッション管理・ツール/リソースハンドリング・OAuth 認証の最新情報を提供する。

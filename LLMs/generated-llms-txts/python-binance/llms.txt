@@ -1,0 +1,54 @@
+# Welcome to python-binance v1.0.36
+
+> {BLOCKQUOTE}
+
+{DESCRIPTION}
+
+## Guide
+
+- [Endpoints](https://github.com/sammchardy/python-binance/blob/master/Endpoints.md): - Wallet Endpoints - GET /sapi/v1/system/status (Fetch system status.)
+- [Account Endpoints](https://github.com/sammchardy/python-binance/blob/master/docs/account.rst)
+- [Binance API](https://github.com/sammchardy/python-binance/blob/master/docs/binance.rst)
+- [v1.0.36 - 2026-03-24](https://github.com/sammchardy/python-binance/blob/master/docs/changelog.rst)
+- [Binance Constants](https://github.com/sammchardy/python-binance/blob/master/docs/constants.rst)
+- [Depth Cache](https://github.com/sammchardy/python-binance/blob/master/docs/depth_cache.rst)
+- [Exceptions](https://github.com/sammchardy/python-binance/blob/master/docs/exceptions.rst)
+- [FAQ](https://github.com/sammchardy/python-binance/blob/master/docs/faqs.rst)
+- [General Endpoints](https://github.com/sammchardy/python-binance/blob/master/docs/general.rst)
+- [Helper Functions](https://github.com/sammchardy/python-binance/blob/master/docs/helpers.rst)
+- [Contents](https://github.com/sammchardy/python-binance/blob/master/docs/index.rst)
+- [Margin Trading Endpoints](https://github.com/sammchardy/python-binance/blob/master/docs/margin.rst)
+- [Market Data Endpoints](https://github.com/sammchardy/python-binance/blob/master/docs/market_data.rst)
+- [Getting Started](https://github.com/sammchardy/python-binance/blob/master/docs/overview.rst)
+- [Sub Account Endpoints](https://github.com/sammchardy/python-binance/blob/master/docs/sub_accounts.rst)
+- [Websockets](https://github.com/sammchardy/python-binance/blob/master/docs/websockets.rst)
+- [Withdraw Endpoints](https://github.com/sammchardy/python-binance/blob/master/docs/withdraw.rst)
+- [Pypireadme](https://github.com/sammchardy/python-binance/blob/master/PYPIREADME.rst)
+
+## Source Modules
+
+- [binance.async_client](https://github.com/sammchardy/python-binance/blob/master/binance/async_client.py): Create a listenToken for margin account user data stream
+- [binance.base_client](https://github.com/sammchardy/python-binance/blob/master/binance/base_client.py)
+- [binance.enums](https://github.com/sammchardy/python-binance/blob/master/binance/enums.py)
+- [binance.exceptions](https://github.com/sammchardy/python-binance/blob/master/binance/exceptions.py): Raised when the websocket message queue exceeds its maximum size.
+- [binance.helpers](https://github.com/sammchardy/python-binance/blob/master/binance/helpers.py): Convert UTC date to milliseconds
+- [binance.ws.constants](https://github.com/sammchardy/python-binance/blob/master/binance/ws/constants.py)
+- [binance.ws.depthcache](https://github.com/sammchardy/python-binance/blob/master/binance/ws/depthcache.py): Add a bid to the cache
+- [binance.ws.keepalive_websocket](https://github.com/sammchardy/python-binance/blob/master/binance/ws/keepalive_websocket.py): Override connect to handle ws_api subscriptions differently.
+- [binance.ws.reconnecting_websocket](https://github.com/sammchardy/python-binance/blob/master/binance/ws/reconnecting_websocket.py)
+- [binance.ws.streams](https://github.com/sammchardy/python-binance/blob/master/binance/ws/streams.py): Start a websocket for symbol market depth returning either a diff or a partial book
+- [binance.ws.threaded_stream](https://github.com/sammchardy/python-binance/blob/master/binance/ws/threaded_stream.py)
+- [binance.ws.websocket_api](https://github.com/sammchardy/python-binance/blob/master/binance/ws/websocket_api.py): Register a queue to receive events for a specific subscription.
+- [code-generator](https://github.com/sammchardy/python-binance/blob/master/code-generator.py): Fetch endpoints from the provided Binance doc URLs, filtering duplicates.
+- [docs.conf](https://github.com/sammchardy/python-binance/blob/master/docs/conf.py)
+- [examples.binace_socket_manager](https://github.com/sammchardy/python-binance/blob/master/examples/binace_socket_manager.py)
+- [examples.create_oco_order](https://github.com/sammchardy/python-binance/blob/master/examples/create_oco_order.py)
+- [examples.create_order](https://github.com/sammchardy/python-binance/blob/master/examples/create_order.py)
+- [examples.create_order_async](https://github.com/sammchardy/python-binance/blob/master/examples/create_order_async.py)
+- [examples.depth_cache_example](https://github.com/sammchardy/python-binance/blob/master/examples/depth_cache_example.py)
+- [examples.depth_cache_threaded_example](https://github.com/sammchardy/python-binance/blob/master/examples/depth_cache_threaded_example.py)
+- [examples.futures_algo_order_examples](https://github.com/sammchardy/python-binance/blob/master/examples/futures_algo_order_examples.py): Create a basic STOP_MARKET algo order
+- [examples.save_historical_data](https://github.com/sammchardy/python-binance/blob/master/examples/save_historical_data.py): Convert UTC date to milliseconds
+- [examples.websocket](https://github.com/sammchardy/python-binance/blob/master/examples/websocket.py)
+- [examples.ws_create_order](https://github.com/sammchardy/python-binance/blob/master/examples/ws_create_order.py)
+- [examples.ws_create_order_async](https://github.com/sammchardy/python-binance/blob/master/examples/ws_create_order_async.py)

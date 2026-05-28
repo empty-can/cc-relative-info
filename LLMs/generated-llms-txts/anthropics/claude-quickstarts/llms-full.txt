@@ -1,0 +1,561 @@
+# Claude Quickstarts
+
+> A collection of quickstart projects demonstrating how to build real-world applications with Claude, including autonomous coding agents, browser automation, and computer use demos.
+
+---
+
+## Guide
+
+### 1. See your working directory
+
+*Source: autonomous-coding/prompts/coding_prompt.md | URL: https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/prompts/coding_prompt.md*
+
+## YOUR ROLE - CODING AGENT
+
+You are continuing work on a long-running autonomous development task.
+This is a FRESH context window - you have no memory of previous sessions.
+
+### STEP 1: GET YOUR BEARINGS (MANDATORY)
+
+Start by orienting yourself:
+
+```bash
+# 1. See your working directory
+pwd
+
+# 2. List files to understand project structure
+ls -la
+
+# 3. Read the project specification to understand what you're building
+cat app_spec.txt
+
+# 4. Read the feature list to see all work
+cat feature_list.json | head -50
+
+# 5. Read progress notes from previous sessions
+cat claude-progress.txt
+
+# 6. Check recent git history
+git log --oneline -20
+
+# 7. Count remaining tests
+cat feature_list.json | grep '"passes": false' | wc -l
+```
+
+Understanding the `app_spec.txt` is critical - it contains the full requirements
+for the application you're building.
+
+### STEP 2: START SERVERS (IF NOT RUNNING)
+
+If `init.sh` exists, run it:
+```bash
+chmod +x init.sh
+./init.sh
+```
+
+Otherwise, start servers manually and document the process.
+
+### STEP 3: VERIFICATION TEST (CRITICAL!)
+
+**MANDATORY BEFORE NEW WORK:**
+
+The previous session may have introduced bugs. Before implementing anything
+new, you MUST run verification tests.
+
+Run 1-2 of the feature tests marked as `"passes": true` that are most core to the app's functionality to verify they still work.
+For example, if this were a chat app, you should perform a test that logs into the app, sends a message, and gets a response.
+
+**If you find ANY issues (functional or visual):**
+- Mark that feature as "passes": false immediately
+- Add issues to a list
+- Fix all issues BEFORE moving to new features
+- This includes UI bugs like:
+  * White-on-white text or poor contrast
+  * Random characters displayed
+  * Incorrect timestamps
+  * Layout issues or overflow
+  * Buttons too close together
+  * Missing hover states
+  * Console errors
+
+### STEP 4: CHOOSE ONE FEATURE TO IMPLEMENT
+
+Look at feature_list.json and find the highest-priority feature with "passes": false.
+
+Focus on completing one feature perfectly and completing its testing steps in this session before moving on to other features.
+It's ok if you only complete one feature in this session, as there will be more sessions later that continue to make progress.
+
+### STEP 5: IMPLEMENT THE FEATURE
+
+Implement the chosen feature thoroughly:
+1. Write the code (frontend and/or backend as needed)
+2. Test manually using browser automation (see Step 6)
+3. Fix any issues discovered
+4. Verify the feature works end-to-end
+
+### STEP 6: VERIFY WITH BROWSER AUTOMATION
+
+**CRITICAL:** You MUST verify features through the actual UI.
+
+Use browser automation tools:
+- Navigate to the app in a real browser
+- Interact like a human user (click, type, scroll)
+- Take screenshots at each step
+- Verify both functionality AND visual appearance
+
+**DO:**
+- Test through the UI with clicks and keyboard input
+- Take screenshots to verify visual appearance
+- Check for console errors in browser
+- Verify complete user workflows end-to-end
+
+**DON'T:**
+- Only test with curl commands (backend testing alone is insufficient)
+- Use JavaScript evaluation to bypass UI (no shortcuts)
+- Skip visual verification
+- Mark tests passing without thorough verification
+
+### STEP 7: UPDATE feature_list.json (CAREFULLY!)
+
+**YOU CAN ONLY MODIFY ONE FIELD: "passes"**
+
+After thorough verification, change:
+```json
+"passes": false
+```
+to:
+```json
+"passes": true
+```
+
+**NEVER:**
+- Remove tests
+- Edit test descriptions
+- Modify test steps
+- Combine or consolidate tests
+- Reorder tests
+
+**ONLY CHANGE "passes" FIELD AFTER VERIFICATION WITH SCREENSHOTS.**
+
+### STEP 8: COMMIT YOUR PROGRESS
+
+Make a descriptive git commit:
+```bash
+git add .
+git commit -m "Implement [feature name] - verified end-to-end
+
+- Added [specific changes]
+- Tested with browser automation
+- Updated feature_list.json: marked test #X as passing
+- Screenshots in verification/ directory
+"
+```
+
+### STEP 9: UPDATE PROGRESS NOTES
+
+Update `claude-progress.txt` with:
+- What you accomplished this session
+- Which test(s) you completed
+- Any issues discovered or fixed
+- What should be worked on next
+- Current completion status (e.g., "45/200 tests passing")
+
+### STEP 10: END SESSION CLEANLY
+
+Before context fills up:
+1. Commit all working code
+2. Update claude-progress.txt
+3. Update feature_list.json if tests verified
+4. Ensure no uncommitted changes
+5. Leave app in working state (no broken features)
+
+---
+
+## TESTING REQUIREMENTS
+
+**ALL testing must use browser automation tools.**
+
+Available tools:
+- puppeteer_navigate - Start browser and go to URL
+- puppeteer_screenshot - Capture screenshot
+- puppeteer_click - Click elements
+- puppeteer_fill - Fill form inputs
+- puppeteer_evaluate - Execute JavaScript (use sparingly, only for debugging)
+
+Test like a human user with mouse and keyboard. Don't take shortcuts by using JavaScript evaluation.
+Don't use the puppeteer "active tab" tool.
+
+---
+
+## IMPORTANT REMINDERS
+
+**Your Goal:** Production-quality application with all 200+ tests passing
+
+**This Session's Goal:** Complete at least one feature perfectly
+
+**Priority:** Fix broken tests before implementing new features
+
+**Quality Bar:**
+- Zero console errors
+- Polished UI matching the design specified in app_spec.txt
+- All features work end-to-end through the UI
+- Fast, responsive, professional
+
+**You have unlimited time.** Take as long as needed to get it right. The most important thing is that you
+leave the code base in a clean state before terminating the session (Step 10).
+
+---
+
+Begin by running Step 1 (Get Your Bearings).
+
+### Initializer Prompt
+
+*Source: autonomous-coding/prompts/initializer_prompt.md | URL: https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/prompts/initializer_prompt.md*
+
+## YOUR ROLE - INITIALIZER AGENT (Session 1 of Many)
+
+You are the FIRST agent in a long-running autonomous development process.
+Your job is to set up the foundation for all future coding agents.
+
+### FIRST: Read the Project Specification
+
+Start by reading `app_spec.txt` in your working directory. This file contains
+the complete specification for what you need to build. Read it carefully
+before proceeding.
+
+### CRITICAL FIRST TASK: Create feature_list.json
+
+Based on `app_spec.txt`, create a file called `feature_list.json` with 200 detailed
+end-to-end test cases. This file is the single source of truth for what
+needs to be built.
+
+**Format:**
+```json
+[
+  {
+    "category": "functional",
+    "description": "Brief description of the feature and what this test verifies",
+    "steps": [
+      "Step 1: Navigate to relevant page",
+      "Step 2: Perform action",
+      "Step 3: Verify expected result"
+    ],
+    "passes": false
+  },
+  {
+    "category": "style",
+    "description": "Brief description of UI/UX requirement",
+    "steps": [
+      "Step 1: Navigate to page",
+      "Step 2: Take screenshot",
+      "Step 3: Verify visual requirements"
+    ],
+    "passes": false
+  }
+]
+```
+
+**Requirements for feature_list.json:**
+- Minimum 200 features total with testing steps for each
+- Both "functional" and "style" categories
+- Mix of narrow tests (2-5 steps) and comprehensive tests (10+ steps)
+- At least 25 tests MUST have 10+ steps each
+- Order features by priority: fundamental features first
+- ALL tests start with "passes": false
+- Cover every feature in the spec exhaustively
+
+**CRITICAL INSTRUCTION:**
+IT IS CATASTROPHIC TO REMOVE OR EDIT FEATURES IN FUTURE SESSIONS.
+Features can ONLY be marked as passing (change "passes": false to "passes": true).
+Never remove features, never edit descriptions, never modify testing steps.
+This ensures no functionality is missed.
+
+### SECOND TASK: Create init.sh
+
+Create a script called `init.sh` that future agents can use to quickly
+set up and run the development environment. The script should:
+
+1. Install any required dependencies
+2. Start any necessary servers or services
+3. Print helpful information about how to access the running application
+
+Base the script on the technology stack specified in `app_spec.txt`.
+
+### THIRD TASK: Initialize Git
+
+Create a git repository and make your first commit with:
+- feature_list.json (complete with all 200+ features)
+- init.sh (environment setup script)
+- README.md (project overview and setup instructions)
+
+Commit message: "Initial setup: feature_list.json, init.sh, and project structure"
+
+### FOURTH TASK: Create Project Structure
+
+Set up the basic project structure based on what's specified in `app_spec.txt`.
+This typically includes directories for frontend, backend, and any other
+components mentioned in the spec.
+
+### OPTIONAL: Start Implementation
+
+If you have time remaining in this session, you may begin implementing
+the highest-priority features from feature_list.json. Remember:
+- Work on ONE feature at a time
+- Test thoroughly before marking "passes": true
+- Commit your progress before session ends
+
+### ENDING THIS SESSION
+
+Before your context fills up:
+1. Commit all work with descriptive messages
+2. Create `claude-progress.txt` with a summary of what you accomplished
+3. Ensure feature_list.json is complete and saved
+4. Leave the environment in a clean, working state
+
+The next agent will continue from here with a fresh context window.
+
+---
+
+**Remember:** You have unlimited time across many sessions. Focus on
+quality over speed. Production-ready is the goal.
+
+### Modifications to Microsoft Playwright Source
+
+*Source: browser-use-demo/CHANGELOG.md | URL: https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/CHANGELOG.md*
+
+# Modifications to Microsoft Playwright Source
+
+This file tracks all modifications made to files derived from or inspired by Microsoft Playwright source code.
+
+## Modified Files
+
+### browser_use_demo/browser_tool_utils/browser_dom_script.js
+- **Date Modified**: 9/23/25
+- **Original Source**: https://github.com/microsoft/playwright/blob/main/packages/injected/src/ariaSnapshot.ts
+- **Nature of Changes**: Adapted Playwright's accessibility tree generation for use with browser tools API. Implemented accessibility tree extraction with element reference tracking, visibility filtering, and YAML-formatted output.
+
+### browser_use_demo/browser_tool_utils/browser_element_script.js
+- **Date Modified**: 9/23/25
+- **Original Source**: Microsoft Playwright element interaction patterns
+- **Nature of Changes**: Implemented element finding and interaction logic inspired by Playwright's approach to reliable element targeting and coordinate calculation.
+
+### browser_use_demo/tools/browser.py
+- **Date Modified**: 9/23/25
+- **Original Source**: Microsoft Playwright click emulation implementation
+- **Nature of Changes**: Click emulation methods developed with reference to Playwright source code during debugging to ensure reliable mouse interactions.
+- **Date Modified**: 10/6/25
+- **Nature of Changes**:
+  - Fixed incorrect path to browser_tool_utils directory. Changed from `Path(__file__).parent / "browser_tool_utils"` to `Path(__file__).parent.parent / "browser_tool_utils"` to correctly locate JavaScript utility files.
+  - Fixed missing `cdp_url` attribute initialization in `__init__` method to prevent AttributeError in cleanup method.
+  - Fixed incorrect import path for browser_key_map. Changed from `.browser_tool_utils.browser_key_map` to `..browser_tool_utils.browser_key_map` to correctly import the KEY_MAP.
+- **Date Modified**: 10/14/25
+- **Nature of Changes**:
+  - Enhanced `_scroll` and `_scroll_to` methods to return screenshots after scrolling actions. Added 0.5s stabilization delay before taking screenshots to show the new viewport content. This provides visual feedback to the model after scroll actions, consistent with the navigate action behavior.
+- **Date Modified**: 12/19/25
+- **Nature of Changes**:
+  - Added `hover` action to move mouse cursor without clicking using Playwright's `mouse.move()` API. Useful for revealing tooltips, dropdown menus, or triggering hover states.
+  - Added `execute_js` action to execute JavaScript code in page context using Playwright's `page.evaluate()` API. Returns the result of the last expression.
+- **Date Modified**: 1/18/26
+- **Nature of Changes**:
+  - Added clarifying comment in the `options` property explaining that this implementation uses fixed 1920x1080 dimensions with empirical coordinate correction, and directing users to the "Handle coordinate scaling" section in the computer use documentation for the recommended client-side downscaling approach.
+
+### Claude Quickstarts Development Guide
+
+*Source: CLAUDE.md | URL: https://github.com/anthropics/claude-quickstarts/blob/main/CLAUDE.md*
+
+# Claude Quickstarts Development Guide
+
+## Legal
+
+- When changes are made to files that have a copyright notice add them to that subdirectory's CHANGELOG.md file.
+
+## Computer-Use Demo
+
+### Setup & Development
+
+- **Setup environment**: `./setup.sh`
+- **Build Docker**: `docker build . -t computer-use-demo:local`
+- **Run container**: `docker run -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY -v $(pwd)/computer_use_demo:/home/computeruse/computer_use_demo/ -v $HOME/.anthropic:/home/computeruse/.anthropic -p 5900:5900 -p 8501:8501 -p 6080:6080 -p 8080:8080 -it computer-use-demo:local`
+
+### Testing & Code Quality
+
+- **Lint**: `ruff check .`
+- **Format**: `ruff format .`
+- **Typecheck**: `pyright`
+- **Run tests**: `pytest`
+- **Run single test**: `pytest tests/path_to_test.py::test_name -v`
+
+### Code Style
+
+- **Python**: snake_case for functions/variables, PascalCase for classes
+- **Imports**: Use isort with combine-as-imports
+- **Error handling**: Use custom ToolError for tool errors
+- **Types**: Add type annotations for all parameters and returns
+- **Classes**: Use dataclasses and abstract base classes
+
+## Customer Support Agent
+
+### Setup & Development
+
+- **Install dependencies**: `npm install`
+- **Run dev server**: `npm run dev` (full UI)
+- **UI variants**: `npm run dev:left` (left sidebar), `npm run dev:right` (right sidebar), `npm run dev:chat` (chat only)
+- **Lint**: `npm run lint`
+- **Build**: `npm run build` (full UI), see package.json for variants
+
+### Code Style
+
+- **TypeScript**: Strict mode with proper interfaces
+- **Components**: Function components with React hooks
+- **Formatting**: Follow ESLint Next.js configuration
+- **UI components**: Use shadcn/ui components library
+
+## Financial Data Analyst
+
+### Setup & Development
+
+- **Install dependencies**: `npm install`
+- **Run dev server**: `npm run dev`
+- **Lint**: `npm run lint`
+- **Build**: `npm run build`
+
+### Code Style
+
+- **TypeScript**: Strict mode with proper type definitions
+- **Components**: Function components with type annotations
+- **Visualization**: Use Recharts library for data visualization
+- **State management**: React hooks for state
+
+### Contributing Guidelines
+
+*Source: computer-use-demo/CONTRIBUTING.md | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/CONTRIBUTING.md*
+
+# Contributing Guidelines
+
+Thank you for your interest in contributing to the Computer Use Demo quickstart! This document outlines the process and guidelines for contributing to this project.
+
+## Code of Conduct
+
+Please be respectful and constructive in all interactions. We aim to maintain a welcoming and inclusive environment for all contributors.
+
+## Contribution Policy
+
+- Bugfixes and updates to our documentation that address correctness issues are always welcome
+- Feature additions, refactors, and documentation updates beyond the scope of correctness (major changes) are accepted at the sole determination of the maintainers. We require each major change to be submitted in a separate Pull Request. We will assess new features under the following criteria:
+  - Adherence to coding standards
+  - Ease of use as a reference implementation
+  - User experience
+  - Applicability to a wide audience of developers
+  - Minimization of third-party dependencies
+  - Does not promote a product or service
+
+Please open a github issue if you are need clarification on this policy or you want to discuss a new feature addition.
+
+## Development Setup
+
+1. Create and activate a Python virtual environment:
+
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Unix
+   # or
+   .venv\Scripts\activate  # On Windows
+   ```
+
+2. Install development dependencies:
+
+   ```bash
+   pip install -r dev-requirements.txt
+   ```
+
+3. Install pre-commit hooks:
+   ```bash
+   pre-commit install
+   ```
+
+## Development Process
+
+1. Fork the repository and create a branch for your changes
+2. Make your changes following our coding standards
+3. Submit a pull request with a clear description of the changes
+
+## Coding Standards
+
+- Use clear, descriptive variable and function names
+- Follow PEP 8 style guidelines for Python code
+- Keep functions focused and single-purpose
+- Avoid inline comments - code should be self-documenting
+- Use type hints for all Python functions
+- Use dataclasses for structured data (see `tools/base.py` for examples)
+- All tools must inherit from `BaseAnthropicTool` and implement required methods
+- Use abstract base classes (ABC) for defining interfaces
+- Handle errors using `ToolError` and `ToolFailure` classes
+
+## Code Quality Tools
+
+We use several tools to maintain code quality:
+
+- **Ruff**: For linting and formatting
+  - Run `ruff check .` for linting
+  - Run `ruff format .` for formatting
+  - See `ruff.toml` for enabled rules
+- **Pyright**: For type checking
+  - Configuration in `pyproject.toml`
+- **Pre-commit**: For automated checks before commits
+
+## Testing
+
+- Add tests for new functionality in the `tests/` directory
+- Follow existing test patterns (see `tests/tools/` for examples)
+- Use pytest fixtures where appropriate
+- Run tests with:
+  ```bash
+  pytest
+  ```
+- Tests must pass in async mode (configured in pyproject.toml)
+
+## Commit Guidelines
+
+- All commits MUST be signed (use `git commit -S`)
+- Write clear, descriptive commit messages
+- Use present tense ("Add feature" not "Added feature")
+- Reference issue numbers when applicable
+
+## Pull Request Process
+
+1. Update documentation as needed
+2. Add tests for new functionality
+3. Ensure all checks pass:
+   - All tests pass
+   - Ruff linting passes
+   - Type checking passes
+   - Pre-commit hooks pass
+4. Request review from maintainers
+5. Address review feedback
+
+## Tool Development
+
+When creating new tools:
+
+1. Inherit from `BaseAnthropicTool`
+2. Implement `__call__` and `to_params` methods
+3. Use appropriate result types (`ToolResult`, `CLIResult`, or `ToolFailure`)
+4. Add comprehensive tests
+5. Document parameters and return types
+
+## Documentation
+
+- Keep README.md up to date
+- Document new features and changes
+- Use clear, concise language
+- Include docstrings for all public classes and methods
+- Use concise, single-line docstrings for simple functions
+- For complex functions, include:
+  - A brief description
+  - Args/parameters if not obvious
+  - Return value if not obvious
+  - Any important notes about behavior
+
+## Questions?
+
+If you have questions, please open an issue for discussion.

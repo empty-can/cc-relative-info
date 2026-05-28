@@ -1,0 +1,5 @@
+# Harness Primitives for Long-Running Claude Agents
+
+> {BLOCKQUOTE}
+
+{DESCRIPTION}

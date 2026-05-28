@@ -1,0 +1,331 @@
+# cwc-workshops
+
+> {BLOCKQUOTE}
+
+{DESCRIPTION}
+
+---
+
+## Source Modules
+
+### agent-decomposition.agents.cli
+
+*Source: agent-decomposition/agents/cli.py | URL: https://github.com/anthropics/cwc-workshops/blob/main/agent-decomposition/agents/cli.py*
+
+- `main`
+
+### agent-decomposition.agents.common
+
+*Source: agent-decomposition/agents/common.py | URL: https://github.com/anthropics/cwc-workshops/blob/main/agent-decomposition/agents/common.py*
+
+- `AgentResult`
+- `total_tokens`
+- `to_dict`
+- `current_run_id`: Thread-local first (in-process before-agent), then env (subprocess), then default.
+- `sink_dir`
+- `sink_path`
+- `reset_sinks`
+- `read_sink`
+- `collect_actions`
+- `run_agent`: Dispatch to before (local Messages API) or starter (CMA session).
+
+### agent-decomposition.agents.starter.deploy
+
+*Source: agent-decomposition/agents/starter/deploy.py | URL: https://github.com/anthropics/cwc-workshops/blob/main/agent-decomposition/agents/starter/deploy.py*
+
+- `main`
+
+### agent-decomposition.agents.starter.run
+
+*Source: agent-decomposition/agents/starter/run.py | URL: https://github.com/anthropics/cwc-workshops/blob/main/agent-decomposition/agents/starter/run.py*
+
+- `run`
+
+### ship-your-first-managed-agent.pages.1_Metrics
+
+*Source: ship-your-first-managed-agent/pages/1_Metrics.py | URL: https://github.com/anthropics/cwc-workshops/blob/main/ship-your-first-managed-agent/pages/1_Metrics.py*
+
+- `ts`
+- `chart`
+
+### eval-driven-agent-development.src.graders.code.cluttered-slides
+
+*Source: eval-driven-agent-development/src/graders/code/cluttered-slides.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/eval-driven-agent-development/src/graders/code/cluttered-slides.ts*
+
+- `grade`
+
+### eval-driven-agent-development.src.graders.code.emoji-count
+
+*Source: eval-driven-agent-development/src/graders/code/emoji-count.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/eval-driven-agent-development/src/graders/code/emoji-count.ts*
+
+- `grade`
+
+### eval-driven-agent-development.src.graders.code.produced-result
+
+*Source: eval-driven-agent-development/src/graders/code/produced-result.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/eval-driven-agent-development/src/graders/code/produced-result.ts*
+
+- `grade`
+
+### eval-driven-agent-development.src.graders.code.slides-with-image
+
+*Source: eval-driven-agent-development/src/graders/code/slides-with-image.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/eval-driven-agent-development/src/graders/code/slides-with-image.ts*
+
+- `grade`
+
+### eval-driven-agent-development.src.graders.code.small-font-slides
+
+*Source: eval-driven-agent-development/src/graders/code/small-font-slides.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/eval-driven-agent-development/src/graders/code/small-font-slides.ts*
+
+- `grade`
+
+### eval-driven-agent-development.src.graders.code.text-heavy-slides
+
+*Source: eval-driven-agent-development/src/graders/code/text-heavy-slides.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/eval-driven-agent-development/src/graders/code/text-heavy-slides.ts*
+
+- `grade`
+
+### eval-driven-agent-development.src.graders.judge.title-body-coherence-judge
+
+*Source: eval-driven-agent-development/src/graders/judge/title-body-coherence-judge.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/eval-driven-agent-development/src/graders/judge/title-body-coherence-judge.ts*
+
+- `grade`
+
+### how-we-claude-code.phase-3-verify.src.features.todos.useTodos
+
+*Source: how-we-claude-code/phase-3-verify/src/features/todos/useTodos.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/how-we-claude-code/phase-3-verify/src/features/todos/useTodos.ts*
+
+- `function useTodos`
+
+### production-ready-agent.solution.app.api.confirm.[id].route
+
+*Source: production-ready-agent/solution/app/api/confirm/[id]/route.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/app/api/confirm/[id]/route.ts*
+
+- `function POST`
+
+### production-ready-agent.solution.app.api.session.[id].route
+
+*Source: production-ready-agent/solution/app/api/session/[id]/route.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/app/api/session/[id]/route.ts*
+
+- `function GET`
+- `function DELETE`
+
+### production-ready-agent.solution.app.api.session.[id].threads.route
+
+*Source: production-ready-agent/solution/app/api/session/[id]/threads/route.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/app/api/session/[id]/threads/route.ts*
+
+- `function GET`
+
+### production-ready-agent.solution.app.api.sessions.route
+
+*Source: production-ready-agent/solution/app/api/sessions/route.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/app/api/sessions/route.ts*
+
+- `function GET`
+- `function POST`
+
+### production-ready-agent.solution.app.api.steer.[id].route
+
+*Source: production-ready-agent/solution/app/api/steer/[id]/route.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/app/api/steer/[id]/route.ts*
+
+- `function POST`
+
+### production-ready-agent.solution.app.api.stream.[id].route
+
+*Source: production-ready-agent/solution/app/api/stream/[id]/route.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/app/api/stream/[id]/route.ts*
+
+- `function GET`
+
+### production-ready-agent.solution.app.api.stream.[id].thread.[threadId].route
+
+*Source: production-ready-agent/solution/app/api/stream/[id]/thread/[threadId]/route.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/app/api/stream/[id]/thread/[threadId]/route.ts*
+
+- `function GET`
+
+### production-ready-agent.solution.lib.utils
+
+*Source: production-ready-agent/solution/lib/utils.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/lib/utils.ts*
+
+- `function cn`
+
+### production-ready-agent.starter.app.api.session.[id].threads.route
+
+*Source: production-ready-agent/starter/app/api/session/[id]/threads/route.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/app/api/session/[id]/threads/route.ts*
+
+- `function GET`
+
+### production-ready-agent.starter.app.api.stream.[id].thread.[threadId].route
+
+*Source: production-ready-agent/starter/app/api/stream/[id]/thread/[threadId]/route.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/app/api/stream/[id]/thread/[threadId]/route.ts*
+
+- `function GET`
+
+### production-ready-agent.starter.lib.utils
+
+*Source: production-ready-agent/starter/lib/utils.ts | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/lib/utils.ts*
+
+- `function cn`
+
+### how-we-claude-code.phase-3-verify.src.features.todos.TodoInput
+
+*Source: how-we-claude-code/phase-3-verify/src/features/todos/TodoInput.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/how-we-claude-code/phase-3-verify/src/features/todos/TodoInput.tsx*
+
+- `function TodoInput`
+
+### how-we-claude-code.phase-3-verify.src.features.todos.TodoList
+
+*Source: how-we-claude-code/phase-3-verify/src/features/todos/TodoList.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/how-we-claude-code/phase-3-verify/src/features/todos/TodoList.tsx*
+
+- `function TodoList`
+
+### production-ready-agent.solution.app.layout
+
+*Source: production-ready-agent/solution/app/layout.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/app/layout.tsx*
+
+- `function RootLayout`
+
+### production-ready-agent.solution.app.page
+
+*Source: production-ready-agent/solution/app/page.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/app/page.tsx*
+
+- `function Page`
+
+### production-ready-agent.solution.app.session.[id].layout
+
+*Source: production-ready-agent/solution/app/session/[id]/layout.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/app/session/[id]/layout.tsx*
+
+- `function SessionLayout`
+
+### production-ready-agent.solution.app.session.[id].page
+
+*Source: production-ready-agent/solution/app/session/[id]/page.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/app/session/[id]/page.tsx*
+
+- `function SessionPage`
+
+### production-ready-agent.solution.app.session.[id].thread.[threadId].page
+
+*Source: production-ready-agent/solution/app/session/[id]/thread/[threadId]/page.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/app/session/[id]/thread/[threadId]/page.tsx*
+
+- `function ThreadPage`
+
+### production-ready-agent.solution.components.ai.conversation
+
+*Source: production-ready-agent/solution/components/ai/conversation.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/components/ai/conversation.tsx*
+
+- `function Conversation`
+- `function ConversationScrollButton`
+- `function ConversationEmptyState`
+
+### production-ready-agent.solution.components.ai.message
+
+*Source: production-ready-agent/solution/components/ai/message.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/components/ai/message.tsx*
+
+- `function Message`
+- `function MessageContent`
+
+### production-ready-agent.solution.components.ai.prompt-input
+
+*Source: production-ready-agent/solution/components/ai/prompt-input.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/components/ai/prompt-input.tsx*
+
+- `function PromptInput`
+- `function PromptInputTextarea`
+- `function PromptInputSubmit`
+
+### production-ready-agent.solution.components.ClaudeSpark
+
+*Source: production-ready-agent/solution/components/ClaudeSpark.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/components/ClaudeSpark.tsx*
+
+- `function ClaudeSpark`
+
+### production-ready-agent.solution.components.TopBar
+
+*Source: production-ready-agent/solution/components/TopBar.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/components/TopBar.tsx*
+
+- `function TopBar`
+
+### production-ready-agent.solution.components.ui.badge
+
+*Source: production-ready-agent/solution/components/ui/badge.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/components/ui/badge.tsx*
+
+- `function Badge`
+
+### production-ready-agent.solution.components.ui.tooltip
+
+*Source: production-ready-agent/solution/components/ui/tooltip.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/solution/components/ui/tooltip.tsx*
+
+- `function TooltipContent`
+
+### production-ready-agent.starter.app.layout
+
+*Source: production-ready-agent/starter/app/layout.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/app/layout.tsx*
+
+- `function RootLayout`
+
+### production-ready-agent.starter.app.page
+
+*Source: production-ready-agent/starter/app/page.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/app/page.tsx*
+
+- `function Page`
+
+### production-ready-agent.starter.app.session.[id].layout
+
+*Source: production-ready-agent/starter/app/session/[id]/layout.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/app/session/[id]/layout.tsx*
+
+- `function SessionLayout`
+
+### production-ready-agent.starter.app.session.[id].page
+
+*Source: production-ready-agent/starter/app/session/[id]/page.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/app/session/[id]/page.tsx*
+
+- `function SessionPage`
+
+### production-ready-agent.starter.app.session.[id].thread.[threadId].page
+
+*Source: production-ready-agent/starter/app/session/[id]/thread/[threadId]/page.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/app/session/[id]/thread/[threadId]/page.tsx*
+
+- `function ThreadPage`
+
+### production-ready-agent.starter.components.ai.conversation
+
+*Source: production-ready-agent/starter/components/ai/conversation.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/components/ai/conversation.tsx*
+
+- `function Conversation`
+- `function ConversationScrollButton`
+- `function ConversationEmptyState`
+
+### production-ready-agent.starter.components.ai.message
+
+*Source: production-ready-agent/starter/components/ai/message.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/components/ai/message.tsx*
+
+- `function Message`
+- `function MessageContent`
+
+### production-ready-agent.starter.components.ai.prompt-input
+
+*Source: production-ready-agent/starter/components/ai/prompt-input.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/components/ai/prompt-input.tsx*
+
+- `function PromptInput`
+- `function PromptInputTextarea`
+- `function PromptInputSubmit`
+
+### production-ready-agent.starter.components.ClaudeSpark
+
+*Source: production-ready-agent/starter/components/ClaudeSpark.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/components/ClaudeSpark.tsx*
+
+- `function ClaudeSpark`
+
+### production-ready-agent.starter.components.TopBar
+
+*Source: production-ready-agent/starter/components/TopBar.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/components/TopBar.tsx*
+
+- `function TopBar`
+
+### production-ready-agent.starter.components.ui.badge
+
+*Source: production-ready-agent/starter/components/ui/badge.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/components/ui/badge.tsx*
+
+- `function Badge`
+
+### production-ready-agent.starter.components.ui.tooltip
+
+*Source: production-ready-agent/starter/components/ui/tooltip.tsx | URL: https://github.com/anthropics/cwc-workshops/blob/main/production-ready-agent/starter/components/ui/tooltip.tsx*
+
+- `function TooltipContent`

@@ -1,0 +1,18 @@
+# Llms Txt
+
+> llms.txt is an open standard that gives LLM-powered tools a concise, structured entry point into any website or project, enabling AI assistants and editors to retrieve relevant documentation without scraping raw HTML.
+
+## Guide
+
+- [llms.txt in Different Domains](https://github.com/AnswerDotAI/llms-txt/blob/main/nbs/domains.md): This page has some guidelines and suggestions for how different domains could utilize llms.txt to allow LLMs to better interface with their site if they so choose.
+- [`ed`, the standard text editor](https://github.com/AnswerDotAI/llms-txt/blob/main/nbs/ed.md): In order to understand how llms.txt can be used with editors and IDEs, let's look at how ed, the standard text editor, could work (assuming it's updated to use this proposal).
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/llms-txt/blob/main/CHANGELOG.md): - llms_txt2html (#63) - nbdev3
+
+## Source Modules
+
+- [llms_txt.core](https://github.com/AnswerDotAI/llms-txt/blob/main/llms_txt/core.py)
+- [llms_txt.miniparse](https://github.com/AnswerDotAI/llms-txt/blob/main/llms_txt/miniparse.py)
+- [llms_txt.txt2html](https://github.com/AnswerDotAI/llms-txt/blob/main/llms_txt/txt2html.py)

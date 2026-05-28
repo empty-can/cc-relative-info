@@ -1,0 +1,13 @@
+# ⚠️ This is a Mirror Repository
+
+> GitHub Actions 上で Claude Code を実行できる公式コンポジットアクション。Anthropic API・AWS Bedrock・Google Vertex AI の 3 プロバイダに対応し、CI/CD ワークフローへの AI コーディング支援を提供する。
+
+## Guide
+
+- [CLAUDE.md](https://github.com/anthropics/claude-code-base-action/blob/main/CLAUDE.md): - Build/Type check: bun run typecheck - Format code: bun run format - Check formatting: bun run format:check - Run tests: bun test - Install dependenc…
+- [Contributor Covenant Code of Conduct](https://github.com/anthropics/claude-code-base-action/blob/main/CODE_OF_CONDUCT.md): We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+- [⚠️ This is a Mirror Repository](https://github.com/anthropics/claude-code-base-action/blob/main/MIRROR_DISCLAIMER.md): This repository is an automated mirror of the base-action directory from anthropics/claude-code-action.
+
+## Optional
+
+- [Contributing to Claude Code Base Action](https://github.com/anthropics/claude-code-base-action/blob/main/CONTRIBUTING.md): Thank you for your interest in contributing to Claude Code Base Action!

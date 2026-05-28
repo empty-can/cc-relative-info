@@ -1,0 +1,13 @@
+# fastsql
+
+> fastsql は SQLAlchemy を基盤とする Python ライブラリで、データベースのテーブル操作を Pythonic な API（CRUD・dataclass サポート・マイグレーション）で提供し、SQL の手書きを最小化する。
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/fastsql/blob/main/CHANGELOG.md): add engine kwargs (), thanks to comhar
+
+## Source Modules
+
+- [db_dc](https://github.com/AnswerDotAI/fastsql/blob/main/db_dc.py)
+- [fastsql.core](https://github.com/AnswerDotAI/fastsql/blob/main/fastsql/core.py): A connection to a SQLAlchemy database
+

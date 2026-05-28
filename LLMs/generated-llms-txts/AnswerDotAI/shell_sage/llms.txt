@@ -1,0 +1,17 @@
+# ShellSage
+
+> ShellSage is an AI-powered command-line assistant that helps developers and shell users get instant, context-aware answers and execute shell commands — leveraging the current terminal session history, file system, and web search as live context.
+
+A Python CLI tool (`ssage`) built on top of the Claude/LLM API via the `lisette` library, providing an interactive REPL and single-shot query modes with optional tool-use permissions and reasoning support.
+
+## Optional
+
+- [Release Notes](https://github.com/AnswerDotAI/shell_sage/blob/main/CHANGELOG.md): - Fix: Print tool use details before permission check (#81), thanks to @ncoop57 - Use os.environ.get instead of subprocess to retrieve SHELL variable …
+- [How to contribute](https://github.com/AnswerDotAI/shell_sage/blob/main/CONTRIBUTING.md): Make sure you have read the doc on code style first.
+
+## Source Modules
+
+- [ipython.00-init](https://github.com/AnswerDotAI/shell_sage/blob/main/ipython/00-init.py)
+- [ipython.01-prompt](https://github.com/AnswerDotAI/shell_sage/blob/main/ipython/01-prompt.py)
+- [shell_sage.config](https://github.com/AnswerDotAI/shell_sage/blob/main/shell_sage/config.py)
+- [shell_sage.core](https://github.com/AnswerDotAI/shell_sage/blob/main/shell_sage/core.py)

@@ -1,0 +1,30 @@
+# Claude Code Action
+
+> GitHub ワークフロー内で Claude Code を実行できる公式 GitHub Action。issue / PR への @claude メンション（タグモード）またはプロンプト入力（エージェントモード）に対応し、Anthropic API・AWS Bedrock・Google Vertex AI の 3 プロバイダーをサポートする。
+
+## Guide
+
+- [CLAUDE.md](https://github.com/anthropics/claude-code-action/blob/main/base-action/CLAUDE.md): - Build/Type check: bun run typecheck - Format code: bun run format - Check formatting: bun run format:check - Run tests: bun test - Install dependenc…
+- [Contributor Covenant Code of Conduct](https://github.com/anthropics/claude-code-action/blob/main/base-action/CODE_OF_CONDUCT.md): We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+- [Contributing to Claude Code Base Action](https://github.com/anthropics/claude-code-action/blob/main/base-action/CONTRIBUTING.md): Thank you for your interest in contributing to Claude Code Base Action!
+- [⚠️ This is a Mirror Repository](https://github.com/anthropics/claude-code-action/blob/main/base-action/MIRROR_DISCLAIMER.md): This repository is an automated mirror of the base-action directory from anthropics/claude-code-action.
+- [CLAUDE.md](https://github.com/anthropics/claude-code-action/blob/main/CLAUDE.md): A GitHub Action that lets Claude respond to @claude mentions on issues/PRs (tag mode) or run tasks via prompt input (agent mode).
+- [Contributor Covenant Code of Conduct](https://github.com/anthropics/claude-code-action/blob/main/CODE_OF_CONDUCT.md): We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+- [Capabilities and Limitations](https://github.com/anthropics/claude-code-action/blob/main/docs/capabilities-and-limitations.md): - Respond in a Single Comment: Claude operates by updating a single initial comment with progress and results - Answer Questions: Analyze code and pro…
+- [Cloud Providers](https://github.com/anthropics/claude-code-action/blob/main/docs/cloud-providers.md): You can authenticate with Claude using any of these four methods:
+- [Advanced Configuration](https://github.com/anthropics/claude-code-action/blob/main/docs/configuration.md): You can add custom MCP (Model Context Protocol) servers to extend Claude's capabilities using the --mcp-config flag in claude_args.
+- [Custom Automations](https://github.com/anthropics/claude-code-action/blob/main/docs/custom-automations.md): These examples show how to configure Claude to act automatically based on GitHub events.
+- [Experimental Features](https://github.com/anthropics/claude-code-action/blob/main/docs/experimental.md): Note: Experimental features are considered unstable and not supported for production use.
+- [Frequently Asked Questions (FAQ)](https://github.com/anthropics/claude-code-action/blob/main/docs/faq.md): This FAQ addresses common questions and gotchas when using the Claude Code GitHub Action.
+- [Migration Guide: v0.x to v1.0](https://github.com/anthropics/claude-code-action/blob/main/docs/migration-guide.md): This guide helps you migrate from Claude Code Action v0.x to v1.0.
+- [Security](https://github.com/anthropics/claude-code-action/blob/main/docs/security.md): - Repository Access: The action can only be triggered by users with write access to the repository - Bot User Control: By default, GitHub Apps and bots cannot trigger this action for security reasons.
+- [Setup Guide](https://github.com/anthropics/claude-code-action/blob/main/docs/setup.md): Requirements: You must be a repository admin to complete these steps.
+- [Solutions & Use Cases](https://github.com/anthropics/claude-code-action/blob/main/docs/solutions.md): This guide provides complete, ready-to-use solutions for common automation scenarios with Claude Code Action.
+- [Usage](https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md): Add a workflow file to your repository (e.g., .github/workflows/claude.yml):
+- [Claude Code GitHub Action Roadmap](https://github.com/anthropics/claude-code-action/blob/main/ROADMAP.md): Thank you for trying out the beta of our GitHub Action!
+- [Sample Turns Expected Output](https://github.com/anthropics/claude-code-action/blob/main/test/fixtures/sample-turns-expected-output.md): Available Tools: 8 tools loaded
+
+## Optional
+
+- [Contributing to Claude Code Action](https://github.com/anthropics/claude-code-action/blob/main/CONTRIBUTING.md): Thank you for your interest in contributing to Claude Code Action!
+- [Security Policy](https://github.com/anthropics/claude-code-action/blob/main/SECURITY.md): Thank you for helping us keep this action and the systems they interact with secure.

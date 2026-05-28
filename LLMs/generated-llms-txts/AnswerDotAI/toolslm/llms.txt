@@ -1,0 +1,14 @@
+# toolslm
+
+> Python の関数シグネチャと型アノテーションから JSON Schema を自動生成し、LLM の tool-use（関数呼び出し）と文脈注入（コード・ドキュメント・リポジトリのテキスト化）を開発者向けに手軽に実現するユーティリティライブラリ。
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/toolslm/blob/main/CHANGELOG.md): - Default unspecialised list/set schemas to string items for LLM compatibility (#87)
+
+## Source Modules
+
+- [toolslm.download](https://github.com/AnswerDotAI/toolslm/blob/main/toolslm/download.py)
+- [toolslm.funccall](https://github.com/AnswerDotAI/toolslm/blob/main/toolslm/funccall.py)
+- [toolslm.inspecttools](https://github.com/AnswerDotAI/toolslm/blob/main/toolslm/inspecttools.py): Import a module into the caller's global namespace so it's available for `symsrc`, `symval`, `symdir`, etc.
+- [toolslm.shell](https://github.com/AnswerDotAI/toolslm/blob/main/toolslm/shell.py)

@@ -1,0 +1,7 @@
+# Quickstart Resources
+
+> MCP（Model Context Protocol）の学習者向けに、サーバー・クライアント・天気予報ツールなど実践的なクイックスタートサンプルを最小構成で提供するリポジトリ。
+
+## Optional
+
+- [Security Notes (Quickstart Resources)](https://github.com/modelcontextprotocol/quickstart-resources/blob/main/SECURITY.md): These examples are intentionally minimal and optimized for learning.

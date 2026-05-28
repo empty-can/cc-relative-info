@@ -1,0 +1,16 @@
+# Claude Code Security Reviewer
+
+> {BLOCKQUOTE}
+
+{DESCRIPTION}
+
+## Source Modules
+
+- [claudecode.claude_api_client](https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/claude_api_client.py): Client for calling Claude API directly for security analysis tasks.
+- [claudecode.evals.eval_engine](https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/evals/eval_engine.py): Single evaluation test case.
+- [claudecode.evals.run_eval](https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/evals/run_eval.py): Single evaluation test case.
+- [claudecode.findings_filter](https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/findings_filter.py): Statistics about the filtering process.
+- [claudecode.github_action_audit](https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/github_action_audit.py): Raised when configuration is invalid or missing.
+- [claudecode.json_parser](https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/json_parser.py): Extract JSON object from text, looking in various formats and locations.
+- [claudecode.logger](https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/logger.py): Get a configured logger that outputs to stderr.
+- [claudecode.prompts](https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/prompts.py): Generate security audit prompt for Claude Code.

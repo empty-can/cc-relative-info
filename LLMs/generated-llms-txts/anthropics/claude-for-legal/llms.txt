@@ -1,0 +1,30 @@
+# Claude for Legal
+
+> A Claude Code plugin marketplace providing 12 practice-area AI assistants for legal professionals — from commercial contracts to AI governance — each customizable to the user's practice profile, with built-in attorney oversight guardrails.
+
+## Getting Started
+
+- [Quick Start](https://github.com/anthropics/claude-for-legal/blob/main/QUICKSTART.md): 60 seconds.
+
+## Guide
+
+- [CLAUDE.md](https://github.com/anthropics/claude-for-legal/blob/main/CLAUDE.md): Guidance for working on this repo.
+- [Adding a Connector](https://github.com/anthropics/claude-for-legal/blob/main/CONNECTORS.md): The plugins are at their best when connected to authoritative sources.
+- [AI Governance Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/ai-governance-legal/CLAUDE.md): Written by the cold-start interview.
+- [Commercial Contracts Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/commercial-legal/CLAUDE.md): This file is written by the cold-start interview on first run.
+- [Corporate Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/corporate-legal/CLAUDE.md): Written by cold-start on [DATE].
+- [Employment Law Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/employment-legal/CLAUDE.md): Written by cold-start on [DATE].
+- [IP Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/ip-legal/CLAUDE.md): This file is written by the cold-start interview on first run.
+- [Law Student Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/law-student/CLAUDE.md): Written by cold-start on [DATE].
+- [Legal Builder Hub Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/legal-builder-hub/CLAUDE.md): Written by cold-start on [DATE].
+- [Law School Clinic Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/legal-clinic/CLAUDE.md): Written by the professor-facing cold-start interview.
+- [Litigation Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/litigation-legal/CLAUDE.md): Written by cold-start on [DATE].
+- [Privacy Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/privacy-legal/CLAUDE.md): Written by the cold-start interview.
+- [Product Legal Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/product-legal/CLAUDE.md): Written by cold-start on [DATE].
+- [Company Profile](https://github.com/anthropics/claude-for-legal/blob/main/references/company-profile-template.md): Shared by all Claude for Legal plugins.
+- [Dashboard Template](https://github.com/anthropics/claude-for-legal/blob/main/references/dashboard-template.md): Referenced by the Dashboard offer guardrail.
+- [Regulatory Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/regulatory-legal/CLAUDE.md): Written by cold-start on [DATE].
+
+## Optional
+
+- [Contributing to Claude for Legal](https://github.com/anthropics/claude-for-legal/blob/main/CONTRIBUTING.md): Notes for anyone writing or editing a plugin in this repo.

@@ -1,0 +1,113 @@
+# Quickstart Resources
+
+> MCP クイックスタート用のサンプルリポジトリ。複数言語（Python・TypeScript・Go・Rust・Ruby）による MCP クライアントおよびウェザーサーバーの実装例を収録し、MCP プロトコルの基本的な使い方を示す。
+
+---
+
+## Source Modules
+
+### mcp-client-python.client
+
+*Source: mcp-client-python/client.py | URL: https://github.com/modelcontextprotocol/quickstart-resources/blob/main/mcp-client-python/client.py*
+
+- `MCPClient`
+- `anthropic`: Lazy-initialize Anthropic client when needed
+- `connect_to_server`: Connect to an MCP server
+- `process_query`: Process a query using Claude and available tools
+- `chat_loop`: Run an interactive chat loop
+- `cleanup`: Clean up resources
+- `main`
+
+### weather-server-python.weather
+
+*Source: weather-server-python/weather.py | URL: https://github.com/modelcontextprotocol/quickstart-resources/blob/main/weather-server-python/weather.py*
+
+- `make_nws_request`: Make a request to the NWS API with proper error handling.
+- `format_alert`: Format an alert feature into a readable string.
+- `get_alerts`: Get weather alerts for a US state.
+- `get_forecast`: Get weather forecast for a location.
+- `main`
+
+### mcp-client-typescript.index
+
+*Source: mcp-client-typescript/index.ts | URL: https://github.com/modelcontextprotocol/quickstart-resources/blob/main/mcp-client-typescript/index.ts*
+
+- `function main`
+- `constructor`
+- `anthropic`
+- `connectToServer`
+- `processQuery`
+- `chatLoop`
+- `cleanup`
+
+### weather-server-typescript.src.index
+
+*Source: weather-server-typescript/src/index.ts | URL: https://github.com/modelcontextprotocol/quickstart-resources/blob/main/weather-server-typescript/src/index.ts*
+
+- `function makeNWSRequest`
+- `function formatAlert`
+- `function main`
+
+### mcp-client-go.main
+
+*Source: mcp-client-go/main.go | URL: https://github.com/modelcontextprotocol/quickstart-resources/blob/main/mcp-client-go/main.go*
+
+- `func NewMCPClient`
+- `func mcpToolToAnthropicTool`
+- `func main`
+- `func`
+- `func`
+- `func`
+- `func`
+
+### weather-server-go.main
+
+*Source: weather-server-go/main.go | URL: https://github.com/modelcontextprotocol/quickstart-resources/blob/main/weather-server-go/main.go*
+
+- `func makeNWSRequest`
+- `func formatAlert`
+- `func formatPeriod`
+- `func getForecast`
+- `func getAlerts`
+- `func main`
+
+### mcp-client-rust.src.main
+
+*Source: mcp-client-rust/src/main.rs | URL: https://github.com/modelcontextprotocol/quickstart-resources/blob/main/mcp-client-rust/src/main.rs*
+
+- `fn new`
+- `fn connect_to_server`
+- `fn process_query`
+- `fn request_model`
+- `fn chat_loop`
+- `fn cleanup`
+- `fn main`
+- `fn convert_tools`
+
+### weather-server-rust.src.main
+
+*Source: weather-server-rust/src/main.rs | URL: https://github.com/modelcontextprotocol/quickstart-resources/blob/main/weather-server-rust/src/main.rs*
+
+- `fn make_nws_request`
+- `fn format_alert`
+- `fn format_period`
+- `fn new`
+- `fn get_alerts`
+- `fn get_forecast`
+- `fn get_info`
+- `fn main`
+
+### mcp-client-ruby.client
+
+*Source: mcp-client-ruby/client.rb | URL: https://github.com/modelcontextprotocol/quickstart-resources/blob/main/mcp-client-ruby/client.rb*
+
+- `connect_to_server`
+- `process_query`
+- `chat`
+
+### weather-server-ruby.weather
+
+*Source: weather-server-ruby/weather.rb | URL: https://github.com/modelcontextprotocol/quickstart-resources/blob/main/weather-server-ruby/weather.rb*
+
+- `make_nws_request`
+- `format_alert`

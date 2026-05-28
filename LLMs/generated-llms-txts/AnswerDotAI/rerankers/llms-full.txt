@@ -1,0 +1,167 @@
+# rerankers
+
+> A lightweight, unified Python API for reranking models — from cross-encoders and ColBERT to LLM-based rankers and multi-modal VLMs — enabling seamless integration of state-of-the-art reranking into any retrieval pipeline.
+
+`rerankers` unifies cross-encoder, ColBERT/late-interaction, FlashRank, RankGPT, RankLLM, MonoVLM, MxBai, and API-based rerankers (Cohere, Jina, Pinecone, etc.) behind a single `Reranker` interface. The core package ships dependency-free; extras are installed only for the backends you need.
+
+---
+
+## Source Modules
+
+### rerankers.documents
+
+*Source: rerankers/documents.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/documents.py*
+
+- `Document`
+
+### rerankers.integrations.langchain
+
+*Source: rerankers/integrations/langchain.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/integrations/langchain.py*
+
+- `RerankerLangChainCompressor`
+- `compress_documents`: Rerank a list of documents relevant to a query.
+
+### rerankers.models.api_rankers
+
+*Source: rerankers/models/api_rankers.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/api_rankers.py*
+
+- `APIRanker`
+- `rank`
+- `score`
+
+### rerankers.models.colbert_ranker
+
+*Source: rerankers/models/colbert_ranker.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/colbert_ranker.py*
+
+- `ColBERTModel`
+- `forward`
+- `ColBERTRanker`
+- `rank`
+- `score`
+
+### rerankers.models.flashrank_ranker
+
+*Source: rerankers/models/flashrank_ranker.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/flashrank_ranker.py*
+
+- `FlashRankRanker`
+- `tokenize`
+- `rank`
+- `score`
+
+### rerankers.models.llm_layerwise_ranker
+
+*Source: rerankers/models/llm_layerwise_ranker.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/llm_layerwise_ranker.py*
+
+- `LLMLayerWiseRanker`
+- `rank`
+- `score`
+
+### rerankers.models.llm_relevance_filter
+
+*Source: rerankers/models/llm_relevance_filter.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/llm_relevance_filter.py*
+
+- `LLMRelevanceFilter`
+- `score`: Score a single document.
+- `rank`: Rank a list of documents based on relevance to query.
+
+### rerankers.models.monovlm_ranker
+
+*Source: rerankers/models/monovlm_ranker.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/monovlm_ranker.py*
+
+- `MonoVLMRanker`
+- `rank`
+- `score`
+
+### rerankers.models.mxbai_v2
+
+*Source: rerankers/models/mxbai_v2.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/mxbai_v2.py*
+
+- `MxBaiV2Ranker`: A reranker that uses MxBai models for yes/no-based relevance classification.
+- `get_template`
+- `rank`: Rank documents by relevance to the query.
+- `score`: Score a single query-document pair.
+
+### rerankers.models.pylate_ranker
+
+*Source: rerankers/models/pylate_ranker.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/pylate_ranker.py*
+
+- `PyLateRanker`
+- `rank`
+- `score`
+
+### rerankers.models.ranker
+
+*Source: rerankers/models/ranker.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/ranker.py*
+
+- `BaseRanker`
+- `score`
+- `rank`: End-to-end reranking of documents.
+- `rank_async`
+- `as_langchain_compressor`
+
+### rerankers.models.rankgpt_rankers
+
+*Source: rerankers/models/rankgpt_rankers.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/rankgpt_rankers.py*
+
+- `get_prefix_prompt`
+- `get_post_prompt`
+- `create_permutation_instruction`
+- `clean_response`
+- `remove_duplicate`
+- `receive_permutation`
+- `make_item`
+- `RankGPTRanker`
+- `rank`
+- `score`
+
+### rerankers.models.rankllm_ranker
+
+*Source: rerankers/models/rankllm_ranker.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/rankllm_ranker.py*
+
+- `RankLLMRanker`
+- `rank`
+- `score`
+
+### rerankers.models.transformer_ranker
+
+*Source: rerankers/models/transformer_ranker.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/transformer_ranker.py*
+
+- `TransformerRanker`
+- `tokenize`
+- `rank`
+- `score`
+
+### rerankers.models.upr
+
+*Source: rerankers/models/upr.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/upr.py*
+
+- `UPRRanker`: UPR (Unsupervised Passage Reranker) replicates the negative log-likelihood
+- `score`: Score a single document. Negative log-likelihood of 'query' given 'doc'.
+- `rank`: Ranks a list of documents by the negative log-likelihood of the query given the doc.
+
+### rerankers.reranker
+
+*Source: rerankers/reranker.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/reranker.py*
+
+- `Reranker`
+
+### rerankers.results
+
+*Source: rerankers/results.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/results.py*
+
+- `Result`
+- `RankedResults`
+- `results_count`: Returns the total number of results.
+- `top_k`: Returns the top k results based on the score, if available, or rank.
+- `get_score_by_docid`: Fetches the score of a result by its doc_id using a more efficient approach.
+- `get_result_by_docid`: Fetches a result by its doc_id using a more efficient approach.
+
+### rerankers.utils
+
+*Source: rerankers/utils.py | URL: https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/utils.py*
+
+- `vprint`
+- `make_documents`
+- `prep_docs`
+- `prep_image_docs`: Prepare image documents for processing. Can handle base64 encoded images or file paths.
+- `get_chunks`: Implementation from https://github.com/unicamp-dl/InRanker/blob/main/inranker/base.py with extra typing and more descriptive names.

@@ -1,0 +1,68 @@
+# Claude Code Plugins Directory
+
+> Anthropic 公式の Claude Code プラグイン集。`hookify`（PreToolUse / PostToolUse / Stop / UserPromptSubmit 各フックにルールエンジンを適用するプラグイン）と `skill-creator`（新規 Skill の生成・評価ループを自動化する Skill）の 2 プラグインを収録する。
+
+---
+
+## Source Modules
+
+### plugins.hookify.core.rule_engine
+
+*Source: plugins/hookify/core/rule_engine.py | URL: https://github.com/anthropics/claude-plugins-official/blob/main/plugins/hookify/core/rule_engine.py*
+
+- `compile_regex`: Compile regex pattern with caching.
+- `RuleEngine`: Evaluates rules against hook input data.
+- `evaluate_rules`: Evaluate all rules and return combined results.
+
+### plugins.hookify.hooks.posttooluse
+
+*Source: plugins/hookify/hooks/posttooluse.py | URL: https://github.com/anthropics/claude-plugins-official/blob/main/plugins/hookify/hooks/posttooluse.py*
+
+- `main`: Main entry point for PostToolUse hook.
+
+### plugins.hookify.hooks.pretooluse
+
+*Source: plugins/hookify/hooks/pretooluse.py | URL: https://github.com/anthropics/claude-plugins-official/blob/main/plugins/hookify/hooks/pretooluse.py*
+
+- `main`: Main entry point for PreToolUse hook.
+
+### plugins.hookify.hooks.stop
+
+*Source: plugins/hookify/hooks/stop.py | URL: https://github.com/anthropics/claude-plugins-official/blob/main/plugins/hookify/hooks/stop.py*
+
+- `main`: Main entry point for Stop hook.
+
+### plugins.hookify.hooks.userpromptsubmit
+
+*Source: plugins/hookify/hooks/userpromptsubmit.py | URL: https://github.com/anthropics/claude-plugins-official/blob/main/plugins/hookify/hooks/userpromptsubmit.py*
+
+- `main`: Main entry point for UserPromptSubmit hook.
+
+### plugins.skill-creator.skills.skill-creator.scripts.quick_validate
+
+*Source: plugins/skill-creator/skills/skill-creator/scripts/quick_validate.py | URL: https://github.com/anthropics/claude-plugins-official/blob/main/plugins/skill-creator/skills/skill-creator/scripts/quick_validate.py*
+
+- `validate_skill`: Basic validation of a skill
+
+### plugins.skill-creator.skills.skill-creator.scripts.run_eval
+
+*Source: plugins/skill-creator/skills/skill-creator/scripts/run_eval.py | URL: https://github.com/anthropics/claude-plugins-official/blob/main/plugins/skill-creator/skills/skill-creator/scripts/run_eval.py*
+
+- `find_project_root`: Find the project root by walking up from cwd looking for .claude/.
+- `run_single_query`: Run a single query and return whether the skill was triggered.
+- `run_eval`: Run the full eval set and return results.
+- `main`
+
+### plugins.skill-creator.skills.skill-creator.scripts.run_loop
+
+*Source: plugins/skill-creator/skills/skill-creator/scripts/run_loop.py | URL: https://github.com/anthropics/claude-plugins-official/blob/main/plugins/skill-creator/skills/skill-creator/scripts/run_loop.py*
+
+- `split_eval_set`: Split eval set into train and test sets, stratified by should_trigger.
+- `run_loop`: Run the eval + improvement loop.
+- `main`
+
+### plugins.skill-creator.skills.skill-creator.scripts.utils
+
+*Source: plugins/skill-creator/skills/skill-creator/scripts/utils.py | URL: https://github.com/anthropics/claude-plugins-official/blob/main/plugins/skill-creator/skills/skill-creator/scripts/utils.py*
+
+- `parse_skill_md`: Parse a SKILL.md file, returning (name, description, full_content).

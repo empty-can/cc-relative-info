@@ -1,0 +1,758 @@
+# Ext Apps
+
+> MCP Apps SDK および Claude Code Agent Skills の公式リポジトリ。MCP ツールにチャート・フォーム・ダッシュボード等のインタラクティブ UI を付与し、Claude・ChatGPT をはじめとする MCP 準拠クライアント上でインライン表示を可能にする。create-mcp-app・migrate-oai-app・add-app-to-server・convert-web-app の 4 つの Agent Skill を同梱し、AI コーディングエージェントによる MCP App の生成・移行・統合を支援する。
+
+---
+
+## Source Modules
+
+### examples.qr-server.server
+
+*Source: examples/qr-server/server.py | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/qr-server/server.py*
+
+- `generate_qr`: Generate a QR code from text.
+- `view`: View HTML resource with CSP metadata for external dependencies.
+
+### examples.basic-host.serve
+
+*Source: examples/basic-host/serve.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-host/serve.ts*
+
+- `function sanitizeCspDomains`
+- `function buildCspHeader`
+
+### examples.basic-host.src.theme
+
+*Source: examples/basic-host/src/theme.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-host/src/theme.ts*
+
+- `function applyTheme`
+- `function getTheme`
+- `function setTheme`
+- `function toggleTheme`
+- `function onThemeChange`
+
+### examples.basic-server-preact.main
+
+*Source: examples/basic-server-preact/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-preact/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.basic-server-preact.server
+
+*Source: examples/basic-server-preact/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-preact/server.ts*
+
+- `function createServer`
+
+### examples.basic-server-react.main
+
+*Source: examples/basic-server-react/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-react/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.basic-server-react.server
+
+*Source: examples/basic-server-react/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-react/server.ts*
+
+- `function createServer`
+
+### examples.basic-server-solid.main
+
+*Source: examples/basic-server-solid/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-solid/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.basic-server-solid.server
+
+*Source: examples/basic-server-solid/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-solid/server.ts*
+
+- `function createServer`
+
+### examples.basic-server-svelte.main
+
+*Source: examples/basic-server-svelte/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-svelte/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.basic-server-svelte.server
+
+*Source: examples/basic-server-svelte/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-svelte/server.ts*
+
+- `function createServer`
+
+### examples.basic-server-vanillajs.main
+
+*Source: examples/basic-server-vanillajs/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-vanillajs/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.basic-server-vanillajs.server
+
+*Source: examples/basic-server-vanillajs/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-vanillajs/server.ts*
+
+- `function createServer`
+
+### examples.basic-server-vanillajs.src.mcp-app
+
+*Source: examples/basic-server-vanillajs/src/mcp-app.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-vanillajs/src/mcp-app.ts*
+
+- `function extractTime`
+- `function handleHostContextChanged`
+
+### examples.basic-server-vue.main
+
+*Source: examples/basic-server-vue/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-vue/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.basic-server-vue.server
+
+*Source: examples/basic-server-vue/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-vue/server.ts*
+
+- `function createServer`
+
+### examples.budget-allocator-server.main
+
+*Source: examples/budget-allocator-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/budget-allocator-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.budget-allocator-server.server
+
+*Source: examples/budget-allocator-server/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/budget-allocator-server/server.ts*
+
+- `function seededRandom`
+- `function generateHistory`
+- `function formatBudgetSummary`
+- `function createServer`
+
+### examples.budget-allocator-server.src.mcp-app
+
+*Source: examples/budget-allocator-server/src/mcp-app.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/budget-allocator-server/src/mcp-app.ts*
+
+- `function formatCurrency`
+- `function formatCurrencyFull`
+- `function drawSparkline`
+- `function calculatePercentile`
+- `function getPercentileClass`
+- `function formatPercentileBadge`
+- `function getPercentileIcon`
+- `function initChart`
+- `function updateChart`
+- `function createSliderRow`
+- `function handleSliderChange`
+- `function updateSliderDisplay`
+- `function updateAllSliderAmounts`
+- `function focusSlider`
+- `function highlightSlider`
+- `function clearSliderHighlight`
+- `function updatePercentileBadge`
+- `function updateAllPercentileBadges`
+- `function updateStatusBar`
+- `function updateComparisonSummary`
+- `function initBudgetSelector`
+- `function initStageSelector`
+- `function initializeUI`
+- `function handleHostContextChanged`
+
+### examples.cohort-heatmap-server.main
+
+*Source: examples/cohort-heatmap-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/cohort-heatmap-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.cohort-heatmap-server.server
+
+*Source: examples/cohort-heatmap-server/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/cohort-heatmap-server/server.ts*
+
+- `function generateRetention`
+- `function generateCohortData`
+- `function formatCohortSummary`
+- `function createServer`
+
+### examples.customer-segmentation-server.main
+
+*Source: examples/customer-segmentation-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/customer-segmentation-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.customer-segmentation-server.server
+
+*Source: examples/customer-segmentation-server/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/customer-segmentation-server/server.ts*
+
+- `function getCustomerData`
+- `function createServer`
+
+### examples.customer-segmentation-server.src.data-generator
+
+*Source: examples/customer-segmentation-server/src/data-generator.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/customer-segmentation-server/src/data-generator.ts*
+
+- `function gaussianRandom`
+- `function generateClusteredValue`
+- `function generateCompanyName`
+- `function selectSegment`
+- `function generateCustomer`
+- `function generateCustomers`
+- `function generateSegmentSummaries`
+
+### examples.customer-segmentation-server.src.mcp-app
+
+*Source: examples/customer-segmentation-server/src/mcp-app.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/customer-segmentation-server/src/mcp-app.ts*
+
+- `function formatValue`
+- `function getMetricRange`
+- `function normalizeToRadius`
+- `function getFilteredCustomers`
+- `function buildDatasets`
+- `function resolveColor`
+- `function getChartColors`
+- `function initChart`
+- `function updateChart`
+- `function renderLegend`
+- `function updateDetailPanel`
+- `function resetDetailPanel`
+- `function fetchData`
+- `function handleHostContextChanged`
+
+### examples.debug-server.main
+
+*Source: examples/debug-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/debug-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.debug-server.server
+
+*Source: examples/debug-server/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/debug-server/server.ts*
+
+- `function getLogFilePath`
+- `function appendToLogFile`
+- `function buildContent`
+- `function createServer`
+
+### examples.integration-server.main
+
+*Source: examples/integration-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/integration-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.map-server.main
+
+*Source: examples/map-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/map-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.map-server.server
+
+*Source: examples/map-server/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/map-server/server.ts*
+
+- `function geocodeWithNominatim`
+- `function createServer`
+
+### examples.quickstart.main
+
+*Source: examples/quickstart/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/quickstart/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.quickstart.server
+
+*Source: examples/quickstart/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/quickstart/server.ts*
+
+- `function createServer`
+
+### examples.scenario-modeler-server.main
+
+*Source: examples/scenario-modeler-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/scenario-modeler-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.scenario-modeler-server.src.hooks.useTheme
+
+*Source: examples/scenario-modeler-server/src/hooks/useTheme.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/scenario-modeler-server/src/hooks/useTheme.ts*
+
+- `function useTheme`
+
+### examples.scenario-modeler-server.src.lib.calculations
+
+*Source: examples/scenario-modeler-server/src/lib/calculations.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/scenario-modeler-server/src/lib/calculations.ts*
+
+- `function calculateProjections`
+- `function calculateSummary`
+
+### examples.scenario-modeler-server.src.lib.formatters
+
+*Source: examples/scenario-modeler-server/src/lib/formatters.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/scenario-modeler-server/src/lib/formatters.ts*
+
+- `function formatCurrency`
+- `function formatPercent`
+- `function formatCurrencySlider`
+
+### examples.shadertoy-server.main
+
+*Source: examples/shadertoy-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/shadertoy-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.shadertoy-server.server
+
+*Source: examples/shadertoy-server/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/shadertoy-server/server.ts*
+
+- `function createServer`
+
+### examples.sheet-music-server.main
+
+*Source: examples/sheet-music-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/sheet-music-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.sheet-music-server.server
+
+*Source: examples/sheet-music-server/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/sheet-music-server/server.ts*
+
+- `function createServer`
+
+### examples.sheet-music-server.src.mcp-app
+
+*Source: examples/sheet-music-server/src/mcp-app.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/sheet-music-server/src/mcp-app.ts*
+
+- `function setStatus`
+- `function renderAbc`
+- `function handleHostContextChanged`
+
+### examples.system-monitor-server.main
+
+*Source: examples/system-monitor-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/system-monitor-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.system-monitor-server.server
+
+*Source: examples/system-monitor-server/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/system-monitor-server/server.ts*
+
+- `function getSystemInfo`
+- `function getCpuSnapshots`
+- `function getPollStats`
+- `function createServer`
+
+### examples.system-monitor-server.src.mcp-app
+
+*Source: examples/system-monitor-server/src/mcp-app.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/system-monitor-server/src/mcp-app.ts*
+
+- `function formatBytes`
+- `function formatUptime`
+- `function initChart`
+- `function updateChart`
+- `function updateMemoryBar`
+- `function updateStaticSystemInfo`
+- `function updateDynamicUptime`
+- `function updateStatus`
+- `function calculateCpuUsage`
+- `function fetchStats`
+- `function startPolling`
+- `function stopPolling`
+- `function togglePolling`
+- `function handleHostContextChanged`
+
+### examples.threejs-server.main
+
+*Source: examples/threejs-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/threejs-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.threejs-server.server
+
+*Source: examples/threejs-server/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/threejs-server/server.ts*
+
+- `function createServer`
+
+### examples.transcript-server.main
+
+*Source: examples/transcript-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/transcript-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.transcript-server.server
+
+*Source: examples/transcript-server/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/transcript-server/server.ts*
+
+- `function createServer`
+
+### examples.transcript-server.src.mcp-app
+
+*Source: examples/transcript-server/src/mcp-app.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/transcript-server/src/mcp-app.ts*
+
+- `function handleHostContextChanged`
+- `function startAudioCapture`
+- `function updateAudioLevels`
+- `function stopAudioCapture`
+- `function startSpeechRecognition`
+- `function stopSpeechRecognition`
+- `function commitFinalTranscript`
+- `function clearTranscriptPlaceholder`
+- `function formatTime`
+- `function startTimer`
+- `function stopTimer`
+- `function addTranscriptEntry`
+- `function updateInterimTranscript`
+- `function clearInterimTranscript`
+- `function escapeHtml`
+- `function formatEntry`
+- `function formatEntries`
+- `function getAllEntries`
+- `function getUnsentEntries`
+- `function getAllTranscriptText`
+- `function getUnsentText`
+- `function updateSendButton`
+- `function updateModelContext`
+- `function startListening`
+- `function stopListening`
+
+### examples.video-resource-server.main
+
+*Source: examples/video-resource-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/video-resource-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.video-resource-server.server
+
+*Source: examples/video-resource-server/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/video-resource-server/server.ts*
+
+- `function createServer`
+
+### examples.video-resource-server.src.mcp-app
+
+*Source: examples/video-resource-server/src/mcp-app.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/video-resource-server/src/mcp-app.ts*
+
+- `function parseToolResult`
+- `function showLoading`
+- `function showError`
+- `function showPicker`
+- `function showPlayer`
+- `function fetchAndPlayVideo`
+- `function discoverVideos`
+- `function loadSelectedVideo`
+- `function handleHostContextChanged`
+
+### examples.wiki-explorer-server.main
+
+*Source: examples/wiki-explorer-server/main.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/wiki-explorer-server/main.ts*
+
+- `function startStreamableHTTPServer`
+- `function startStdioServer`
+- `function main`
+
+### examples.wiki-explorer-server.server
+
+*Source: examples/wiki-explorer-server/server.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/wiki-explorer-server/server.ts*
+
+- `function extractTitleFromUrl`
+- `function extractWikiLinks`
+- `function createServer`
+
+### src.app-bridge.examples
+
+*Source: src/app-bridge.examples.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/app-bridge.examples.ts*
+
+- `function AppBridge_basicUsage`
+- `function AppBridge_constructor_withMcpClient`
+- `function AppBridge_constructor_withoutMcpClient`
+- `function AppBridge_getAppCapabilities_checkAfterInit`
+- `function AppBridge_getAppVersion_logAfterInit`
+- `function AppBridge_oninitialized_sendToolInput`
+- `function AppBridge_onmessage_logMessage`
+- `function AppBridge_onopenlink_handleRequest`
+- `function AppBridge_onupdatemodelcontext_storeContext`
+- `function AppBridge_oncalltool_forwardToServer`
+- `function AppBridge_oncreatesamplingmessage_forwardToLlm`
+- `function AppBridge_onlistresources_returnResources`
+- `function AppBridge_onreadresource_returnResource`
+- `function AppBridge_onlistprompts_returnPrompts`
+- `function AppBridge_onping_handleRequest`
+- `function AppBridge_onsizechange_handleResize`
+- `function AppBridge_onrequestdisplaymode_handleRequest`
+- `function AppBridge_onloggingmessage_handleLog`
+- `function AppBridge_teardownResource_gracefulShutdown`
+- `function AppBridge_setHostContext_updateTheme`
+- `function AppBridge_setHostContext_updateMultiple`
+- `function AppBridge_sendToolInput_afterInit`
+- `function AppBridge_sendToolInputPartial_streaming`
+- `function AppBridge_sendToolResult_afterExecution`
+- `function AppBridge_sendToolCancelled_userInitiated`
+- `function AppBridge_sendToolCancelled_systemLevel`
+- `function AppBridge_connect_withMcpClient`
+- `function AppBridge_connect_withoutMcpClient`
+
+### src.app.examples
+
+*Source: src/app.examples.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/app.examples.ts*
+
+- `function RESOURCE_URI_META_KEY_modernFormat`
+- `function RESOURCE_URI_META_KEY_legacyFormat`
+- `function RESOURCE_URI_META_KEY_hostSide`
+- `function App_constructor_basic`
+- `function App_basicUsage`
+- `function App_getHostCapabilities_checkAfterConnection`
+- `function App_getHostVersion_logAfterConnection`
+- `function App_getHostContext_accessAfterConnection`
+- `function App_ontoolinput_setter`
+- `function App_ontoolinputpartial_progressiveRendering`
+- `function App_ontoolresult_displayResults`
+- `function App_ontoolcancelled_handleCancellation`
+- `function App_onhostcontextchanged_respondToTheme`
+- `function App_onhostcontextchanged_respondToDisplayMode`
+- `function App_onteardown_performCleanup`
+- `function App_oncalltool_handleFromHost`
+- `function App_onlisttools_returnTools`
+- `function App_callServerTool_fetchWeather`
+- `function App_createSamplingMessage_simple`
+- `function App_createSamplingMessage_withTools`
+- `function App_readServerResource_playVideo`
+- `function App_listServerResources_buildPicker`
+- `function App_sendMessage_textFromInteraction`
+- `function App_sendMessage_withLargeContext`
+- `function App_sendLog_debugState`
+- `function App_updateModelContext_appState`
+- `function App_updateModelContext_reportError`
+- `function App_openLink_documentation`
+- `function App_requestDisplayMode_toggle`
+- `function App_sendSizeChanged_manual`
+- `function App_setupAutoResize_manual`
+- `function App_connect_withPostMessageTransport`
+
+### src.message-transport.examples
+
+*Source: src/message-transport.examples.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/message-transport.examples.ts*
+
+- `function PostMessageTransport_view`
+- `function PostMessageTransport_host`
+- `function PostMessageTransport_constructor_view`
+- `function PostMessageTransport_constructor_host`
+
+### src.react.useAutoResize
+
+*Source: src/react/useAutoResize.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/react/useAutoResize.ts*
+
+- `function useAutoResize`
+
+### src.react.useDocumentTheme
+
+*Source: src/react/useDocumentTheme.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/react/useDocumentTheme.ts*
+
+- `function useDocumentTheme`
+
+### src.react.useHostStyles
+
+*Source: src/react/useHostStyles.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/react/useHostStyles.ts*
+
+- `function useHostStyleVariables`
+- `function useHostFonts`
+- `function useHostStyles`
+
+### src.server.index.examples
+
+*Source: src/server/index.examples.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/server/index.examples.ts*
+
+- `function index_overview`
+- `function registerAppTool_basicUsage`
+- `function registerAppTool_modelOnlyVisibility`
+- `function registerAppTool_appOnlyVisibility`
+- `function registerAppResource_basicUsage`
+- `function registerAppResource_withCsp`
+- `function registerAppResource_withDomain`
+- `function computeAppDomainForClaude`
+- `function getUiCapability_checkSupport`
+
+### src.server.index
+
+*Source: src/server/index.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/server/index.ts*
+
+- `function registerAppTool`
+- `function registerAppResource`
+- `function getUiCapability`
+
+### src.styles.examples
+
+*Source: src/styles.examples.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/styles.examples.ts*
+
+- `function getDocumentTheme_checkCurrent`
+- `function applyDocumentTheme_fromHostContext`
+- `function applyHostStyleVariables_fromHostContext`
+- `function applyHostStyleVariables_toElement`
+- `function applyHostFonts_fromHostContext`
+- `function applyHostFonts_selfHosted`
+- `function applyHostFonts_googleFonts`
+
+### src.styles
+
+*Source: src/styles.ts | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/styles.ts*
+
+- `function getDocumentTheme`
+- `function applyDocumentTheme`
+- `function applyHostStyleVariables`
+- `function applyHostFonts`
+
+### docs.patterns
+
+*Source: docs/patterns.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/docs/patterns.tsx*
+
+- `function pollingVanillaJs`
+- `function poll`
+- `function startPolling`
+- `function stopPolling`
+- `function pollingReact`
+- `function poll`
+- `function chunkedDataServer`
+- `function chunkedDataClient`
+- `function loadDataInChunks`
+- `function binaryBlobResourceServer`
+- `function binaryBlobResourceClient`
+- `function hostContextVanillaJs`
+- `function applyHostContext`
+- `function hostContextReact`
+- `function MyApp`
+- `function persistViewStateServer`
+- `function toolCallback`
+- `function persistViewState`
+- `function saveState`
+- `function loadState`
+- `function visibilityBasedPause`
+
+### examples.basic-server-preact.src.mcp-app
+
+*Source: examples/basic-server-preact/src/mcp-app.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-preact/src/mcp-app.tsx*
+
+- `function extractTime`
+- `function GetTimeApp`
+
+### examples.basic-server-react.src.mcp-app
+
+*Source: examples/basic-server-react/src/mcp-app.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-react/src/mcp-app.tsx*
+
+- `function extractTime`
+- `function GetTimeApp`
+
+### examples.basic-server-solid.src.mcp-app
+
+*Source: examples/basic-server-solid/src/mcp-app.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/basic-server-solid/src/mcp-app.tsx*
+
+- `function extractTime`
+- `function GetTimeApp`
+- `function GetTimeAppInner`
+- `function handleGetTime`
+- `function handleSendMessage`
+- `function handleSendLog`
+- `function handleOpenLink`
+
+### examples.integration-server.src.mcp-app
+
+*Source: examples/integration-server/src/mcp-app.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/integration-server/src/mcp-app.tsx*
+
+- `function extractTime`
+- `function GetTimeApp`
+
+### examples.scenario-modeler-server.src.components.MetricCard
+
+*Source: examples/scenario-modeler-server/src/components/MetricCard.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/scenario-modeler-server/src/components/MetricCard.tsx*
+
+- `function MetricCard`
+
+### examples.scenario-modeler-server.src.components.SliderRow
+
+*Source: examples/scenario-modeler-server/src/components/SliderRow.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/scenario-modeler-server/src/components/SliderRow.tsx*
+
+- `function SliderRow`
+
+### examples.scenario-modeler-server.src.mcp-app
+
+*Source: examples/scenario-modeler-server/src/mcp-app.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/scenario-modeler-server/src/mcp-app.tsx*
+
+- `function getSafeAreaPaddingStyle`
+- `function ScenarioModeler`
+
+### examples.threejs-server.src.mcp-app-wrapper
+
+*Source: examples/threejs-server/src/mcp-app-wrapper.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/examples/threejs-server/src/mcp-app-wrapper.tsx*
+
+- `function registerWidgetTools`
+- `function McpAppWrapper`
+
+### src.react.index.examples
+
+*Source: src/react/index.examples.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/react/index.examples.tsx*
+
+- `function index_basicReactApp`
+- `function MyApp`
+
+### src.react.useApp.examples
+
+*Source: src/react/useApp.examples.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/react/useApp.examples.tsx*
+
+- `function useApp_registerHandler`
+- `function useApp_basicUsage`
+- `function MyApp`
+
+### src.react.useApp
+
+*Source: src/react/useApp.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/react/useApp.tsx*
+
+- `function useApp`
+- `function connect`
+
+### src.react.useAutoResize.examples
+
+*Source: src/react/useAutoResize.examples.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/react/useAutoResize.examples.tsx*
+
+- `function useAutoResize_manualApp`
+- `function MyComponent`
+
+### src.react.useDocumentTheme.examples
+
+*Source: src/react/useDocumentTheme.examples.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/react/useDocumentTheme.examples.tsx*
+
+- `function ThemedButton`
+
+### src.react.useHostStyles.examples
+
+*Source: src/react/useHostStyles.examples.tsx | URL: https://github.com/modelcontextprotocol/ext-apps/blob/main/src/react/useHostStyles.examples.tsx*
+
+- `function useHostStyleVariables_basicUsage`
+- `function MyApp`
+- `function MyApp`

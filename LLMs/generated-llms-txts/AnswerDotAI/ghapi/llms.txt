@@ -1,0 +1,19 @@
+# ghapi
+
+> GitHub API 全体を Python から利用できる fast.ai 製ラッパーライブラリ。型安全なクライアント `GhApi` により、Issues・PR・ファイル操作・Actions・GraphQL クエリ等の全エンドポイントを Pythonic に操作できる。
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/ghapi/blob/main/CHANGELOG.md): - Only decode non binary types (#206)
+- [How to contribute](https://github.com/AnswerDotAI/ghapi/blob/main/CONTRIBUTING.md): Before anything else, please install the git hooks that run automatic scripts during each commit and merge to strip the notebooks of superfluous metadata (and avoid merge conflicts).
+
+## Source Modules
+
+- [ghapi._nbdev](https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/_nbdev.py)
+- [ghapi.actions](https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/actions.py)
+- [ghapi.auth](https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/auth.py)
+- [ghapi.build_lib](https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/build_lib.py)
+- [ghapi.cli](https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/cli.py)
+- [ghapi.core](https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/core.py)
+- [ghapi.graphql](https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/graphql.py)
+- [ghapi.page](https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/page.py)

@@ -1,0 +1,12 @@
+# FastHTML
+
+> Python と HTMX を組み合わせ、HTML ファーストのアプローチで Web アプリを素早く構築したい開発者向けに、シンプルな記法で完全な Web アプリケーションを提供するフレームワーク。
+
+## Guide
+
+- [Contributor Covenant Code of Conduct](https://github.com/AnswerDotAI/fasthtml/blob/main/CODE_OF_CONDUCT.md): In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to make participation in our project and our community a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/fasthtml/blob/main/CHANGELOG.md): The following imports have been removed from fasthtml.common:
+- [How to contribute](https://github.com/AnswerDotAI/fasthtml/blob/main/CONTRIBUTING.md): Make sure you have read the doc on code style first.

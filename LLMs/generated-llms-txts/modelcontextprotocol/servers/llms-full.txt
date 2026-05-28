@@ -1,0 +1,923 @@
+# Model Context Protocol servers
+
+> MCP 公式リファレンスサーバー実装群（TypeScript 4 本・Python 3 本）を npm ワークスペースモノレポで提供し、開発者が MCP プロトコルの全機能を実際のコードで学・検証・統合できるようにする。
+
+---
+
+## Guide
+
+### CLAUDE.md
+
+*Source: CLAUDE.md | URL: https://github.com/modelcontextprotocol/servers/blob/main/CLAUDE.md*
+
+# CLAUDE.md
+
+This file provides guidance to Claude Code when working with code in this repository.
+
+## Project Overview
+
+Official MCP reference server implementations. This is an npm workspaces monorepo containing 7 servers (4 TypeScript, 3 Python) under `src/`. Each server is a standalone package published to npm or PyPI.
+
+## Monorepo Structure
+
+```
+src/
+  everything/          TS  @modelcontextprotocol/server-everything    (reference server, all MCP features)
+  filesystem/          TS  @modelcontextprotocol/server-filesystem    (file operations with Roots access control)
+  memory/              TS  @modelcontextprotocol/server-memory        (knowledge graph persistence)
+  sequentialthinking/  TS  @modelcontextprotocol/server-sequential-thinking  (step-by-step reasoning)
+  fetch/               Py  mcp-server-fetch                           (web content fetching)
+  git/                 Py  mcp-server-git                             (git repository operations)
+  time/                Py  mcp-server-time                            (timezone queries and conversion)
+```
+
+## Build & Test Commands
+
+### TypeScript servers
+
+```bash
+# Single server
+cd src/<server> && npm ci && npm run build && npm test
+
+# All TS servers from root
+npm install && npm run build
+```
+
+- Build: `tsc` (target ES2022, module Node16, strict mode)
+- Tests: **vitest** with `@vitest/coverage-v8` (required for new tests)
+- Node version: **22**
+
+### Python servers
+
+```bash
+cd src/<server> && uv sync --frozen --all-extras --dev
+
+# Run tests (if tests/ or test/ directory exists)
+uv run pytest
+
+# Type checking
+uv run pyright
+
+# Linting
+uv run ruff check .
+```
+
+- Build system: **hatchling** (`uv build`)
+- Package manager: **uv** (not pip)
+- Python version: **>= 3.10** (per-server `.python-version` file)
+- Type checking: **pyright** (enforced in CI)
+- Linting: **ruff**
+
+## Code Style
+
+### TypeScript
+
+- ES modules with `.js` extension in import paths
+- Strict TypeScript typing for all functions and variables
+- Zod schemas for tool input validation
+- 2-space indentation, trailing commas in multi-line objects
+- camelCase for variables/functions, PascalCase for types/classes, UPPER_CASE for constants
+- kebab-case for file names and registered tools/prompts/resources
+- Verb-first tool names (e.g., `get-file-info`, not `file-info`)
+- Imports grouped: external first, then internal
+
+### Python
+
+- Type hints enforced via pyright
+- Async/await patterns (especially in fetch server with pytest-asyncio)
+- Follow existing module layout per server
+
+## Contributing Guidelines
+
+**Accepted:** Bug fixes, usability improvements, enhancements demonstrating MCP protocol features (Resources, Prompts, Roots -- not just Tools).
+
+**Selective:** New features outside a server's core purpose or highly opinionated additions.
+
+**Not accepted:** New server implementations (use the [MCP Server Registry](https://github.com/modelcontextprotocol/registry)), README server listing changes.
+
+## CI/CD Pipeline
+
+Both TypeScript and Python workflows use **dynamic package detection** (find + jq matrix strategy):
+
+1. `detect-packages` -- finds all `package.json` / `pyproject.toml` under `src/`
+2. `test` -- runs tests per package
+3. `build` -- compiles and type-checks per package
+4. `publish` -- on release events only (npm for TS, PyPI trusted publishing for Python)
+
+## MCP Protocol Reference
+
+The repo is configured with an MCP docs server (`.mcp.json`) pointing to `https://modelcontextprotocol.io/mcp`. For schema details, reference `https://github.com/modelcontextprotocol/modelcontextprotocol/tree/main/schema` which contains versioned schemas in JSON and TypeScript formats.
+
+## Key Patterns
+
+- Each server registers capabilities via `registerTools(server)`, `registerResources(server)`, `registerPrompts(server)` functions
+- Tool annotations: set `readOnlyHint`, `idempotentHint`, `destructiveHint` per MCP spec
+- Transport support: stdio (default), SSE (deprecated), Streamable HTTP
+- All PRs are reviewed against the [PR template](.github/pull_request_template.md) checklist -- ensure MCP docs are read, security best practices followed, and changes tested with an LLM client
+
+### Contributor Covenant Code of Conduct
+
+*Source: CODE_OF_CONDUCT.md | URL: https://github.com/modelcontextprotocol/servers/blob/main/CODE_OF_CONDUCT.md*
+
+# Contributor Covenant Code of Conduct
+
+## Our Pledge
+
+We as members, contributors, and leaders pledge to make participation in our
+community a harassment-free experience for everyone, regardless of age, body
+size, visible or invisible disability, ethnicity, sex characteristics, gender
+identity and expression, level of experience, education, socio-economic status,
+nationality, personal appearance, race, religion, or sexual identity
+and orientation.
+
+We pledge to act and interact in ways that contribute to an open, welcoming,
+diverse, inclusive, and healthy community.
+
+## Our Standards
+
+Examples of behavior that contributes to a positive environment for our
+community include:
+
+* Demonstrating empathy and kindness toward other people
+* Being respectful of differing opinions, viewpoints, and experiences
+* Giving and gracefully accepting constructive feedback
+* Accepting responsibility and apologizing to those affected by our mistakes,
+  and learning from the experience
+* Focusing on what is best not just for us as individuals, but for the
+  overall community
+
+Examples of unacceptable behavior include:
+
+* The use of sexualized language or imagery, and sexual attention or
+  advances of any kind
+* Trolling, insulting or derogatory comments, and personal or political attacks
+* Public or private harassment
+* Publishing others' private information, such as a physical or email
+  address, without their explicit permission
+* Other conduct which could reasonably be considered inappropriate in a
+  professional setting
+
+## Enforcement Responsibilities
+
+Community leaders are responsible for clarifying and enforcing our standards of
+acceptable behavior and will take appropriate and fair corrective action in
+response to any behavior that they deem inappropriate, threatening, offensive,
+or harmful.
+
+Community leaders have the right and responsibility to remove, edit, or reject
+comments, commits, code, wiki edits, issues, and other contributions that are
+not aligned to this Code of Conduct, and will communicate reasons for moderation
+decisions when appropriate.
+
+## Scope
+
+This Code of Conduct applies within all community spaces, and also applies when
+an individual is officially representing the community in public spaces.
+Examples of representing our community include using an official e-mail address,
+posting via an official social media account, or acting as an appointed
+representative at an online or offline event.
+
+## Enforcement
+
+Instances of abusive, harassing, or otherwise unacceptable behavior may be
+reported to the community leaders responsible for enforcement at
+mcp-coc@anthropic.com.
+All complaints will be reviewed and investigated promptly and fairly.
+
+All community leaders are obligated to respect the privacy and security of the
+reporter of any incident.
+
+## Enforcement Guidelines
+
+Community leaders will follow these Community Impact Guidelines in determining
+the consequences for any action they deem in violation of this Code of Conduct:
+
+### 1. Correction
+
+**Community Impact**: Use of inappropriate language or other behavior deemed
+unprofessional or unwelcome in the community.
+
+**Consequence**: A private, written warning from community leaders, providing
+clarity around the nature of the violation and an explanation of why the
+behavior was inappropriate. A public apology may be requested.
+
+### 2. Warning
+
+**Community Impact**: A violation through a single incident or series
+of actions.
+
+**Consequence**: A warning with consequences for continued behavior. No
+interaction with the people involved, including unsolicited interaction with
+those enforcing the Code of Conduct, for a specified period of time. This
+includes avoiding interactions in community spaces as well as external channels
+like social media. Violating these terms may lead to a temporary or
+permanent ban.
+
+### 3. Temporary Ban
+
+**Community Impact**: A serious violation of community standards, including
+sustained inappropriate behavior.
+
+**Consequence**: A temporary ban from any sort of interaction or public
+communication with the community for a specified period of time. No public or
+private interaction with the people involved, including unsolicited interaction
+with those enforcing the Code of Conduct, is allowed during this period.
+Violating these terms may lead to a permanent ban.
+
+### 4. Permanent Ban
+
+**Community Impact**: Demonstrating a pattern of violation of community
+standards, including sustained inappropriate behavior,  harassment of an
+individual, or aggression toward or disparagement of classes of individuals.
+
+**Consequence**: A permanent ban from any sort of public interaction within
+the community.
+
+## Attribution
+
+This Code of Conduct is adapted from the [Contributor Covenant][homepage],
+version 2.0, available at
+https://www.contributor-covenant.org/version/2/0/code_of_conduct.html.
+
+Community Impact Guidelines were inspired by [Mozilla's code of conduct
+enforcement ladder](https://github.com/mozilla/diversity).
+
+[homepage]: https://www.contributor-covenant.org
+
+For answers to common questions about this code of conduct, see the FAQ at
+https://www.contributor-covenant.org/faq. Translations are available at
+https://www.contributor-covenant.org/translations.
+
+### MCP "Everything" Server - Development Guidelines
+
+*Source: src/everything/AGENTS.md | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/AGENTS.md*
+
+# MCP "Everything" Server - Development Guidelines
+
+## Build, Test & Run Commands
+
+- Build: `npm run build` - Compiles TypeScript to JavaScript
+- Watch mode: `npm run watch` - Watches for changes and rebuilds automatically
+- Run STDIO server: `npm run start:stdio` - Starts the MCP server using stdio transport
+- Run SSE server: `npm run start:sse` - Starts the MCP server with SSE transport
+- Run StreamableHttp server: `npm run start:streamableHttp` - Starts the MCP server with StreamableHttp transport
+- Prepare release: `npm run prepare` - Builds the project for publishing
+
+## Code Style Guidelines
+
+- Use ES modules with `.js` extension in import paths
+- Strictly type all functions and variables with TypeScript
+- Follow zod schema patterns for tool input validation
+- Prefer async/await over callbacks and Promise chains
+- Place all imports at top of file, grouped by external then internal
+- Use descriptive variable names that clearly indicate purpose
+- Implement proper cleanup for timers and resources in server shutdown
+- Handle errors with try/catch blocks and provide clear error messages
+- Use consistent indentation (2 spaces) and trailing commas in multi-line objects
+- Match existing code style, import order, and module layout in the respective folder.
+- Use camelCase for variables/functions,
+- Use PascalCase for types/classes,
+- Use UPPER_CASE for constants
+- Use kebab-case for file names and registered tools, prompts, and resources.
+- Use verbs for tool names, e.g., `get-annotated-message` instead of `annotated-message`
+
+## Extending the Server
+
+The Everything Server is designed to be extended at well-defined points.
+See [Extension Points](docs/extension.md) and [Project Structure](docs/structure.md).
+The server factory is `src/everything/server/index.ts` and registers all features during startup as well as handling post-connection setup.
+
+### High-level
+
+- Tools live under `src/everything/tools/` and are registered via `registerTools(server)`.
+- Resources live under `src/everything/resources/` and are registered via `registerResources(server)`.
+- Prompts live under `src/everything/prompts/` and are registered via `registerPrompts(server)`.
+- Subscriptions and simulated update routines are under `src/everything/resources/subscriptions.ts`.
+- Logging helpers are under `src/everything/server/logging.ts`.
+- Transport managers are under `src/everything/transports/`.
+
+### When adding a new feature
+
+- Follow the existing file/module pattern in its folder (naming, exports, and registration function).
+- Export a `registerX(server)` function that registers new items with the MCP SDK in the same style as existing ones.
+- Wire your new module into the central index (e.g., update `tools/index.ts`, `resources/index.ts`, or `prompts/index.ts`).
+- Ensure schemas (for tools) are accurate JSON Schema and include helpful descriptions and examples.
+  `server/index.ts` and usages in `logging.ts` and `subscriptions.ts`.
+- Keep the docs in `src/everything/docs/` up to date if you add or modify noteworthy features.
+
+### Everything Server – Architecture
+
+*Source: src/everything/docs/architecture.md | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/architecture.md*
+
+# Everything Server – Architecture
+
+**Architecture
+| [Project Structure](structure.md)
+| [Startup Process](startup.md)
+| [Server Features](features.md)
+| [Extension Points](extension.md)
+| [How It Works](how-it-works.md)**
+
+This documentation summarizes the current layout and runtime architecture of the `src/everything` package.
+It explains how the server starts, how transports are wired, where tools, prompts, and resources are registered, and how to extend the system.
+
+## High‑level Overview
+
+### Purpose
+
+A minimal, modular MCP server showcasing core Model Context Protocol features. It exposes simple tools, prompts, and resources, and can be run over multiple transports (STDIO, SSE, and Streamable HTTP).
+
+### Design
+
+A small “server factory” constructs the MCP server and registers features.
+Transports are separate entry points that create/connect the server and handle network concerns.
+Tools, prompts, and resources are organized in their own submodules.
+
+### Multi‑client
+
+The server supports multiple concurrent clients. Tracking per session data is demonstrated with
+resource subscriptions and simulated logging.
+
+## Build and Distribution
+
+- TypeScript sources are compiled into `dist/` via `npm run build`.
+- The `build` script copies `docs/` into `dist/` so instruction files ship alongside the compiled server.
+- The CLI bin is configured in `package.json` as `mcp-server-everything` → `dist/index.js`.
+
+## [Project Structure](structure.md)
+
+## [Startup Process](startup.md)
+
+## [Server Features](features.md)
+
+## [Extension Points](extension.md)
+
+## [How It Works](how-it-works.md)
+
+### Everything Server - Extension Points
+
+*Source: src/everything/docs/extension.md | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/extension.md*
+
+# Everything Server - Extension Points
+
+**[Architecture](architecture.md)
+| [Project Structure](structure.md)
+| [Startup Process](startup.md)
+| [Server Features](features.md)
+| Extension Points
+| [How It Works](how-it-works.md)**
+
+## Adding Tools
+
+- Create a new file under `tools/` with your `registerXTool(server)` function that registers the tool via `server.registerTool(...)`.
+- Export and call it from `tools/index.ts` inside `registerTools(server)`.
+
+## Adding Prompts
+
+- Create a new file under `prompts/` with your `registerXPrompt(server)` function that registers the prompt via `server.registerPrompt(...)`.
+- Export and call it from `prompts/index.ts` inside `registerPrompts(server)`.
+
+## Adding Resources
+
+- Create a new file under `resources/` with your `registerXResources(server)` function using `server.registerResource(...)` (optionally with `ResourceTemplate`).
+- Export and call it from `resources/index.ts` inside `registerResources(server)`.
+
+### Everything Server - Features
+
+*Source: src/everything/docs/features.md | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/features.md*
+
+# Everything Server - Features
+
+**[Architecture](architecture.md)
+| [Project Structure](structure.md)
+| [Startup Process](startup.md)
+| Server Features
+| [Extension Points](extension.md)
+| [How It Works](how-it-works.md)**
+
+## Tools
+
+- `echo` (tools/echo.ts): Echoes the provided `message: string`. Uses Zod to validate inputs.
+- `get-annotated-message` (tools/get-annotated-message.ts): Returns a `text` message annotated with `priority` and `audience` based on `messageType` (`error`, `success`, or `debug`); can optionally include an annotated `image`.
+- `get-env` (tools/get-env.ts): Returns all environment variables from the running process as pretty-printed JSON text.
+- `get-resource-links` (tools/get-resource-links.ts): Returns an intro `text` block followed by multiple `resource_link` items. For a requested `count` (1–10), alternates between dynamic Text and Blob resources using URIs from `resources/templates.ts`.
+- `get-resource-reference` (tools/get-resource-reference.ts): Accepts `resourceType` (`text` or `blob`) and `resourceId` (positive integer). Returns a concrete `resource` content block (with its `uri`, `mimeType`, and data) with surrounding explanatory `text`.
+- `get-roots-list` (tools/get-roots-list.ts): Returns the last list of roots sent by the client.
+- `gzip-file-as-resource` (tools/gzip-file-as-resource.ts): Accepts a `name` and `data` (URL or data URI), fetches the data subject to size/time/domain constraints, compresses it, registers it as a session resource at `demo://resource/session/<name>` with `mimeType: application/gzip`, and returns either a `resource_link` (default) or an inline `resource` depending on `outputType`.
+- `get-structured-content` (tools/get-structured-content.ts): Demonstrates structured responses. Accepts `location` input and returns both backward‑compatible `content` (a `text` block containing JSON) and `structuredContent` validated by an `outputSchema` (temperature, conditions, humidity).
+- `get-sum` (tools/get-sum.ts): For two numbers `a` and `b` calculates and returns their sum. Uses Zod to validate inputs.
+- `get-tiny-image` (tools/get-tiny-image.ts): Returns a tiny PNG MCP logo as an `image` content item with brief descriptive text before and after.
+- `trigger-long-running-operation` (tools/trigger-trigger-long-running-operation.ts): Simulates a multi-step operation over a given `duration` and number of `steps`; reports progress via `notifications/progress` when a `progressToken` is provided by the client.
+- `toggle-simulated-logging` (tools/toggle-simulated-logging.ts): Starts or stops simulated, random‑leveled logging for the invoking session. Respects the client’s selected minimum logging level.
+- `toggle-subscriber-updates` (tools/toggle-subscriber-updates.ts): Starts or stops simulated resource update notifications for URIs the invoking session has subscribed to.
+- `trigger-sampling-request` (tools/trigger-sampling-request.ts): Issues a `sampling/createMessage` request to the client/LLM using provided `prompt` and optional generation controls; returns the LLM's response payload.
+- `simulate-research-query` (tools/simulate-research-query.ts): Demonstrates MCP Tasks (SEP-1686) with a simulated multi-stage research operation. Accepts `topic` and `ambiguous` parameters. Returns a task that progresses through stages with status updates. If `ambiguous` is true and client supports elicitation, sends an elicitation request directly to gather clarification before completing.
+- `trigger-sampling-request-async` (tools/trigger-sampling-request-async.ts): Demonstrates bidirectional tasks where the server sends a sampling request that the client executes as a background task. Server polls for status and retrieves the LLM result when complete. Requires client to support `tasks.requests.sampling.createMessage`.
+- `trigger-elicitation-request-async` (tools/trigger-elicitation-request-async.ts): Demonstrates bidirectional tasks where the server sends an elicitation request that the client executes as a background task. Server polls while waiting for user input. Requires client to support `tasks.requests.elicitation.create`.
+
+## Prompts
+
+- `simple-prompt` (prompts/simple.ts): No-argument prompt that returns a static user message.
+- `args-prompt` (prompts/args.ts): Two-argument prompt with `city` (required) and `state` (optional) used to compose a question.
+- `completable-prompt` (prompts/completions.ts): Demonstrates argument auto-completions with the SDK’s `completable` helper; `department` completions drive context-aware `name` suggestions.
+- `resource-prompt` (prompts/resource.ts): Accepts `resourceType` ("Text" or "Blob") and `resourceId` (string convertible to integer) and returns messages that include an embedded dynamic resource of the selected type generated via `resources/templates.ts`.
+
+## Resources
+
+- Dynamic Text: `demo://resource/dynamic/text/{index}` (content generated on the fly)
+- Dynamic Blob: `demo://resource/dynamic/blob/{index}` (base64 payload generated on the fly)
+- Static Documents: `demo://resource/static/document/<filename>` (serves files from `src/everything/docs/` as static file-based resources)
+- Session Scoped: `demo://resource/session/<name>` (per-session resources registered dynamically; available only for the lifetime of the session)
+
+## Resource Subscriptions and Notifications
+
+- Simulated update notifications are opt‑in and off by default.
+- Clients may subscribe/unsubscribe to resource URIs using the MCP `resources/subscribe` and `resources/unsubscribe` requests.
+- Use the `toggle-subscriber-updates` tool to start/stop a per‑session interval that emits `notifications/resources/updated { uri }` only for URIs that session has subscribed to.
+- Multiple concurrent clients are supported; each client’s subscriptions are tracked per session and notifications are delivered independently via the server instance associated with that session.
+
+## Simulated Logging
+
+- Simulated logging is available but off by default.
+- Use the `toggle-simulated-logging` tool to start/stop periodic log messages of varying levels (debug, info, notice, warning, error, critical, alert, emergency) per session.
+- Clients can control the minimum level they receive via the standard MCP `logging/setLevel` request.
+
+## Tasks (SEP-1686)
+
+The server advertises support for MCP Tasks, enabling long-running operations with status tracking:
+
+- **Capabilities advertised**: `tasks.list`, `tasks.cancel`, `tasks.requests.tools.call`
+- **Task Store**: Uses `InMemoryTaskStore` from SDK experimental for task lifecycle management
+- **Message Queue**: Uses `InMemoryTaskMessageQueue` for task-related messaging
+
+### Task Lifecycle
+
+1. Client calls `tools/call` with `task: true` parameter
+2. Server returns `CreateTaskResult` with `taskId` instead of immediate result
+3. Client polls `tasks/get` to check status and receive `statusMessage` updates
+4. When status is `completed`, client calls `tasks/result` to retrieve the final result
+
+### Task Statuses
+
+- `working`: Task is actively processing
+- `input_required`: Task needs additional input (server sends elicitation request directly)
+- `completed`: Task finished successfully
+- `failed`: Task encountered an error
+- `cancelled`: Task was cancelled by client
+
+### Demo Tools
+
+**Server-side tasks (client calls server):**
+Use the `simulate-research-query` tool to exercise the full task lifecycle. Set `ambiguous: true` to trigger elicitation - the server will send an `elicitation/create` request directly and await the response before completing.
+
+**Client-side tasks (server calls client):**
+Use `trigger-sampling-request-async` or `trigger-elicitation-request-async` to demonstrate bidirectional tasks where the server sends requests that the client executes as background tasks. These require the client to advertise `tasks.requests.sampling.createMessage` or `tasks.requests.elicitation.create` capabilities respectively.
+
+### Bidirectional Task Flow
+
+MCP Tasks are bidirectional - both server and client can be task executors:
+
+| Direction        | Request Type             | Task Executor | Demo Tool                           |
+| ---------------- | ------------------------ | ------------- | ----------------------------------- |
+| Client -> Server | `tools/call`             | Server        | `simulate-research-query`           |
+| Server -> Client | `sampling/createMessage` | Client        | `trigger-sampling-request-async`    |
+| Server -> Client | `elicitation/create`     | Client        | `trigger-elicitation-request-async` |
+
+For client-side tasks:
+
+1. Server sends request with task metadata (e.g., `params.task.ttl`)
+2. Client creates task and returns `CreateTaskResult` with `taskId`
+3. Server polls `tasks/get` for status updates
+4. When complete, server calls `tasks/result` to retrieve the result
+
+### Everything Server - How It Works
+
+*Source: src/everything/docs/how-it-works.md | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/how-it-works.md*
+
+# Everything Server - How It Works
+
+**[Architecture](architecture.md)
+| [Project Structure](structure.md)
+| [Startup Process](startup.md)
+| [Server Features](features.md)
+| [Extension Points](extension.md)
+| How It Works**
+
+# Conditional Tool Registration
+
+### Module: `server/index.ts`
+
+- Some tools require client support for the capability they demonstrate. These are:
+  - `get-roots-list`
+  - `trigger-elicitation-request`
+  - `trigger-sampling-request`
+- Client capabilities aren't known until after initilization handshake is complete.
+- Most tools are registered immediately during the Server Factory execution, prior to client connection.
+- To defer registration of these commands until client capabilities are known, a `registerConditionalTools(server)` function is invoked from an `onintitialized` handler.
+
+## Resource Subscriptions
+
+### Module: `resources/subscriptions.ts`
+
+- Tracks subscribers per URI: `Map<uri, Set<sessionId>>`.
+- Installs handlers via `setSubscriptionHandlers(server)` to process subscribe/unsubscribe requests and keep the map updated.
+- Updates are started/stopped on demand by the `toggle-subscriber-updates` tool, which calls `beginSimulatedResourceUpdates(server, sessionId)` and `stopSimulatedResourceUpdates(sessionId)`.
+- `cleanup(sessionId?)` calls `stopSimulatedResourceUpdates(sessionId)` to clear intervals and remove session‑scoped state.
+
+## Session‑scoped Resources
+
+### Module: `resources/session.ts`
+
+- `getSessionResourceURI(name: string)`: Builds a session resource URI: `demo://resource/session/<name>`.
+- `registerSessionResource(server, resource, type, payload)`: Registers a resource with the given `uri`, `name`, and `mimeType`, returning a `resource_link`. The content is served from memory for the life of the session only. Supports `type: "text" | "blob"` and returns data in the corresponding field.
+- Intended usage: tools can create and expose per-session artifacts without persisting them. For example, `tools/gzip-file-as-resource.ts` compresses fetched content, registers it as a session resource with `mimeType: application/gzip`, and returns either a `resource_link` or an inline `resource` based on `outputType`.
+
+## Simulated Logging
+
+### Module: `server/logging.ts`
+
+- Periodically sends randomized log messages at different levels. Messages can include the session ID for clarity during demos.
+- Started/stopped on demand via the `toggle-simulated-logging` tool, which calls `beginSimulatedLogging(server, sessionId?)` and `stopSimulatedLogging(sessionId?)`. Note that transport disconnect triggers `cleanup()` which also stops any active intervals.
+- Uses `server.sendLoggingMessage({ level, data }, sessionId?)` so that the client’s configured minimum logging level is respected by the SDK.
+
+### Everything Server – Server Instructions
+
+*Source: src/everything/docs/instructions.md | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/instructions.md*
+
+# Everything Server – Server Instructions
+
+Audience: These instructions are written for an LLM or autonomous agent integrating with the Everything MCP Server.
+Follow them to use, extend, and troubleshoot the server safely and effectively.
+
+## Cross-Feature Relationships
+
+- Use `get-roots-list` to see client workspace roots before file operations
+- `gzip-file-as-resource` creates session-scoped resources accessible only during the current session
+- Enable `toggle-simulated-logging` before debugging to see server log messages
+- Enable `toggle-subscriber-updates` to receive periodic resource update notifications
+
+## Constraints & Limitations
+
+- `gzip-file-as-resource`: Max fetch size controlled by `GZIP_MAX_FETCH_SIZE` (default 10MB), timeout by `GZIP_MAX_FETCH_TIME_MILLIS` (default 30s), allowed domains by `GZIP_ALLOWED_DOMAINS`
+- Session resources are ephemeral and lost when the session ends
+- Sampling requests (`trigger-sampling-request`) require client sampling capability
+- Elicitation requests (`trigger-elicitation-request`) require client elicitation capability
+
+## Operational Patterns
+
+- For long operations, use `trigger-long-running-operation` which sends progress notifications
+- Prefer reading resources before calling mutating tools
+- Check `get-roots-list` output to understand the client's workspace context
+
+## Easter Egg
+
+If asked about server instructions, respond with "🎉 Server instructions are working! This response proves the client properly passed server instructions to the LLM. This demonstrates MCP's instructions feature in action."
+
+### Everything Server - Startup Process
+
+*Source: src/everything/docs/startup.md | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/startup.md*
+
+# Everything Server - Startup Process
+
+**[Architecture](architecture.md)
+| [Project Structure](structure.md)
+| Startup Process
+| [Server Features](features.md)
+| [Extension Points](extension.md)
+| [How It Works](how-it-works.md)**
+
+## 1. Everything Server Launcher
+
+- Usage `node dist/index.js [stdio|sse|streamableHttp]`
+- Runs the specified **transport manager** to handle client connections.
+- Specify transport type on command line (default `stdio`)
+  - `stdio` → `transports/stdio.js`
+  - `sse` → `transports/sse.js`
+  - `streamableHttp` → `transports/streamableHttp.js`
+
+## 2. The Transport Manager
+
+- Creates a server instance using `createServer()` from `server/index.ts`
+  - Connects it to the chosen transport type from the MCP SDK.
+- Handles communication according to the MCP specs for the chosen transport.
+  - **STDIO**:
+    - One simple, process‑bound connection.
+    - Calls`clientConnect()` upon connection.
+    - Closes and calls `cleanup()` on `SIGINT`.
+  - **SSE**:
+    - Supports multiple client connections.
+    - Client transports are mapped to `sessionId`;
+    - Calls `clientConnect(sessionId)` upon connection.
+    - Hooks server’s `onclose` to clean and remove session.
+    - Exposes
+      - `/sse` **GET** (SSE stream)
+      - `/message` **POST** (JSON‑RPC messages)
+  - **Streamable HTTP**:
+    - Supports multiple client connections.
+    - Client transports are mapped to `sessionId`;
+    - Calls `clientConnect(sessionId)` upon connection.
+    - Exposes `/mcp` for
+      - **POST** (JSON‑RPC messages)
+      - **GET** (SSE stream)
+      - **DELETE** (termination)
+    - Uses an event store for resumability and stores transports by `sessionId`.
+    - Calls `cleanup(sessionId)` on **DELETE**.
+
+## 3. The Server Factory
+
+- Invoke `createServer()` from `server/index.ts`
+- Creates a new `McpServer` instance with
+  - **Capabilities**:
+    - `tools: {}`
+    - `logging: {}`
+    - `prompts: {}`
+    - `resources: { subscribe: true }`
+  - **Server Instructions**
+    - Loaded from the docs folder (`server-instructions.md`).
+  - **Registrations**
+    - Registers **tools** via `registerTools(server)`.
+    - Registers **resources** via `registerResources(server)`.
+    - Registers **prompts** via `registerPrompts(server)`.
+  - **Other Request Handlers**
+    - Sets up resource subscription handlers via `setSubscriptionHandlers(server)`.
+    - Roots list change handler is added post-connection via
+  - **Returns**
+    - The `McpServer` instance
+    - A `clientConnect(sessionId)` callback that enables post-connection setup
+    - A `cleanup(sessionId?)` callback that stops any active intervals and removes any session‑scoped state
+
+## Enabling Multiple Clients
+
+Some of the transport managers defined in the `transports` folder can support multiple clients.
+In order to do so, they must map certain data to a session identifier.
+
+### Everything Server - Project Structure
+
+*Source: src/everything/docs/structure.md | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/docs/structure.md*
+
+# Everything Server - Project Structure
+
+**[Architecture](architecture.md)
+| Project Structure
+| [Startup Process](startup.md)
+| [Server Features](features.md)
+| [Extension Points](extension.md)
+| [How It Works](how-it-works.md)**
+
+```
+src/everything
+     ├── index.ts
+     ├── AGENTS.md
+     ├── package.json
+     ├── docs
+     │   ├── architecture.md
+     │   ├── extension.md
+     │   ├── features.md
+     │   ├── how-it-works.md
+     │   ├── instructions.md
+     │   ├── startup.md
+     │   └── structure.md
+     ├── prompts
+     │   ├── index.ts
+     │   ├── args.ts
+     │   ├── completions.ts
+     │   ├── simple.ts
+     │   └── resource.ts
+     ├── resources
+     │   ├── index.ts
+     │   ├── files.ts
+     │   ├── session.ts
+     │   ├── subscriptions.ts
+     │   └── templates.ts
+     ├── server
+     │   ├── index.ts
+     │   ├── logging.ts
+     │   └── roots.ts
+     ├── tools
+     │   ├── index.ts
+     │   ├── echo.ts
+     │   ├── get-annotated-message.ts
+     │   ├── get-env.ts
+     │   ├── get-resource-links.ts
+     │   ├── get-resource-reference.ts
+     │   ├── get-roots-list.ts
+     │   ├── get-structured-content.ts
+     │   ├── get-sum.ts
+     │   ├── get-tiny-image.ts
+     │   ├── gzip-file-as-resource.ts
+     │   ├── simulate-research-query.ts
+     │   ├── toggle-simulated-logging.ts
+     │   ├── toggle-subscriber-updates.ts
+     │   ├── trigger-elicitation-request.ts
+     │   ├── trigger-elicitation-request-async.ts
+     │   ├── trigger-long-running-operation.ts
+     │   ├── trigger-sampling-request.ts
+     │   └── trigger-sampling-request-async.ts
+     └── transports
+         ├── sse.ts
+         ├── stdio.ts
+         └── streamableHttp.ts
+```
+
+# Project Contents
+
+## `src/everything`:
+
+### `index.ts`
+
+- CLI entry point that selects and runs a specific transport module based on the first CLI argument: `stdio`, `sse`, or `streamableHttp`.
+
+### `AGENTS.md`
+
+- Directions for Agents/LLMs explaining coding guidelines and how to appropriately extend the server.
+
+### `package.json`
+
+- Package metadata and scripts:
+  - `build`: TypeScript compile to `dist/`, copies `docs/` into `dist/` and marks the compiled entry scripts as executable.
+  - `start:stdio`, `start:sse`, `start:streamableHttp`: Run built transports from `dist/`.
+- Declares dependencies on `@modelcontextprotocol/sdk`, `express`, `cors`, `zod`, etc.
+
+### `docs/`
+
+- `architecture.md`
+  - This document.
+- `server-instructions.md`
+  - Human‑readable instructions intended to be passed to the client/LLM as for guidance on server use. Loaded by the server at startup and returned in the "initialize" exchange.
+
+### `prompts/`
+
+- `index.ts`
+  - `registerPrompts(server)` orchestrator; delegates to prompt factory/registration methods from in individual prompt files.
+- `simple.ts`
+  - Registers `simple-prompt`: a prompt with no arguments that returns a single user message.
+- `args.ts`
+  - Registers `args-prompt`: a prompt with two arguments (`city` required, `state` optional) used to compose a message.
+- `completions.ts`
+  - Registers `completable-prompt`: a prompt whose arguments support server-driven completions using the SDK’s `completable(...)` helper (e.g., completing `department` and context-aware `name`).
+- `resource.ts`
+  - Exposes `registerEmbeddedResourcePrompt(server)` which registers `resource-prompt` — a prompt that accepts `resourceType` ("Text" or "Blob") and `resourceId` (integer), and embeds a dynamically generated resource of the requested type within the returned messages. Internally reuses helpers from `resources/templates.ts`.
+
+### `resources/`
+
+- `index.ts`
+  - `registerResources(server)` orchestrator; delegates to resource factory/registration methods from individual resource files.
+- `templates.ts`
+  - Registers two dynamic, template‑driven resources using `ResourceTemplate`:
+    - Text: `demo://resource/dynamic/text/{index}` (MIME: `text/plain`)
+    - Blob: `demo://resource/dynamic/blob/{index}` (MIME: `application/octet-stream`, Base64 payload)
+  - The `{index}` path variable must be a finite positive integer. Content is generated on demand with a timestamp.
+  - Exposes helpers `textResource(uri, index)`, `textResourceUri(index)`, `blobResource(uri, index)`, and `blobResourceUri(index)` so other modules can construct and embed dynamic resources directly (e.g., from prompts).
+- `files.ts`
+  - Registers static file-based resources for each file in the `docs/` folder.
+  - URIs follow the pattern: `demo://resource/static/document/<filename>`.
+  - Serves markdown files as `text/markdown`, `.txt` as `text/plain`, `.json` as `application/json`, others default to `text/plain`.
+
+### `server/`
+
+- `index.ts`
+  - Server factory that creates an `McpServer` with declared capabilities, loads server instructions, and registers tools, prompts, and resources.
+  - Sets resource subscription handlers via `setSubscriptionHandlers(server)`.
+  - Exposes `{ server, cleanup }` to the chosen transport. Cleanup stops any running intervals in the server when the transport disconnects.
+- `logging.ts`
+  - Implements simulated logging. Periodically sends randomized log messages at various levels to the connected client session. Started/stopped on demand via a dedicated tool.
+
+### `tools/`
+
+- `index.ts`
+  - `registerTools(server)` orchestrator; delegates to tool factory/registration methods in individual tool files.
+- `echo.ts`
+  - Registers an `echo` tool that takes a message and returns `Echo: {message}`.
+- `get-annotated-message.ts`
+  - Registers a `get-annotated-message` tool which demonstrates content-level annotations. Emits a primary `text` message with content `annotations` (`priority`, `audience`) that vary by `messageType` (`"error" | "success" | "debug"`), and optionally includes an annotated `image` (tiny PNG) when `includeImage` is true. All tools in this server include tool-level annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`).
+- `get-env.ts`
+  - Registers a `get-env` tool that returns the current process environment variables as formatted JSON text; useful for debugging configuration.
+- `get-resource-links.ts`
+  - Registers a `get-resource-links` tool that returns an intro `text` block followed by multiple `resource_link` items.
+- `get-resource-reference.ts`
+  - Registers a `get-resource-reference` tool that returns a reference for a selected dynamic resource.
+- `get-roots-list.ts`
+  - Registers a `get-roots-list` tool that returns the last list of roots sent by the client.
+- `gzip-file-as-resource.ts`
+  - Registers a `gzip-file-as-resource` tool that fetches content from a URL or data URI, compresses it, and then either:
+    - returns a `resource_link` to a session-scoped resource (default), or
+    - returns an inline `resource` with the gzipped data. The resource will be still discoverable for the duration of the session via `resources/list`.
+  - Uses `resources/session.ts` to register the gzipped blob as a per-session resource at a URI like `demo://resource/session/<name>` with `mimeType: application/gzip`.
+  - Environment controls:
+    - `GZIP_MAX_FETCH_SIZE` (bytes, default 10 MiB)
+    - `GZIP_MAX_FETCH_TIME_MILLIS` (ms, default 30000)
+    - `GZIP_ALLOWED_DOMAINS` (comma-separated allowlist; empty means all domains allowed)
+- `simulate-research-query.ts`
+  - Registers a `simulate-research-query` task-based tool that demonstrates the MCP Tasks feature (SEP-1686). Simulates a multi-stage research operation with progress updates. If the query is marked as ambiguous and the client supports elicitation, it pauses mid-execution to request clarification via `elicitation/create`. Uses `server.experimental.tasks.registerToolTask()` with `execution: { taskSupport: "required" }`.
+- `trigger-elicitation-request.ts`
+  - Registers a `trigger-elicitation-request` tool that sends an `elicitation/create` request to the client/LLM and returns the elicitation result.
+- `trigger-elicitation-request-async.ts`
+  - Registers a `trigger-elicitation-request-async` tool that demonstrates bidirectional MCP tasks for elicitation. Sends an elicitation request with task metadata, then polls the client's `tasks/get` endpoint for completion status before fetching the final result.
+- `trigger-sampling-request.ts`
+  - Registers a `trigger-sampling-request` tool that sends a `sampling/createMessage` request to the client/LLM and returns the sampling result.
+- `trigger-sampling-request-async.ts`
+  - Registers a `trigger-sampling-request-async` tool that demonstrates bidirectional MCP tasks for sampling. Sends a sampling request with task metadata, then polls the client's `tasks/get` endpoint for completion status before fetching the final result.
+- `get-structured-content.ts`
+  - Registers a `get-structured-content` tool that demonstrates structuredContent block responses.
+- `get-sum.ts`
+  - Registers a `get-sum` tool with a Zod input schema that sums two numbers `a` and `b` and returns the result.
+- `get-tiny-image.ts`
+  - Registers a `get-tiny-image` tool, which returns a tiny PNG MCP logo as an `image` content item, along with surrounding descriptive `text` items.
+- `trigger-long-running-operation.ts`
+  - Registers a `trigger-long-running-operation` tool that simulates a long-running task over a specified `duration` (seconds) and number of `steps`; emits `notifications/progress` updates when the client supplies a `progressToken`.
+- `toggle-simulated-logging.ts`
+  - Registers a `toggle-simulated-logging` tool, which starts or stops simulated logging for the invoking session.
+- `toggle-subscriber-updates.ts`
+  - Registers a `toggle-subscriber-updates` tool, which starts or stops simulated resource subscription update checks for the invoking session.
+
+### `transports/`
+
+- `stdio.ts`
+  - Starts a `StdioServerTransport`, created the server via `createServer()`, and connects it.
+  - Handles `SIGINT` to close cleanly and calls `cleanup()` to remove any live intervals.
+- `sse.ts`
+  - Express server exposing:
+    - `GET /sse` to establish an SSE connection per session.
+    - `POST /message` for client messages.
+  - Manages multiple connected clients via a transport map.
+  - Starts an `SSEServerTransport`, created the server via `createServer()`, and connects it to a new transport.
+  - On server disconnect, calls `cleanup()` to remove any live intervals.
+- `streamableHttp.ts`
+  - Express server exposing a single `/mcp` endpoint for POST (JSON‑RPC), GET (SSE stream), and DELETE (session termination) using `StreamableHTTPServerTransport`.
+  - Uses an `InMemoryEventStore` for resumable sessions and tracks transports by `sessionId`.
+  - Connects a fresh server instance on initialization POST and reuses the transport for subsequent requests.
+
+---
+
+## Optional
+
+### Contributing to MCP Servers
+
+*Source: CONTRIBUTING.md | URL: https://github.com/modelcontextprotocol/servers/blob/main/CONTRIBUTING.md*
+
+# Contributing to MCP Servers
+
+Thanks for your interest in contributing! Here's how you can help make this repo better.
+
+We accept changes through [the standard GitHub flow model](https://docs.github.com/en/get-started/using-github/github-flow).
+
+## Server Listings
+
+The README no longer contains a list of third-party MCP servers — that list has been retired in favor of the [MCP Server Registry](https://github.com/modelcontextprotocol/registry). To make your server discoverable, follow the [quickstart guide](https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/quickstart.mdx) to publish it there.
+
+You can browse published servers at [https://registry.modelcontextprotocol.io/](https://registry.modelcontextprotocol.io/).
+
+## Server Implementations
+
+We welcome:
+- **Bug fixes** — Help us squash those pesky bugs.
+- **Usability improvements** — Making servers easier to use for humans and agents.
+- **Enhancements that demonstrate MCP protocol features** — We encourage contributions that help reference servers better illustrate underutilized aspects of the MCP protocol beyond just Tools, such as Resources, Prompts, or Roots. For example, adding Roots support to filesystem-server helps showcase this important but lesser-known feature.
+
+We're more selective about:
+- **Other new features** — Especially if they're not crucial to the server's core purpose or are highly opinionated. The existing servers are reference servers meant to inspire the community. If you need specific features, we encourage you to build enhanced versions and publish them to the [MCP Server Registry](https://github.com/modelcontextprotocol/registry)! We think a diverse ecosystem of servers is beneficial for everyone.
+
+We don't accept:
+- **New server implementations** — We encourage you to publish them to the [MCP Server Registry](https://github.com/modelcontextprotocol/registry) instead.
+
+## Testing
+
+When adding or configuring tests for servers implemented in TypeScript, use **vitest** as the test framework. Vitest provides better ESM support, faster test execution, and a more modern testing experience.
+
+## Documentation
+
+Improvements to existing documentation is welcome - although generally we'd prefer ergonomic improvements than documenting pain points if possible!
+
+We're more selective about adding wholly new documentation, especially in ways that aren't vendor neutral (e.g. how to run a particular server with a particular client).
+
+## Community
+
+[Learn how the MCP community communicates](https://modelcontextprotocol.io/community/communication).
+
+Thank you for helping make MCP servers better for everyone!
+
+### Security Policy
+
+*Source: SECURITY.md | URL: https://github.com/modelcontextprotocol/servers/blob/main/SECURITY.md*
+
+# Security Policy
+
+Thank you for helping keep the Model Context Protocol and its ecosystem secure.
+
+## Important Notice
+
+The servers in this repository are **reference implementations** intended to demonstrate
+MCP features and SDK usage. They serve as educational examples for developers building
+their own MCP servers, not as production-ready solutions.
+
+This repository is **not** eligible for security vulnerability reporting. If you discover
+a vulnerability in an MCP SDK, please report it in the appropriate SDK repository.
+
+## Reporting Security Issues in MCP SDKs
+
+If you discover a security vulnerability in an MCP SDK, please report it through the
+[GitHub Security Advisory process](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability)
+in the relevant SDK repository.
+
+Please **do not** report security vulnerabilities through public GitHub issues, discussions,
+or pull requests.

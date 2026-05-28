@@ -1,0 +1,22 @@
+# Knowledge Work Plugins
+
+> バイオ研究（single-cell RNA-seq・scvi-tools・Nextflow・Allotrope 変換）とデータ抽出を対象とした 5 Skill を含む Claude Code 拡張セット。
+
+## Source Modules
+
+- [bio-research.skills.instrument-data-to-allotrope.scripts.convert_to_asm](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/instrument-data-to-allotrope/scripts/convert_to_asm.py): Auto-detect instrument type from file contents.
+- [bio-research.skills.instrument-data-to-allotrope.scripts.export_parser](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/instrument-data-to-allotrope/scripts/export_parser.py): Generate standalone Python script for given vendor.
+- [bio-research.skills.instrument-data-to-allotrope.scripts.flatten_asm](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/instrument-data-to-allotrope/scripts/flatten_asm.py): Detect the ASM technique type from document structure.
+- [bio-research.skills.nextflow-development.scripts.utils.file_discovery](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/nextflow-development/scripts/utils/file_discovery.py): Information about a discovered file.
+- [bio-research.skills.nextflow-development.scripts.utils.sample_inference](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/nextflow-development/scripts/utils/sample_inference.py): Extract sample metadata from filepath.
+- [bio-research.skills.nextflow-development.scripts.utils.validators](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/nextflow-development/scripts/utils/validators.py): Result of samplesheet validation.
+- [bio-research.skills.scvi-tools.scripts.cluster_embed](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/cluster_embed.py): Cluster and compute UMAP embedding.
+- [bio-research.skills.scvi-tools.scripts.differential_expression](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/differential_expression.py): Run differential expression analysis.
+- [bio-research.skills.scvi-tools.scripts.integrate_datasets](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/integrate_datasets.py): Integrate multiple datasets.
+- [bio-research.skills.scvi-tools.scripts.model_utils](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/model_utils.py): Identify mitochondrial genes for both human and mouse data.
+- [bio-research.skills.scvi-tools.scripts.train_model](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/train_model.py): Train scVI model.
+- [bio-research.skills.scvi-tools.scripts.transfer_labels](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/transfer_labels.py): Transfer labels from reference to query.
+- [bio-research.skills.scvi-tools.scripts.validate_adata](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/validate_adata.py): Results from AnnData validation.
+- [bio-research.skills.single-cell-rna-qc.scripts.qc_core](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/single-cell-rna-qc/scripts/qc_core.py): Calculate QC metrics for single-cell RNA-seq data.
+- [bio-research.skills.single-cell-rna-qc.scripts.qc_plotting](https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/single-cell-rna-qc/scripts/qc_plotting.py): Create comprehensive QC distribution plots.
+- [data.skills.data-context-extractor.scripts.package_data_skill](https://github.com/anthropics/knowledge-work-plugins/blob/main/data/skills/data-context-extractor/scripts/package_data_skill.py): Basic validation of skill structure.

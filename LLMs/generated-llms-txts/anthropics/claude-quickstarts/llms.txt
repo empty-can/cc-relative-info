@@ -1,0 +1,11 @@
+# Claude Quickstarts
+
+> A collection of quickstart projects demonstrating how to build real-world applications with Claude, including autonomous coding agents, browser automation, and computer use demos.
+
+## Guide
+
+- [1. See your working directory](https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/prompts/coding_prompt.md): You are continuing work on a long-running autonomous development task.
+- [Initializer Prompt](https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/prompts/initializer_prompt.md): You are the FIRST agent in a long-running autonomous development process.
+- [Modifications to Microsoft Playwright Source](https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/CHANGELOG.md): This file tracks all modifications made to files derived from or inspired by Microsoft Playwright source code.
+- [Claude Quickstarts Development Guide](https://github.com/anthropics/claude-quickstarts/blob/main/CLAUDE.md): - When changes are made to files that have a copyright notice add them to that subdirectory's CHANGELOG.md file.
+- [Contributing Guidelines](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/CONTRIBUTING.md): Thank you for your interest in contributing to the Computer Use Demo quickstart!

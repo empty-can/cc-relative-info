@@ -1,0 +1,37 @@
+# MonsterUI
+
+> Python UI framework for FastHTML that turns Python code into polished web apps using Tailwind CSS, Franken UI, and DaisyUI — with zero frontend complexity.
+
+MonsterUI is a batteries-included UI component library built on top of FastHTML. It integrates Tailwind-based component suites (Franken UI and DaisyUI), Mistletoe for Markdown rendering, HighlightJS for code syntax highlighting, and KaTeX for LaTeX math. Designed for data scientists, ML engineers, and Python developers, it provides high-level Python components (Card, NavBar, Form, Accordion, etc.) that follow semantic HTML patterns and are styled via a theme system (`Theme.blue.headers()`). Install with `pip install MonsterUI` and start building immediately — no JavaScript framework knowledge required.
+
+## Guide
+
+- [MonsterUI](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/getting_started/GettingStarted.md): MonsterUI is a UI framework for FastHTML for building beautiful web interfaces with minimal code.
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/MonsterUI/blob/main/CHANGELOG.md): - Update deps
+- [CONTRIBUTING](https://github.com/AnswerDotAI/MonsterUI/blob/main/CONTRIBUTING.md): This is an nbdev library.
+
+## Source Modules
+
+- [docs.cf_addns](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/cf_addns.py)
+- [docs.examples.auth](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/auth.py)
+- [docs.examples.cards](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/cards.py)
+- [docs.examples.dashboard](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/dashboard.py)
+- [docs.examples.forms](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/forms.py)
+- [docs.examples.mail](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/mail.py)
+- [docs.examples.playground](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/playground.py)
+- [docs.examples.scrollspy](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/scrollspy.py)
+- [docs.examples.tasks](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/tasks.py)
+- [docs.getting_started.app_product_gallery](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/getting_started/app_product_gallery.py)
+- [docs.getting_started.StylingRulesOfThumb](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/getting_started/StylingRulesOfThumb.py)
+- [docs.htmxindicator](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/htmxindicator.py)
+- [docs.main](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/main.py)
+- [docs.utils](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/utils.py)
+- [monsterui.core](https://github.com/AnswerDotAI/MonsterUI/blob/main/monsterui/core.py)
+- [monsterui.daisy](https://github.com/AnswerDotAI/MonsterUI/blob/main/monsterui/daisy.py)
+- [monsterui.foundations](https://github.com/AnswerDotAI/MonsterUI/blob/main/monsterui/foundations.py)
+- [monsterui.franken](https://github.com/AnswerDotAI/MonsterUI/blob/main/monsterui/franken.py): Creates a styled Accordion container using accordion component.
+- [testnavbar](https://github.com/AnswerDotAI/MonsterUI/blob/main/testnavbar.py)
+- [monsterui.icon.iife](https://github.com/AnswerDotAI/MonsterUI/blob/main/monsterui/icon.iife.js)

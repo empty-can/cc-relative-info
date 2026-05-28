@@ -1,0 +1,1456 @@
+# Cc Relative Info
+
+> {BLOCKQUOTE}
+
+{DESCRIPTION}
+
+---
+
+## Skills
+
+### 5-whys-analysis
+
+*Source: .claude/skills/5-whys/SKILL.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/5-whys/SKILL.md*
+
+---
+name: 5-whys-analysis
+description: 問題の根本原因を体系的に特定する。「根本原因を調べて」「なぜなぜ分析」「なぜ起きたか」「原因を深掘りして」「再発防止策を考えて」「症状ではなく原因から解決したい」「find the root cause」「why did this happen」といった言葉が出たら適用する。
+---
+
+# 5-Whys なぜなぜ分析
+
+「なぜ？」を繰り返すことで症状の奥にある真の根本原因を特定する体系的手法。
+
+## このスキルを使う場面
+
+- 明らかな修正を試みても解決しなかったバグの調査
+- 本番インシデントのポストモーテム分析
+- 原因が不明なパフォーマンス問題
+- 「修正した」のに再発する繰り返し障害
+- 回復だけでなく再発防止が必要なシステム障害
+- 症状への対処療法では不十分な場面
+
+## 分析プロセス
+
+### フェーズ 1: 問題を明確に定義する
+
+問題を具体的・観察可能な事実として記述する:
+
+**良い問題記述の例:**
+- 「API レスポンスタイムが 50ms から 500ms に増加した」
+- 「チェックアウトページで 500 エラーが発生している」
+- 「夜間バッチが午前 3:00 に失敗した」
+
+**不十分な問題記述の例:**
+- 「システムが遅い」（曖昧すぎる）
+- 「何かが壊れている」（具体性がない）
+- 「ユーザーが不満を持っている」（問題ではなく症状）
+
+**問題記述テンプレート:**
+```
+What（何が）:    [具体的な観察可能な挙動]
+When（いつ）:    [発生時刻・条件]
+Where（どこで）: [影響を受けるコンポーネント・システム]
+Impact（影響）:  [測定可能な結果]
+```
+
+### フェーズ 2: 「なぜ？」を繰り返す
+
+答えが出るたびに「なぜそれが起きたか？」を問い続け、実行可能な根本原因に達するまで繰り返す:
+
+**Why Chain:**
+```
+問題: [記述]
+    ↓
+Why 1: [最初のレベルの原因]
+    ↓
+Why 2: [より深い原因]
+    ↓
+Why 3: [さらに深く]
+    ↓
+Why 4: [根本に近づく]
+    ↓
+Why 5: [根本原因 - 実行可能]
+```
+
+**各「なぜ」の品質チェック:**
+- この答えは事実として検証可能か？
+- 前のレベルを説明しているか？
+- 裏付ける証拠があるか？
+- このレベルに複数の原因がある可能性はないか？
+
+### フェーズ 3: 根本原因を特定する
+
+真の根本原因は以下の特性を持つ:
+
+| 特性 | 確認方法 |
+|---|---|
+| **実行可能** | 対策を取れるか？ |
+| **再発防止可能** | これを修正すれば再発を防げるか？ |
+| **根本的** | 再度「なぜ」と問うても実行可能な答えが出ない |
+| **検証可能** | これが原因であることを証明できるか？ |
+
+**分析の停止条件:**
+- 変更可能なプロセス・ポリシーに到達した
+- 欠落しているコントロールまたはチェックを発見した
+- 知識・トレーニングのギャップを特定した
+- 設計上の欠陥を発見した
+- リソース制約に関する意思決定に行き当たった
+
+### フェーズ 4: チェーンを検証する
+
+チェーンを逆方向でたどる:
+
+```
+[根本原因] が解消されれば
+↓ [Why 4] は発生しない
+↓ [Why 3] は発生しない
+↓ [Why 2] は発生しない
+↓ [Why 1] は発生しない
+↓ [問題] は発生しない
+```
+
+どこかでチェーンが切れる場合は、そのレベルを見直す。
+
+### フェーズ 5: 対策を定義する
+
+根本原因に対して以下を定義する:
+
+1. **即時対応** — 出血を止める（暫定対処）
+2. **予防措置** — 二度と起きないようにする（根本対処）
+3. **検出メカニズム** — 予防が失敗した際に早期に検知する
+
+## 出力フォーマット
+
+```markdown
+## なぜなぜ分析: [問題タイトル]
+
+### 問題記述
+**What（何が）:**    [具体的な挙動]
+**When（いつ）:**    [時刻・条件]
+**Where（どこで）:** [コンポーネント]
+**Impact（影響）:**  [結果]
+
+### Why Chain
+
+| Why | 問い | 答え | 根拠・証拠 |
+|---|---|---|---|
+| Why 1 | なぜ〔問題〕が起きたか？ | [答え] | [証拠] |
+| Why 2 | なぜ〔Why 1 の答え〕だったか？ | [答え] | [証拠] |
+| Why 3 | なぜ〔Why 2 の答え〕だったか？ | [答え] | [証拠] |
+| Why 4 | なぜ〔Why 3 の答え〕だったか？ | [答え] | [証拠] |
+| Why 5 | なぜ〔Why 4 の答え〕だったか？ | [答え] | [証拠] |
+
+### 根本原因
+**特定した原因:** [記述]
+**種別:** [プロセス / 設計 / 知識 / リソース]
+**確信度:** [高 / 中 / 低]
+
+### バリデーション（逆方向確認）
+- 〔根本原因〕が解消 → 〔Why 4〕が防止される ✓
+- 〔Why 4〕が防止 → 〔Why 3〕が防止される ✓
+- …チェーンが成立することを確認…
+
+### 対策
+| 種別 | 対応内容 | 担当 | 期限 |
+|---|---|---|---|
+| 即時対応 | [内容] | [担当者] | [期限] |
+| 予防措置 | [内容] | [担当者] | [期限] |
+| 検出 | [内容] | [担当者] | [期限] |
+```
+
+## よくある落とし穴
+
+### 落とし穴 1: 早すぎる停止
+
+**症状:** 根本原因がまだ症状レベルにある
+```
+問題: サーバーがクラッシュした
+Why 1: メモリ不足
+→ 「対策: メモリを増やす」✗（症状への対処）
+
+続ける:
+Why 2: サービス X にメモリリーク
+Why 3: コネクションプールがコネクションを解放していない
+Why 4: 例外ハンドラがコネクションをクローズしていない
+Why 5: DB コードに finally ブロックがない
+→ 「対策: 適切なリソースクリーンアップを追加」✓
+```
+
+### 落とし穴 2: 原因ではなく責任追及
+
+**誤り:** 「なぜ？ → 開発者がミスをした」
+**正解:** 「なぜ？ → コードレビューで問題を検出できなかった」
+**さらに良い:** 「なぜ？ → このケースの自動テストがなかった」
+
+**原則:** 個人ではなくプロセスとシステムに焦点を当てる。
+
+### 落とし穴 3: 複数原因があるのに単一スレッドで分析する
+
+問題に複数の要因が絡んでいる場合がある:
+
+```
+問題: デプロイが失敗した
+    ↓
+Why 1: DB マイグレーションがタイムアウト
+    ├─→ Branch A: なぜマイグレーションに時間がかかったか？
+    │       └─→ テーブルロックが長時間保持
+    │               └─→ 長時間クエリ
+    │                       └─→ インデックス欠落
+    │
+    └─→ Branch B: なぜタイムアウトがこれほど短いのか？
+            └─→ デフォルトタイムアウトを使用
+                    └─→ デプロイ固有の設定がない
+```
+
+### 落とし穴 4: 検証されていない仮定
+
+各「なぜ」は証拠で裏付ける:
+
+| Why | 答え | 必要な証拠 |
+|---|---|---|
+| Why 1 | 「サービスがクラッシュした」 | クラッシュを示すログ |
+| Why 2 | 「OOM で強制終了された」 | dmesg / システムログ |
+| Why 3 | 「メモリリーク」 | ヒープダンプ解析 |
+| Why 4 | 「ストリームが未クローズ」 | コードインスペクション |
+| Why 5 | 「finally ブロックがない」 | git blame |
+
+## 他の分析手法との組み合わせ
+
+| 手法 | 組み合わせるタイミング |
+|---|---|
+| **First Principles（第一原理思考）** | 問題定義自体が正しいか疑問なとき |
+| **仮説検証** | 「なぜ」の証拠が不確かなとき |
+| **Pre-mortem** | 修正後、類似問題の予防のため |
+| **トレードオフ分析** | 対策の選択肢を比較するとき |
+
+## 適用範囲
+
+**実施すること:**
+- 証拠に基づいて問題を根本原因まで体系的にたどる
+- 各レベルが証拠に裏付けられていることを確認する
+- 実行可能な対策を特定する
+- 複数分岐の原因ツリーを扱う
+
+**実施しないこと:**
+- 責任追及（「人為ミス」）で停止する
+- 証拠なしに曖昧な答えを受け入れる
+- ちょうど 5 段にこだわる（3 段でも 7 段でも構わない）
+- コードインスペクションが必要な場面で詳細デバッグを置き換える
+
+## クイックリファレンス
+
+**5-Whys チェックリスト:**
+- [ ] 問題が具体的・測定可能な形で記述されている
+- [ ] 各「なぜ」は仮定でなく事実である
+- [ ] 各レベルに証拠がある
+- [ ] 根本原因は実行可能かつ再発防止可能である
+- [ ] チェーンを逆方向でたどっても論理が成立する
+- [ ] 対策は症状ではなく根本原因に対処している
+- [ ] 個人ではなくプロセス・システムに焦点を当てている
+
+## 追加リソース
+
+本スキルに付属するサポートドキュメント:
+
+| 種別 | ファイル | 内容 |
+|---|---|---|
+| 例 | [examples/production-incident.md](examples/production-incident.md) | 本番インシデント（支払いサービス障害）の完全分析例 |
+| 例 | [examples/performance-regression.md](examples/performance-regression.md) | パフォーマンスリグレッション（API レイテンシ増加）の分析例 |
+| 参考 | [references/toyota-origins.md](references/toyota-origins.md) | 5-Whys のトヨタにおける起源・コア原則・ソフトウェアへの適用 |
+| 参考 | [references/software-patterns.md](references/software-patterns.md) | ソフトウェア問題に特有の根本原因パターン 8 種とアンチパターン |
+
+---
+
+*原著: [awesome-skills/5-whys-skill](https://github.com/awesome-skills/5-whys-skill) — MIT License*
+*本リポジトリ向けに日本語化・フォーマット調整済み*
+
+### check-model
+
+*Source: .claude/skills/check-model/SKILL.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/check-model/SKILL.md*
+
+---
+name: check-model
+description: 現セッションのモデルが、現在進行中または着手予定の作業内容に対して適切かを評価し、不適合なら推奨モデルへの切替を提案する。「適切なモデルか確認」「モデル妥当性」「Opus が必要か」「Sonnet で十分か」「Haiku に任せていいか」「check model fit」「model appropriateness」といった言葉が出たら適用する。
+argument-hint: "[作業内容の説明（省略可・省略時は会話履歴から自動推定）]"
+---
+
+# check-model
+
+現セッションのモデル妥当性を評価し、必要に応じて切替を提案する。
+
+## 引数
+
+`/check-model [作業内容の説明]` の形式で呼び出せる。
+
+- **引数あり**: 指定された説明を評価対象の作業内容として直接使用する
+- **引数なし**: 会話履歴から直近の作業指示を自動推定する（hook 経由の自動発動時はこちら）
+
+引数なしで直近の作業指示が特定できない場合は、作業指示者に「評価対象の作業内容」を確認する。
+
+## 評価基準
+
+| モデル | 適性領域 |
+|---|---|
+| **Opus** | 設計判断、複雑な多段推論、論理整合性が問われる検討、独立クロスレビュー、新規アーキテクチャの方針策定、トレードオフ分析 |
+| **Sonnet** | 通常の実装・デバッグ・リファクタリング、中規模の設計、調査と要約、コードレビュー実施 |
+| **Haiku** | 単純な変換・整形、決定論的 lookup、軽量な質問への応答、テンプレ生成 |
+
+## 出力フォーマット（固定）
+
+判定結果に関わらず、常に以下の形式で出力する:
+
+適合の場合:
+
+```
+**直近の作業指示**: <作業内容>
+**判定結果**: 適合
+**モデル情報**: 現モデル: <現モデル名>
+```
+
+切替推奨の場合:
+
+```
+**直近の作業指示**: <作業内容>
+**判定結果**: 切替推奨（過剰）／ 切替推奨（不足）
+**モデル情報**: 現モデル: <現モデル名> → 推奨モデル: <推奨モデル名>
+**理由**: <1〜2文>
+```
+
+- 「切替推奨」の場合は出力後、作業指示者に切替の判断を仰ぐ
+- フォーマット外の補足説明・見出し・追加セクションは原則追加しない
+
+## 実行手順
+
+1. 引数が指定されていれば、その内容を作業内容として確定する。引数なしの場合は会話履歴から直近の作業指示を特定する
+2. 現セッションのモデル（system prompt の自己認識）を確認する
+3. 評価基準に照らして判定する:
+   - **適合**: 現モデルが作業内容に対して過不足ない
+   - **切替推奨（過剰）**: Opus を使っているが Sonnet/Haiku で十分な作業
+   - **切替推奨（不足）**: Sonnet/Haiku を使っているが Opus 相当の思考深度が必要な作業
+4. 上記フォーマットで出力する。「切替推奨」の場合は作業指示者に切替の判断を仰ぐ
+
+## 判定が曖昧な場合
+
+タスクの規模・期待される思考深度・反復回数のいずれかを作業指示者に質問して情報を補完してから再判定する。
+
+## 適用範囲
+
+- メインセッションのモデル妥当性のみを対象とする
+- sub-agent として呼び出された状態でこの Skill を実行することは想定しない（sub-agent のモデルは Agent 定義 frontmatter で固定されており切替不可のため）
+
+### commit-and-pr
+
+*Source: .claude/skills/commit-and-pr/SKILL.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/commit-and-pr/SKILL.md*
+
+---
+name: commit-and-pr
+description: 現在のステージ済み・未ステージ変更を適切なメッセージでコミットし、プッシュして Pull Request を作成する。変更が完成して共有可能な状態になったら使用する。
+disable-model-invocation: true
+allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*), Bash(git branch:*), Bash(git push:*), Bash(gh pr create:*)
+---
+
+## 前提条件
+
+- `gh` CLI がインストールされていること
+  - 未インストールの場合: PR 作成手順を説明するので手動で実施してください
+- GitHub にリモートリポジトリが存在すること
+
+## コンテキスト
+
+- 現在の変更: !`git status --short`
+- 現在のブランチ: !`git branch --show-current`
+- 差分サマリ: !`git diff --stat HEAD`
+
+## 実行手順
+
+以下を **1 メッセージで連続して** 実行してください：
+
+1. **ブランチ確認**: `main` または `master` の場合は `git checkout -b <username>/<feature>` で新ブランチを作成
+2. **コミット**: 変更を単一コミットにまとめる
+   - コミットメッセージのプレフィックス: `feat:` / `fix:` / `docs:` / `refactor:` / `test:`
+   - メッセージは変更内容を端的に表現（50 文字以内）
+3. **プッシュ**: `git push -u origin <branch>`
+4. **PR 作成**: `gh pr create --title "<title>" --body "<body>"`
+   - `gh` が使えない場合は PR 用 URL と本文を出力して手動作成を案内
+
+## 注意事項
+
+- `.env` や `secrets/` 内のファイルは絶対にコミットしない
+- 意図しない変更が含まれていないか `git diff --stat` で確認してからコミット
+
+### generate-llms-txt
+
+*Source: .claude/skills/generate-llms-txt/SKILL.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/generate-llms-txt/SKILL.md*
+
+---
+name: generate-llms-txt
+description: リポジトリから llms.txt と llms-full.txt を自動生成する。ローカルパスまたは GitHub URL を対象にできる。--target-list でファイルから複数ターゲットを並列処理することも可能。
+allowed-tools: Agent(general-purpose), Read
+argument-hint: "[--target <local_path_or_github_url>] [--target-list <file>] [--base-url <url>] [--output <dir>] [--extract-sigs]"
+---
+
+## 引数パース
+
+引数文字列から以下の変数を決定する：
+
+| 変数 | デフォルト | 決定方法 |
+|---|---|---|
+| `TARGET` | — | `--target <value>` または位置引数1 |
+| `TARGET_LIST` | — | `--target-list <file>` のファイルパス |
+| `BASE_URL` | 自動検出 | `--base-url <value>` または後述の自動検出 |
+| `OUTPUT_DIR` | 自動（後述の規則） | `--output <value>` |
+| `EXTRACT_SIGS` | false | `--extract-sigs` フラグの有無 |
+
+`--target` と `--target-list` は排他。両方指定された場合は `--target-list` を優先する。
+どちらも省略された場合は `TARGET` = `.`（カレントディレクトリ）とする。
+
+### ターゲット一覧ファイルの形式
+
+`--target-list` で指定するファイルは以下の形式（1行1ターゲット）：
+
+```
+# コメント行（# で始まる行）・空行は無視する
+https://github.com/langchain-ai/mcpdoc
+https://github.com/google-gemini/genai-processors --extract-sigs
+https://github.com/sammchardy/python-binance --extract-sigs
+LLMs/work/tmp-clone/somelocal --base-url https://example.com/docs/blob/main/
+```
+
+各行の先頭トークンが `TARGET` に対応し、残りのトークンがその行専用のオプションとなる。
+行ごとのオプションは SKILL 引数のオプション（`--extract-sigs`, `--base-url`）より優先する。
+
+### OUT_DIR の決定規則
+
+`--output` が指定された場合はその値を使用する（単一ターゲット時のみ有効）。それ以外：
+
+**GitHub URL の場合**（`https://github.com/` で始まる）：
+- URL から `OWNER` / `REPO_NAME` / `BRANCH`（任意）を抽出する
+  - 例: `https://github.com/langchain-ai/mcpdoc` → owner=`langchain-ai`, repo=`mcpdoc`
+  - 例: `https://github.com/org/repo/tree/develop` → branch=`develop`
+- `OUT_DIR` = `LLMs/work/gen-out/<OWNER>/<REPO_NAME>/`
+- ブランチが指定されかつデフォルト（`main`/`master`）でない場合: `LLMs/work/gen-out/<OWNER>/<REPO_NAME>/<BRANCH>/`
+- `REPO_PATH` = `LLMs/work/tmp-clone/<OWNER>/<REPO_NAME>`
+- `BASE_URL` が未指定の場合: `https://github.com/<OWNER>/<REPO_NAME>/blob/<BRANCH_OR_MAIN>/`
+
+**ローカルパスの場合**：
+- `git -C <TARGET> remote get-url origin` で GitHub リモート URL を取得して上記と同様に扱う
+- リモートが取得できない / GitHub 以外の場合: `OUT_DIR` = `LLMs/work/gen-out/<TARGET のディレクトリ名>/`
+
+---
+
+## 実行手順 — 単一ターゲット（TARGET が確定している場合）
+
+### 1. Agent 起動
+
+以下のプロンプトで `general-purpose` Agent を **1つ** 起動する。
+変数は上記で決定した実際の値に置換して渡す。
+
+> ※ Agent プロンプトのテンプレートは「**Agent プロンプトテンプレート**」セクションを参照。
+
+### 2. 完了報告
+
+Agent の完了メッセージをそのまま作業指示者に伝える。
+
+---
+
+## 実行手順 — 複数ターゲット（TARGET_LIST が指定された場合）
+
+### 1. ファイル読み込みと行パース
+
+`Read` ツールで `TARGET_LIST` ファイルを読み込む。
+- `#` で始まる行・空行を除外する
+- 各行の先頭トークンを `TARGET`、残りを行オプションとして解析する
+- 各ターゲットについて OUT_DIR 決定規則を適用し、変数セット（REPO_PATH, BASE_URL, OUT_DIR, EXTRACT_SIGS 等）を確定する
+
+### 2. 全 Agent を並列起動（1メッセージで同時発火）
+
+全ターゲット分の Agent を **単一メッセージで同時に起動する**（直列ではなく並列）。
+各 Agent には「Agent プロンプトテンプレート」に実値を埋めたプロンプトを渡す。
+
+### 3. 完了サマリ報告
+
+全 Agent の結果を受け取ったら以下の形式でサマリを報告する：
+
+```
+[完了] <N> 件を処理しました。
+
+  ✓ <owner>/<repo>  : <OUT_DIR>/llms.txt
+  ✓ <owner>/<repo>  : <OUT_DIR>/llms.txt
+  ✗ <owner>/<repo>  : エラー — <理由>
+  ...
+```
+
+---
+
+## Agent プロンプトテンプレート
+
+> 以下のテンプレートの `<変数>` に実値を埋めて Agent に渡す。
+
+```
+リポジトリから llms.txt / llms-full.txt を生成してください。
+
+## 変数（確定値）
+- REPO_PATH   : <REPO_PATH>
+- BASE_URL    : <BASE_URL>
+- OUT_DIR     : <OUT_DIR>
+- EXTRACT_SIGS: <true|false>
+- CLONE_URL   : <GitHub URL（ローカルパスの場合は空）>
+- BRANCH      : <ブランチ名（指定がある場合のみ、なければ空）>
+
+## 手順
+
+### 1. クローンまたは最新化（CLONE_URL が空でない場合のみ）
+
+REPO_PATH が既に存在する場合: リポジトリを最新化する。
+  git -C <REPO_PATH> pull --depth=1
+
+存在しない場合: 新規クローンする。
+  git clone --depth=1 [--branch <BRANCH>] <CLONE_URL> <REPO_PATH>
+
+### 2. llms-full.txt / llms.txt 生成
+
+  python LLMs/scripts/gen-llms-txt/gen_llms_full.py <REPO_PATH> \
+    --base-url <BASE_URL> \
+    --output <OUT_DIR> \
+    [--extract-sigs（EXTRACT_SIGS が true の場合）]
+
+終了コードが非0の場合: エラーメッセージを出力して中断する。
+
+### 3. ナラティブ生成
+
+Read ツールで <OUT_DIR>/llms-full.txt の先頭 200 行を読み込む。
+
+読み込んだ内容から以下を生成する：
+- blockquote（1〜2文、必須）: このプロジェクトが「何を・誰のために・どうやって解決するか」を端的に記述する。
+- description（省略可）: llms.txt を読む LLM が文脈を正しく解釈するための補足情報。不要なら空にする。
+
+### 4. プレースホルダ置換
+
+Edit ツールで以下を実行する：
+1. <OUT_DIR>/llms.txt の `> {BLOCKQUOTE}` を `> <生成した内容>` に置換する
+2. <OUT_DIR>/llms.txt の `{DESCRIPTION}` を生成した内容に置換する（空の場合は該当行ごと削除）
+3. <OUT_DIR>/llms-full.txt の `> {BLOCKQUOTE}` と `{DESCRIPTION}` を同様に置換する
+
+### 5. 検証
+
+  bash LLMs/scripts/gen-llms-txt/validate.sh <OUT_DIR>/llms.txt
+
+終了コード 0 → ステップ 6 へ。非0 → エラーを報告して中断する。
+
+### 6. 完了報告
+
+完了: llms.txt / llms-full.txt を生成しました。
+  llms.txt     : <OUT_DIR>/llms.txt
+  llms-full.txt: <OUT_DIR>/llms-full.txt
+  blockquote   : "<生成した内容>"
+```
+
+### orchestrate
+
+*Source: .claude/skills/orchestrate/SKILL.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/orchestrate/SKILL.md*
+
+---
+name: orchestrate
+description: 複雑なタスクで複数の専門エージェントを協調させる。並列調査・段階的レビュー・複数領域の実装など、単独では非効率な作業に適用する。
+disable-model-invocation: true
+allowed-tools: Agent, Read, Grep, Bash
+---
+
+# オーケストレーション・フレームワーク
+
+このスキルは、複数の Sub-agent を協調させて複雑なタスクを効率的に処理する手順を提供します。
+
+Claude Code の公式仕様では「Subagents cannot spawn other subagents」のため、
+本スキルは**メインセッション**で実行され、`Agent` ツール経由で子エージェントを並列/順次起動します。
+
+## パターン A: 並列調査（Parallel Research）
+
+複数の独立したトピックを同時に調査する場合に使用します。
+
+**手順**:
+1. タスクを独立したサブトピックに分割
+2. 1 メッセージで複数の Agent ツール呼び出しを並列実行
+3. 全エージェントの結果が揃った後に統合・分析
+
+**例**: 「認証方式 A と B を同時に調査して比較」
+
+## パターン B: 段階的処理（Sequential Chain）
+
+前段の結果が次段の入力になる場合に使用します。
+
+**手順**:
+1. Phase 1: Explore エージェントでコードベースを調査
+2. Phase 2: Plan エージェントで実装計画を策定（Phase 1 の結果を渡す）
+3. Phase 3: code-reviewer エージェントで成果物をレビュー
+
+**例**: 「既存コードを調査してからリファクタリング計画を立案」
+
+## パターン C: 役割分担（Divide and Conquer）
+
+大規模タスクを専門領域に分割して並列処理する場合に使用します。
+
+**手順**:
+1. タスクを専門領域（フロントエンド・バックエンド・テスト等）に分割
+2. 各領域を専門エージェントに並列割り当て
+3. メインセッションが全結果を取りまとめて統合
+
+**例**: 「フロントエンドとバックエンドの変更を同時に実装」
+
+## 実行のガイドライン
+
+- **並列化できるものは並列化する**: 1 メッセージで複数 Agent ツール呼び出しを行う
+- **コンテキストを明示して渡す**: 子エージェントはメインの会話コンテキストを持たないため、必要情報をプロンプトに含める
+- **結果の統合はメインセッションで**: 子エージェントの出力を受け取り、最終的な判断と統合はメインセッションが担う
+
+### pre-compact
+
+*Source: .claude/skills/pre-compact/SKILL.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/pre-compact/SKILL.md*
+
+---
+name: pre-compact
+description: /compact 実行前の事前準備を実施する。メモリ最新化・未コミット変更確認・保留タスク整理を行い、次セッション再開時に最低限の文脈が復元できる状態を保証する
+---
+
+# pre-compact（コンパクション前事前準備）
+
+`/compact` 実行前に呼び出し、コンパクション後の次セッション再開時に最低限の文脈が復元できる状態を整える Skill。
+
+## 出力方針
+
+**作業指示者の判断を要する情報と、最終的な `/compact` コメント提案のみを出力する。** ステップ 1・3 は完全 silent。ステップ 2 は未コミット変更がある場合のみ出力する。コンテキスト消費を抑えるための方針。
+
+**silent ステップでの禁止事項**: 「サイレントで実行中」「ステップ N を処理中」「メモリを確認しています」等の進捗説明・確認メッセージ・実行状況報告を含め、**いかなるテキストも出力してはならない**。完全無言で処理する。
+
+## 実行手順
+
+以下を順番に実施する。
+
+### 1. メモリ最新化（silent）
+
+auto-memory（`memory/` ディレクトリ）配下のメモリファイルを確認し、現在の会話で変化した情報を更新する。**出力しない**。確認観点:
+
+- 進行中のタスクの最新ステータス・中断箇所
+- 次セッション再開時の継続ポイント
+- 作業指示者との合意事項で未記録のもの
+- 保留中の判断事項
+
+### 2. 未コミット変更の確認
+
+`git status` で未コミット変更を確認する。
+
+- **変更なし**: 出力しない
+- **変更あり**: コミットメッセージ案と対象ファイルを提示し、作業指示者の判断を仰ぐ（この場合のみ出力する）
+
+### 3. 継続ポイントの収集（silent）
+
+次セッション再開時に必要な情報をステップ 4 の入力として収集する。**出力しない**:
+
+- 現在実施中のタスクと中断箇所
+- 保留中の判断事項（作業指示者が決める必要があるもの）
+- 次セッションの最初のアクション
+
+### 4. 最適なコンパクション指示コメントの提案
+
+ステップ 1〜3 の内容と会話コンテキストをもとに、`/compact <指示>` に渡す最適な指示コメントを生成して提示する。
+
+**コメントの書き方（公式ドキュメントに基づく指針）**:
+
+公式例: `/compact Focus on the API changes`
+
+- **短く・焦点を絞る**: コンパクターは intent（意図）を解釈するため、詳細なタスクリストより端的な保存指示が有効
+- **「Preserve X」「Focus on Y」フレーミング**: 「現在の作業文脈と次アクションに集中して」のように意図を伝える
+- **ファイルパスや手順の羅列は避ける**: コンパクターが会話から自動抽出するため冗長になる
+
+**セルフチェックリスト**（コメント案を出力する前に必ず確認する）:
+
+- [ ] コメントが概ね 200 文字以下か（公式例 `Focus on the API changes` から大きく逸脱していないか）
+- [ ] 「Preserve X」「Focus on Y」フレーミングを使っているか
+- [ ] ファイルパス・指摘 ID（C1 / I1 等）・手順の具体的羅列を避けているか
+- [ ] intent（次アクション + 保持すべき方針のメタ指示）に集中しているか
+
+いずれかに不適合があれば、コメントを修正してから提示する。
+
+**盛り込む観点**（優先順位順）:
+1. 現在進行中のタスク（最も優先）
+2. 未完了の残ステップの概要
+3. 保留中の判断事項（あれば）
+4. 未コミット変更（あれば）
+
+**出力形式**（作業指示者がそのままコピーして使えるよう提示）:
+
+```
+【/compact コメント提案】
+/compact <生成した指示コメント>
+```
+
+作業指示者は提案をそのまま使うか、必要に応じて編集してから `/compact` コマンドに渡す。
+
+## 完了確認
+
+ステップ 4 の出力の後、「上記コメントを使って `/compact` を実行してください」と作業指示者に伝える。
+
+## /compact コメントに関する公式情報
+
+参照元: `research-for-local-RAG-for-cc/resources/references/claude-code-llms-full.txt`（約 4667 行〜）
+
+> For more control, run `/compact <instructions>`, like `/compact Focus on the API changes`
+
+> Customize compaction behavior in CLAUDE.md with instructions like `"When compacting, always preserve the full list of modified files and any test commands"` to ensure critical context survives summarization
+
+コメントは自由記述でコンパクターが intent を解釈して処理する。常時保持したい保存指示は CLAUDE.md に書く方法もある。
+
+## 設計背景
+
+`/compact` は built-in コマンドであり `PreCompact` hook で前処理を挟む方法があるが、hook は Claude のコンテキスト外（シェル/別 LLM 呼び出し）で動作するため、現在の会話コンテキストを踏まえた Claude 自身による能動的な準備は実行できない。詳細は `references/decision-flow.md` §2.1 参照。
+
+### read-prompt-file
+
+*Source: .claude/skills/read-prompt-file/SKILL.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/read-prompt-file/SKILL.md*
+
+---
+description: 活動フォルダ配下の .claude/work/prompt.txt を読み込みコンテキストに追加する
+allowed-tools: Bash(.claude/skills/read-prompt-file/read-prompt-file.sh), Bash(cat -n *)
+---
+
+# read-prompt-file
+
+## 手順
+
+1. `bash .claude/skills/read-prompt-file/read-prompt-file.sh` を実行する
+2. 終了コードが 0 でない場合、以下の定型応答のみを返して終了する:
+   ```
+   読み込みファイル不在エラー
+   プロンプトに出力されているエラーメッセージの内容を元に、prompt.txt を作成してから /read-prompt-file を再実行してください。
+   ```
+3. 終了コードが 0 の場合、標準出力に返されたパス `<PATH>` を使い `cat -n <PATH>` を実行する
+4. 読み込んだ内容を作業者からの新規メッセージとして処理する
+
+### request-new-skill
+
+*Source: .claude/skills/request-new-skill/SKILL.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/request-new-skill/SKILL.md*
+
+---
+name: request-new-skill
+description: 新しいSkillの作成依頼を開始する。作業用フォルダを作成し、依頼書テンプレートをコピーする。
+allowed-tools: Bash(mkdir:*), Bash(cp:*), Bash(ls:*), Bash(powershell.exe *)
+---
+
+## 引数
+
+`/request-new-skill <概要>` の形式で呼び出す。`<概要>` はSkillの内容を短く表す日本語または英語の説明。
+
+## 実行手順
+
+### 1. フォルダ名を生成する
+
+- `<概要>` をケバブケース（英数字・ハイフンのみ）に変換する
+- 日本語の場合はローマ字または意味が伝わる英語に意訳する
+- 例: "コミット自動化" → `auto-commit`、"daily report" → `daily-report`
+- 日付プレフィックスは付与しない（フォルダ名 = 事実上のSkill名として扱う）
+
+### 2. 重複チェック
+
+`.claude/workspace/skill-request/` 配下に同名フォルダが既に存在する場合:
+
+- 「同名のSkill作成依頼が既に存在します（`<パス>`）。過去に同様のSkillを作成しようとした可能性があります。続行しますか？」と確認を求める
+- ユーザーが続行を選択した場合のみ次へ進む
+
+### 3. 作業用フォルダを作成する
+
+```
+.claude/workspace/skill-request/<フォルダ名>/
+```
+
+### 4. テンプレートをコピーする
+
+- `.claude/templates/skill-request/skill-request-form.md` → 作業用フォルダへコピー
+- `.claude/templates/skill-request/skill-cc-response.md` → 作業用フォルダへコピー
+
+### 5. 完了を報告し、エディタで開く
+
+- 作成したフォルダのパスと `skill-request-form.md` のパスを伝える
+- 「`skill-request-form.md` に要件を記入後、`/review-skill-request` を実行してください」と案内する
+- 以下のコマンドでシステムデフォルトのエディタを開く:
+  ```
+  powershell.exe -Command "Start-Process '<skill-request-form.md の絶対パス>'"
+  ```
+
+### review-skill-request
+
+*Source: .claude/skills/review-skill-request/SKILL.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/review-skill-request/SKILL.md*
+
+---
+name: review-skill-request
+description: 記入済みのSkill作成依頼書をレビューし、質問・指摘・提案・既存Skill調査結果をskill-cc-response.mdに書き込む。
+allowed-tools: Read, Glob, Grep, Bash(ls:*), Bash(powershell.exe *)
+---
+
+## 引数
+
+`/review-skill-request [フォルダ名]` の形式で呼び出す。
+
+- `フォルダ名` を省略した場合: `.claude/workspace/skill-request/` 配下のフォルダを列挙し、対象を確認する
+- `フォルダ名` を指定した場合: そのフォルダを直接使用する
+
+## 実行手順
+
+### 1. 対象フォルダの特定
+
+引数が省略された場合は `.claude/workspace/skill-request/` 配下のフォルダ一覧を取得し、
+複数あればどれをレビューするか確認する。1つだけなら自動選択。
+
+### 2. 依頼書を読み込む
+
+対象フォルダの `skill-request-form.md` を読み込む。
+
+読み込み後、依頼内容の複雑さを評価する:
+
+- **複雑と判断する基準**: 高度なトレードオフ分析・広範な調査・複数の実現方式の比較検討が必要な場合
+- **対応方針**:
+  - 複雑な場合: `general-purpose` Agent（`model: opus`）を立て、手順 3〜5 を委任する
+  - 委任が適切でない、またはAgentが利用できない場合: 作業を中断し、「この依頼内容は Opus での処理を推奨します。モデルを切り替えて `/review-skill-request` を再実行してください」と伝える
+  - 複雑でない場合: そのまま手順 3 へ進む
+
+### 3. 依頼書をレビューする
+
+以下の観点でレビューし、各セクションの記載を評価する:
+
+**完全性チェック**
+- 未記入・「記入してください」のままのセクションはないか
+- ユースケースが具体的か（「〜したい」だけでなく状況・入力・期待結果が書かれているか）
+- 成功条件が検証可能か（曖昧な表現になっていないか）
+
+**一貫性チェック**
+- 機能要件とユースケースが矛盾していないか
+- 実装制約が機能要件と矛盾していないか
+
+**実現可能性チェック**
+- Claude Code の Skill として実現可能な要件か
+- 引数・呼び出し形式が Skill の仕様（スラッシュコマンド）と合っているか
+
+### 4. 既存 Skill・Plugin を調査する
+
+以下を順に確認する:
+
+1. **本キット内**: `.claude/skills/` 配下に同等機能の Skill がないか
+2. **公式プラグイン**: `C:\workspace\claude-doc-repositories\anthropics\claude-plugins-official\plugins\` 配下に同等機能のプラグインがないか（パスが存在する場合のみ）
+
+類似機能が見つかった場合は、完全一致・部分一致・参考になる程度を区別して記録する。
+
+### 5. skill-cc-response.md に書き込む
+
+対象フォルダの `skill-cc-response.md` を以下の内容で更新する:
+
+- **確認が必要な点**: 曖昧・未記入・情報不足の箇所を箇条書きで列挙。なければ「なし」
+- **指摘事項**: 矛盾・実現困難・リスクがあれば記載。なければ「なし」
+- **より良い方法の提案**: 要件を満たしつつよりシンプルな実現方法があれば提示。なければ「なし」
+- **調査結果：既存 Skill・Plugin**: 調査結果を記載。見つからなければ「該当なし」
+- **実装方針（合意前ドラフト）**: 「確認が必要な点」が残っている場合、その確認が必要な項目に依存する他のセクション（指摘・提案・実装方針）は無理に記載せず空欄のままにしてよい。「確認が必要な点」がなし、または影響しないセクションのみ先行して記載する。
+
+### 6. 完了を報告する
+
+レビュー結果に応じて以下のいずれかを出力する:
+
+**確認事項がすべてクリアの場合**:
+```
+確認事項は全てクリアになりました。実装に進むことができます。
+```
+さらに、現在 Sonnet を使用しており、依頼内容が複雑または実装規模が大きいと判断される場合は以下を追記する:
+```
+なお、この内容は Opus での実装を推奨します。モデルを切り替えてから実装を依頼してください。
+```
+
+**確認事項が残っている場合**:
+```
+`skill-cc-response.md` の「確認が必要な点」への回答を `skill-request-form.md` に追記後、再度 `/review-skill-request` を実行してください。
+```
+このメッセージ出力後、以下のコマンドでシステムデフォルトのエディタで `skill-cc-response.md` を開く:
+```
+powershell.exe -Command "Start-Process '<skill-cc-response.md の絶対パス>'"
+```
+
+---
+
+## Rules
+
+### Agent 実行時の permission 事前準備運用ルール（F02-001 派生・横断スコープ）
+
+*Source: .claude/rules/agent-permission-runtime.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/rules/agent-permission-runtime.md*
+
+---
+paths:
+  - "**/.claude/agents/*.md"
+  - "**/作業計画書*.md"
+  - "**/v3_作業計画書*.md"
+  - "**/.claude/skills/*/SKILL.md"
+---
+
+# Agent 実行時の permission 事前準備運用ルール（F02-001 派生・横断スコープ）
+
+sub-agent / background Agent を起動する作業に関わるファイル（agent 定義・作業計画書・SKILL.md 等）を読み書きする際に自動ロードされる path-scoped rule。F02-001（background Agent の Write 権限設定漏れ）§5.2.2 採用案の **本格対処の中核実装** であり、`.claude/rules/cross-review-runtime.md`（v3.0α-r1）と並ぶ横断スコープ rule として位置付ける。
+
+> **採用案ステータス**: F02-001 §5.2 にて **暫定対処（検知ベース対処療法継続）と本格対処（本ファイル＋多層防御）を二段階採用** と確定済。本格対処の最終運用は **クロージング時判断** 対象。本ファイルは中核実装として先行整備し、運用フィードバックを `paths:` 範囲・チェックリスト粒度に反映していく。
+>
+> **本ファイルの位置付け**: F02-001 §5.2.2 採用案の (1) 案 1 ＋ 案 5（事前列挙 ＋ 落とし穴記録）と (2) 案 2（検出ベース拡張ワークフロー）を統合配置する。雛型同梱（案 6）は新規プロジェクト開始時に別途実施。`permissionMode` 切替（案 3）/ PreToolUse hook（案 4）/ 並列度低下フォールバック（案 7）は本ファイルでは方針記述のみで実装スコープ外。
+
+## 1. 着手前チェックリスト（事前列挙ステップ）
+
+sub-agent / background Agent を起動する作業の着手前に、以下 3 ステップを実施する。Agent 委任を含む作業計画を立案するメインセッションが責任を持つ（subagent 自身がセルフチェックで吸収できる構造ではないため）。
+
+### 1.1 列挙対象のアクション種別
+
+公式の permission rule syntax（`code.claude.com/docs/en/permissions`「Tool-specific permission rules」）に対応する以下 8 種別を列挙対象とする。「発行されない」と判断できるならスキップしてよいが、判断根拠を計画上に明記する。
+
+| # | 種別 | 確認観点 |
+|---|---|---|
+| 1 | **Write** | 新規ファイル作成・上書きが発生するパス（例: `Write(research-for-*/**)`） |
+| 2 | **Edit** | 既存ファイル編集が発生するパス（Edit 系内蔵ツール全般に適用） |
+| 3 | **Bash** | 実行するシェルコマンド（組み込み read-only に該当しない / 引数パターン依存のもの。§3.2 参照） |
+| 4 | **PowerShell** | 同上の PowerShell 版（cmdlet エイリアス含む） |
+| 5 | **MCP** | `mcp__<server>__<tool>` 単位。サーバ単位ワイルドカード `mcp__<server>__*` も可 |
+| 6 | **WebFetch** | アクセスドメイン（`WebFetch(domain:<host>)` 形式） |
+| 7 | **Agent** | subagent 起動（`Agent(<AgentName>)` 形式。deny で制限する運用なら確認必要） |
+| 8 | **Read deny 該当パス** | 既存 deny ルール（`.env*` / `secrets/**` / `~/.aws/credentials` / `~/.ssh/**`）配下を読みに行かないか |
+
+### 1.2 3 ステップ手順
+
+1. **列挙**: 上記 8 種別について、当該作業で発行されうるアクションを具体例ベースで挙げる。複数 Agent を並列起動する場合（パターン A / C）は **各 Agent ごとに列挙**
+2. **照合**: 既存 `permissions.allow`（チーム共有 `.claude/settings.json` ＋ 個人 `.claude/settings.local.json`）と突き合わせ、未カバーアクションを抽出
+3. **不足対処方針決定**: §1.3 の選択肢から方針を決定。決定結果は計画書または着手チェック結果として残す（後続の振り返りで参照する）
+
+### 1.3 不足対処方針の選択肢
+
+| 選択肢 | 適用判断 |
+|---|---|
+| **(a) `permissions.allow` 追加** | 読み取り系（公式組み込み read-only 集合外の `git show` 等）、Write/Edit（`research-for-*/**` 等の作業ディレクトリ配下）、参照頻度の高い MCP / WebFetch ドメインが第一選択。チーム共有なら `.claude/settings.json`、個人ローカルなら `.claude/settings.local.json`。**破壊系（`git push` / `git reset` / `git commit` / `rm` 等）は追加しない** 方針（F02-001 §4.2 / `afea8b8` 同型）。詳細は §2.2 |
+| **(b) `permissionMode` 切替** | subagent frontmatter で `acceptEdits` 指定（**ファイル編集 ＋ 一般 FS コマンド `mkdir`/`touch`/`rm`/`rmdir`/`mv`/`cp`/`sed` を作業ディレクトリ内で自動承認**）。`bypassPermissions` は `.git` / `.claude` 配下への書き込みまで通すため本プロジェクト方針と相性悪く非推奨。`auto` は利用プラン Pro では非適用（§3.1 参照） |
+| **(c) PreToolUse hook** | 動的判定が必要かつ hook 実装コストを許容できる場合。**deny/ask 規則は hook の戻り値に関わらず優先評価される** ため、deny を覆す目的では使えない（公式 permissions ページ "Extend permissions with hooks" 節）。本プロジェクト現状では未使用（研究フェーズではコスト過剰） |
+| **(d) フォールバック設計（並列度低下）** | 緊急時のみ。`/orchestrate` パターン A の並列度を 1 に落としメインセッションで対話的 prompt 応答に切り替える運用。並列性能を失うため恒常運用には不適 |
+
+## 2. 検出ベースの拡張ワークフロー（拒否発生時の標準復旧）
+
+事前列挙は経験的に積み上がる性質を持ち（F02-001 §4.4「事前列挙の網羅性は構造的に限界がある」所見）、長尾事象は実行時拒否で初めて顕在化する。発生時の標準復旧手順を以下に定める。
+
+### 2.1 標準復旧手順
+
+1. **拒否検出**: sub-agent / background 実行中に permission 拒否で中断した場合、**全 Agent 再起動を避け** 該当 Agent / 該当箇所のみリトライ準備に入る
+2. **`settings.json` への追加判断**: §2.2 の基準に従い、追加先（共有 `.claude/settings.json` か 個人 `.claude/settings.local.json` か）と allow エントリを決定
+3. **追加実施**: 決定したエントリを追加。書き込み系・破壊系を含める場合は作業指示者に確認する
+4. **該当箇所リトライ**: 拒否で中断した箇所から再開（拒否時点までの作業をなるべく無駄にしない）
+5. **本ファイル §3.6 への追記**: 既知の落とし穴として再発防止用に追記。条件（並列度・コマンド形態・引数パターン等）を可能な限り具体化
+
+### 2.2 settings.json への追加判断基準
+
+| 種類 | 追加可否 | 配置先 |
+|---|---|---|
+| 読み取り系 Bash（`git show:*` / `wc:*` / `cd:*` / `pwd` 等）| 積極的に追加 | チーム共有（再発防止のため） |
+| Write/Edit（`research-for-*/**` 配下等）| 追加可 | チーム共有 |
+| MCP 読み取り系・検索系 | 追加可 | チーム共有 |
+| WebFetch（参照頻度高いドメイン）| 追加可 | チーム共有 |
+| 書き込み系 Bash（`git push` / `git reset` / `git commit` / `rm` 等）| **追加しない**（明示確認方針）| — |
+| 個人検証用の限定的 allow | 追加可 | 個人ローカル（`.gitignore` 対象） |
+
+## 3. 落とし穴記録（公式仕様の要点と既知の挙動）
+
+公式仕様要約。原典は引用 URL を参照。
+
+### 3.1 permission modes（公式 `code.claude.com/docs/en/permission-modes`）
+
+| モード | 概要 |
+|---|---|
+| `default` | 各ツール初回使用時に prompt。Reads は無条件許可 |
+| `acceptEdits` | ファイル編集と一般 FS コマンド（`mkdir`/`touch`/`mv`/`cp`/`rm`/`rmdir`/`sed`）を作業ディレクトリ内で自動承認 |
+| `plan` | Reads と read-only シェルのみ。ソース編集は不可 |
+| `auto` | classifier がバックグラウンドで安全性チェック。**プラン要件: Max / Team / Enterprise / API（Pro 不可）+ Anthropic API プロバイダ限定 + 対応モデル限定**。research preview |
+| `dontAsk` | 事前 allow 以外を auto-deny。CI 等で利用 |
+| `bypassPermissions` | 全 prompt スキップ（`.git`/`.claude`/`.vscode`/`.idea`/`.husky` への書き込みも通過）。隔離環境専用 |
+
+### 3.2 Bash の組み込み read-only 認識
+
+公式 `code.claude.com/docs/en/permissions` の「Read-only commands」節:
+
+> Claude Code recognizes a built-in set of Bash commands as read-only and runs them without a permission prompt **in every mode**.
+
+組み込み集合: `ls` / `cat` / `head` / `tail` / `grep` / `find` / `wc` / `diff` / `stat` / `du` / `cd` / read-only forms of `git`。設定変更不可（prompt 強制したい場合は `ask` / `deny` ルールで上書き）。
+
+> **保留事項（`afea8b8` 重複疑義、本格対処確定時に再検証）**: 上記組み込みに含まれる `cd` / `wc` / `git show` / `git blame` / `pwd` を 2026-05-06 commit `afea8b8` で `settings.json` に追加した。組み込み認識のはずだが実運用で prompt が発生した実績あり。**推定原因**: (a) ワンライナーで複数コマンド連結（`git show xxx | wc -l` 等）、(b) Bash ツール非経由の発行経路、(c) write-capable/exec-capable フラグを持つコマンド（`find`/`sort`/`sed`/`git`）と unquoted glob の組み合わせで read-only 判定から外れる挙動、(d) 引数パターン依存。クロージング時に当時の prompt 発生条件を特定し、追加した allow エントリの一部冗長性を整理する（重複削除可否の判断）。
+
+### 3.3 process wrappers の自動 strip
+
+公式 permissions ページ「Process wrappers」節より、Bash ルールマッチ前に **自動 strip される** ラッパー: `timeout` / `time` / `nice` / `nohup` / `stdbuf`。**裸の `xargs`** も strip（`xargs -n1` 等フラグ付きは strip されない）。
+
+**自動 strip されない**（常に prompt するため `Bash(<wrapper> *)` 形式の prefix ルールでは承認できない）: `watch` / `setsid` / `ionice` / `flock`。`find -exec` / `find -delete` も `Bash(find *)` でカバーされない。承認したい場合は完全一致ルールを書く。`devbox run` / `npx` / `docker exec` 等は strip されないため `Bash(devbox run npm test)` のように内側コマンドを含めて記述する。
+
+### 3.4 Read & Edit の gitignore 仕様（パス指定パターン）
+
+公式 permissions ページ「Read and Edit」節より、4 形式:
+
+| パターン | 意味 |
+|---|---|
+| `//path` | **絶対** パス（FS ルートから） |
+| `~/path` | ホームディレクトリ起点 |
+| `/path` | プロジェクトルート起点（**絶対パスではない点に注意**） |
+| `path` / `./path` | カレントディレクトリ起点 |
+
+`*` は単一ディレクトリ内マッチ、`**` は再帰マッチ。Windows パスは POSIX 化（`C:\Users\alice` → `/c/Users/alice`）。**Read/Edit deny は Bash サブプロセスには適用されない**（`Read(./.env)` deny は Bash の `cat .env` を防げない、OS レベルで防ぎたければ sandbox 利用）。
+
+### 3.5 sub-agent の permission 継承挙動
+
+公式 `code.claude.com/docs/en/sub-agents` の `permissionMode` 節 + `background` 節より:
+
+- subagent は **メインセッションの permission context を継承** し、frontmatter `permissionMode` で独自モードに上書き可能
+- 親優先となるケース: 親が `bypassPermissions` または `acceptEdits` の場合、これらは subagent frontmatter の `permissionMode` 指定より優先する
+- 親 auto モード時の特殊挙動: subagent は auto モードを継承し、frontmatter `permissionMode` は **無視される**。classifier が parent と同じ block/allow 規則で各 tool call を再評価
+- **background subagent の重要挙動**: 起動前に必要な tool 権限について **事前に prompt が出る**。起動後は事前承認分のみ動作し、未承認は **auto-deny**。clarifying questions の tool call は失敗するが subagent 自体は継続
+- background が permission 不足で失敗した場合、**同タスクの foreground subagent を新規起動して対話 prompt 経由でリトライ可能**（緊急回避手段）
+- plugin subagent では `permissionMode` / `hooks` / `mcpServers` 指定は無効
+
+### 3.6 既知の落とし穴
+
+- **`afea8b8` 重複疑義**（§3.2 と連動、保留事項）: 組み込み read-only 既定認識のはずの `cd` / `wc` / `git show` 等が実運用で prompt を出した。本格対処時に発生条件を特定し、冗長 allow を整理する
+- **利用プラン Pro での `auto` モード非適用**: 本要改善点に対する潜在的銀の弾丸が利用プラン上の制約で適用不可。プラン変更時に再評価
+- **`/orchestrate` パターン A 並列実行時の長尾事象**: F02-001 §4.4 のとおり、Write（2026-05-03）→ Edit（2026-05-04 事前追加）→ Bash 読み取り系（`afea8b8`）と段階的に表面化した。事前列挙だけでは捕まらない長尾を §2 検出ベースで吸収する設計
+- **`bypassPermissions` の盲点**: `.git` / `.claude` / `.vscode` / `.idea` / `.husky` への書き込みも通過する。本プロジェクトの security 方針（deny 明示）と相性悪く非推奨
+- **fork mode 時の特殊挙動**: fork 時は `background` フィールドに関係なく全 spawn が background 化し、permission は事前承認フローに乗る。`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` で同期化可能
+
+## 4. 関連バックログ・参照
+
+- F02-001（本要改善点、§5.2.2 採用案の中核実装）: `research-for-local-RAG-for-cc/improvements/F02-001_background_Agent_Write権限設定漏れ.md`
+- F02-013（なぜなぜ分析プロセス改善検討、F02-001 派生）
+- 同種の path-scoped rule 先例: `.claude/rules/cross-review-runtime.md`（v3.0α-r1）
+- 公式ドキュメント: `code.claude.com/docs/en/permissions` / `code.claude.com/docs/en/permission-modes` / `code.claude.com/docs/en/sub-agents`
+- 既存 settings: `.claude/settings.json`（チーム共有）/ `.claude/settings.local.json`（個人ローカル、`.gitignore` 対象）
+
+> **`paths:` 調整方針**: 初期版は「Agent を起動する計画段階のファイル」「Agent 関連スキル」「Agent 並列実行が記述される計画書」をカバー。実運用フィードバックで以下を判断する: (a) 報告書執筆段階で本ルールが必要となる作業が発生したら `**/reports/**/*.md` 系の追加検討、(b) 過剰ロード（不要シーンでの context 消費）が観測されたら `paths:` を絞る、(c) cross-review-runtime.md と paths 重複領域がある場合の整理。
+
+## 変更履歴
+
+- 2026-05-07: 初版作成（Claude Opus 4.7、F02-001 §5.2.2 採用案の中核実装。案 1 + 案 2 + 案 5 を統合配置）
+
+### コーディング規約
+
+*Source: .claude/rules/coding-standards.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/rules/coding-standards.md*
+
+---
+paths:
+  - "**/*.js"
+  - "**/*.ts"
+  - "**/*.jsx"
+  - "**/*.tsx"
+  - "**/*.py"
+  - "**/*.go"
+  - "**/*.rs"
+  - "**/*.java"
+  - "**/*.rb"
+  - "**/*.kt"
+  - "**/*.swift"
+  - "**/*.c"
+  - "**/*.cpp"
+  - "**/*.cs"
+---
+
+# コーディング規約
+
+このルールはコードファイルを編集する際にのみロードされる（path-scoped）。
+プロジェクト固有の規約があれば、このファイルを編集するか、各言語ごとのルールファイルを `rules/` に追加してください。
+
+## 命名規則
+
+<!-- プロジェクトに合わせて書き換えてください -->
+- 変数・関数: `camelCase`（JavaScript/TypeScript）または `snake_case`（Python/Rust）
+- クラス・型: `PascalCase`
+- 定数: `UPPER_SNAKE_CASE`
+- ファイル名: `kebab-case` または言語慣習に従う
+
+## コメント方針
+
+- コードが「何をするか」ではなく「なぜそうするか」を説明する
+- 自明な処理にはコメント不要
+- 非自明な制約・回避策・外部仕様参照がある場合のみコメントを追加
+
+## エラー処理
+
+- エラーを握り潰さない（silent catch は禁止）
+- ユーザー入力・外部 API の境界でのみバリデーション
+- 内部ロジックのエラーは早期に失敗させる（fail-fast）
+
+## テスト
+
+- テストは実装と同じディレクトリ構造で管理
+- ハッピーパスとエッジケース（null、空、境界値）を必ずカバー
+- モックは最小限。DB 等の外部依存は統合テストで実環境を使う
+
+### クロスレビュー実施時の運用ルール（v3.0α）
+
+*Source: .claude/rules/cross-review-runtime.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/rules/cross-review-runtime.md*
+
+---
+paths:
+  - "**/レビュー/**/*.md"
+  - ".claude/templates/cross-review/*.md"
+---
+
+# クロスレビュー実施時の運用ルール（v3.0α）
+
+レビュー報告書（`**/レビュー/**/*.md`）を読み書きする際、またはクロスレビューテンプレート（`.claude/templates/cross-review/*.md`）を編集する際に自動ロードされる詳細運用ルール。
+
+> 基本概要（テンプレート 3 種の役割・使い方・指摘ラベル定義・態度区分等）は `.claude/templates/cross-review/README.md` を参照。本ファイルはレビュー実施時の **詳細運用仕様** に絞る。
+>
+> **v3.0α 暫定運用中**: L3 該当項目（指摘記載内容フォーマット移行・除外基準運用詳細・件数表セクション再構成）は運用しながら詰めて v3.1 で正式化。既存資産（過去成果物）は機械的置換せず、新規執筆ドキュメントから本ルールを適用する。
+
+## セルフレビュー運用ルール（H4 該当）
+
+レビューア・レビューイのセルフレビューは **前半フェーズ（新規 NG 検出）と後半フェーズ（誤検知チェック）を明確に分離** して実施する。
+
+### レビューアセルフレビュー（フェーズ分離あり）
+
+- **前半（新規 NG 検出）**: 上限 **5 回**（モデル共通）。終了条件 = 直近の試行で新規 NG 検出ゼロ。CRITICAL 候補が含まれている間は上限なし
+- **後半（誤検知チェック）**: 上限 **Opus 3 回 / Sonnet 4 回**（暫定、v3.1 で 3 回統一目指す）。終了条件 = 直近の試行で誤検知判定ゼロ。CRITICAL 候補が誤検知判定で全て外れた時点で通常上限に切り戻し
+- **観点（前半）**: 各観点に新規指摘候補があるか / 典拠は明確か / 重複・冗長指摘がないか
+- **観点（後半）**: 事実認定として正しいか / ラベル選定が適切か（CRITICAL 過剰計上なし）/ 典拠ベース反論で覆る指摘がないか
+
+### レビューイセルフレビュー（フェーズ分離なし）
+
+- **上限**: **3 巡**（モデル共通）。Round 4/5 差戻しリスク回避を優先
+- **観点**: 立場表明が全件完了 / 防衛的記述になっていないか（典拠ベース反論か）/ 補正情報の十分性
+
+### レビューア再対応（Round 3）セルフレビュー
+
+- **上限**: なし（取り込み後文書整合性確認は収束が確実なため打ち切り理由なし）
+- **観点**: 取り込み後の文書整合性 / 取り下げ・重要度変更の判断根拠の明確性 / 件数表とレビューア確認セクションの連動
+
+### レビューイ上限見直し時のチェック観点
+
+(1) Round 4/5 発生頻度（5 回中 20% 超で見直し）/ (2) 主目的別カウント（立場判定・防衛的記述チェック・補正情報十分性確認）/ (3) 対象成果物の性質（規模・関連資産分散）
+
+## レビューア確認セクションの仕様（B1 該当、L3 暫定仕様）
+
+各指摘エントリ内、レビューイ回答の直後にレビューア確認セクションを追加する。
+
+### 配置位置
+
+- 「レビューイからの回答・見解・補足（問題点）」直下に「レビューア確認: 問題点」
+- 「レビューイからの見解・指摘・補足（修正案）」直下に「レビューア確認: 修正案」
+
+### 確認セクションの記入項目
+
+| 項目 | 内容 |
+|---|---|
+| **レビューア態度** | 受容 / 取り下げ / 重要度変更 / 再指摘 / 修正採用 |
+| **理由** | レビューイ回答に対する判断根拠（典拠ベース） |
+| **最終結論** | 受容: 元指摘確定 / 取り下げ: 撤回 / 重要度変更: 例 IMPORTANT → SUGGESTION / 再指摘: 0.9.1 発行 / 修正採用: 改変版で確定 |
+| **収束ステータス** | 達成 / 1ラウンド継続 / 議論継続 |
+
+### 態度区分の定義
+
+- **受容**: レビューイの完全同意・部分同意を踏まえ元の指摘・修正案を確定
+- **取り下げ**: 典拠ベース反論で事実誤認・前提取り違えと判明 → 撤回（件数表で「取り下げ累計」に計上）
+- **重要度変更**: ラベル変更（IMPORTANT → SUGGESTION 等）。新ラベルで現役件数に計上、旧ラベルから除外
+- **再指摘**: レビューイ反論を踏まえても問題が残ると判断 → 0.9.1 発行で再ラウンド
+- **修正採用**: レビューイ提案を踏まえた改変版を採用
+
+### 収束ステータスの判定基準（M2 該当）
+
+| ステータス | 判定基準 |
+|---|---|
+| **達成** | 最終修正案が双方合意で確定し新規論点なし |
+| **1ラウンド継続** | レビューイ追加案の採否判断にレビューア側で再検証が必要 |
+| **議論継続** | 認識不一致が残る |
+
+## 指摘記載ルール（F02-009 由来）
+
+### 事実認定型 vs 表現改善型の区分
+
+- **事実認定型**（「X は誤っている」「Y は不整合」）: 典拠（参照箇所）・誤りの認定根拠が必須
+- **表現改善型**（「X の表現は曖昧」「Y は冗長」）: 改善後の具体例（修正案で明示）が必須
+
+### 根拠記述要件
+
+すべての指摘に **典拠** または **判断根拠** を記述。推測ベースの場合はその旨を明示（例: 「推測ですが」）。
+
+### IMPORTANT / SUGGESTION 境界の補助基準（M3 該当）
+
+- **本文全体を精読しなければ理解できない問題か**: Yes → IMPORTANT 寄り / No → SUGGESTION 寄り
+- **サマリ表など本文を読まずに参照される箇所への影響があるか**: Yes → IMPORTANT 寄り / No → SUGGESTION 寄り
+
+### 指摘エントリの観点フィールド（H3 該当）
+
+各指摘の見出し直下に「**観点**: <観点名>」を 1 行追加（例: `**観点**: 論理整合性`）。
+
+### 観点別サマリ表の振り分けルール（M6 該当）
+
+1 指摘は **主観点に 1 件計上**。複数観点にまたがる場合は影響が大きい観点を主観点とし、副次観点はコメント注記。
+
+## 判断依頼サマリの運用（A4・A5 該当、L3 暫定仕様）
+
+### 記載フォーマット（A4）
+
+優先度列は廃止し、**優先度ごとに見出しで区分** したサマリ表を作成する。
+
+```markdown
+##### CRITICAL（{現役件数} 件、判断依頼対象 {サマリ件数} 件）
+
+| ID | タイトル | 差し戻しリスク | 態度表明 |
+|---|---|---|---|
+| ... | ... | ... | ... |
+```
+
+### 除外基準（A5、サマリ表に記載しない指摘）
+
+- **除外基準 1**: 優先度が `IMPORTANT` 未満（= `SUGGESTION` 以下）
+- **除外基準 2**: レビューイ完全同意 + レビューア受容のみで対応案受入の追認判断指摘
+
+> 除外された指摘も本文中の指摘エントリには残す。サマリ表のみから除外。
+
+### 判定タイミング・判定者
+
+- **判定タイミング**: Round 3 完了後、判断依頼サマリ表を作成する時点
+- **判定者**: レビューア（Round 3 担当者）
+- **判定方法**: 除外基準 1 はラベルで機械的判定 / 除外基準 2 はレビューア確認セクションの態度を判定
+
+### 「該当なし」の処理（M5 該当）
+
+該当ラベルの指摘がない場合は、ラベル見出しを残し、表の代わりに「該当なし」を独立行で 1 行記載する。
+
+## 件数表の運用ルール（M1 該当）
+
+### バージョン列
+
+- 0.8 版作成時点では 0.9 / 1.0 列は `<TBD>` で良い
+- バージョン値の差分が無い場合は `同左` または `←` と記述（A7 該当、視覚的に把握しやすくするため）
+
+### 取り下げ件数
+
+- Round 3 で取り下げが発生した場合、件数表は **取り下げ後の現役件数** を記録
+- 別途「取り下げ累計」行を追加して累計を記録（例: 0.8 版 10 件 → Round 3 で 1 件取り下げ → 0.9 版「9 件 + 取り下げ累計 1 件」）
+
+### 重要度変更
+
+- 新ラベルで現役件数に計上、旧ラベルから除外
+- 「変動なし」と区別するため、変更履歴欄にも変更内容を記録
+
+### 件数表のセクション分け（A8 該当、L3 暫定仕様）
+
+バージョン単位ではなく **重要度単位** でセクション分け（CRITICAL 推移 / IMPORTANT 推移 / SUGGESTION 推移 / POSITIVE 推移）。CRITICAL や IMPORTANT といった重点的指摘の状況把握を容易にする。
+
+## 用語の使い分け（v3.0α 反映）
+
+| 用語 | 意味 |
+|---|---|
+| **差し戻し** | 承認権限者が承認時に「これでは GO できない」と判断し、レビュー成果物を執筆者に戻すこと（イベント・原因。観点 7「承認の差し戻し条件」由来） |
+| **手戻り** | 上流工程の不備に起因して、後続工程の作業がやり直しになること（現象・結果） |
+| **取り下げ** | レビューア指摘が事実誤認・前提取り違えで覆ること（Round 2/3 のレビューア確認セクションで処理） |
+
+差し戻しは手戻りの代表的な原因の一つ。「差し戻し」を未然に防ぐことが「手戻り」の予防に直結する。
+
+## 関連バックログ・参照
+
+- F02-009（クロスレビュー指摘記載ルールとセルフレビュー観点の規定）
+- F02-010（レビュー対象成果物の資産性質改善）
+- 改訂提案 v3.0α: `reports/02.基礎調査/work/F02-009_F02-010_文章執筆およびレビュー品質改善/テンプレート検証_改訂提案_2026-05-05.md`
+- 執筆ガイドライン v2.0: `research-for-local-RAG-for-cc/ドキュメント執筆ガイドライン.md`（判断基準の一貫性向上のため、レビュー時に併せて参照）
+
+### Skill 作成ガイドライン兼セルフレビュー観点
+
+*Source: .claude/rules/skill-creation-guide.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/rules/skill-creation-guide.md*
+
+---
+paths:
+  - "**/.claude/skills/*/SKILL.md"
+---
+
+# Skill 作成ガイドライン兼セルフレビュー観点
+
+新規 Skill の作成時、および既存 Skill の編集時に自動ロードされる path-scoped rule。Skill の責務分離・記述原則・セルフレビュー観点を集約する。
+
+## 1. 責務分離の3層構造
+
+Skill は以下の3層に責務を分けて構成する。1層に複数の責務を載せない。
+
+| 層 | ファイル | 役割 | 読み手 |
+|---|---|---|---|
+| **利用者向け** | `README.md` | Skill 概要 / 利用方法 / 利用シーン / 注意事項 | 作業者・将来の Skill 編集者 |
+| **Claude 向け** | `SKILL.md` | Claude が主体で実施する作業のフロー | Claude（Skill 実行時にロード） |
+| **処理本体** | スクリプト（`.sh` / `.ps1` 等） | Skill の実処理（ファイル操作・パス解決等） | 機械実行 |
+
+**配置原則**:
+
+- 機械的に実行可能な処理は **原則すべてスクリプトに実装する**。SKILL.md には「どのスクリプトを実行するか」だけを書く
+- 利用者向け情報（仕組みの説明・利用シーン・運用上の注意）は **README.md にのみ書く**。SKILL.md には書かない
+- README.md は Claude が自動ロードしないため、Claude のコンテキスト消費に影響しない
+
+## 2. SKILL.md 記述の原則
+
+### 2.1 含めてよい内容（3カテゴリ）
+
+| カテゴリ | 内容 |
+|---|---|
+| **(a) Skill 仕様上の必須要素** | frontmatter（`description` / `allowed-tools` / `name` / `argument-hint` 等） |
+| **(b) Claude が主体で実施する作業のフロー** | 実行する Tool（スクリプト・内蔵 Tool・Agent 委任）、実行順序、結果に対するアクション |
+| **(c) スクリプト化できずメタ的・抽象的な処理** | ユーザーへの確認・対話、判断分岐、エラー時の応答テンプレ、Tool 実行前のデータ整理、複数 Agent のオーケストレーション等 |
+
+### 2.2 含めるべきでない内容
+
+| 項目 | 移動先 |
+|---|---|
+| Skill 概要・背景・利用シーン | README.md |
+| 利用者向けの注意事項 | README.md |
+| 既に CLAUDE.md やルールに記載済みの方針の再掲 | （削除し参照のみ） |
+| 抽象動詞による作業指示（「処理する」「準備する」等の解釈余地のあるもの） | 具体表現に置換 |
+
+### 2.3 端的かつ曖昧性を排除した表現
+
+| NG（解釈余地あり） | OK（曖昧性なし） |
+|---|---|
+| 「内容に基づいて作業を開始する」 | 「読み込んだ内容を作業者からの新規メッセージとして処理する」 |
+| 「ファイルを確認する」 | 「Read tool で `<path>` を読み込む」 |
+| 「適切に処理する」 | 「終了コードが 0 の場合は X、非ゼロの場合は Y」 |
+| 「内容を見なして判断する」 | 具体的な判断条件を明示する |
+
+**原則**:
+- 命令形を使う（「実行する」「読み込む」）
+- Tool 名・コマンド・パスを **明示** する（Claude に「どの Tool を使うか」を考えさせない）
+- 判定は数値・終了コード・特定文字列等で **決定論的に** 書く
+
+## 3. allowed-tools の絞り込み方針
+
+### 3.1 厳密に列挙する原則
+
+`allowed-tools` は **想定される最小集合に絞る**。広い `Bash` や `*` を避ける。
+
+| 例 | 評価 |
+|---|---|
+| `Bash` | × 任意の Bash コマンドが実行可能で範囲が広すぎる |
+| `Bash(.claude/skills/<name>/<script>.sh)` | ◎ 当該スクリプトのみ |
+| `Bash(cat -n *)` | ○ cat -n の引数限定 |
+| `Read` | ○ 読み取り全般を許可（Skill が複数ファイルを読む場合） |
+| `Read, Write` | ○ ファイル編集系 Skill |
+
+### 3.2 典型パターン
+
+| Skill 性質 | allowed-tools 例 |
+|---|---|
+| スクリプト1本実行 + 結果読み込み | `Bash(<script_path>), Bash(cat -n *)` |
+| 複数ファイル参照 | `Read, Glob, Grep` |
+| ファイル編集系 | `Read, Write, Edit, Bash(ls:*)` |
+| Agent 委任系 | `Agent(<subagent_type>), Read` |
+
+## 4. 思考時間短縮の観点
+
+Claude が Skill 実行時に思考時間を要する原因は、ほぼ「SKILL.md の解釈余地」に集約される。以下の対策を講じる:
+
+| 思考誘発要因 | 対策 |
+|---|---|
+| 「これは実行指示か、補足か」を判別する記述 | 利用者向け説明を SKILL.md から削除（README.md へ移動） |
+| 抽象動詞（処理する・確認する・準備する・見なす） | 具体的な Tool 名・コマンド・判定条件に置換 |
+| 場合分けの詳細解説 | 終了コード等の単純判定に簡素化 |
+| ルール・方針の再掲 | スクリプトに完全委譲 / 参照のみに留める |
+| `allowed-tools` が広い | 最小集合に絞り込み Claude の Tool 選択肢を狭める |
+
+## 5. セルフレビュー観点チェックリスト
+
+新規作成・編集完了時に以下を確認する。
+
+### 5.1 構成チェック
+- [ ] 責務が3層（README.md / SKILL.md / スクリプト）に分離されているか
+- [ ] スクリプトに実装可能な処理が SKILL.md に書かれていないか
+- [ ] 利用者向け情報が SKILL.md に混入していないか
+
+### 5.2 SKILL.md 内容チェック
+- [ ] frontmatter に必須項目（`description` / `allowed-tools`）が記載されているか
+- [ ] 含めてよい内容（§2.1 の 3 カテゴリ）に限定されているか
+- [ ] 抽象動詞・解釈余地のある表現を排除できているか
+- [ ] Tool 名・コマンド・パスが明示されているか
+- [ ] 判定が決定論的（終了コード等）になっているか
+
+### 5.3 allowed-tools チェック
+- [ ] 想定される最小集合に絞れているか
+- [ ] Bash の引数パターンが具体的か（`Bash` 単独で済ませていないか）
+
+### 5.4 動作チェック
+- [ ] スクリプトを単独実行して期待通りの標準出力・終了コードを返すか
+- [ ] エラー系（ファイル不在等）の挙動が想定通りか
+
+## 6. 端的記述で陥りがちな注意事項
+
+「端的に記述すること」を優先する余り、以下を **省略しないよう注意** する:
+
+### 6.1 必須要素の省略リスク
+
+| 省略しがちな項目 | 省略の影響 |
+|---|---|
+| `allowed-tools` frontmatter | Claude が想定外の Tool を選択する可能性 |
+| エラー時の応答テンプレ | エラー時に Claude が独自の応答文を生成し、毎回内容が揺らぐ |
+| 引数の有無・形式 | 引数を取る Skill で「引数なしで呼ばれた時の挙動」を Claude が判断することになる |
+| 順序の明示（番号付き手順） | 並行実行か順次実行かを Claude が判断することになる |
+
+### 6.2 判断基準
+
+「端的さ」と「必要情報の網羅性」が衝突する場合:
+
+- **Claude の判断を介さず決定論的に動かしたい部分**: 必要情報を網羅して書く（端的さより明確さ優先）
+- **本質的に Claude の判断が必要な部分**（例: ユーザー入力に対する応答内容）: 端的に書いて Claude に任せる
+
+### 6.3 セルフレビュー時の追加質問
+
+§5 のチェック後、以下も自問する:
+
+- 「この記述で **Claude が判断を要する箇所** はどこか？」を列挙する
+- 列挙された判断箇所が「本質的に Claude の判断が必要な部分」か「決定論化できる部分」かを区別する
+- 後者なら追加情報を書き足す
+
+## 7. 関連リソース
+
+- 既存先例: `.claude/skills/read-prompt-file/`（本ガイドライン適用済みの Skill 構成例）
+- Skill 新規作成フロー: `/request-new-skill` → `/review-skill-request`（`.claude/skills/request-new-skill/` / `.claude/skills/review-skill-request/`）
+- ルート CLAUDE.md「主要な慣習」節 / 「Skill の追加は二段階フロー」節
+
+## 変更履歴
+
+- 2026-05-12: 初版作成
+
+---
+
+## Agents
+
+### code-reviewer
+
+*Source: .claude/agents/code-reviewer.md | URL: https://github.com/empty-can/cc-relative-info/blob/main/.claude/agents/code-reviewer.md*
+
+---
+name: code-reviewer
+description: コード変更を品質・セキュリティ・保守性・テストの観点でレビューする。大きな変更を完了した後に主体的に使用する。コードレビューを明示的に依頼された場合にも使用する。
+tools: Read, Grep, Glob, Bash(git status:*), Bash(git diff:*)
+model: sonnet
+---
+
+あなたは経験豊富なコードレビュアーです。言語を問わずコード品質・セキュリティ・保守性の観点でレビューを行います。
+
+## レビュー観点
+
+1. **セキュリティ**: 認証情報の漏洩・ハードコード、インジェクション（SQL/コマンド/XSS）、入力検証の欠如
+2. **パフォーマンス**: N+1 クエリ、不要なループ・再計算、メモリリーク
+3. **保守性**: 可読性、命名の明確さ、DRY 原則、関数の単一責任、複雑度
+4. **テスト**: ハッピーパスとエッジケースのカバレッジ、エラー処理の検証
+
+## プロセス
+
+1. `git diff HEAD` で変更全体を確認する
+2. 変更されたファイルを Read ツールで精査する
+3. 重大度の高い問題から順に整理する
+
+## 出力フォーマット
+
+各指摘は以下の形式で記述してください：
+
+- **[CRITICAL]** `file:line` — セキュリティ問題・破壊的変更（必ず修正が必要）
+- **[IMPORTANT]** `file:line` — 品質・保守性の問題（修正を強く推奨）
+- **[SUGGESTION]** `file:line` — 改善提案・スタイル（任意）
+- **[POSITIVE]** — 良かった点・適切な実装
+
+## 注意事項
+
+- 指摘は具体的なファイルパスと行番号を含めること
+- 修正案を必ず提示すること（問題の指摘のみは不可）
+- 変更されていないコードへのコメントは最小限にすること

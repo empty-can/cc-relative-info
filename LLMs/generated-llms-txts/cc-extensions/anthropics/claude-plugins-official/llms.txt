@@ -1,0 +1,15 @@
+# Claude Code Plugins Directory
+
+> Anthropic 公式の Claude Code プラグイン集。`hookify`（PreToolUse / PostToolUse / Stop / UserPromptSubmit 各フックにルールエンジンを適用するプラグイン）と `skill-creator`（新規 Skill の生成・評価ループを自動化する Skill）の 2 プラグインを収録する。
+
+## Source Modules
+
+- [plugins.hookify.core.rule_engine](https://github.com/anthropics/claude-plugins-official/blob/main/plugins/hookify/core/rule_engine.py): Compile regex pattern with caching.
+- [plugins.hookify.hooks.posttooluse](https://github.com/anthropics/claude-plugins-official/blob/main/plugins/hookify/hooks/posttooluse.py): Main entry point for PostToolUse hook.
+- [plugins.hookify.hooks.pretooluse](https://github.com/anthropics/claude-plugins-official/blob/main/plugins/hookify/hooks/pretooluse.py): Main entry point for PreToolUse hook.
+- [plugins.hookify.hooks.stop](https://github.com/anthropics/claude-plugins-official/blob/main/plugins/hookify/hooks/stop.py): Main entry point for Stop hook.
+- [plugins.hookify.hooks.userpromptsubmit](https://github.com/anthropics/claude-plugins-official/blob/main/plugins/hookify/hooks/userpromptsubmit.py): Main entry point for UserPromptSubmit hook.
+- [plugins.skill-creator.skills.skill-creator.scripts.quick_validate](https://github.com/anthropics/claude-plugins-official/blob/main/plugins/skill-creator/skills/skill-creator/scripts/quick_validate.py): Basic validation of a skill
+- [plugins.skill-creator.skills.skill-creator.scripts.run_eval](https://github.com/anthropics/claude-plugins-official/blob/main/plugins/skill-creator/skills/skill-creator/scripts/run_eval.py): Find the project root by walking up from cwd looking for .claude/.
+- [plugins.skill-creator.skills.skill-creator.scripts.run_loop](https://github.com/anthropics/claude-plugins-official/blob/main/plugins/skill-creator/skills/skill-creator/scripts/run_loop.py): Split eval set into train and test sets, stratified by should_trigger.
+- [plugins.skill-creator.skills.skill-creator.scripts.utils](https://github.com/anthropics/claude-plugins-official/blob/main/plugins/skill-creator/skills/skill-creator/scripts/utils.py): Parse a SKILL.md file, returning (name, description, full_content).

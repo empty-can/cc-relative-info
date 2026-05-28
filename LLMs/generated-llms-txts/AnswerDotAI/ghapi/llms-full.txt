@@ -1,0 +1,371 @@
+# ghapi
+
+> GitHub API 全体を Python から利用できる fast.ai 製ラッパーライブラリ。型安全なクライアント `GhApi` により、Issues・PR・ファイル操作・Actions・GraphQL クエリ等の全エンドポイントを Pythonic に操作できる。
+
+---
+
+## Optional
+
+### Release notes
+
+*Source: CHANGELOG.md | URL: https://github.com/AnswerDotAI/ghapi/blob/main/CHANGELOG.md*
+
+# Release notes
+
+<!-- do not remove -->
+
+## 1.0.13
+
+### Bugs Squashed
+
+- Only decode non binary types ([#206](https://github.com/AnswerDotAI/ghapi/issues/206))
+
+
+## 1.0.12
+
+### New Features
+
+- Use Content-Type to determine response parsing ([#205](https://github.com/AnswerDotAI/ghapi/pull/205)), thanks to [@erikgaas](https://github.com/erikgaas)
+
+
+## 1.0.10
+
+### New Features
+
+- `GhApi.get_repo_contents` method ([#190](https://github.com/AnswerDotAI/ghapi/pull/190)), thanks to [@KeremTurgutlu](https://github.com/KeremTurgutlu)
+
+
+## 1.0.9
+
+### New Features
+
+- Update API ([#203](https://github.com/AnswerDotAI/ghapi/issues/203))
+- Add GraphQL support ([#202](https://github.com/AnswerDotAI/ghapi/pull/202)), thanks to [@erikgaas](https://github.com/erikgaas)
+- Support for Python 3.13 and 3.14 ([#200](https://github.com/AnswerDotAI/ghapi/pull/200)), thanks to [@hugovk](https://github.com/hugovk)
+- Add py.typed file so that typecheckers recognize this library as typed ([#194](https://github.com/AnswerDotAI/ghapi/pull/194)), thanks to [@jedesroches](https://github.com/jedesroches)
+
+
+## 1.0.8
+
+### Bugs Squashed
+
+- rm `GitPython` dep ([#199](https://github.com/AnswerDotAI/ghapi/pull/199)), thanks to [@KeremTurgutlu](https://github.com/KeremTurgutlu)
+
+
+
+## 1.0.7
+
+### New Features
+
+- Avoid quoting slash, thanks @soemiran ([#196](https://github.com/AnswerDotAI/ghapi/issues/196))
+- Create gist with imgs ([#195](https://github.com/AnswerDotAI/ghapi/pull/195)), thanks to [@KeremTurgutlu](https://github.com/KeremTurgutlu)
+
+
+## 1.0.6
+
+### New Features
+
+- Automatically decode response based on path ([#183](https://github.com/fastai/ghapi/pull/183)), thanks to [@radam9](https://github.com/radam9)
+- Expose timeout [#174](https://github.com/fastai/ghapi/pull/174)), thanks to [@HarikrishnanBalagopal](https://github.com/HarikrishnanBalagopal)
+
+### Bugs Squashed
+
+- Github now requires branch, author, and committer in file update calls ([#184](https://github.com/fastai/ghapi/issues/184))
+- Remove the check which removes `None` values ([#171](https://github.com/fastai/ghapi/pull/171)), thanks to [@shreve](https://github.com/shreve)
+
+
+## 1.0.3
+
+### New Features
+
+- add `authenticate` arg which allows unauthenticated `GhApi` clients even if `GITHUB_TOKEN` is set ([#150](https://github.com/fastai/ghapi/pull/150)), thanks to [@seeM](https://github.com/seeM)
+
+
+## 1.0.1
+
+### New Features
+
+- warn if no GitHub token found ([#145](https://github.com/fastai/ghapi/issues/145))
+- set `GITHUB_DEBUG=1` to print requests sent to GitHub
+
+
+## 1.0.0
+
+### New Features
+
+- add `delete_file` and `create_file` ([#143](https://github.com/fastai/ghapi/issues/143))
+- Add a "Documentation" link to the sidebar on PyPI ([#106](https://github.com/fastai/ghapi/pull/106)), thanks to [@nedbat](https://github.com/nedbat)
+- Add support for media types ([#102](https://github.com/fastai/ghapi/pull/102)), thanks to [@lfdebrux](https://github.com/lfdebrux)
+
+### Bugs Squashed
+
+- Fix links to GitHub docs ([#136](https://github.com/fastai/ghapi/pull/136)), thanks to [@hwine](https://github.com/hwine)
+
+
+## 0.1.21
+
+### Bugs Squashed
+
+- fix `create_gist`
+
+
+## 0.1.20
+
+### New Features
+
+- add `create_gist` ([#129](https://github.com/fastai/ghapi/issues/129))
+
+### Bugs Squashed
+
+- `HTTP Error 422: Unprocessable Entity` returned for `issues.add_labels` in version `0.1.17` ([#69](https://github.com/fastai/ghapi/issues/69))
+
+
+## 0.1.19
+
+### New Features
+
+- Remove need to URL-quote some parameters ([#54](https://github.com/fastai/ghapi/issues/54))
+
+
+## 0.1.18
+
+### Bugs Squashed
+
+- `HTTP Error 422: Unprocessable Entity` returned for `issues.add_labels` ([#69](https://github.com/fastai/ghapi/issues/69))
+
+
+## 0.1.17
+
+
+### Bugs Squashed
+
+- Fix ability to define scopes ([#53](https://github.com/fastai/ghapi/pull/53)), thanks to [@danpalmer](https://github.com/danpalmer)
+
+
+## 0.1.15
+
+### New Features
+
+- make `actions_group` a context manager ([#33](https://github.com/fastai/ghapi/issues/33))
+
+
+## 0.1.14
+
+### New Features
+
+- `text` property for `GhEvent` ([#23](https://github.com/fastai/ghapi/issues/23))
+
+### Bugs Squashed
+
+- broken links in index.html page ([#27](https://github.com/fastai/ghapi/issues/27))
+- Bug: `paged` does not pass `kwargs` to operation ([#24](https://github.com/fastai/ghapi/issues/24))
+
+
+## 0.1.13
+
+
+### Bugs Squashed
+
+- missing import in auth ([#21](https://github.com/fastai/ghapi/issues/21))
+
+
+## 0.1.11
+
+### Bugs Squashed
+
+- missing webbrowser import ([#20](https://github.com/fastai/ghapi/issues/20))
+
+
+## 0.1.10
+
+- Add `load_sample_events`, which loads a file of 1000 sample public events
+
+
+## 0.1.8
+
+### New Features
+
+- add `fetch_events` ([#19](https://github.com/fastai/ghapi/issues/19))
+
+
+## 0.1.7
+
+### New Features
+
+- parallel `pages` ([#18](https://github.com/fastai/ghapi/issues/18))
+- add `GhDeviceAuth` ([#15](https://github.com/fastai/ghapi/issues/15))
+- add `date2gh` ([#14](https://github.com/fastai/ghapi/issues/14))
+
+
+## 0.1.6
+
+### New Features
+
+- add `paged` ([#13](https://github.com/fastai/ghapi/issues/13))
+- add `gh_date` ([#12](https://github.com/fastai/ghapi/issues/12))
+
+
+## 0.1.1
+
+### New Features
+
+- add `list_tags` and `list_branches` ([#2](https://github.com/fastai/ghapi/issues/2))
+
+### Bugs Squashed
+
+- `GhApi` pickle recursion error ([#3](https://github.com/fastai/ghapi/issues/3))
+
+
+## 0.1.0
+
+- First release with full API coverage
+
+### How to contribute
+
+*Source: CONTRIBUTING.md | URL: https://github.com/AnswerDotAI/ghapi/blob/main/CONTRIBUTING.md*
+
+# How to contribute
+
+## How to get started
+
+Before anything else, please install the git hooks that run automatic scripts during each commit and merge to strip the notebooks of superfluous metadata (and avoid merge conflicts). After cloning the repository, run the following command inside it:
+```
+nbdev_install_git_hooks
+```
+
+## Did you find a bug?
+
+* Ensure the bug was not already reported by searching on GitHub under Issues.
+* If you're unable to find an open issue addressing the problem, open a new one. Be sure to include a title and clear description, as much relevant information as possible, and a code sample or an executable test case demonstrating the expected behavior that is not occurring.
+* Be sure to add the complete error messages.
+
+#### Did you write a patch that fixes a bug?
+
+* Open a new GitHub pull request with the patch.
+* Ensure that your PR includes a test that fails without your patch, and pass with it.
+* Ensure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
+
+## PR submission guidelines
+
+* Keep each PR focused. While it's more convenient, do not combine several unrelated fixes together. Create as many branches as needing to keep each PR focused.
+* Do not mix style changes/fixes with "functional" changes. It's very difficult to review such PRs and it most likely get rejected.
+* Do not add/remove vertical whitespace. Preserve the original style of the file you edit as much as you can.
+* Do not turn an already submitted PR into your development playground. If after you submitted PR, you discovered that more work is needed - close the PR, do the required work and then submit a new PR. Otherwise each of your commits requires attention from maintainers of the project.
+* If, however, you submitted a PR and received a request for changes, you should proceed with commits inside that PR, so that the maintainer can see the incremental fixes and won't need to review the whole PR again. In the exception case where you realize it'll take many many commits to complete the requests, then it's probably best to close the PR, do the work and then submit it again. Use common sense where you'd choose one way over another.
+
+## Do you want to contribute to the documentation?
+
+* Docs are automatically created from the notebooks in the nbs folder.
+
+---
+
+## Source Modules
+
+### ghapi._nbdev
+
+*Source: ghapi/_nbdev.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/_nbdev.py*
+
+- `custom_doc_links`
+
+### ghapi.actions
+
+*Source: ghapi/actions.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/actions.py*
+
+- `user_repo`
+- `create_workflow_files`
+- `fill_workflow_templates`
+- `env_contexts`
+- `create_workflow`
+- `gh_create_workflow`
+- `example_payload`
+- `github_token`
+- `actions_output`
+- `actions_debug`
+- `actions_warn`
+- `actions_error`
+- `actions_group`
+- `actions_mask`
+- `set_git_user`
+
+### ghapi.auth
+
+*Source: ghapi/auth.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/auth.py*
+
+- `scope_str`
+- `GhDeviceAuth`
+- `url_docs`
+- `open_browser`
+- `auth`
+- `wait`
+- `github_auth_device`
+
+### ghapi.build_lib
+
+*Source: ghapi/build_lib.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/build_lib.py*
+
+- `build_funcs`
+
+### ghapi.cli
+
+*Source: ghapi/cli.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/cli.py*
+
+- `ghapi`
+- `ghpath`
+- `ghraw`
+- `completion_ghapi`
+
+### ghapi.core
+
+*Source: ghapi/core.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/core.py*
+
+- `doc_url`
+- `print_summary`
+- `GhApi`
+- `full_docs`
+- `date2gh`
+- `gh2date`
+- `create_gist`
+- `delete_release`
+- `upload_file`
+- `create_release`
+- `list_tags`
+- `list_branches`
+- `create_branch_empty`
+- `delete_tag`
+- `delete_branch`
+- `get_branch`
+- `list_files`
+- `get_content`
+- `create_or_update_file`
+- `create_file`
+- `delete_file`
+- `update_contents`
+- `get_repo_files`
+- `get_file_content`
+- `get_repo_contents`
+- `enable_pages`
+
+### ghapi.graphql
+
+*Source: ghapi/graphql.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/graphql.py*
+
+- `GhGql`
+- `client`
+- `schema`
+- `list_queries`
+- `query_args`
+- `type_fields`
+- `list_queries`
+- `query_args`
+- `type_fields`
+- `gh_query`
+
+### ghapi.page
+
+*Source: ghapi/page.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/page.py*
+
+- `paged`
+- `scan`
+- `parse_link_hdr`
+- `last_page`
+- `pages`

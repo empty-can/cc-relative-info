@@ -1,0 +1,105 @@
+# GenAI Processors Library 📚
+
+> A Python library of composable, async Processor building blocks for generative AI pipelines—supporting streaming, function calling, real-time audio/video, and multiple model backends including Google Gemini.
+
+## Guide
+
+- [Async & Streaming](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/concepts/async-streaming.md): Content streams are the primary mechanism through which processors ingest, transform, and output data.
+- [Function Calling](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/concepts/function-calling.md): GenAI Processors provides a unified interface for tool use (function calling) across different model backends, with specific support for asynchronous execution making it a natural fit for low-latency, real-time agents.
+- [Processor](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/concepts/processor.md): The Processor is the fundamental unit of work in the GenAI Processors library.
+- [Real-time Processing](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/concepts/realtime.md): ⭐ Real-time processing enables live audio/video streaming with bidirectional communication.
+- [Built-in Processors](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/development/built-in-processors.md): The genai_processors.core package contains a rich set of processors for building AI agents and pipelines.
+- [Caching](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/development/caching.md): GenAI Processors includes a caching mechanism to store and retrieve the results of processor executions.
+- [Supported Models](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/development/supported-models.md): GenAI Processors supports multiple model backends, enabling flexible deployments from cloud to local.
+- [Tracing](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/development/tracing.md): GenAI Processors includes a powerful hierarchical tracing mechanism for monitoring and debugging processor pipelines.
+- [Wrapping a Processor into a WebSocket Server](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/development/websocket-server.md): The live_server module provides a simple way to serve a GenAI Processor over a WebSocket connection.
+- [Cli](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/examples/cli.md): This page is taken from the examples/ directory and refers to the code there.
+- [Live Commentator](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/examples/live_commentator.md): This page is taken from the examples/live_commentator/ directory and refers to the code there.
+- [Live Illustrator](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/examples/live_illustrator.md): This page is taken from the examples/live/ directory and refers to the code there.
+- [Research Agent](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/examples/research_agent.md): This page is taken from the examples/research/ directory and refers to the code there.
+- [Widgets](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/examples/widgets.md): This page is taken from the examples/widgets/ directory and refers to the code there.
+- [Getting Started](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/getting-started.md): This guide will walk you through setting up GenAI Processors and building your first AI pipeline.
+- [GenAI Processors](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/index.md): Composable Building Blocks for Generative AI Pipelines
+- [Principles](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/principles.md): The field of agents and LLMs is moving quickly, leading to many ideas maturing independently.
+- [Building AI Studio Applets for Live Agents](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/rapid-prototyping/ai-studio.md): Google's AI Studio allows you to build Applets—custom web-based frontends for rapidly prototyping interactive AI agents.
+- [Building CLI Examples](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/rapid-prototyping/cli.md): Building a Command Line Interface (CLI) is the fastest way to prototype and test your agents.
+- [Building AI applications with Coding Agents and GenAI Processors](https://github.com/google-gemini/genai-processors/blob/main/documentation/docs/rapid-prototyping/coding-agent.md): Generative models are often unaware of recent API and SDK updates and may suggest outdated or legacy code.
+- [GenAI Processors Library 📚](https://github.com/google-gemini/genai-processors/blob/main/README.pypi.md): Build Modular, Asynchronous, and Composable AI Pipelines for Generative AI.
+
+## Optional
+
+- [How to Contribute](https://github.com/google-gemini/genai-processors/blob/main/CONTRIBUTING.md): We welcome contributions of new Processors that can be shared with the community.
+
+## Source Modules
+
+- [documentation.hooks](https://github.com/google-gemini/genai-processors/blob/main/documentation/hooks.py): Copy extra assets to the site build directory.
+- [examples.chat](https://github.com/google-gemini/genai-processors/blob/main/examples/chat.py): This processor matches on WebRequest parts.
+- [examples.live_commentator.commentator](https://github.com/google-gemini/genai-processors/blob/main/examples/live_commentator/commentator.py): Returns the duration of the audio data in seconds.
+- [examples.live_commentator.commentator_ais](https://github.com/google-gemini/genai-processors/blob/main/examples/live_commentator/commentator_ais.py): Creates a live commentator processor.
+- [examples.live_commentator.commentator_cli](https://github.com/google-gemini/genai-processors/blob/main/examples/live_commentator/commentator_cli.py): Runs a live commentator in a CLI environment.
+- [examples.live_illustrator.illustrator](https://github.com/google-gemini/genai-processors/blob/main/examples/live_illustrator/illustrator.py): Returns the content of a function response.
+- [examples.live_illustrator.illustrator_ais](https://github.com/google-gemini/genai-processors/blob/main/examples/live_illustrator/illustrator_ais.py): Creates a live commentator processor.
+- [examples.live_simple_cli](https://github.com/google-gemini/genai-processors/blob/main/examples/live_simple_cli.py): Runs a simple live agent taking audio/video streams as input.
+- [examples.mcp_server](https://github.com/google-gemini/genai-processors/blob/main/examples/mcp_server.py): Add two numbers together.
+- [examples.models](https://github.com/google-gemini/genai-processors/blob/main/examples/models.py): Returns a turn-based model based on command line flags.
+- [examples.pdf_cli](https://github.com/google-gemini/genai-processors/blob/main/examples/pdf_cli.py): Extracts PDF content.
+- [examples.realtime_simple_cli](https://github.com/google-gemini/genai-processors/blob/main/examples/realtime_simple_cli.py): Runs a simple conversation agent taking an audio stream as input.
+- [examples.research.agent](https://github.com/google-gemini/genai-processors/blob/main/examples/research/agent.py): Research agent example, using Processors library.
+- [examples.research.interfaces](https://github.com/google-gemini/genai-processors/blob/main/examples/research/interfaces.py): A topic to be researched.
+- [examples.research.processors.topic_generator](https://github.com/google-gemini/genai-processors/blob/main/examples/research/processors/topic_generator.py): Processor which generates research topics based on user content.
+- [examples.research.processors.topic_researcher](https://github.com/google-gemini/genai-processors/blob/main/examples/research/processors/topic_researcher.py): Processor which researches a given `Topic`.
+- [examples.speech_to_text_cli](https://github.com/google-gemini/genai-processors/blob/main/examples/speech_to_text_cli.py): Runs speech-to-text in a CLI environment.
+- [examples.text_to_speech_cli](https://github.com/google-gemini/genai-processors/blob/main/examples/text_to_speech_cli.py): Runs speech-to-text in a CLI environment.
+- [examples.trip_request_adk.agent](https://github.com/google-gemini/genai-processors/blob/main/examples/trip_request_adk/agent.py): A trip request required for GenAI models to generate structured output.
+- [examples.trip_request_cli](https://github.com/google-gemini/genai-processors/blob/main/examples/trip_request_cli.py): A trip request required for GenAI models to generate structured output.
+- [examples.trip_request_cli_ollama](https://github.com/google-gemini/genai-processors/blob/main/examples/trip_request_cli_ollama.py): A trip request required for GenAI models to generate structured output.
+- [examples.vad_cli](https://github.com/google-gemini/genai-processors/blob/main/examples/vad_cli.py): Runs the VAD + Gemini model in a CLI environment.
+- [examples.widgets.widgets](https://github.com/google-gemini/genai-processors/blob/main/examples/widgets/widgets.py): Image generator from a description.
+- [examples.widgets.widgets_ais](https://github.com/google-gemini/genai-processors/blob/main/examples/widgets/widgets_ais.py): Creates a dynamic widgets processor.
+- [genai_processors.cache](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/cache.py): Creates a deterministic hash key from a ProcessorContent-like query.
+- [genai_processors.cache_base](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/cache_base.py): Sentinel value to represent a cache miss.
+- [genai_processors.content_api](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/content_api.py): A wrapper around `Part` with additional metadata.
+- [genai_processors.context](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/context.py): TaskGroup that adds itself to a contextvar to be accessed by create_task.
+- [genai_processors.contrib.langchain_model](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/contrib/langchain_model.py): A simple turn based wrapper around any LangChain BaseChatModel.
+- [genai_processors.contrib.openrouter_model](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/contrib/openrouter_model.py): Optional model configuration parameters for OpenRouter.
+- [genai_processors.core.adk](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/adk.py): ADK Custom agent that delegates processing its input to a Processor.
+- [genai_processors.core.audio](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/audio.py): Concatenates consecutive audio parts into a single WAV part.
+- [genai_processors.core.audio_io](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/audio_io.py): Receives audio input and inserts it into the input stream.
+- [genai_processors.core.constrained_decoding](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/constrained_decoding.py): Buffers a stream of text parts to parse a JSON object or list.
+- [genai_processors.core.drive](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/drive.py): Fetches the requested file as PDF bytes.
+- [genai_processors.core.event_detection](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/event_detection.py): Event detection processor.
+- [genai_processors.core.filesystem](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/filesystem.py): A source that yields files matching a glob pattern.
+- [genai_processors.core.function_calling](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/function_calling.py): Tool use with Function Calling.
+- [genai_processors.core.genai_model](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/genai_model.py): Converts a Genai response to metadata, to be attached to a ProcessorPart.
+- [genai_processors.core.github](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/github.py): Parses a GitHub file URL to extract owner, repo, ref (branch/tag/commit),
+- [genai_processors.core.jinja_template](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/jinja_template.py): Processor for rendering a Jinja template with multimodal contents.
+- [genai_processors.core.live_model](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/live_model.py): Converts a LiveServerMessage to a stream of ProcessorParts.
+- [genai_processors.core.ollama_model](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/ollama_model.py): Optional model configuration parameters.
+- [genai_processors.core.pdf](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/pdf.py): Extracts PDFs into content parts.
+- [genai_processors.core.preamble](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/preamble.py): Prepends a preamble to the full content.
+- [genai_processors.core.rate_limit_audio](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/rate_limit_audio.py): Splits audio data into chunks of max_duration_sec.
+- [genai_processors.core.realtime](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/realtime.py): Trigger model mode.
+- [genai_processors.core.speech_events](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/speech_events.py): Start of speech event.
+- [genai_processors.core.speech_to_text](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/speech_to_text.py): Adds silent audio parts if no activity after `silent_part_duration_sec`.
+- [genai_processors.core.text](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/text.py): Processor finding text patterns and extracting them from the input stream.
+- [genai_processors.core.text_to_speech](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/text_to_speech.py): Streams audio content parts from text parts.
+- [genai_processors.core.timestamp](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/timestamp.py): Returns a timestamp as a string to indicate the time of an event.
+- [genai_processors.core.transformers_model](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/transformers_model.py): Optional model configuration parameters.
+- [genai_processors.core.video](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/video.py): Video mode for the VideoIn processor.
+- [genai_processors.core.web](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/web.py): A processor that fetches documents by URLs.
+- [genai_processors.core.window](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/core/window.py): Rolling prompt (aka iterator of prompts) for conversation processors.
+- [genai_processors.debug](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/debug.py): Wraps a processor to provide performance messaging.
+- [genai_processors.dev.live_server](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/dev/live_server.py): Returns whether the part is a reset command.
+- [genai_processors.dev.trace](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/dev/trace.py): A trace of a processor call.
+- [genai_processors.dev.trace_file](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/dev/trace_file.py): A single event in a trace.
+- [genai_processors.examples.__init__](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/examples/__init__.py)
+- [genai_processors.map_processor](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/map_processor.py): Applies a part function synchronously.
+- [genai_processors.mcp](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/mcp.py): Error raised when an MCP tool call fails.
+- [genai_processors.mime_types](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/mime_types.py): Returns whether the content is a human-readable text.
+- [genai_processors.processor](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/processor.py): An async iterable of ProcessorParts returned by a Processor.
+- [genai_processors.sql_cache](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/sql_cache.py): Context manager that creates an SqlCache instance.
+- [genai_processors.streams](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/streams.py): Split a stream into `n` identical streams.
+- [genai_processors.switch](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/switch.py): Switch between processors.
+- [genai_processors.tool_utils](https://github.com/google-gemini/genai-processors/blob/main/genai_processors/tool_utils.py): Raises ValueError if the tool list contains a server-side tool.
+- [examples.live_commentator.ais_app.index](https://github.com/google-gemini/genai-processors/blob/main/examples/live_commentator/ais_app/index.tsx)
+- [examples.widgets.ais_app.index](https://github.com/google-gemini/genai-processors/blob/main/examples/widgets/ais_app/index.tsx)

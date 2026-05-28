@@ -1,0 +1,197 @@
+# Model Context Protocol servers
+
+> MCP 公式リファレンスサーバー群のリポジトリ。fetch・git・time（Python 実装）および everything・filesystem・sequentialthinking（TypeScript 実装）の 6 種のサーバーを収録し、Claude Code から MCP 経由で HTTP フェッチ・Git 操作・時刻変換・ファイルシステム操作・段階的思考を利用するための実装基盤を提供する。
+
+---
+
+## Source Modules
+
+### scripts.release
+
+*Source: scripts/release.py | URL: https://github.com/modelcontextprotocol/servers/blob/main/scripts/release.py*
+
+- `GitHashParamType`
+- `convert`
+- `Package`
+- `package_name`
+- `update_version`
+- `NpmPackage`
+- `package_name`
+- `update_version`
+- `PyPiPackage`
+- `package_name`
+- `update_version`
+- `has_changes`: Check if any files changed between current state and git hash
+- `gen_version`: Generate version based on current date
+- `find_changed_packages`
+- `cli`
+- `update_packages`
+- `generate_notes`
+- `generate_version`
+- `generate_matrix`
+
+### src.fetch.src.mcp_server_fetch.__init__
+
+*Source: src/fetch/src/mcp_server_fetch/__init__.py | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/fetch/src/mcp_server_fetch/__init__.py*
+
+- `main`: MCP Fetch Server - HTTP fetching functionality for MCP
+
+### src.fetch.src.mcp_server_fetch.server
+
+*Source: src/fetch/src/mcp_server_fetch/server.py | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/fetch/src/mcp_server_fetch/server.py*
+
+- `extract_content_from_html`: Extract and convert HTML content to Markdown format.
+- `get_robots_txt_url`: Get the robots.txt URL for a given website URL.
+- `check_may_autonomously_fetch_url`: Check if the URL can be fetched by the user agent according to the robots.txt file.
+- `fetch_url`: Fetch the URL and return the content in a form ready for the LLM, as well as a prefix string with status information.
+- `Fetch`: Parameters for fetching a URL.
+- `serve`: Run the fetch MCP server.
+- `list_tools`
+- `list_prompts`
+- `call_tool`
+- `get_prompt`
+
+### src.git.src.mcp_server_git.__init__
+
+*Source: src/git/src/mcp_server_git/__init__.py | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/git/src/mcp_server_git/__init__.py*
+
+- `main`: MCP Git Server - Git functionality for MCP
+
+### src.git.src.mcp_server_git.server
+
+*Source: src/git/src/mcp_server_git/server.py | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/git/src/mcp_server_git/server.py*
+
+- `GitStatus`
+- `GitDiffUnstaged`
+- `GitDiffStaged`
+- `GitDiff`
+- `GitCommit`
+- `GitAdd`
+- `GitReset`
+- `GitLog`
+- `GitCreateBranch`
+- `GitCheckout`
+- `GitShow`
+- `GitBranch`
+- `GitTools`
+- `git_status`
+- `git_diff_unstaged`
+- `git_diff_staged`
+- `git_diff`
+- `git_commit`
+- `git_add`
+- `git_reset`
+- `git_log`
+- `git_create_branch`
+- `git_checkout`
+- `git_show`
+- `validate_repo_path`: Validate that repo_path is within the allowed repository path.
+- `git_branch`
+- `serve`
+- `list_tools`
+- `list_repos`
+- `by_roots`
+- `by_commandline`
+- `call_tool`
+
+### src.time.src.mcp_server_time.__init__
+
+*Source: src/time/src/mcp_server_time/__init__.py | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/time/src/mcp_server_time/__init__.py*
+
+- `main`: MCP Time Server - Time and timezone conversion functionality for MCP
+
+### src.everything.index
+
+*Source: src/everything/index.ts | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/index.ts*
+
+- `function run`
+
+### src.everything.resources.files
+
+*Source: src/everything/resources/files.ts | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/resources/files.ts*
+
+- `function getMimeType`
+- `function readFileSafe`
+
+### src.everything.resources.index
+
+*Source: src/everything/resources/index.ts | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/resources/index.ts*
+
+- `function readInstructions`
+
+### src.everything.tools.gzip-file-as-resource
+
+*Source: src/everything/tools/gzip-file-as-resource.ts | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/tools/gzip-file-as-resource.ts*
+
+- `function validateDataURI`
+- `function fetchSafely`
+
+### src.everything.transports.stdio
+
+*Source: src/everything/transports/stdio.ts | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/transports/stdio.ts*
+
+- `function main`
+
+### src.everything.transports.streamableHttp
+
+*Source: src/everything/transports/streamableHttp.ts | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/everything/transports/streamableHttp.ts*
+
+- `storeEvent`
+- `replayEventsAfter`
+
+### src.filesystem.index
+
+*Source: src/filesystem/index.ts | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/filesystem/index.ts*
+
+- `function readFileAsBase64Stream`
+- `function buildTree`
+- `function updateAllowedDirectoriesFromRoots`
+- `function runServer`
+
+### src.filesystem.lib
+
+*Source: src/filesystem/lib.ts | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/filesystem/lib.ts*
+
+- `function setAllowedDirectories`
+- `function getAllowedDirectories`
+- `function formatSize`
+- `function normalizeLineEndings`
+- `function createUnifiedDiff`
+- `function resolveRelativePathAgainstAllowedDirectories`
+- `function validatePath`
+- `function getFileStats`
+- `function readFileContent`
+- `function writeFileContent`
+- `function applyFileEdits`
+- `function tailFile`
+- `function headFile`
+- `function searchFilesWithValidation`
+- `function search`
+
+### src.filesystem.path-utils
+
+*Source: src/filesystem/path-utils.ts | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/filesystem/path-utils.ts*
+
+- `function convertToWindowsPath`
+- `function normalizePath`
+- `function expandHome`
+
+### src.filesystem.path-validation
+
+*Source: src/filesystem/path-validation.ts | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/filesystem/path-validation.ts*
+
+- `function isPathWithinAllowedDirectories`
+
+### src.filesystem.roots-utils
+
+*Source: src/filesystem/roots-utils.ts | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/filesystem/roots-utils.ts*
+
+- `function parseRootUri`
+- `function formatDirectoryError`
+- `function getValidRootDirectories`
+
+### src.sequentialthinking.index
+
+*Source: src/sequentialthinking/index.ts | URL: https://github.com/modelcontextprotocol/servers/blob/main/src/sequentialthinking/index.ts*
+
+- `function runServer`

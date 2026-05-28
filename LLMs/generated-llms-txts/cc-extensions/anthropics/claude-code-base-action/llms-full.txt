@@ -1,0 +1,56 @@
+# ⚠️ This is a Mirror Repository
+
+> Anthropic 公式の GitHub Actions ベースアクション。CI/CD パイプライン上で Claude Code を自動実行するための TypeScript 実装（プロンプト準備・環境検証・SDK 実行・設定セットアップ）を提供する。
+
+---
+
+## Source Modules
+
+### src.execution-file
+
+*Source: src/execution-file.ts | URL: https://github.com/anthropics/claude-code-base-action/blob/main/src/execution-file.ts*
+
+- `function getExecutionFilePath`
+- `function writeExecutionFile`
+- `function setExecutionFileOutputIfPresent`
+
+### src.index
+
+*Source: src/index.ts | URL: https://github.com/anthropics/claude-code-base-action/blob/main/src/index.ts*
+
+- `function run`
+
+### src.prepare-prompt
+
+*Source: src/prepare-prompt.ts | URL: https://github.com/anthropics/claude-code-base-action/blob/main/src/prepare-prompt.ts*
+
+- `function validateAndPreparePrompt`
+- `function createTemporaryPromptFile`
+- `function preparePrompt`
+
+### src.run-claude-sdk
+
+*Source: src/run-claude-sdk.ts | URL: https://github.com/anthropics/claude-code-base-action/blob/main/src/run-claude-sdk.ts*
+
+- `function fileExists`
+- `function createPromptConfig`
+- `function sanitizeSdkOutput`
+- `function runClaudeWithSdk`
+
+### src.run-claude
+
+*Source: src/run-claude.ts | URL: https://github.com/anthropics/claude-code-base-action/blob/main/src/run-claude.ts*
+
+- `function runClaude`
+
+### src.setup-claude-code-settings
+
+*Source: src/setup-claude-code-settings.ts | URL: https://github.com/anthropics/claude-code-base-action/blob/main/src/setup-claude-code-settings.ts*
+
+- `function setupClaudeCodeSettings`
+
+### src.validate-env
+
+*Source: src/validate-env.ts | URL: https://github.com/anthropics/claude-code-base-action/blob/main/src/validate-env.ts*
+
+- `function validateEnvironmentVariables`

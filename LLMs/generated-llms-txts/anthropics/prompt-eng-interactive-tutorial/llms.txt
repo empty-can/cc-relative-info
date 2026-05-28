@@ -1,0 +1,7 @@
+# Welcome to Anthropic's Prompt Engineering Interactive Tutorial
+
+> Anthropic's hands-on prompt engineering tutorial for Claude, providing step-by-step interactive exercises to master prompting techniques including both direct API and Amazon Bedrock integrations.
+
+## Guide
+
+- [Contributing Guidelines](https://github.com/anthropics/prompt-eng-interactive-tutorial/blob/main/AmazonBedrock/CONTRIBUTING.md): Thank you for your interest in contributing to our project.

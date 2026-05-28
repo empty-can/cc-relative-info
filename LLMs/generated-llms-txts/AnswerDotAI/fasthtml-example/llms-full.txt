@@ -1,0 +1,810 @@
+# FastHTML Example Apps
+
+> A curated collection of FastHTML example applications covering real-time features, AI integrations, authentication patterns, and interactive UI components — ideal for learning how to build modern Python web apps with HTMX.
+
+This repository contains 78 example modules demonstrating the breadth of FastHTML capabilities. Examples range from foundational patterns (hello world, echo, form handling) to real-time communication (WebSocket, SSE, chunked transfer), interactive games (Game of Life, Pictionary, chess), AI-powered chatbots, OAuth and passkey authentication, image classification, infinite scroll, a code editor, 3D card components, and deployment guides for PythonAnywhere. Each example is self-contained and serves as a practical reference for specific FastHTML features.
+
+---
+
+## Guide
+
+### Deploying a FastHTML site to PythonAnywhere
+
+*Source: deploying-to-pythonanywhere.md | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/deploying-to-pythonanywhere.md*
+
+# Deploying a FastHTML site to PythonAnywhere
+
+You can easily create and deploy FastHTML sites on PythonAnywhere; support
+for it is being continuously improved, and you'll find the latest instructions
+on [this help page](https://help.pythonanywhere.com/pages/FastHTML/).
+
+---
+
+## Source Modules
+
+### 00_game_of_life.main
+
+*Source: 00_game_of_life/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/00_game_of_life/main.py*
+
+- `update_grid`
+- `count_neighbors`
+- `Grid`
+- `Home`
+- `get`
+- `update_players`
+- `on_connect`
+- `on_disconnect`
+- `ws`
+- `background_task`
+- `put`
+- `put`
+- `put`
+- `put`
+
+### 02_chatbot.basic
+
+*Source: 02_chatbot/basic.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/02_chatbot/basic.py*
+
+- `ChatMessage`
+- `ChatInput`
+- `index`
+- `send`
+
+### 02_chatbot.chunked_transfer
+
+*Source: 02_chatbot/chunked_transfer.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/02_chatbot/chunked_transfer.py*
+
+- `get`
+- `ChatMessage`
+- `ChatInput`
+- `index`
+- `stream_response`
+- `send`
+
+### 02_chatbot.polling
+
+*Source: 02_chatbot/polling.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/02_chatbot/polling.py*
+
+- `ChatMessage`
+- `get_chat_message`
+- `ChatInput`
+- `get`
+- `get_response`
+- `post`
+
+### 02_chatbot.ws
+
+*Source: 02_chatbot/ws.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/02_chatbot/ws.py*
+
+- `ChatMessage`
+- `ChatInput`
+- `get`
+- `ws`
+
+### 02_chatbot.ws_streaming
+
+*Source: 02_chatbot/ws_streaming.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/02_chatbot/ws_streaming.py*
+
+- `ChatMessage`
+- `ChatInput`
+- `get`
+- `ws`
+
+### 03_pictionary.main
+
+*Source: 03_pictionary/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/03_pictionary/main.py*
+
+- `home`
+- `process_canvas`
+
+### 03_pictionary.moodle_demo.main
+
+*Source: 03_pictionary/moodle_demo/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/03_pictionary/moodle_demo/main.py*
+
+- `before`
+- `start_game`
+- `Navbar`
+- `home`
+- `active_area`
+- `get_recent_guesses`
+- `countdown`
+- `end`
+- `create_game_gif`
+- `end_game`
+- `process_canvas`
+- `join`
+- `leaderboard`
+- `nickname_form`
+- `game_summary_page`
+- `save_nickname`
+- `past_games_area`
+- `spectate`
+- `stats`
+- `about`
+- `download_dbs`
+- `static`
+- `make_prompt`
+- `guess_gemini`
+- `guess_gpt_4o`
+- `guess_haiku`
+- `random_guess`
+- `queue_pruner`
+- `game_ender`
+- `BackgroundTask`
+- `run`
+- `start_background_tasks`
+- `stop_background_tasks`
+- `startup_event`
+- `shutdown_event`
+
+### 04_sse.sse_chatbot
+
+*Source: 04_sse/sse_chatbot.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/04_sse/sse_chatbot.py*
+
+- `message_generator`
+- `ChatMessage`
+- `ChatInput`
+- `get`
+- `get_message`
+- `send_message`
+
+### 04_sse.sse_clock
+
+*Source: 04_sse/sse_clock.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/04_sse/sse_clock.py*
+
+- `get`
+- `time_generator`
+- `get`
+
+### 04_sse.sse_clock_plus
+
+*Source: 04_sse/sse_clock_plus.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/04_sse/sse_clock_plus.py*
+
+- `get`
+- `time_generator`
+- `get`
+
+### 04_sse.sse_clock_scroll
+
+*Source: 04_sse/sse_clock_scroll.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/04_sse/sse_clock_scroll.py*
+
+- `index`
+- `time_generator`
+- `get`
+
+### 04_sse.sse_rand
+
+*Source: 04_sse/sse_rand.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/04_sse/sse_rand.py*
+
+- `get`
+- `number_generator`
+- `get`
+
+### 04_sse.sse_rand_scroll
+
+*Source: 04_sse/sse_rand_scroll.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/04_sse/sse_rand_scroll.py*
+
+- `index`
+- `number_generator`
+- `get`
+
+### 04_sse.sse_starlette_demo
+
+*Source: 04_sse/sse_starlette_demo.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/04_sse/sse_starlette_demo.py*
+
+- `numbers`
+- `sse`
+
+### 04_sse.ws_rand_scroll
+
+*Source: 04_sse/ws_rand_scroll.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/04_sse/ws_rand_scroll.py*
+
+- `bg`
+- `life`
+- `index`
+
+### 3d-component.card3d
+
+*Source: 3d-component/card3d.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/3d-component/card3d.py*
+
+- `card_3d`
+
+### 3d-component.main
+
+*Source: 3d-component/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/3d-component/main.py*
+
+- `get`
+- `get`
+
+### 3d-component.playingcard
+
+*Source: 3d-component/playingcard.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/3d-component/playingcard.py*
+
+- `playing_card`
+
+### chess_app.chess_app
+
+*Source: chess_app/chess_app.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/chess_app/chess_app.py*
+
+- `WS`
+- `on_connect`
+- `on_receive`
+- `on_disconnect`
+- `Board`
+- `Home`
+- `get`
+- `post`
+- `put`
+
+### cli_oauth_example.client-do
+
+*Source: cli_oauth_example/client-do.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/cli_oauth_example/client-do.py*
+
+- `get_client`
+- `auth_cli`
+
+### cli_oauth_example.client-login
+
+*Source: cli_oauth_example/client-login.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/cli_oauth_example/client-login.py*
+
+- `poll_token`
+- `auth_cli`
+
+### cli_oauth_example.server
+
+*Source: cli_oauth_example/server.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/cli_oauth_example/server.py*
+
+- `User`
+- `cli_login`
+- `redirect`
+- `token`
+- `secured`
+- `index`
+
+### code_editor.code_editor
+
+*Source: code_editor/code_editor.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/code_editor/code_editor.py*
+
+- `get`
+- `post`
+
+### code_editor.components.code_editor
+
+*Source: code_editor/components/code_editor.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/code_editor/components/code_editor.py*
+
+- `CodeEditor`
+
+### code_editor.components.context_menu
+
+*Source: code_editor/components/context_menu.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/code_editor/components/context_menu.py*
+
+- `ContextMenuItem`
+- `ContextMenu`
+
+### code_editor.components.toolbar
+
+*Source: code_editor/components/toolbar.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/code_editor/components/toolbar.py*
+
+- `Toolbar`
+
+### code_highlight_and_copy.main
+
+*Source: code_highlight_and_copy/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/code_highlight_and_copy/main.py*
+
+- `get`
+
+### data_spot_check.main
+
+*Source: data_spot_check/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/data_spot_check/main.py*
+
+- `home`
+- `download_db`
+- `rate`
+- `rate`
+
+### devtools.main
+
+*Source: devtools/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/devtools/main.py*
+
+- `index`
+
+### doodle.main
+
+*Source: doodle/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/doodle/main.py*
+
+- `home`
+- `static`
+
+### e_commerce.main
+
+*Source: e_commerce/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/e_commerce/main.py*
+
+- `User`
+- `Transaction`
+- `mk_txn`
+- `credits`
+- `Auth`
+- `get_auth`
+- `index`
+- `dashboard`
+- `webhook`
+
+### echo.main
+
+*Source: echo/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/echo/main.py*
+
+- `index`
+
+### file_upload_form_example.main
+
+*Source: file_upload_form_example/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/file_upload_form_example/main.py*
+
+- `get`
+- `post`
+
+### h2f.main
+
+*Source: h2f/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/h2f/main.py*
+
+- `post`
+- `get`
+
+### hacker_news_reskin.main
+
+*Source: hacker_news_reskin/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/hacker_news_reskin/main.py*
+
+- `Article`
+- `get`
+- `summarize_text`
+- `fetch_hn_stories`: Fetch latest HN stories using aiohttp
+- `process_article`: Fetch and process a single article
+- `update_summaries`
+- `start_update_task`
+
+### helloworld.main
+
+*Source: helloworld/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/helloworld/main.py*
+
+- `get`
+
+### helloworld.main_cache
+
+*Source: helloworld/main_cache.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/helloworld/main_cache.py*
+
+- `home`
+- `get`
+
+### helloworld.starter
+
+*Source: helloworld/starter.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/helloworld/starter.py*
+
+- `index`
+- `rnd`
+
+### htmx.click-load
+
+*Source: htmx/click-load.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/click-load.py*
+
+- `mk_row`
+- `set_busy`
+- `get`
+- `get`
+
+### htmx.counter-facet
+
+*Source: htmx/counter-facet.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/counter-facet.py*
+
+- `Incrementer`
+- `index`
+
+### htmx.counter-rsjs
+
+*Source: htmx/counter-rsjs.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/counter-rsjs.py*
+
+- `Incrementer`
+- `get`
+
+### htmx.counter-surreal
+
+*Source: htmx/counter-surreal.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/counter-surreal.py*
+
+- `Incrementer`
+- `index`
+
+### htmx.counter-uuid
+
+*Source: htmx/counter-uuid.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/counter-uuid.py*
+
+- `Incrementer`
+- `get`
+
+### htmx.counter-webc
+
+*Source: htmx/counter-webc.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/counter-webc.py*
+
+- `index`
+
+### htmx.formcb
+
+*Source: htmx/formcb.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/formcb.py*
+
+- `MyForm`
+- `home`
+- `process`
+
+### htmx.formdemo
+
+*Source: htmx/formdemo.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/formdemo.py*
+
+- `submit`
+- `index`
+
+### htmx.keys
+
+*Source: htmx/keys.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/keys.py*
+
+- `keytrig`
+- `more`
+- `index`
+
+### htmx.oob
+
+*Source: htmx/oob.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/oob.py*
+
+- `link`
+- `index`
+
+### htmx.storage
+
+*Source: htmx/storage.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/storage.py*
+
+- `before`
+- `content`
+
+### htmx.surreal
+
+*Source: htmx/surreal.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/surreal.py*
+
+- `get`
+
+### htmx.svgswap
+
+*Source: htmx/svgswap.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/svgswap.py*
+
+- `get_circle`
+- `get_btn`
+- `index`
+- `foo`
+- `change`
+
+### htmx.utils
+
+*Source: htmx/utils.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/utils.py*
+
+- `extract_names`
+- `RsJs`
+- `ref`
+- `expand`
+- `data`
+- `d`
+- `Component`
+
+### htmx.ws
+
+*Source: htmx/ws.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/ws.py*
+
+- `get`
+- `ws`
+
+### htmx.ws_no
+
+*Source: htmx/ws_no.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/htmx/ws_no.py*
+
+- `index`
+- `handle`
+
+### image_app_session_credits.main
+
+*Source: image_app_session_credits/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/image_app_session_credits/main.py*
+
+- `home`
+- `generation_preview`
+- `preview`
+- `get_balance`
+- `static`
+- `post`
+- `generate_and_save`
+- `buy_credits`
+- `cancel`
+- `success`
+- `stripe_webhook`
+
+### image_app_session_credits.session
+
+*Source: image_app_session_credits/session.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/image_app_session_credits/session.py*
+
+- `get`
+- `generation_preview`
+- `get`
+- `static`
+- `post`
+- `generate_and_save`
+
+### image_app_simple.draft1
+
+*Source: image_app_simple/draft1.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/image_app_simple/draft1.py*
+
+- `home`
+- `generation_preview`
+- `get`
+- `static`
+- `post`
+- `generate_and_save`
+
+### image_app_simple.main
+
+*Source: image_app_simple/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/image_app_simple/main.py*
+
+- `home`
+- `generation_preview`
+- `preview`
+- `static`
+- `post`
+- `generate_and_save`
+
+### image_classification_app.main
+
+*Source: image_classification_app/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/image_classification_app/main.py*
+
+- `classify`
+- `home`
+- `handle_classify`
+- `serve_upload`
+
+### infinite_scroll.main
+
+*Source: infinite_scroll/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/infinite_scroll/main.py*
+
+- `create_card`
+- `home`
+- `more_cards`
+
+### oauth_example.database
+
+*Source: oauth_example/database.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/oauth_example/database.py*
+
+- `before`
+- `home`
+- `increment`
+- `login`
+- `logout`
+- `auth_redirect`
+
+### oauth_example.minimal
+
+*Source: oauth_example/minimal.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/oauth_example/minimal.py*
+
+- `index`
+- `redirect`
+
+### oauth_example.oa
+
+*Source: oauth_example/oa.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/oauth_example/oa.py*
+
+- `Auth`
+- `get_auth`
+- `home`
+- `login`
+
+### oauth_example.oa_github
+
+*Source: oauth_example/oa_github.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/oauth_example/oa_github.py*
+
+- `Auth`
+- `get_auth`
+- `home`
+- `login`
+
+### passkey.main
+
+*Source: passkey/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/passkey/main.py*
+
+- `origin_kw`
+- `add_credential`
+- `name2uid`
+- `uid2name`
+- `register`
+- `request_auth`
+- `verify_auth`
+- `index`
+
+### shoelace
+
+*Source: shoelace.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/shoelace.py*
+
+- `sl_link`
+- `icon`
+- `menu`
+- `breadcrumbs`
+- `get`
+- `get`
+- `metric_card`
+- `users`
+- `get`
+- `get`
+- `get`
+
+### story.main
+
+*Source: story/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/story/main.py*
+
+- `footer`
+- `get`
+- `get`
+
+### story.story
+
+*Source: story/story.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/story/story.py*
+
+- `class_list`
+- `Wrapper`
+- `ItemContent`
+- `Item`
+- `Gallery`
+- `PageWrapper`
+- `get_app`
+- `static`
+
+### todos2-hf.main
+
+*Source: todos2-hf/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/todos2-hf/main.py*
+
+- `tid`
+- `lookup_user`
+- `before`
+- `mk_input`
+- `clr_details`
+- `get`
+- `delete`
+- `post`
+- `get`
+- `put`
+- `get`
+
+### xtermjs.main
+
+*Source: xtermjs/main.py | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/xtermjs/main.py*
+
+- `MiniTerm`
+- `read_pty`
+- `stream`
+- `spawn`
+- `stop`
+- `write`
+- `on_conn`
+- `on_disconn`
+- `on_message`
+- `index`
+
+### 03_pictionary.canvas
+
+*Source: 03_pictionary/canvas.js | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/03_pictionary/canvas.js*
+
+- `function startDrawing`
+- `function stopDrawing`
+- `function draw`
+- `function sendCanvasData`
+
+### 03_pictionary.moodle_demo.multiplayer
+
+*Source: 03_pictionary/moodle_demo/multiplayer.js | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/03_pictionary/moodle_demo/multiplayer.js*
+
+- `function startDrawing`
+- `function stopDrawing`
+- `function draw`
+- `function handleStart`
+- `function handleEnd`
+- `function handleMove`
+- `function throttledSendCanvasData`
+- `function sendCanvasData`
+
+### story.assets.js.breakpoints.min
+
+*Source: story/assets/js/breakpoints.min.js | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/story/assets/js/breakpoints.min.js*
+
+- `function e`
+
+### story.assets.js.jquery.min
+
+*Source: story/assets/js/jquery.min.js | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/story/assets/js/jquery.min.js*
+
+- `function b`
+- `function w`
+- `function p`
+- `function se`
+- `function ue`
+- `function le`
+- `function ce`
+- `function fe`
+- `function pe`
+- `function de`
+- `function he`
+- `function ge`
+- `function ve`
+- `function ye`
+- `function me`
+- `function xe`
+- `function be`
+- `function we`
+- `function Te`
+- `function Ce`
+- `function Ee`
+- `function A`
+- `function j`
+- `function O`
+- `function R`
+- `function M`
+- `function I`
+- `function l`
+- `function B`
+- `function U`
+- `function X`
+- `function G`
+- `function Z`
+- `function se`
+- `function le`
+- `function ve`
+- `function ye`
+- `function xe`
+- `function we`
+- `function Te`
+- `function Ce`
+- `function Ee`
+- `function Se`
+- `function je`
+- `function De`
+- `function qe`
+- `function Le`
+- `function He`
+- `function Oe`
+- `function We`
+- `function Fe`
+- `function e`
+- `function t`
+- `function ze`
+- `function Ye`
+- `function Qe`
+- `function Je`
+- `function Ke`
+- `function ot`
+- `function at`
+- `function st`
+- `function ut`
+- `function lt`
+- `function ht`
+- `function gt`
+- `function vt`
+- `function At`
+- `function It`
+- `function Wt`
+- `function l`
+- `function Ft`
+- `function l`
+
+### story.assets.js.jquery.scrollex.min
+
+*Source: story/assets/js/jquery.scrollex.min.js | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/story/assets/js/jquery.scrollex.min.js*
+
+- `function e`
+
+### story.assets.js.jquery.scrolly.min
+
+*Source: story/assets/js/jquery.scrolly.min.js | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/story/assets/js/jquery.scrolly.min.js*
+
+- `function u`
+
+### xtermjs.static.terminal
+
+*Source: xtermjs/static/terminal.js | URL: https://github.com/AnswerDotAI/fasthtml-example/blob/main/xtermjs/static/terminal.js*
+
+- `function resizeTerm`

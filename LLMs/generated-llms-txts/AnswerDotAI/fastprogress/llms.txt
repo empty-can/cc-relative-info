@@ -1,0 +1,25 @@
+# fastprogress
+
+> A fast and simple progress bar for Jupyter Notebook and console, supporting nested (master/child) bars, real-time graph plotting, and both interactive and non-interactive environments.
+
+fastprogress is a lightweight Python library by Sylvain Gugger (fast.ai) that provides `master_bar` and `progress_bar` iterators for tracking nested loops. It renders smoothly in Jupyter notebooks and terminals, supports inline loss-curve plotting via `update_graph`, and gracefully falls back to plain text output when stdout is redirected.
+
+## Guide
+
+- [Contributor Covenant Code of Conduct](https://github.com/AnswerDotAI/fastprogress/blob/main/CODE-OF-CONDUCT.md): In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to making participation in our project and our community a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+- [Contributor Covenant Code of Conduct](https://github.com/AnswerDotAI/fastprogress/blob/main/CODE_OF_CONDUCT.md): In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to make participation in our project and our community a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+- [fastprogress](https://github.com/AnswerDotAI/fastprogress/blob/main/docs/index.md): A fast and simple progress bar for Jupyter Notebook and console.
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/fastprogress/blob/main/CHANGELOG.md): - Lazy imports (#125)
+- [How to contribute to fastprogress](https://github.com/AnswerDotAI/fastprogress/blob/main/CONTRIBUTING.md): First, thanks a lot for wanting to help!
+- [Build and Release Instructions](https://github.com/AnswerDotAI/fastprogress/blob/main/RELEASE.md): You can skip this step if you have done it once already on the system you're making the release from.
+
+## Source Modules
+
+- [fastprogress._nbdev](https://github.com/AnswerDotAI/fastprogress/blob/main/fastprogress/_nbdev.py)
+- [fastprogress.core](https://github.com/AnswerDotAI/fastprogress/blob/main/fastprogress/core.py)
+- [docs.js.jekyll-search](https://github.com/AnswerDotAI/fastprogress/blob/main/docs/js/jekyll-search.js)
+- [docs.js.jquery.ba-throttle-debounce.min](https://github.com/AnswerDotAI/fastprogress/blob/main/docs/js/jquery.ba-throttle-debounce.min.js)
+- [docs.js.jquery.shuffle.min](https://github.com/AnswerDotAI/fastprogress/blob/main/docs/js/jquery.shuffle.min.js)

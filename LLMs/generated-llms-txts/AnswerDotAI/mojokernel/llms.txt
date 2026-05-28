@@ -1,0 +1,20 @@
+# mojokernel
+
+> Jupyter カーネルとして Mojo 言語の対話実行環境を提供するプロジェクト。LLDB の内部 REPL インフラを活用して変数の永続化を実現し、ノートブックユーザーが Mojo コードをセル単位で実行・デバッグできるようにする。
+
+## Guide
+
+- [mojokernel internals](https://github.com/AnswerDotAI/mojokernel/blob/main/DEV.md): How the Mojo REPL works under the hood, and how each engine exploits it.
+
+## Source Modules
+
+- [mojokernel.__main__](https://github.com/AnswerDotAI/mojokernel/blob/main/mojokernel/__main__.py)
+- [mojokernel.engines.base](https://github.com/AnswerDotAI/mojokernel/blob/main/mojokernel/engines/base.py)
+- [mojokernel.engines.pexpect_engine](https://github.com/AnswerDotAI/mojokernel/blob/main/mojokernel/engines/pexpect_engine.py)
+- [mojokernel.engines.server_engine](https://github.com/AnswerDotAI/mojokernel/blob/main/mojokernel/engines/server_engine.py)
+- [mojokernel.kernel](https://github.com/AnswerDotAI/mojokernel/blob/main/mojokernel/kernel.py)
+- [mojokernel.lsp_client](https://github.com/AnswerDotAI/mojokernel/blob/main/mojokernel/lsp_client.py)
+- [setup](https://github.com/AnswerDotAI/mojokernel/blob/main/setup.py): Force platform wheel when binary is present.
+- [tools.explore_kernel_client](https://github.com/AnswerDotAI/mojokernel/blob/main/tools/explore_kernel_client.py)
+- [tools.explore_lsp](https://github.com/AnswerDotAI/mojokernel/blob/main/tools/explore_lsp.py)
+- [tools.server_exec](https://github.com/AnswerDotAI/mojokernel/blob/main/tools/server_exec.py)

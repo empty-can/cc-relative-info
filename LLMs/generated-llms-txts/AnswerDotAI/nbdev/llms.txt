@@ -1,0 +1,44 @@
+# Getting Started
+
+> nbdev lets Python developers write, test, and document packages entirely inside Jupyter notebooks, automatically exporting clean source modules, running tests, and publishing documentation from a single notebook-centric workflow.
+
+
+
+## Guide
+
+- [Contributor Covenant Code of Conduct](https://github.com/AnswerDotAI/nbdev/blob/main/CODE_OF_CONDUCT.md): In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to make participation in our project and our community a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+- [An Example Markdown Post](https://github.com/AnswerDotAI/nbdev/blob/main/tests/2020-01-14-test-markdown-post.md): A minimal example of using markdown with fastpages.
+- [Essential Work-From-Home Advice: Cheap and Easy Ergonomic Setups](https://github.com/AnswerDotAI/nbdev/blob/main/tests/2022-09-06-homeschooling.md): Lorem ipsum
+- [Todo](https://github.com/AnswerDotAI/nbdev/blob/main/TODO.md): - show_doc changes: - support #default_cls_lvl - pick header level for functions/methods - implement stuff from nbdev export2html, e.g.(?): - remove_w…
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/nbdev/blob/main/CHANGELOG.md): - feat: add docs URL to exported module docstrings (#1593), thanks to @RensDimmendaal - Register faulthandler on SIGINT in nbdev-test for tracebacks o…
+- [How to contribute](https://github.com/AnswerDotAI/nbdev/blob/main/CONTRIBUTING.md): Install nbdev in editable mode with development dependencies:
+
+## Source Modules
+
+- [nbdev.clean](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/clean.py)
+- [nbdev.cli](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/cli.py): Use `nb_export` on ipynb files in `nbs` directory on changes using nbdev config if available
+- [nbdev.config](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/config.py)
+- [nbdev.diff](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/diff.py)
+- [nbdev.doclinks](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/doclinks.py)
+- [nbdev.export](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/export.py)
+- [nbdev.extract_attachments](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/extract_attachments.py)
+- [nbdev.frontmatter](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/frontmatter.py)
+- [nbdev.maker](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/maker.py)
+- [nbdev.merge](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/merge.py)
+- [nbdev.migrate](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/migrate.py)
+- [nbdev.processors](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/processors.py): Strips "hidden" metadata property from code cells so it doesn't interfere with docs rendering
+- [nbdev.qmd](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/qmd.py)
+- [nbdev.quarto](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/quarto.py): Create CONTRIBUTING.md from contributing_nb (defaults to 'contributing.ipynb' if present). Skips if the file doesn't exist.
+- [nbdev.release](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/release.py)
+- [nbdev.scrubmagics](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/scrubmagics.py)
+- [nbdev.serve](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/serve.py)
+- [nbdev.serve_drv](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/serve_drv.py)
+- [nbdev.showdoc](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/showdoc.py)
+- [nbdev.sync](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/sync.py)
+- [nbdev.test](https://github.com/AnswerDotAI/nbdev/blob/main/nbdev/test.py)
+- [nbs.blog.posts.2022-11-07-spaces.app](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/blog/posts/2022-11-07-spaces/app.py)
+- [nbs.images.circles.svg](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/images/circles.svg.py)
+- [nbs.tutorials.renderscript.qmd](https://github.com/AnswerDotAI/nbdev/blob/main/nbs/tutorials/renderscript.qmd.py)

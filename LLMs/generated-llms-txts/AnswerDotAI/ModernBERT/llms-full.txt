@@ -1,0 +1,938 @@
+# Welcome!
+
+> ModernBERT is a research repository by Answer.AI and LightOn that modernises the BERT encoder architecture—through Flash Attention, Rotary Position Embeddings, RMSNorm, and the modular FlexBERT framework—to deliver state-of-the-art encoder performance for NLP practitioners who need efficient masked language model pre-training and fine-tuning at scale.
+
+This is the full pre-training and evaluation codebase used to produce ModernBERT. It is not intended as an end-user library; for production use, see the HuggingFace model collection. The repository covers the complete training pipeline (Composer-based, YAML-configured), dataset utilities, GLUE/SuperGLUE/retrieval evaluations, and conversion scripts for exporting to HuggingFace format.
+
+---
+
+## Guide
+
+### How to Run Evaluations
+
+*Source: RunEvals.md | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/RunEvals.md*
+
+# How to Run Evaluations
+
+This document explains how to run fine-tuning evaluations for pre-trained models using the scripts `run_evals.py` and `generate_eval_config.py`. These scripts assume you have a pre-trained or finetuned Composer `FlexBert`checkpoint to evaluate.
+
+## 1. Optionally Login to Hugging Face
+
+First, make sure you are logged into Hugging Face, or provide a Hugging Face token to the `hub_token` argument:
+
+```bash
+huggingface-cli login
+```
+
+Follow the prompts to enter your authentication token.
+
+## 2. Run Evaluations
+
+### Option 1: Run Evaluations for All Checkpoints using `run_evals.py`
+
+You can use the `run_evals.py` script to run evaluations for all checkpoints in a directory.
+
+First, view the available arguments:
+```bash
+python run_evals.py --help
+```
+
+To simplify the process, create a YAML configuration file (e.g., `run_evals_args.yaml`) with the required argument values. For example:
+
+```yaml
+# Checkpoint & Config Paths
+checkpoints: checkpoints
+train_config: path/to/training_config.yaml # optional, uses default config if not provided and a wandb run isn't specified
+
+# Model Options
+model_size: base # default FlexBert model config to use
+
+# Hugging Face Download
+hub_repo: {org}/{repo}
+hub_token: {your_hf_token} # needed if downloading from a private/gated repo and `huggingface-cli login` wasn't used
+hub_files: {checkpoint_files} # optional limit to only download specific repo files or directories
+
+# Evaluation Tasks
+tasks:
+    - mnli
+    - sst2
+    - cola
+    - mrpc
+
+# Task Settings
+parallel: false
+seeds:
+    - 42
+    - 314
+    - 1234
+
+# Weights & Biases (logging & config downloading)
+wandb_run: ${your_pretraining_run_name} # these two options are only needed to download a non-default pretraining config
+wandb_project: ${your_pretraining_wandb_project}
+
+track_run: true # set these options to track the evaluation run in W&B
+wandb_entity: ${your_wandb_entity}
+track_run_project: ${your_evaluation_wandb_project}
+
+# GPU Options (which GPUs to use)
+gpu_ids:
+    - 0
+    - 1
+```
+
+Replace the placeholders with your specific values:
+
+- `{parallel}`: Set to `true` to run evaluations on one checkpoint in parallel. Note that this can randomly error out.
+- `{training_config.yaml}`: Path to your optional training configuration file if not using the default config.
+- `{org}/{repo}`: Hugging Face Hub repository ID (e.g., `your_org/your_repo` where the Composer checkpoints are stored).
+- `{your_hf_token}`: Your Hugging Face authentication token.
+- `your_wandb_entity`: Your Weights & Biases entity (username or team name).
+- `your_wandb_run_name`: The name of the Weights & Biases run containing the training configuration.
+- `your_evaluation_wandb_project`: The name of your Weights & Biases evaluation project to log the eval runs to.
+
+To run the script, use:
+
+```bash
+python run_evals.py --config run_evals_args.yaml
+```
+
+This will:
+
+- **Download checkpoints** from the specified Hugging Face repository (if `hub_repo` is provided).
+- **Generate evaluation configurations** for the specified tasks.
+- **Run evaluations** in parallel on the specified GPUs.
+
+### Option 2: Run Evaluation for a Specific Checkpoint using `generate_eval_config.py` and `eval.py`
+
+If you want to run evaluation for a specific checkpoint, you can use `generate_eval_config.py` to generate the evaluation configuration, and then run `eval.py`.
+
+#### Step 1: Generate the Evaluation Configuration
+
+```bash
+python generate_eval_config.py \
+  --checkpoint path/to/checkpoint \
+  --output-dir configs \
+  --model-size base \
+  --rope-theta 10000.0 \
+  --tasks mnli sst2 \
+  --wandb-entity ${your_wandb_entity} \
+  --wandb-project ${your_wandb_project} \
+  --wandb-run ${your_wandb_run_name} \
+  --track-run \
+  --track-run-project ${your_wandb_project}
+```
+
+Replace the placeholders accordingly:
+
+- `path/to/checkpoint`: Path to your specific checkpoint file or directory.
+- `configs`: Directory where the generated configuration file will be saved.
+- `mnli sst2`: List of tasks you want to evaluate.
+- `your_wandb_entity`, `your_wandb_project`, `your_wandb_run_name`: Your Weights & Biases details.
+
+This command will generate a configuration YAML file in the `configs` directory.
+
+#### Step 2: Run the Evaluation
+
+```bash
+python eval.py configs/generated_config.yaml
+```
+
+Replace `configs/generated_config.yaml` with the actual path to the generated configuration file.
+
+## Tips & Tricks
+
+1. **Building Evaluation Configurations for Single Tasks**
+
+   If you want to build a fine-tuning evaluation configuration YAML for a single task, you can use `generate_eval_config.py` with the `--tasks` option to specify the task(s).
+
+   For example:
+
+       python generate_eval_config.py \
+         --checkpoint path/to/checkpoint \
+         --output-dir configs \
+         --tasks mnli
+
+   Then, run the evaluation with `eval.py`:
+
+       python eval.py configs/generated_config.yaml
+
+2. **Monitoring GPU Usage**
+
+   Install `nvitop` to monitor GPU usage more effectively:
+
+       pip install nvitop
+       nvitop
+
+   This provides a more useful and user-friendly interface than `nvidia-smi`.
+
+## Additional Notes
+
+- **Parallel Evaluations**: When running evaluations in parallel, you can specify the GPU IDs to use with the `--gpu-ids` option or in the YAML configuration file.
+
+- **Configurable Options**: Both `run_evals.py` and `generate_eval_config.py` support various options to fine-tune the evaluation process. Use `--help` with these scripts to see all available options.
+
+      python run_evals.py --help
+      python generate_eval_config.py --help
+
+- **Using Configuration Files**: You can use YAML configuration files to specify arguments for the scripts, which can simplify command-line usage. Command-line options will override options specified in the configuration file.
+
+- **Hugging Face Hub Integration**: If you have your checkpoints stored in a private repository on Hugging Face Hub, ensure you have access by logging in via `huggingface-cli login` and providing your token.
+
+- **Loading Training Configurations**: If you have a training configuration file or a Weights & Biases run containing the training configuration, you can provide it using the `--train-config` or `--wandb-run` options to ensure consistency between training and evaluation.
+
+## Optional: Manual Checkpoint Download
+
+If you prefer to manually download checkpoints instead of using the automatic download feature in `run_evals.py`, you can use `huggingface-cli`:
+
+Replace `{org}`, `{repo}`, and `{checkpoint_folder}` with the appropriate organization, repository, and checkpoint folder names.
+
+### Example Command:
+
+```bash
+huggingface-cli download {org}/{repo} --include "{checkpoint_folder}/*" --local-dir checkpoints
+huggingface-cli download {org}/{repo} --include "{checkpoint_folder}" --local-dir checkpoints
+```
+
+### Notes:
+- If there are multiple Composer checkpoints, use the latest one (usually starts with "ep-1").
+- This manual download is optional since `run_evals.py` can automatically download checkpoints when you specify the `hub_repo`, `hub_folder`, and `hub_token` arguments.
+
+---
+
+This README reflects the latest updates in the scripts `run_evals.py` and `generate_eval_config.py`. Be sure to review the scripts and their help messages for the most current information.
+
+---
+
+## Source Modules
+
+### benchmark
+
+*Source: benchmark.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/benchmark.py*
+
+- `ModelType`
+- `conf_callback`
+- `get_model`
+- `get_gpu_power`
+- `benchmark_training`
+- `benchmark_inference`
+- `create_dummy_data`
+- `tile_list_to_length`
+- `main`
+
+### convert_to_hf
+
+*Source: convert_to_hf.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/convert_to_hf.py*
+
+- `TorchDtype`
+- `update_config`
+- `main`: Convert a ModernBERT Composer checkpoint to HuggingFace pretrained format.
+
+### download_artifacts_from_wandb
+
+*Source: download_artifacts_from_wandb.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/download_artifacts_from_wandb.py*
+
+- `get_model_artifacts`
+- `get_base_folder`
+- `get_ba`
+- `main`
+
+### efficiency.multiprocess_bench
+
+*Source: efficiency/multiprocess_bench.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/efficiency/multiprocess_bench.py*
+
+- `create_fixed_short_dataset`
+- `create_fixed_long_dataset`
+- `create_variable_short_dataset`
+- `create_variable_long_dataset`
+- `create_all_datasets`
+- `test_batch_size_worker`: Worker that:
+- `find_max_batch_size_worker`: Worker that runs the batch size finding logic.
+- `try_batch_size`
+- `inference_worker`: Worker to run inference multiple times and report mean/std of times.
+- `run_inference_benchmark`
+
+### eval
+
+*Source: eval.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/eval.py*
+
+- `build_algorithm`
+- `build_callback`
+- `build_logger`
+- `build_scheduler`
+- `build_optimizer`
+- `build_model`
+- `get_values_from_path`: Parses out information from a path/string that looks like.
+- `get_checkpoint_name_from_path`: To go from checkpoint name to path, replace | with /
+- `download_starting_checkpoint`: Downloads the pretrained checkpoints to start from.
+- `create_job_configs`
+- `run_job_worker`: Instantiates the job object and runs it.
+- `run_jobs_parallel`: Runs a list of jobs (passed in as Hydra configs) across GPUs.
+- `run_jobs_serial`: Runs the jobs serially, rather than in parallel.
+- `format_job_name`: Formats the job name for pretty printing.
+- `train`: Main training logic.
+
+### examples.train_pylate
+
+*Source: examples/train_pylate.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/examples/train_pylate.py*
+
+- `main`
+
+### examples.train_st
+
+*Source: examples/train_st.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/examples/train_st.py*
+
+- `main`
+
+### examples.train_st_gooaq
+
+*Source: examples/train_st_gooaq.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/examples/train_st_gooaq.py*
+
+- `main`
+
+### generate_eval_config
+
+*Source: generate_eval_config.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/generate_eval_config.py*
+
+- `conf_callback`
+- `ModelSize`
+- `get_model_defaults`
+- `ordered_yaml_dump`
+- `OrderedDumper`
+- `safe_get`
+- `get_wandb_config`
+- `main`
+
+### glue
+
+*Source: glue.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/glue.py*
+
+- `build_algorithm`
+- `build_callback`
+- `build_logger`
+- `build_scheduler`
+- `build_model`
+- `get_values_from_path`: Parses out information from a path/string that looks like.
+- `get_checkpoint_name_from_path`: To go from checkpoint name to path, replace | with /
+- `download_starting_checkpoint`: Downloads the pretrained checkpoints to start from.
+- `create_job_configs`
+- `run_job_worker`: Instantiates the job object and runs it.
+- `run_jobs_parallel`: Runs a list of jobs (passed in as Hydra configs) across GPUs.
+- `run_jobs_serial`: Runs the jobs serially, rather than in parallel.
+- `format_job_name`: Formats the job name for pretty printing.
+- `train`: Main training logic.
+
+### main
+
+*Source: main.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/main.py*
+
+- `update_batch_size_info`
+- `param_groups_weight_decay`
+- `log_config`
+- `build_algorithm`
+- `build_callback`
+- `build_logger`
+- `build_scheduler`
+- `build_optimizer`
+- `get_num_tokens_in_batch_unpadded`
+- `build_dataloader`
+- `build_model`
+- `init_from_checkpoint`
+- `main`
+
+### run_evals
+
+*Source: run_evals.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/run_evals.py*
+
+- `ModelSize`
+- `conf_callback`
+- `kill_process_tree`
+- `signal_handler`
+- `get_gpu_memory_usage`: Get memory usage for a specific GPU.
+- `get_free_gpu`: Check for free GPUs, prioritizing potentially free GPUs.
+- `run_subprocess`
+- `handle_process_completion`: Handles the completion of a process, checks for errors, cleans up stderr_file, and logs messages.
+- `run_job`: Run a job with optional GPU management.
+- `check_finished_jobs`: Check for finished jobs and free up their GPUs.
+- `manage_jobs`: Manage the launching of jobs for each configuration file in the directory.
+- `create_symlink_for_newest_checkpoint`: Create a symlink to the newest checkpoint file if 'latest-rank0.pt' does not exist.
+- `generate_eval_configs`: Generate evaluation configs for each checkpoint.
+- `download_dataset`
+- `download_datasets`
+- `find_checkpoint_file`
+- `extract_numbers`
+- `download_hub_files`: Download specific files or the entire repository from a Hugging Face Hub repository.
+- `move_and_flatten_files`
+- `main`: Run evaluations on model checkpoints.
+
+### sequence_classification
+
+*Source: sequence_classification.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/sequence_classification.py*
+
+- `update_batch_size_info`
+- `log_config`
+- `build_algorithm`
+- `build_callback`
+- `build_logger`
+- `build_scheduler`
+- `build_optimizer`
+- `build_my_dataloader`: Create a dataloader for classification.
+- `build_model`
+- `train`
+
+### src.algorithms.rope_schedule
+
+*Source: src/algorithms/rope_schedule.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/algorithms/rope_schedule.py*
+
+- `FlexBertRopeSchedule`
+- `match`
+- `apply`
+
+### src.bert_layers.activation
+
+*Source: src/bert_layers/activation.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/activation.py*
+
+- `ClassInstantier`
+- `get_act_fn`
+
+### src.bert_layers.attention
+
+*Source: src/bert_layers/attention.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/attention.py*
+
+- `BertAlibiUnpadSelfAttention`: Performs multi-headed self attention on a batch of unpadded sequences.
+- `forward`: Perform self-attention.
+- `BertSelfOutput`: Computes the output of the attention layer.
+- `forward`
+- `BertAlibiUnpadAttention`: Chains attention, Dropout, and LayerNorm for Mosaic BERT.
+- `forward`: Forward pass for scaled self-attention without padding.
+- `FlexBertAttentionBase`: A FlexBERT attention base class for type hints.
+- `forward`
+- `extra_repr`
+- `FlexBertUnpadAttention`: Performs multi-headed self attention on a batch of unpadded sequences.
+- `forward`: Perform self-attention.
+- `FlexBertUnpadParallelAttention`: Computes the output of the multi-headed self parallel attention on a batch of unpadded sequences
+- `forward`: Perform self-attention.
+- `FlexBertPaddedAttention`: Performs multi-headed self attention on a batch of padded sequences.
+- `forward`: Perform self-attention.
+- `FlexBertUnpadRopeAttention`: Performs multi-headed self attention on a batch of unpadded sequences.
+- `forward`: Perform self-attention.
+- `FlexBertPaddedRopeAttention`: Performs multi-headed self attention on a batch of padded sequences.
+- `forward`: Perform self-attention.
+- `FlexBertUnpadRopeParallelAttention`: Performs multi-headed self attention on a batch of unpadded sequences.
+- `forward`: Perform self-attention.
+- `FlexBertPaddedRopeParallelAttention`: Performs multi-headed self attention on a batch of padded sequences.
+- `forward`: Perform self-attention.
+- `FlexBertPaddedParallelAttention`: Performs multi-headed self attention on a batch of padded sequences.
+- `forward`: Perform self-attention.
+- `get_attention_layer`
+
+### src.bert_layers.configuration_bert
+
+*Source: src/bert_layers/configuration_bert.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/configuration_bert.py*
+
+- `BertConfig`
+- `FlexBertConfig`
+- `maybe_add_padding`
+
+### src.bert_layers.embeddings
+
+*Source: src/bert_layers/embeddings.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/embeddings.py*
+
+- `BertAlibiEmbeddings`: Construct the embeddings for words, ignoring position.
+- `forward`
+- `FlexBertEmbeddingsBase`: A FlexBERT embeddings base class for type hints.
+- `reset_parameters`
+- `forward`
+- `FlexBertAbsoluteEmbeddings`: Construct the embeddings with absolute positional embeddings.
+- `forward`
+- `FlexBertCompiledSansPositionEmbeddings`: Construct the embeddings from token embeddings without any positional embeddings.
+- `forward`
+- `FlexBertSansPositionEmbeddings`: Construct the embeddings from token embeddings without any positional embeddings.
+- `forward`
+- `get_embedding_layer`
+
+### src.bert_layers.initialization
+
+*Source: src/bert_layers/initialization.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/initialization.py*
+
+- `InitFnType`
+- `ModuleType`
+- `init_weights`: Initialize weights of a linear or embedding module.
+- `TileMode`
+- `tile_weight`: Tile or center an input tensor to a larger desired size. Works for both 2D and 1D tensors.
+- `tile_fused_qkv`: Tile the weights of a fused pretrained QKV layer to a new, larger QKV dimension.
+- `tile_fused_glu`: Tile the weights of a fused pretrained GLU layer to a new, larger GLU dimension.
+- `tile_fused_qkvff`: Tile the weights of a fused pretrained QKVFF layer to a new, larger QKVFF dimension.
+- `TileLinear`
+- `tile_linear`: Tile the weights of a linear layer to a new, larger linear dimension.
+- `tile_norm`: Tile the weights of a pretrained norm layer to a new, larger layer norm dimension.
+- `tile_embedding`: Tile the weights of an embedding layer to a new, larger embedding dimension.
+
+### src.bert_layers.layers
+
+*Source: src/bert_layers/layers.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/layers.py*
+
+- `BertAlibiLayer`: Composes the Mosaic BERT attention and FFN blocks into a single layer.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `BertAlibiEncoder`: A stack of BERT layers providing the backbone of Mosaic BERT.
+- `rebuild_alibi_tensor`
+- `get_slopes_power_of_2`
+- `forward`
+- `BertPooler`
+- `forward`
+- `BertPredictionHeadTransform`
+- `forward`
+- `FlexBertLayerBase`: A FlexBERT Layer base class for type hints.
+- `reset_parameters`
+- `forward`
+- `FlexBertCompileUnpadPreNormLayer`: Composes the FlexBERT attention and MLP blocks into a single layer using pre-normalization.
+- `compiled_mlp`
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `FlexBertUnpadPreNormLayer`: Composes the FlexBERT attention and MLP blocks into a single layer using pre-normalization.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `FlexBertUnpadParallelPreNormLayer`: Composes the FlexBERT parallel attention and MLP blocks into a single layer using pre-normalization.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `FlexBertPaddedPreNormLayer`: Composes the FlexBERT attention and MLP blocks into a single layer using pre-normalization.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `FlexBertPaddedParallelPreNormLayer`: Composes the FlexBERT attention and MLP blocks into a single layer using pre-normalization.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `FlexBertUnpadPostNormLayer`: Composes the FlexBERT attention and MLP blocks into a single layer using post-normalization.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `FlexBertPaddedPostNormLayer`: Composes the FlexBERT attention and MLP blocks into a single layer using post-normalization.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `get_bert_layer`
+- `FlexBertEncoderBase`: A FlexBERT base class for type hints.
+- `reset_parameters`
+- `forward`
+- `FlexBertUnpadEncoder`: A stack of BERT layers providing the backbone of FlexBERT.
+- `forward`
+- `FlexBertPaddedEncoder`: A stack of BERT layers providing the backbone of FlexBERT.
+- `forward`
+- `get_encoder_layer`
+
+### src.bert_layers.loss
+
+*Source: src/bert_layers/loss.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/loss.py*
+
+- `get_loss_fn`
+
+### src.bert_layers.mlp
+
+*Source: src/bert_layers/mlp.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/mlp.py*
+
+- `BertResidualGLU`: Applies the FFN at the end of each Mosaic BERT layer.
+- `forward`: Compute new hidden states from current hidden states.
+- `FlexBertMLPBase`: A FlexBERT MLP base class for type hints.
+- `reset_parameters`
+- `forward`
+- `FlexBertMLP`: Applies the MLP at the end of each FlexBERT layer.
+- `forward`: Compute new hidden states from current hidden states.
+- `FlexBertGLU`: Applies the GLU at the end of each FlexBERT layer.
+- `forward`
+- `FlexBertParallelGLU`: Applies the GLU at the end of each FlexBERT layer using intermediate_ff computed in parallel of the attention.
+- `forward`
+- `get_mlp_layer`
+
+### src.bert_layers.model
+
+*Source: src/bert_layers/model.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/model.py*
+
+- `BertModel`: Overall BERT model.
+- `get_input_embeddings`
+- `set_input_embeddings`
+- `forward`
+- `BertLMPredictionHead`
+- `forward`
+- `BertOnlyMLMHead`
+- `forward`
+- `BertOnlyNSPHead`
+- `forward`
+- `BertForPreTraining`
+- `BertLMHeadModel`
+- `BertForMaskedLM`
+- `from_composer`: Load from pre-trained.
+- `get_output_embeddings`
+- `set_output_embeddings`
+- `forward`
+- `prepare_inputs_for_generation`
+- `BertForNextSentencePrediction`
+- `BertForSequenceClassification`: Bert Model transformer with a sequence classification/regression head.
+- `from_composer`: Load from pre-trained.
+- `forward`
+- `BertForMultipleChoice`: Bert Model with a multiple choice classification head on top (a linear layer on top of the pooled output and a
+- `from_composer`: Load from pre-trained.
+- `forward`: labels (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
+- `BertForTokenClassification`
+- `BertForQuestionAnswering`: Bert Model with a span classification head.
+- `FlexBertPredictionHead`
+- `reset_parameters`
+- `forward`
+- `FlexBertPoolingHead`
+- `forward`
+- `reset_parameters`
+- `MaskedLMOutput`: Base class for masked language models outputs.
+- `MaskedLMOutputZLoss`: Base class for masked language models outputs.
+- `FlexBertPreTrainedModel`: An abstract class to handle custom weights initialization of modules
+- `FlexBertModel`: Overall BERT model.
+- `post_init`
+- `get_input_embeddings`
+- `set_input_embeddings`
+- `forward`
+- `reset_parameters`
+- `get_number_parameters`: Returns the number of parameters in the model.
+- `FlexBertForMaskedLM`
+- `from_composer`: Load from pre-trained.
+- `get_output_embeddings`
+- `set_output_embeddings`
+- `unpad_inputs`
+- `pad_inputs`
+- `compiled_head`
+- `forward`
+- `prepare_inputs_for_generation`
+- `get_number_parameters`: Returns the number of parameters in the model.
+- `FlexBertForSequenceClassification`: Bert Model transformer with a sequence classification/regression head.
+- `from_composer`: Load from pre-trained.
+- `forward`
+- `get_number_parameters`: Returns the number of parameters in the model.
+- `FlexBertForMultipleChoice`: Bert Model with a multiple choice classification head on top (a linear layer on top of the pooled output and a
+- `from_composer`: Load from pre-trained.
+- `forward`
+- `get_number_parameters`: Returns the number of parameters in the model.
+- `init_model_from_pretrained`: Initialize the new model from the pretrained model.
+- `init_mlm_model_from_pretrained`: Initialize the new model from the pretrained model.
+
+### src.bert_layers.normalization
+
+*Source: src/bert_layers/normalization.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/normalization.py*
+
+- `RMSNorm`: Llama2 RMSNorm implementation
+- `forward`: Forward pass through the RMSNorm layer.
+- `reset_parameters`
+- `get_norm_layer`
+
+### src.bert_layers.options
+
+*Source: src/bert_layers/options.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/options.py*
+
+- `print_layer_options`
+
+### src.bert_layers.padding
+
+*Source: src/bert_layers/padding.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/padding.py*
+
+- `unpad_input`: Remove padding from input sequences.
+- `pad_input`: Add padding to sequences.
+
+### src.bert_layers.rotary
+
+*Source: src/bert_layers/rotary.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/rotary.py*
+
+- `ApplyRotaryEmbUnpad`
+- `forward`
+- `backward`
+- `apply_rotary_emb_unpad`: Arguments:
+- `UnpaddedRotaryEmbedding`: The rotary position embeddings applied directly to unpadded sequences.
+- `forward`: qkv: (total_nnz, 3, nheads, headdim)
+- `extra_repr`
+
+### src.bert_padding
+
+*Source: src/bert_padding.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_padding.py*
+
+- `IndexFirstAxis`
+- `forward`: Get just the values of `input` which are at `indices`.
+- `backward`
+- `IndexPutFirstAxis`
+- `forward`
+- `backward`
+- `unpad_input`: Remove padding from input sequences.
+- `unpad_input_only`: Like unpad_input, but only return the unpadded first tensor.
+- `pad_input`: Add padding to sequences.
+
+### src.callbacks.dataloader_speed
+
+*Source: src/callbacks/dataloader_speed.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/callbacks/dataloader_speed.py*
+
+- `DataloaderSpeedMonitor`: Measure how long it takes to return a batch from the dataloader.
+- `before_dataloader`
+- `after_dataloader`
+
+### src.callbacks.log_grad_norm
+
+*Source: src/callbacks/log_grad_norm.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/callbacks/log_grad_norm.py*
+
+- `LogGradNorm`: Logs the precomputed L1 and L2 gradient norms from StableAdamW
+- `epoch_start`
+- `batch_end`
+
+### src.callbacks.packing_efficiency
+
+*Source: src/callbacks/packing_efficiency.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/callbacks/packing_efficiency.py*
+
+- `PackingEfficency`: Records the packing efficiency for each batch.
+- `after_dataloader`
+
+### src.callbacks.scheduled_gc
+
+*Source: src/callbacks/scheduled_gc.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/callbacks/scheduled_gc.py*
+
+- `gc_cuda`: Garbage collect Torch (CUDA) memory.
+- `ScheduledGarbageCollector`: Disable automatic garbage collection and collect garbage at interval.
+- `fit_start`
+- `fit_end`
+- `before_dataloader`
+- `eval_start`
+- `eval_end`
+
+### src.colbert_beir.index_and_score
+
+*Source: src/colbert_beir/index_and_score.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/colbert_beir/index_and_score.py*
+
+- `build_colbert_index`
+- `colbert_score`
+
+### src.colbert_beir.train
+
+*Source: src/colbert_beir/train.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/colbert_beir/train.py*
+
+- `colbert_train`
+
+### src.convert_dataset
+
+*Source: src/convert_dataset.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/convert_dataset.py*
+
+- `ConcatMode`
+- `parse_args`: Parse commandline arguments.
+- `DataSplitConstants`
+- `DatasetConstants`
+- `TrainSmallConstants`
+- `ValSmallConstants`
+- `NoConcatDataset`: An IterableDataset that returns text samples for MDSWriter.
+- `ConcatTokensDataset`: An IterableDataset that returns token samples for MDSWriter.
+- `build_hf_dataset`: Build an IterableDataset over the HF C4 or pile source data.
+- `build_dataloader`
+- `generate_samples`: Generator over samples of a dataloader.
+- `main`: Main: create C4/pile streaming dataset.
+
+### src.data.get_counts_from_hf
+
+*Source: src/data/get_counts_from_hf.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/get_counts_from_hf.py*
+
+- `get_counts_for_repo`
+- `get_counts`
+
+### src.data.hf_to_mds
+
+*Source: src/data/hf_to_mds.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/hf_to_mds.py*
+
+- `push_to_hub_incrementally`
+- `sample_hf`
+
+### src.data.mds_conversion
+
+*Source: src/data/mds_conversion.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/mds_conversion.py*
+
+- `maybe_decompress_shard`: If shard does not have decompressed data,
+- `main`
+
+### src.data.relative_prop_to_instance_prop
+
+*Source: src/data/relative_prop_to_instance_prop.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/relative_prop_to_instance_prop.py*
+
+- `relative_to_instance`
+
+### src.data.sample_dataset_from_config
+
+*Source: src/data/sample_dataset_from_config.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/sample_dataset_from_config.py*
+
+- `tokenize_and_write`
+- `sample_dataset_from_config`
+
+### src.data.source_stats
+
+*Source: src/data/source_stats.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/source_stats.py*
+
+- `main`
+
+### src.evals.data
+
+*Source: src/evals/data.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/data.py*
+
+- `create_eval_dataset`
+- `create_glue_dataset`
+- `create_superglue_dataset`
+- `create_swag_dataset`
+- `create_eurlex_dataset`
+- `create_ultrafeedback_dataset`
+- `create_mlmmlu_dataset`
+
+### src.evals.finetuning_jobs
+
+*Source: src/evals/finetuning_jobs.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/finetuning_jobs.py*
+
+- `multiple_choice_collate_fn`
+- `build_dataloader`
+- `reset_trainer`: Cleans up memory usage left by trainer.
+- `log_config`
+- `FineTuneJob`: Encapsulates a fine-tuning job.
+- `get_trainer`: Returns the trainer for the job.
+- `print_metrics`: Prints fine-tuning results.
+- `job_name`: Job name, defaults to class name.
+- `run`: Trains the model, optionally pulling a GPU id from the queue.
+- `ClassificationJob`
+- `get_trainer`
+
+### src.evals.glue_jobs
+
+*Source: src/evals/glue_jobs.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/glue_jobs.py*
+
+- `MNLIJob`: MNLI.
+- `RTEJob`: RTE.
+- `QQPJob`: QQP.
+- `COLAJob`: COLA.
+- `MRPCJob`: MRPC.
+- `QNLIJob`: QNLI.
+- `SST2Job`: SST2.
+- `STSBJob`: STSB.
+
+### src.evals.misc_jobs
+
+*Source: src/evals/misc_jobs.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/misc_jobs.py*
+
+- `SWAGJob`: SWAG.
+- `tokenize_fn_factory`
+- `tokenize_fn`
+- `EurlexMultilabelF1Score`
+- `EurlexJob`: Eurlex multi-label classification.
+- `tokenize_fn_factory`
+- `tokenize_fn`
+- `generate_labels`
+- `UltrafeedbackAUROC`
+- `UltrafeedbackJob`: ultrafeedback binary classification.
+- `tokenize_fn_factory`
+- `tokenize_fn`
+- `MLMMLUAmateurSemipro`: MLMMLU for Amateur & Semipro
+- `tokenize_fn_factory`
+- `tokenize_fn`
+- `MLMMLUReserveRookie`: MLMMLU for Reserve & Rookie
+- `tokenize_fn_factory`
+- `tokenize_fn`
+
+### src.evals.superglue_jobs
+
+*Source: src/evals/superglue_jobs.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/superglue_jobs.py*
+
+- `BoolQJob`: BoolQ.
+- `CBMetric`
+- `update`
+- `compute`
+- `CBJob`: CB.
+- `COPAJob`: COPA.
+- `tokenize_fn_factory`
+- `tokenize_fn`
+- `MultiRCMetric`
+- `update`
+- `compute`
+- `compute_final`
+- `MultiRCJob`: MultiRC.
+- `tokenize_fn_factory`
+- `tokenize_fn`
+- `collate_fn`
+- `WiCJob`: WiC.
+
+### src.flex_bert
+
+*Source: src/flex_bert.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/flex_bert.py*
+
+- `rename_class`
+- `class_renamer`
+- `FALanguageCrossEntropy`: Torchmetric that computes cross entropy on language modeling outputs using flash_attn's Cross Entropy.
+- `EfficientCrossEntropy`: Torchmetric that grabs the precomputed ce_loss value from the model outputs
+- `update`: Updates the internal state with results from a new batch.
+- `compute`: Aggregate the state over all processes to compute the metric.
+- `EfficientZLoss`: Torchmetric that grabs the precomputed z_loss value from the model outputs
+- `update`: Updates the internal state with results from a new batch.
+- `compute`: Aggregate the state over all processes to compute the metric.
+- `EfficientHuggingFaceModel`
+- `eval_forward`
+- `update_metric`
+- `create_flex_bert_mlm`: FlexBERT masked language model based on |:hugging_face:| Transformers.
+- `create_flex_bert_classification`: FlexBERT classification model based on |:hugging_face:| Transformers.
+
+### src.hf_bert
+
+*Source: src/hf_bert.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/hf_bert.py*
+
+- `create_hf_bert_mlm`: BERT model based on |:hugging_face:| Transformers.
+- `create_hf_bert_classification`: BERT model based on |:hugging_face:| Transformers.
+
+### src.mosaic_bert
+
+*Source: src/mosaic_bert.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/mosaic_bert.py*
+
+- `create_mosaic_bert_mlm`: Mosaic BERT masked language model based on |:hugging_face:| Transformers.
+- `create_mosaic_bert_classification`: Mosaic BERT classification model based on |:hugging_face:| Transformers.
+
+### src.optimizer
+
+*Source: src/optimizer.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/optimizer.py*
+
+- `StableAdamW`: StableAdamW optimizer. An AdamW-Adafactor hybrid with learning rate update clipping.
+- `step`: Performs a single optimization step on the whole model or individual parameter.
+- `stableadamw`: Functional API to apply a StableAdamW optimization step.
+
+### src.scheduler
+
+*Source: src/scheduler.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/scheduler.py*
+
+- `Schedule`
+- `WarmupStableDecayScheduler`: Args:
+- `CosineInverseSqrtScheduler`: Decays the learning rate according to a cosine decay followed by an inverse square root decay, with optional warmup and cooldown.
+- `OneMinusSqrtScheduler`: Decays the learning rate according to a 1 - sqrt function, without an initial warmup phase.
+
+### src.sequence_packer
+
+*Source: src/sequence_packer.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/sequence_packer.py*
+
+- `BatchSizeWarmupScheduler`
+- `SequencePackerBatchOutputTuple`
+- `SequencePacker`
+- `seqs_emitted`
+- `seqs_consumed`
+- `mlm_masking`: Prepare masked tokens inputs/labels for masked language modeling: 80% MASK, 10% random, 10% original.
+- `find_best_fit`
+- `GreedyBestFitSequencePacker`
+- `from_composer`
+- `BufferedIterable`
+- `BufferedIterator`
+- `split_packed_batch`
+- `get_num_samples_in_packed_batch`
+
+### src.text_data
+
+*Source: src/text_data.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/text_data.py*
+
+- `DistributedSamplerPCG64DXSM`
+- `build_tokenizer`
+- `StreamingTextDataset`: Generic text dataset using MosaicML's StreamingDataset.
+- `ConcatenatedSequenceCollatorWrapper`: Collator wrapper to add sequence_id to batch.
+- `get_sequence_id_from_batch`
+- `build_streaming_dataset`
+- `build_no_streaming_dataset`
+- `build_text_dataloader`
+- `NoStreamingDataset`: A dataset class that can read data with raw mds-format (mosaic streaming-format without compression)
+
+### src.utils
+
+*Source: src/utils.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/utils.py*
+
+- `warning_once`: This method is identical to `logger.warning()`, but will emit the warning with the same message only once
+- `StrEnum`: This is equivalent to Python's :class:`enum.StrEnum` since version 3.11.
+
+### wandb_log_live_eval
+
+*Source: wandb_log_live_eval.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/wandb_log_live_eval.py*
+
+- `parse_model_string`
+- `init_run`
+- `process_data`
+- `main`

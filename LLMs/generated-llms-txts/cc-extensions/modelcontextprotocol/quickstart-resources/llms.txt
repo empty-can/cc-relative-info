@@ -1,0 +1,16 @@
+# Quickstart Resources
+
+> MCP クイックスタート用のサンプルリポジトリ。複数言語（Python・TypeScript・Go・Rust・Ruby）による MCP クライアントおよびウェザーサーバーの実装例を収録し、MCP プロトコルの基本的な使い方を示す。
+
+## Source Modules
+
+- [mcp-client-python.client](https://github.com/modelcontextprotocol/quickstart-resources/blob/main/mcp-client-python/client.py): Lazy-initialize Anthropic client when needed
+- [weather-server-python.weather](https://github.com/modelcontextprotocol/quickstart-resources/blob/main/weather-server-python/weather.py): Make a request to the NWS API with proper error handling.
+- [mcp-client-typescript.index](https://github.com/modelcontextprotocol/quickstart-resources/blob/main/mcp-client-typescript/index.ts)
+- [weather-server-typescript.src.index](https://github.com/modelcontextprotocol/quickstart-resources/blob/main/weather-server-typescript/src/index.ts)
+- [mcp-client-go.main](https://github.com/modelcontextprotocol/quickstart-resources/blob/main/mcp-client-go/main.go)
+- [weather-server-go.main](https://github.com/modelcontextprotocol/quickstart-resources/blob/main/weather-server-go/main.go)
+- [mcp-client-rust.src.main](https://github.com/modelcontextprotocol/quickstart-resources/blob/main/mcp-client-rust/src/main.rs)
+- [weather-server-rust.src.main](https://github.com/modelcontextprotocol/quickstart-resources/blob/main/weather-server-rust/src/main.rs)
+- [mcp-client-ruby.client](https://github.com/modelcontextprotocol/quickstart-resources/blob/main/mcp-client-ruby/client.rb)
+- [weather-server-ruby.weather](https://github.com/modelcontextprotocol/quickstart-resources/blob/main/weather-server-ruby/weather.rb)

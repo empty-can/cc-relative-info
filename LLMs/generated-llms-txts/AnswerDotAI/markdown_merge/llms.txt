@@ -1,0 +1,11 @@
+# MarkdownMerge
+
+> MarkdownMerge は、Markdown テンプレートと送信先リストを組み合わせて SMTP 経由でバルクメール（mail-merge）を送信するための Python ライブラリ。開発者が少ないコードでパーソナライズされたメールを一括配信できる。
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/markdown_merge/blob/main/CHANGELOG.md): - Attachments (#11)
+
+## Source Modules
+
+- [markdown_merge.core](https://github.com/AnswerDotAI/markdown_merge/blob/main/markdown_merge/core.py)

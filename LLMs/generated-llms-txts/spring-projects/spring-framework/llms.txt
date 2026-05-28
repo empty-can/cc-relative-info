@@ -1,0 +1,14 @@
+# <img src="framework-docs/src/docs/spring-framework.png" width="80" height="80"> Spring Framework [![Build Status](https://github.com/spring-projects/spring-framework/actions/workflows/build-and-deploy-snapshot.yml/badge.svg?branch=main)](https://github.com/spring-projects/spring-framework/actions/workflows/build-and-deploy-snapshot.yml?query=branch%3Amain) [![Revved up by Develocity](https://img.shields.io/badge/Revved%20up%20by-Develocity-06A0CE?logo=Gradle&labelColor=02303A)](https://ge.spring.io/scans?search.rootProjectNames=spring)
+
+> Java アプリケーション開発者向けに、DI・AOP・Web MVC・データアクセス等のコア機能を統合的に提供するフレームワーク。設定より規約の原則を基に、エンタープライズ開発を簡潔かつテスト容易な形で実現する。
+
+## Guide
+
+- [All Modules](https://github.com/spring-projects/spring-framework/blob/main/framework-docs/src/docs/api/dokka-overview.md): _See also the <a href="../javadoc-api/" target="_blank">Java API documentation (Javadoc)</a>._
+- [Spring Framework - Eclipse/STS Project Import Guide](https://github.com/spring-projects/spring-framework/blob/main/import-into-eclipse.md): This document will guide you through the process of importing the Spring Framework projects into Eclipse or the Spring Tool Suite (_STS_).
+- [Import Into Intellij Idea](https://github.com/spring-projects/spring-framework/blob/main/import-into-intellij-idea.md): The following has been tested against IntelliJ IDEA 2016.2.2
+
+## Optional
+
+- [Contributing to the Spring Framework](https://github.com/spring-projects/spring-framework/blob/main/CONTRIBUTING.md): First off, thank you for taking the time to contribute!
+- [Reporting a Vulnerability](https://github.com/spring-projects/spring-framework/blob/main/SECURITY.md): Please, open a draft security advisory if you need to disclose and discuss a security issue in private with the Spring Framework team.

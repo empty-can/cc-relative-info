@@ -1,0 +1,444 @@
+# MCP Registry
+
+> MCP サーバーの発見・公開・管理を担う公式レジストリサービス（Go 製）。GitHub 認証・OIDC・複数のキー署名プロバイダーによる安全な publish フローと、Kubernetes ベースのインフラ構成スクリプトを含む。
+
+---
+
+## Source Modules
+
+### cmd.publisher.auth.azurekeyvault.common
+
+*Source: cmd/publisher/auth/azurekeyvault/common.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/cmd/publisher/auth/azurekeyvault/common.go*
+
+- `func GetSignatureProvider`
+- `func`
+
+### cmd.publisher.auth.common
+
+*Source: cmd/publisher/auth/common.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/cmd/publisher/auth/common.go*
+
+- `func GetTimestamp`
+- `func NewInProcessSigner`
+- `func parseRawPrivateKey`
+- `func PrintEd25519KeyInfo`
+- `func PrintEcdsaP384KeyInfo`
+- `func printEcdsaKeyInfo`
+- `func`
+- `func`
+- `func`
+- `func`
+
+### cmd.publisher.auth.dns
+
+*Source: cmd/publisher/auth/dns.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/cmd/publisher/auth/dns.go*
+
+- `func NewDNSProvider`
+- `func`
+
+### cmd.publisher.auth.github-at
+
+*Source: cmd/publisher/auth/github-at.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/cmd/publisher/auth/github-at.go*
+
+- `func NewGitHubATProvider`
+- `func getClientID`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+
+### cmd.publisher.auth.github-oidc
+
+*Source: cmd/publisher/auth/github-oidc.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/cmd/publisher/auth/github-oidc.go*
+
+- `func NewGitHubOIDCProvider`
+- `func audienceFromRegistryURL`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+
+### cmd.publisher.auth.googlekms.common
+
+*Source: cmd/publisher/auth/googlekms/common.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/cmd/publisher/auth/googlekms/common.go*
+
+- `func GetSignatureProvider`
+- `func derToRS`
+- `func`
+- `func`
+
+### cmd.publisher.auth.http
+
+*Source: cmd/publisher/auth/http.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/cmd/publisher/auth/http.go*
+
+- `func NewHTTPProvider`
+- `func`
+
+### cmd.publisher.auth.none
+
+*Source: cmd/publisher/auth/none.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/cmd/publisher/auth/none.go*
+
+- `func NewNoneProvider`
+- `func`
+- `func`
+- `func`
+
+### cmd.publisher.main
+
+*Source: cmd/publisher/main.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/cmd/publisher/main.go*
+
+- `func main`
+- `func printUsage`
+- `func printCommandHelp`
+
+### deploy.main
+
+*Source: deploy/main.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/deploy/main.go*
+
+- `func createProvider`
+- `func main`
+
+### deploy.pkg.k8s.backup
+
+*Source: deploy/pkg/k8s/backup.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/deploy/pkg/k8s/backup.go*
+
+- `func DeployK8up`
+
+### deploy.pkg.k8s.cert_manager
+
+*Source: deploy/pkg/k8s/cert_manager.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/deploy/pkg/k8s/cert_manager.go*
+
+- `func SetupCertManager`
+
+### deploy.pkg.k8s.deploy
+
+*Source: deploy/pkg/k8s/deploy.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/deploy/pkg/k8s/deploy.go*
+
+- `func DeployAll`
+
+### deploy.pkg.k8s.ingress
+
+*Source: deploy/pkg/k8s/ingress.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/deploy/pkg/k8s/ingress.go*
+
+- `func SetupIngressController`
+
+### deploy.pkg.k8s.monitoring
+
+*Source: deploy/pkg/k8s/monitoring.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/deploy/pkg/k8s/monitoring.go*
+
+- `func DeployMonitoringStack`
+- `func deployVictoriaLogs`
+- `func deployOtelCollectorDaemonSet`
+- `func deployGrafana`
+
+### deploy.pkg.providers.local.provider
+
+*Source: deploy/pkg/providers/local/provider.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/deploy/pkg/providers/local/provider.go*
+
+- `func getClusterName`
+- `func`
+- `func`
+
+### internal.api.handlers.v0.auth.github_at
+
+*Source: internal/api/handlers/v0/auth/github_at.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/auth/github_at.go*
+
+- `func NewGitHubHandler`
+- `func RegisterGitHubATEndpoint`
+- `func isValidGitHubName`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+
+### internal.api.handlers.v0.auth.github_oidc
+
+*Source: internal/api/handlers/v0/auth/github_oidc.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/auth/github_oidc.go*
+
+- `func NewGitHubOIDCValidator`
+- `func NewMockOIDCValidator`
+- `func NewGitHubOIDCHandler`
+- `func RegisterGitHubOIDCEndpoint`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+
+### internal.api.handlers.v0.auth.main
+
+*Source: internal/api/handlers/v0/auth/main.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/auth/main.go*
+
+- `func RegisterAuthEndpoints`
+
+### internal.api.handlers.v0.auth.none
+
+*Source: internal/api/handlers/v0/auth/none.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/auth/none.go*
+
+- `func NewNoneHandler`
+- `func RegisterNoneEndpoint`
+- `func`
+
+### internal.api.handlers.v0.auth.oidc
+
+*Source: internal/api/handlers/v0/auth/oidc.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/auth/oidc.go*
+
+- `func NewStandardOIDCValidator`
+- `func NewOIDCHandler`
+- `func RegisterOIDCEndpoints`
+- `func claimMatches`
+- `func toAnySlice`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+
+### internal.api.handlers.v0.edit
+
+*Source: internal/api/handlers/v0/edit.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/edit.go*
+
+- `func RegisterEditEndpoints`
+
+### internal.api.handlers.v0.health
+
+*Source: internal/api/handlers/v0/health.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/health.go*
+
+- `func RegisterHealthEndpoint`
+- `func recordHealthMetrics`
+
+### internal.api.handlers.v0.ping
+
+*Source: internal/api/handlers/v0/ping.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/ping.go*
+
+- `func RegisterPingEndpoint`
+
+### internal.api.handlers.v0.publish
+
+*Source: internal/api/handlers/v0/publish.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/publish.go*
+
+- `func RegisterPublishEndpoint`
+- `func buildPermissionErrorMessage`
+
+### internal.api.handlers.v0.servers
+
+*Source: internal/api/handlers/v0/servers.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/servers.go*
+
+- `func resolveIncludeDeleted`
+- `func RegisterServersEndpoints`
+- `func`
+- `func`
+- `func`
+
+### internal.api.handlers.v0.status
+
+*Source: internal/api/handlers/v0/status.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/status.go*
+
+- `func validateStatusTransition`
+- `func RegisterStatusEndpoints`
+- `func buildStatusChangeRequestFromBody`
+- `func RegisterAllVersionsStatusEndpoints`
+- `func validateBulkStatusTransition`
+
+### internal.api.handlers.v0.ui
+
+*Source: internal/api/handlers/v0/ui.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/ui.go*
+
+- `func GetUIHTML`
+
+### internal.api.handlers.v0.validate
+
+*Source: internal/api/handlers/v0/validate.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/validate.go*
+
+- `func RegisterValidateEndpoint`
+
+### internal.api.handlers.v0.version
+
+*Source: internal/api/handlers/v0/version.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/handlers/v0/version.go*
+
+- `func RegisterVersionEndpoint`
+
+### internal.api.router.v0
+
+*Source: internal/api/router/v0.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/api/router/v0.go*
+
+- `func RegisterV0Routes`
+- `func RegisterV0_1Routes`
+
+### internal.config.config
+
+*Source: internal/config/config.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/config/config.go*
+
+- `func NewConfig`
+
+### internal.database.database
+
+*Source: internal/database/database.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/database/database.go*
+
+- `func InTransactionT`
+
+### internal.database.migrate
+
+*Source: internal/database/migrate.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/database/migrate.go*
+
+- `func NewMigrator`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+
+### internal.database.testutil
+
+*Source: internal/database/testutil.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/database/testutil.go*
+
+- `func ensureTemplateDB`
+- `func NewTestDB`
+
+### internal.importer.importer
+
+*Source: internal/importer/importer.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/importer/importer.go*
+
+- `func NewService`
+- `func readSeedFile`
+- `func fetchFromHTTP`
+- `func fetchFromRegistryAPI`
+- `func`
+
+### internal.service.versioning
+
+*Source: internal/service/versioning.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/service/versioning.go*
+
+- `func IsSemanticVersion`
+- `func ensureVPrefix`
+- `func compareSemanticVersions`
+- `func CompareVersions`
+
+### internal.telemetry.metrics
+
+*Source: internal/telemetry/metrics.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/telemetry/metrics.go*
+
+- `func NewMetrics`
+- `func NewPrometheusMeterProvider`
+- `func InitMetrics`
+- `func`
+
+### internal.validators.package
+
+*Source: internal/validators/package.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/validators/package.go*
+
+- `func ValidatePackage`
+
+### internal.validators.registries.npm
+
+*Source: internal/validators/registries/npm.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/validators/registries/npm.go*
+
+- `func ValidateNPM`
+
+### internal.validators.registries.nuget
+
+*Source: internal/validators/registries/nuget.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/validators/registries/nuget.go*
+
+- `func ValidateNuGet`
+- `func validateAndNormalizeBaseURL`
+- `func fetchAndCacheServiceIndex`
+- `func getReadmeURLTemplate`
+- `func validateReadme`
+- `func getPackageContentBaseURL`
+- `func validatePackageExists`
+
+### internal.validators.registries.oci
+
+*Source: internal/validators/registries/oci.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/validators/registries/oci.go*
+
+- `func ValidateOCI`
+- `func isAllowedRegistry`
+
+### internal.validators.registries.pypi
+
+*Source: internal/validators/registries/pypi.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/validators/registries/pypi.go*
+
+- `func ValidatePyPI`
+
+### internal.validators.schema
+
+*Source: internal/validators/schema.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/validators/schema.go*
+
+- `func extractVersionFromSchemaURL`
+- `func loadSchemaByVersion`
+- `func GetCurrentSchemaVersion`
+- `func validateServerJSONSchema`
+- `func addValidationError`
+- `func ConvertJSONPointerToBracketNotation`
+- `func addDetailedErrors`
+- `func buildResolvedReference`
+- `func resolveRefInSchema`
+
+### internal.validators.utils
+
+*Source: internal/validators/utils.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/validators/utils.go*
+
+- `func IsValidRepositoryURL`
+- `func HasNoSpaces`
+- `func extractTemplateVariables`
+- `func replaceTemplateVariables`
+- `func IsValidURL`
+- `func IsValidSubfolderPath`
+- `func IsValidRemoteURL`
+- `func IsValidTemplatedURL`
+
+### internal.validators.validation_types
+
+*Source: internal/validators/validation_types.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/validators/validation_types.go*
+
+- `func NewValidationIssue`
+- `func NewValidationIssueFromError`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+
+### internal.validators.validators
+
+*Source: internal/validators/validators.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/internal/validators/validators.go*
+
+- `func ValidateServerJSON`
+- `func validateRepository`
+- `func validateWebsiteURL`
+- `func validateTitle`
+- `func validateIcons`
+- `func validateIcon`
+- `func validatePackageField`
+- `func validateVersion`
+- `func looksLikeVersionRange`
+- `func validateArgument`
+- `func validateNamedArgumentName`
+- `func validateArgumentValueFields`
+- `func collectAvailableVariables`
+- `func collectRemoteTransportVariables`
+- `func validatePackageTransport`
+- `func validateRemoteTransport`
+- `func ValidatePublishRequest`
+- `func ValidateUpdateRequest`
+- `func validateRegistryOwnership`
+- `func validatePublisherExtensions`
+- `func parseServerName`
+
+### scripts.mirror_data.fetch_production_data
+
+*Source: scripts/mirror_data/fetch_production_data.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/scripts/mirror_data/fetch_production_data.go*
+
+- `func main`
+
+### scripts.mirror_data.load_production_data
+
+*Source: scripts/mirror_data/load_production_data.go | URL: https://github.com/modelcontextprotocol/registry/blob/main/scripts/mirror_data/load_production_data.go*
+
+- `func main`

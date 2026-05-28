@@ -1,0 +1,700 @@
+# fastprogress
+
+> A fast and simple progress bar for Jupyter Notebook and console, supporting nested (master/child) bars, real-time graph plotting, and both interactive and non-interactive environments.
+
+fastprogress is a lightweight Python library by Sylvain Gugger (fast.ai) that provides `master_bar` and `progress_bar` iterators for tracking nested loops. It renders smoothly in Jupyter notebooks and terminals, supports inline loss-curve plotting via `update_graph`, and gracefully falls back to plain text output when stdout is redirected.
+
+---
+
+## Guide
+
+### Contributor Covenant Code of Conduct
+
+*Source: CODE-OF-CONDUCT.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/CODE-OF-CONDUCT.md*
+
+# Contributor Covenant Code of Conduct
+
+## Our Pledge
+
+In the interest of fostering an open and welcoming environment, we as
+contributors and maintainers pledge to making participation in our project and
+our community a harassment-free experience for everyone, regardless of age, body
+size, disability, ethnicity, gender identity and expression, level of experience,
+education, socio-economic status, nationality, personal appearance, race,
+religion, or sexual identity and orientation.
+
+## Our Standards
+
+Examples of behavior that contributes to creating a positive environment
+include:
+
+* Using welcoming and inclusive language
+* Being respectful of differing viewpoints and experiences
+* Gracefully accepting constructive criticism
+* Focusing on what is best for the community
+* Showing empathy towards other community members
+
+Examples of unacceptable behavior by participants include:
+
+* The use of sexualized language or imagery and unwelcome sexual attention or
+  advances
+* Trolling, insulting/derogatory comments, and personal or political attacks
+* Public or private harassment
+* Publishing others' private information, such as a physical or electronic
+  address, without explicit permission
+* Other conduct which could reasonably be considered inappropriate in a
+  professional setting
+
+## Our Responsibilities
+
+Project maintainers are responsible for clarifying the standards of acceptable
+behavior and are expected to take appropriate and fair corrective action in
+response to any instances of unacceptable behavior.
+
+Project maintainers have the right and responsibility to remove, edit, or
+reject comments, commits, code, wiki edits, issues, and other contributions
+that are not aligned to this Code of Conduct, or to ban temporarily or
+permanently any contributor for other behaviors that they deem inappropriate,
+threatening, offensive, or harmful.
+
+## Scope
+
+This Code of Conduct applies both within project spaces and in public spaces
+when an individual is representing the project or its community. Examples of
+representing a project or community include using an official project e-mail
+address, posting via an official social media account, or acting as an appointed
+representative at an online or offline event. Representation of a project may be
+further defined and clarified by project maintainers.
+
+## Enforcement
+
+Instances of abusive, harassing, or otherwise unacceptable behavior may be
+reported by contacting the project team at info@fast.ai. All
+complaints will be reviewed and investigated and will result in a response that
+is deemed necessary and appropriate to the circumstances. The project team is
+obligated to maintain confidentiality with regard to the reporter of an incident.
+Further details of specific enforcement policies may be posted separately.
+
+Project maintainers who do not follow or enforce the Code of Conduct in good
+faith may face temporary or permanent repercussions as determined by other
+members of the project's leadership.
+
+## Attribution
+
+This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 1.4,
+available at https://www.contributor-covenant.org/version/1/4/code-of-conduct.html
+
+[homepage]: https://www.contributor-covenant.org
+
+### Contributor Covenant Code of Conduct
+
+*Source: CODE_OF_CONDUCT.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/CODE_OF_CONDUCT.md*
+
+# Contributor Covenant Code of Conduct
+
+## Our Pledge
+
+In the interest of fostering an open and welcoming environment, we as
+contributors and maintainers pledge to make participation in our project and
+our community a harassment-free experience for everyone, regardless of age, body
+size, disability, ethnicity, gender identity and expression, level of experience,
+education, socio-economic status, nationality, personal appearance, race,
+religion, or sexual identity and orientation.
+
+Examples of unacceptable behavior by participants include:
+
+* The use of sexualized language or imagery and unwelcome sexual attention or
+  advances
+* Trolling, insulting/derogatory comments, and personal or political attacks
+* Public or private harassment
+* Publishing others' private information, such as a physical or electronic
+  address, without explicit permission
+
+These examples of unacceptable behaviour are requirements; we will not allow them
+in any fast.ai project, including this one.
+
+## Our Standards
+
+Examples of behavior that contributes to creating a positive environment
+include:
+
+* Using welcoming and inclusive language
+* Being respectful of differing viewpoints and experiences
+* Gracefully accepting constructive criticism
+* Focusing on what is best for the community
+* Showing empathy towards other community members
+
+These examples are shown only to help you participate effectively -- they are not
+requirements, just requests and guidance.
+
+## Our Responsibilities
+
+Project maintainers are responsible for clarifying the standards of acceptable
+behavior and are expected to take appropriate and fair corrective action in
+response to any instances of unacceptable behavior.
+
+Project maintainers have the right and responsibility to remove, edit, or
+reject comments, commits, code, wiki edits, issues, and other contributions
+that are not aligned to this Code of Conduct, or to ban temporarily or
+permanently any contributor for other behaviors that they deem inappropriate,
+threatening, offensive, or harmful.
+
+## Scope
+
+This Code of Conduct applies both within project spaces and in public spaces
+when an individual is representing the project or its community. Examples of
+representing a project or community include using an official project e-mail
+address, posting via an official social media account or acting as an appointed
+representative at an online or offline event. Representation of a project may be
+further defined and clarified by project maintainers.
+
+## Enforcement
+
+Instances of abusive, harassing or otherwise unacceptable behavior may be
+reported by contacting the project team at info@fast.ai. All
+complaints will be reviewed and investigated and will result in a response that
+is deemed necessary and appropriate to the circumstances. The project team is
+obligated to maintain confidentiality with regard to the reporter of an incident.
+Further details of specific enforcement policies may be posted separately.
+
+Project maintainers who do not follow or enforce the Code of Conduct in good
+faith may face temporary or permanent repercussions as determined by other
+members of the project's leadership.
+
+## Attribution
+
+This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 1.4,
+available at https://www.contributor-covenant.org/version/1/4/code-of-conduct.html
+
+[homepage]: https://www.contributor-covenant.org
+
+### fastprogress
+
+*Source: docs/index.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/docs/index.md*
+
+# fastprogress
+
+A fast and simple progress bar for Jupyter Notebook and console. Created by Sylvain Gugger for fast.ai.
+
+<img src="https://github.com/fastai/fastprogress/raw/master/images/cifar_train.gif" width="600">
+
+## Install
+
+To install simply use
+```
+pip install fastprogress
+```
+or:
+```
+conda install -c fastai fastprogress
+```
+Note that this requires python 3.6 or later.
+
+## Usage
+
+### Example 1
+
+Here is a simple example. Each bar takes an iterator as a main argument, and we can specify the second bar is nested with the first by adding the argument `parent=mb`. We can then:
+- add a comment in the first bar by changing the value of `mb.main_bar.comment`
+- add a comment in the first bar by changing the value of `mb.child.comment`
+- write a line between the two bars with `mb.write('message')`
+
+``` python
+from fastprogress.fastprogress import master_bar, progress_bar
+from time import sleep
+mb = master_bar(range(10))
+for i in mb:
+    for j in progress_bar(range(100), parent=mb):
+        sleep(0.01)
+        mb.child.comment = f'second bar stat'
+    mb.main_bar.comment = f'first bar stat'
+    mb.write(f'Finished loop {i}.')
+    #mb.update_graph(graphs, x_bounds, y_bounds)
+```
+
+<img src="https://github.com/fastai/fastprogress/raw/master/images/pb_basic.gif" width="600">
+
+### Example 2
+
+To add a graph that get plots as the training goes, just use the command `mb.update_graphs`. It will create the figure on its first use. Arguments are:
+- `graphs`: a list of graphs to be plotted (each of the form `[x,y]`)
+- `x_bounds`: the min and max values of the x axis (if `None`, it will those given by the graphs)
+- `y_bounds`: the min and max values of the y axis (if `None`, it will those given by the graphs)
+
+Note that it's best to specify `x_bounds` and `y_bounds`, otherwise the box will change as the loop progresses.
+
+Additionally, we can give the label of each graph via the command `mb.names` (should have as many elements as the graphs argument).
+
+``` python
+import numpy as np
+mb = master_bar(range(10))
+mb.names = ['cos', 'sin']
+for i in mb:
+    for j in progress_bar(range(100), parent=mb):
+        if j%10 == 0:
+            k = 100 * i + j
+            x = np.arange(0, 2*k*np.pi/1000, 0.01)
+            y1, y2 = np.cos(x), np.sin(x)
+            graphs = [[x,y1], [x,y2]]
+            x_bounds = [0, 2*np.pi]
+            y_bounds = [-1,1]
+            mb.update_graph(graphs, x_bounds, y_bounds)
+            mb.child.comment = f'second bar stat'
+    mb.main_bar.comment = f'first bar stat'
+    mb.write(f'Finished loop {i}.')
+```
+
+<img src="https://github.com/fastai/fastprogress/raw/master/images/pb_cos.gif" width="600">
+
+Here is the rendering in console:
+
+<img src="https://github.com/fastai/fastprogress/raw/master/images/pb_console.gif" width="800">
+
+If the script using this is executed with a redirect to a file, only the results of the `.write` method will be printed in that file.
+
+### Example 3
+
+Here is an example that a typical machine learning training loop can use. It also demonstrates how to set `y_bounds` dynamically.
+
+```
+def plot_loss_update(epoch, epochs, mb, train_loss, valid_loss):
+    """ dynamically print the loss plot during the training/validation loop.
+        expects epoch to start from 1.
+    """
+    x = range(1, epoch+1)
+    y = np.concatenate((train_loss, valid_loss))
+    graphs = [[x,train_loss], [x,valid_loss]]
+    x_margin = 0.2
+    y_margin = 0.05
+    x_bounds = [1-x_margin, epochs+x_margin]
+    y_bounds = [np.min(y)-y_margin, np.max(y)+y_margin]
+
+    mb.update_graph(graphs, x_bounds, y_bounds)
+```
+
+And here is an emulation of a training loop that uses this function:
+
+```
+from fastprogress.fastprogress import master_bar, progress_bar
+from time import sleep
+import numpy as np
+import random
+
+epochs = 5
+mb = master_bar(range(1, epochs+1))
+# optional: graph legend: if not set, the default is 'train'/'valid'
+# mb.names = ['first', 'second']
+train_loss, valid_loss = [], []
+for epoch in mb:
+    # emulate train sub-loop
+    for batch in progress_bar(range(2), parent=mb): sleep(0.2)
+    train_loss.append(0.5 - 0.06 * epoch + random.uniform(0, 0.04))
+
+    # emulate validation sub-loop
+    for batch in progress_bar(range(2), parent=mb): sleep(0.2)
+    valid_loss.append(0.5 - 0.03 * epoch + random.uniform(0, 0.04))
+
+    plot_loss_update(epoch, epochs, mb, train_loss, valid_loss)
+```
+
+And the output:
+
+<img src="https://github.com/fastai/fastprogress/raw/master/images/pb_graph.gif" alt="Output">
+
+----
+
+Copyright 2017 onwards, fast.ai. Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. A copy of the License is provided in the LICENSE file in this repository.
+
+---
+
+## Optional
+
+### Release notes
+
+*Source: CHANGELOG.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/CHANGELOG.md*
+
+# Release notes
+
+<!-- do not remove -->
+
+## 1.1.6
+
+### New Features
+
+- Lazy imports ([#125](https://github.com/AnswerDotAI/fastprogress/issues/125))
+
+
+## 1.1.5
+
+### Bugs Squashed
+
+- `self.out` not initialised properly ([#118](https://github.com/AnswerDotAI/fastprogress/issues/118))
+
+
+## 1.1.3
+
+### New Features
+
+- Add `show_styles` ([#116](https://github.com/AnswerDotAI/fastprogress/issues/116))
+
+
+## 1.1.1
+
+### New Features
+
+- Add `hdrs` ([#115](https://github.com/AnswerDotAI/fastprogress/issues/115))
+
+
+## 1.1.0
+
+### Breaking Changes
+
+- Convert to fasthtml and modernize ([#114](https://github.com/AnswerDotAI/fastprogress/issues/114))
+
+
+## 1.0.5
+
+### New Features
+
+- Solveit compat ([#113](https://github.com/AnswerDotAI/fastprogress/issues/113))
+
+
+## 1.0.3
+
+### New Features
+
+- support unknown `total` by passing `total='noinfer'` ([#102](https://github.com/fastai/fastprogress/pull/102)), thanks to [@seeM](https://github.com/seeM)
+- support PyCharm console as TTY ([#101](https://github.com/fastai/fastprogress/issues/101))
+
+
+## 1.0.2
+
+### Bugs Squashed
+
+- Check that stdout exposes `isatty` ([#81](https://github.com/fastai/fastprogress/pull/81)), thanks to [@scw](https://github.com/scw)
+
+
+## 1.0.1
+
+### Bugs Squashed
+
+- Move the style overrides to a separate HTML widget ([#79](https://github.com/fastai/fastprogress/pull/79)), thanks to [@jpc](https://github.com/jpc)
+  - This fixes performance problems on Safari
+
+### How to contribute to fastprogress
+
+*Source: CONTRIBUTING.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/CONTRIBUTING.md*
+
+# How to contribute to fastprogress
+
+First, thanks a lot for wanting to help!
+
+## Did you find a bug?
+
+* Ensure the bug was not already reported by searching on GitHub under [Issues](https://github.com/fastai/fastprogress/issues).
+* If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/fastai/fastprogress/issues/new). Be sure to include a title and clear description, as much relevant information as possible, and a code sample or an executable test case demonstrating the expected behavior that is not occurring.
+* Be sure to add the complete error messages.
+
+#### Did you write a patch that fixes a bug?
+
+* Sign the [Contributor License Agreement](https://www.clahub.com/agreements/fastai/fastprogress).
+* Open a new GitHub pull request with the patch.
+* Ensure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
+
+## Do you have questions about the source code?
+
+* Please ask it on the [fast.ai forum](http://forums.fast.ai/) (after searching someone didn't ask the same one before with a quick search).
+
+### Build and Release Instructions
+
+*Source: RELEASE.md | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/RELEASE.md*
+
+# Build and Release Instructions
+
+
+
+## One Time Preparation
+
+You can skip this step if you have done it once already on the system you're making the release from.
+
+1. You need to register (free) with:
+
+    - [PyPI](https://pypi.org/account/register/)
+    - [TestPyPI](https://test.pypi.org/account/register/)
+    - [anaconda.org](https://anaconda.org/)
+
+    After registration, to upload to fastai project, you will need to ask Jeremy to add your username to PyPI and anaconda.
+
+2. Create file `~/.pypirc` with the following content:
+
+    ```
+    [distutils]
+    index-servers =
+      pypi
+      testpypi
+
+    [testpypi]
+    repository: https://test.pypi.org/legacy/
+    username: your testpypi username
+    password: your testpypi password
+
+    [pypi]
+    username: your pypi username
+    password: your pypi password
+    ```
+
+3. You can also setup your client to have transparent access to anaconda tools, see https://anaconda.org/YOURUSERNAME/settings/access (adjust the url to insert your username).
+
+    You don't really need it, as the anaconda client cashes your credentials so you need to login only infrequently.
+
+
+
+
+
+## Quick Release Process
+
+No matter which release process you follow, always remember to start with:
+
+```
+git pull
+```
+
+This does it all:
+```
+make release
+```
+
+If this was a bug fix, remember to update `fastai` dependency files: `conda/meta.yaml` and `setup.py` and also `imports/core.py` with this release's `fastprogress` version number.
+
+## TL;DR
+
+Here is a step-by-step release process. You can follow these steps from the beginning, or if something goes wrong during the auto-pilot simply continue with where it left off.
+
+1. Install/update build tools
+
+   ```
+   make tools-update
+   ```
+
+2. Test code:
+   ```
+   make git-pull
+   make test
+   make git-not-dirty || echo "Commit changes before proceeding"
+   ```
+
+   The next stage requires a clean tree to start with, so commit any uncommitted code. If you `git stash` make sure to rerun `make test`.
+
+3. Bump and Tag and Commit:
+
+   ```
+   make git-not-dirty && make bump && make commit-tag
+   ```
+
+   This will do patch-level bump, for major/minor bump targets see below.
+
+4. Release:
+
+   ```
+   make dist
+   make upload
+   ```
+
+5. Test uploads by installing them:
+
+   ```
+   make test-install
+   ```
+
+6. Update fastai repo
+
+   If this was a bug fix or a change of API, update the following four `fastai` dependency files with this release's `fastprogress` version number:
+   1. `imports/core.py`
+   2. `conda/meta.yaml`
+   3. `setup.py`
+   4. `docs/install.md` (#custom-dependencies)
+
+
+
+## Detailed information
+
+The following is needed if the combined release instructions were failing. So that each step can be done separately.
+
+
+### Bump the version
+
+You can either edit `fastprogress/version.py` and change the version number by hand.
+
+Or run one of these `make` targets:
+
+   Target            | Function
+   ------------------| --------------------------------------------
+   bump-major        | bump major level; remove .devX if any
+   bump-minor        | bump minor level; remove .devX if any
+   bump-patch        | bump patch level unless has .devX, then don't bump, but remove .devX
+   bump              | alias to bump-patch (as it's used often)
+   bump-post-release | add .post1 or bump post-release level .post2, .post3, ...
+   bump-major-dev    | bump major level and add .dev0
+   bump-minor-dev    | bump minor level and add .dev0
+   bump-patch-dev    | bump patch level and add .dev0
+   bump-dev          | alias to bump-patch-dev (as it's used often)
+
+e.g.:
+
+```
+make bump
+```
+
+We use the semver version convention w/ python adjustment to `.devX`, instead of `-devX`:
+
+* release: `major.minor.patch`, 0.1.10
+* dev or rc: `major.minor.patch.devX`, 0.1.10.dev0
+
+For fastprogress, due to its simplicity and usage, there is probably no need for intermediary `.devX` stage. So just normal `bump` will do when a new version is released.
+
+
+
+### PyPI details
+
+To build a PyPI package and release it on [pypi.org/](https://pypi.org/project/fastprogress/):
+
+1. Build the pip packages (source and wheel)
+
+   ```
+   make dist-pypi
+   ```
+
+2. Publish:
+
+   ```
+   make upload-pypi
+   ```
+
+   Note: PyPI won't allow re-uploading the same package filename, even if it's a minor fix. If you delete the file from pypi or test.pypi it still won't let you do it. So either a patch-level version needs to be bumped (A.B.C++) or some [post release string added](https://www.python.org/dev/peps/pep-0440/#post-releases) in `version.py`.
+
+3. Test that the uploaded package is found and gets installed:
+
+   Test the webpage so that the description looks correct: [https://pypi.org/project/fastprogress/](https://pypi.org/project/fastprogress/)
+
+   Test installation:
+
+   ```
+   pip install fastprogress
+   ```
+
+
+
+### Conda details
+
+To build a Conda package and release it on [anaconda.org](https://anaconda.org/fastai/fastprogress):
+
+1. Build the fastprogress conda package:
+
+   ```
+   make dist-conda
+
+   ```
+
+2. Upload
+
+   ```
+   make upload-conda
+
+   ```
+
+3. Test that the uploaded package is found and gets installed:
+
+   Test the webpage so that the description looks correct: [https://pypi.org/project/fastprogress/](https://pypi.org/project/fastprogress/)
+
+   Test installation:
+
+   ```
+   conda install -c fastai fastprogress
+   ```
+
+### Others
+
+`make clean` removes any intermediary build artifacts.
+
+`make` will show all possible targets with a short description of what they do.
+
+---
+
+## Source Modules
+
+### fastprogress._nbdev
+
+*Source: fastprogress/_nbdev.py | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/fastprogress/_nbdev.py*
+
+- `custom_doc_links`
+
+### fastprogress.core
+
+*Source: fastprogress/core.py | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/fastprogress/core.py*
+
+- `format_time`
+- `html_progress_bar`
+- `text2html_table`
+- `in_colab`
+- `in_notebook`
+
+### docs.js.jekyll-search
+
+*Source: docs/js/jekyll-search.js | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/docs/js/jekyll-search.js*
+
+- `function s`
+- `function receivedResponse`
+- `function handleResponse`
+- `function FuzzySearchStrategy`
+- `function createFuzzyRegExpFromString`
+- `function LiteralSearchStrategy`
+- `function doMatch`
+- `function findMatches`
+- `function findMatchesInObject`
+- `function getSearchStrategy`
+- `function isObject`
+- `function isArray`
+- `function addObject`
+- `function addArray`
+- `function SimpleJekyllSearch`
+- `function initWithJSON`
+- `function initWithURL`
+- `function throwError`
+- `function validateOptions`
+- `function assignOptions`
+- `function isJSON`
+- `function emptyResultsContainer`
+- `function appendToResultsContainer`
+- `function registerInput`
+- `function render`
+
+### docs.js.jquery.ba-throttle-debounce.min
+
+*Source: docs/js/jquery.ba-throttle-debounce.min.js | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/docs/js/jquery.ba-throttle-debounce.min.js*
+
+- `function g`
+- `function l`
+- `function k`
+
+### docs.js.jquery.shuffle.min
+
+*Source: docs/js/jquery.shuffle.min.js | URL: https://github.com/AnswerDotAI/fastprogress/blob/main/docs/js/jquery.shuffle.min.js*
+
+- `function z`
+- `function A`
+- `function B`
+- `function C`
+- `function D`
+- `function E`
+- `function F`
+- `function dashify`
+- `function throttle`
+- `function each`
+- `function defer`
+- `function arrayMax`
+- `function arrayMin`
+- `function getNumber`
+- `function handleTransitionEnd`
+- `function handleEventName`
+- `function handleRemoved`
+- `function randomize`

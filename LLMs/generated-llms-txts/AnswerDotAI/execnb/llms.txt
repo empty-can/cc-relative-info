@@ -1,0 +1,11 @@
+# execnb
+
+> execnb provides a lightweight IPython kernel wrapper (`CaptureShell`) that lets developers execute Jupyter notebook cells programmatically and capture their outputs — enabling CI pipelines, doc generators, and notebook-based tools to run notebooks without a full Jupyter server.
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/execnb/blob/main/CHANGELOG.md): - Add mpl_format=None param option that skips inline matplotlib setup (#82)
+
+## Source Modules
+
+- [execnb.shell](https://github.com/AnswerDotAI/execnb/blob/main/execnb/shell.py)
