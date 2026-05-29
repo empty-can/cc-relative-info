@@ -2,7 +2,6 @@
 
 ## Docs
 
-- [Example Clients](https://modelcontextprotocol.io/clients.md): A list of applications that support MCP integrations
 - [Antitrust Policy](https://modelcontextprotocol.io/community/antitrust.md): MCP Project Antitrust Policy for participants and contributors
 - [Group Charter Template](https://modelcontextprotocol.io/community/charter-template.md): Template for MCP Working Group and Interest Group charters.
 - [Contributor Communication](https://modelcontextprotocol.io/community/communication.md): Communication strategy and framework for the Model Context Protocol community
@@ -14,6 +13,7 @@
 - [Governance and Stewardship](https://modelcontextprotocol.io/community/governance.md): Learn about the Model Context Protocol's governance structure and how to participate in the community
 - [Inspector V2 Working Group Charter](https://modelcontextprotocol.io/community/inspector-v2/charter.md): Charter for the Inspector V2 Working Group, a Working Group of the Model Context Protocol community.
 - [Interceptors Charter](https://modelcontextprotocol.io/community/interceptors/charter.md): Charter for the MCP Interceptors Working Group.
+- [Registry Charter](https://modelcontextprotocol.io/community/registry/charter.md): Charter for the MCP Registry Working Group.
 - [SDK Tiering System](https://modelcontextprotocol.io/community/sdk-tiers.md): Feature completeness, protocol support, and maintenance commitment levels for Model Context Protocol SDKs
 - [SDK Working Group Charter](https://modelcontextprotocol.io/community/sdk/charter.md): Charter for the MCP SDK Working Group.
 - [SEP Guidelines](https://modelcontextprotocol.io/community/sep-guidelines.md): Specification Enhancement Proposal (SEP) guidelines for proposing changes to the Model Context Protocol
