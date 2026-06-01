@@ -11,8 +11,6 @@
 >
 > 1. SEP-2243（HTTP ヘッダ標準化）: `x-mcp-header` の制約厳格化（RFC 9110 トークン準拠・`number` 型禁止→integer 限定・ネスト許可・base64 センチネル衝突回避 ほか）
 > 2. SEP-2663（Tasks 拡張）: 後方互換性の表形式整理（`2025-11-25` ↔ `2026-06-30`）とエラーコード `-32003` の追加
-> 3. MCP Apps / Extension Support Matrix に対応クライアント Archestra.AI を追加
-> 4. community ワーキンググループ（Tool Annotations / Skills Over MCP）の membership 更新
 
 ## ハイライト
 
