@@ -18,14 +18,23 @@ _DEFAULT_OUTPUT_BASE = _REPO_ROOT / 'LLMs' / 'work' / 'gen-out'
 # Error logs mirror the gen-out tree under a sibling gen-error/ directory.
 _DEFAULT_ERROR_BASE = _REPO_ROOT / 'LLMs' / 'work' / 'gen-error'
 
-# Generation warnings collected during a run, flushed to the error log at the end.
+# Generation notices collected during a run, flushed to the error log at the end.
+# WARN = action required on this side (missing optional package etc.)
+# INFO = situation report (no expected files in target / option-target mismatch)
 _WARNINGS: list[str] = []
+_INFOS: list[str] = []
 
 
 def _warn(msg: str) -> None:
-    """Print a warning to stderr and record it for the error log."""
+    """Print a WARN to stderr and record it for the error log."""
     _WARNINGS.append(msg)
-    print(f'WARNING: {msg}', file=sys.stderr)
+    print(f'WARN: {msg}', file=sys.stderr)
+
+
+def _info(msg: str) -> None:
+    """Print an INFO to stderr and record it for the error log."""
+    _INFOS.append(msg)
+    print(f'INFO: {msg}', file=sys.stderr)
 
 
 def _infer_output_dir(base_url: str, repo_path: Path, cc_extensions: bool = False) -> Path:
@@ -56,6 +65,12 @@ CC_SECTION_MAP: dict[str, str] = {
 # Sections whose subdirectories each contain a SKILL.md (one entry per subdirectory)
 CC_SKILL_LIKE_SECTIONS = {'skills', 'plugins'}
 CC_SECTION_ORDER = ['Plugins', 'Skills', 'Rules', 'Agents', 'Templates', 'Hooks', 'Optional', 'Guide']
+# CC ext + doc を統合した cc-extensions モードの出力順
+COMBINED_SECTION_ORDER = [
+    'Plugins', 'Skills', 'Rules', 'Agents', 'Templates', 'Hooks',
+    'Getting Started', 'Guide', 'API Reference',
+    'Optional',
+]
 
 SECTION_RULES = [
     (['install', 'setup', 'quickstart', 'getting-started', 'getting_started', 'start'], 'Getting Started'),
@@ -513,7 +528,8 @@ def _get_nbformat():
             _NBFORMAT = nbformat
         except ImportError:
             _NBFORMAT = False
-            _warn('nbformat not installed — .ipynb files skipped. Install: pip install nbformat')
+            _warn('nbformat パッケージが未導入のため、.ipynb ファイルをスキップしました。'
+          'pip install nbformat でインストールしてください。')
     return _NBFORMAT or None
 
 
@@ -567,14 +583,24 @@ def _read_doc_content(f: Path) -> str | None:
         return None
 
 
-def collect_doc_sections(repo_path: Path) -> list[tuple[str, list[tuple[Path, str]]]]:
-    """Return [(section_name, [(file_path, content)])] ordered by SECTION_ORDER."""
+def collect_doc_sections(
+    repo_path: Path,
+    *,
+    exclude_top_dirs: frozenset[str] = frozenset(),
+) -> list[tuple[str, list[tuple[Path, str]]]]:
+    """Return [(section_name, [(file_path, content)])] ordered by SECTION_ORDER.
+
+    exclude_top_dirs: top-level directory names to skip (used in --cc-extensions
+    mode to avoid re-collecting CC scan directories like skills/, rules/, agents/).
+    """
     buckets: dict[str, list[tuple[Path, str]]] = {s: [] for s in SECTION_ORDER}
 
     for ext in DOC_EXTENSIONS:
         for f in sorted(repo_path.rglob(f'*{ext}')):
             rel = f.relative_to(repo_path)
             if _is_skipped(rel.parts[:-1]):
+                continue
+            if exclude_top_dirs and rel.parts and rel.parts[0] in exclude_top_dirs:
                 continue
             if _is_noise_doc(f):
                 continue
@@ -660,8 +686,9 @@ def collect_cc_sections(repo_path: Path) -> list[tuple[str, list[tuple[Path, str
     _scan_cc_base(repo_path / '.claude', buckets)
 
     if not any(buckets.values()):
-        _warn('No CC extension files found '
-              '(checked skills/, .claude/skills/, rules/, .claude/rules/)')
+        _info('Claude Code 拡張ファイル(Skill / Rule)が見つかりませんでした'
+              '(skills/, .claude/skills/, rules/, .claude/rules/ を確認)。'
+              'CC 拡張リポジトリでない場合は --cc-extensions を外して実行することを検討してください。')
 
     return [(s, buckets[s]) for s in CC_SECTION_ORDER if buckets[s]]
 
@@ -718,7 +745,8 @@ def collect_source_sections(
     try:
         from codesigs import file_sigs
     except ImportError:
-        _warn('codesigs not installed — skipping --extract-sigs.')
+        _warn('codesigs パッケージが未導入のため、--extract-sigs をスキップしました。'
+              'pip install codesigs でインストールしてください。')
         return []
 
     SOURCE_SKIP_DIRS = {'tests', 'test', 'spec', '__tests__', 'e2e'}
@@ -754,6 +782,23 @@ def collect_source_sections(
 # Generation
 # ---------------------------------------------------------------------------
 
+def _merge_sections_by_name(
+    cc_sections: list[tuple[str, list[tuple[Path, str]]]],
+    doc_sections: list[tuple[str, list[tuple[Path, str]]]],
+    order: list[str],
+) -> list[tuple[str, list[tuple[Path, str]]]]:
+    """Combine CC and doc section lists. Sections with the same name (e.g. Optional /
+    Guide) are merged into a single entry to avoid duplicate '## Name' blocks in the
+    generated llms.txt. Output order follows `order`; unknown names come at the end.
+    """
+    merged: dict[str, list[tuple[Path, str]]] = {}
+    for name, files in (*cc_sections, *doc_sections):
+        merged.setdefault(name, []).extend(files)
+    ordered = [(n, merged[n]) for n in order if n in merged and merged[n]]
+    extras = [(n, merged[n]) for n in merged if n not in order and merged[n]]
+    return ordered + extras
+
+
 def generate(
     repo_path: Path,
     base_url: str,
@@ -768,22 +813,40 @@ def generate(
     )
 
     if cc_extensions:
-        sections = collect_cc_sections(repo_path)
+        cc_sections = collect_cc_sections(repo_path)
+        # CC スキャン対象の top-level ディレクトリは doc スキャンから除外して二重カウントを防ぐ
+        doc_sections = collect_doc_sections(
+            repo_path, exclude_top_dirs=frozenset(CC_SECTION_MAP.keys()),
+        )
+        sections = _merge_sections_by_name(cc_sections, doc_sections, COMBINED_SECTION_ORDER)
         src_secs = collect_source_sections(repo_path, base_url)  # always enabled in CC mode
-        if not sections:
-            _warn('No .claude/ files found.')
+        if not cc_sections:
+            _info('.claude/ ディレクトリ配下のファイルが見つかりませんでした。'
+                  'CC 拡張を含まないリポジトリの場合は --cc-extensions を外して実行することを検討してください。')
+        # cc-extensions モードでは docs は補助情報のため、0 件でも INFO は出さない
     else:
-        sections = collect_doc_sections(repo_path)
+        cc_sections = []
+        doc_sections = collect_doc_sections(repo_path)
+        sections = doc_sections
         if not sections:
-            _warn('No documentation files found.')
+            _info('ドキュメントファイル(.md / .mdx / .rst / .adoc / .ipynb)が見つかりませんでした。'
+                  'ソースコードのみのリポジトリであれば、--extract-sigs フラグを付けて'
+                  'ソースシグネチャを索引化することを検討してください。')
         src_secs = collect_source_sections(repo_path, base_url) if extract_sigs else []
 
     _write_llms_full(project_name, sections, src_secs, base_url, repo_path, output_dir)
     _write_llms_txt(project_name, sections, src_secs, base_url, repo_path, output_dir)
 
-    total_docs = sum(len(files) for _, files in sections)
-    mode_label = 'CC extension file(s)' if cc_extensions else 'doc file(s)'
-    print(f'Processed {total_docs} {mode_label} across {len(sections)} section(s)'
+    cc_count = sum(len(files) for _, files in cc_sections)
+    doc_count = sum(len(files) for _, files in doc_sections)
+    if cc_extensions:
+        if doc_count > 0:
+            file_summary = f'{cc_count} CC extension file(s), {doc_count} doc file(s)'
+        else:
+            file_summary = f'{cc_count} CC extension file(s)'
+    else:
+        file_summary = f'{doc_count} doc file(s)'
+    print(f'Processed {file_summary} across {len(sections)} section(s)'
           + (f', {len(src_secs)} source module(s).' if src_secs else '.'))
     print(f'Generated: {output_dir / "llms-full.txt"}')
     print(f'Generated: {output_dir / "llms.txt"}')
@@ -899,15 +962,37 @@ def _write_error_log(output_dir: Path, *, cc_extensions: bool, extract_sigs: boo
         f'EXTRACT_SIGS={str(extract_sigs).lower()}',
         '',
     ]
-    if _WARNINGS:
-        lines += [f'## Result: completed with {len(_WARNINGS)} warning(s)', '', '## Warnings']
-        lines += [f'- {w}' for w in _WARNINGS]
-    else:
-        lines += ['## Result: SUCCESS (no warnings)', '',
+    n_warn = len(_WARNINGS)
+    n_info = len(_INFOS)
+    if n_warn == 0 and n_info == 0:
+        lines += ['## 結果: 成功(WARN・INFO なし)', '',
                   'No errors encountered. Generation completed successfully.']
+    else:
+        parts = []
+        if n_warn:
+            parts.append(f'WARN {n_warn} 件')
+        if n_info:
+            parts.append(f'INFO {n_info} 件')
+        lines += [f'## 結果: {"、".join(parts)}で完了']
+        if n_warn:
+            lines += ['', '## WARN']
+            lines += [f'- {w}' for w in _WARNINGS]
+        if n_info:
+            lines += ['', '## INFO']
+            lines += [f'- {i}' for i in _INFOS]
     lines.append('')
-    (error_dir / 'error-log.md').write_text('\n'.join(lines), encoding='utf-8')
-    print(f'Error log: {error_dir / "error-log.md"}')
+    log_path = error_dir / 'error-log.md'
+    log_path.write_text('\n'.join(lines), encoding='utf-8')
+
+    summary_parts = []
+    if n_warn:
+        summary_parts.append(f'WARN ({n_warn})')
+    if n_info:
+        summary_parts.append(f'INFO ({n_info})')
+    if summary_parts:
+        print(f'{", ".join(summary_parts)}: {log_path}')
+    else:
+        print(f'生成ログ: {log_path}')
 
 
 # ---------------------------------------------------------------------------
