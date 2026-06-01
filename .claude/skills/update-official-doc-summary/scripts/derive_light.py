@@ -125,6 +125,17 @@ def derive(detail_text: str) -> str:
     if not regions:
         raise SystemExit('ERROR: No <!-- light:*:start --> markers found in detail file')
 
+    # 概要件数 <= ハイライト件数 を保証する。概要(summary blockquote の `> N.`)が
+    # ハイライト(`N.`)より多いと、読み手が件数差を不審に思うため、ここで弾く。
+    region_map = dict(regions)
+    n_summary = len(re.findall(r'^>\s*\d+\.\s', region_map.get('summary', ''), re.MULTILINE))
+    n_highlight = len(re.findall(r'^\d+\.\s', region_map.get('highlight-list', ''), re.MULTILINE))
+    if n_summary > n_highlight:
+        raise SystemExit(
+            f'ERROR: 概要項目数({n_summary}) > ハイライト項目数({n_highlight})。'
+            '概要はハイライトと同集合(同数)にしてください。'
+        )
+
     related = extract_related_links(body)
 
     parts: list[str] = []
