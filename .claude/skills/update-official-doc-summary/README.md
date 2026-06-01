@@ -1,6 +1,6 @@
 # update-official-doc-summary
 
-Claude Code 公式ドキュメント(`llms.txt` / `llms-full.txt` / `claude_code_docs_map.md`)の更新差分を、人間向けの changelog / リリースノート風 Markdown として生成する Skill。
+`official-llms-txts/` 配下の公式ドキュメント(`llms.txt` / `llms-full.txt`)の更新差分を、人間向けの changelog / リリースノート風 Markdown として生成する Skill。対象サイトは `--site <slug>` で切り替える(現状 `claude-code-docs` / `mcp`)。サイトごとに構成が異なるため、サイト別テンプレートと「サイト設定テーブル」(SKILL.md)で差異を吸収する。
 
 ## 目的
 
@@ -15,11 +15,14 @@ Claude Code 公式ドキュメント(`llms.txt` / `llms-full.txt` / `claude_code
 
 ### 入力
 
-| パス | 用途 |
-|---|---|
-| `LLMs/official-llms-txts/code.claude.com/docs/llms.txt` | URL 一覧と 1 行説明 |
-| `LLMs/official-llms-txts/code.claude.com/docs/llms-full.txt` | 全文展開 |
-| `LLMs/official-llms-txts/code.claude.com/docs/en/claude_code_docs_map.md` | ページ見出しマップ(新ページ検出補助) |
+入力パスは `--site` の選択行(SKILL.md「サイト設定テーブル」)で決まる。
+
+| サイト | `<INPUT_BASE>` | 補助ファイル |
+|---|---|---|
+| `claude-code-docs` | `LLMs/official-llms-txts/code.claude.com/docs/` | `en/claude_code_docs_map.md`(ページ見出しマップ) |
+| `mcp` | `LLMs/official-llms-txts/modelcontextprotocol.io/` | なし |
+
+各サイトとも `<INPUT_BASE>llms.txt`(URL 一覧と 1 行説明) と `<INPUT_BASE>llms-full.txt`(全文展開) を読む。
 
 前提: `bash LLMs/scripts/dl_llms.sh` で最新化済みであること。
 
@@ -27,7 +30,7 @@ Claude Code 公式ドキュメント(`llms.txt` / `llms-full.txt` / `claude_code
 
 ```
 LLMs/official-doc-update-summary/
-└── claude-code-docs/
+└── <出力slug>/            claude-code-docs / mcp
     ├── latest.md           ライト版(機械抽出)
     ├── latest-detail.md    詳細版(LLM 生成)
     └── archives/
@@ -43,18 +46,18 @@ LLMs/official-doc-update-summary/
 ### 通常運用(差分ベース更新)
 
 ```
-/update-official-doc-summary
+/update-official-doc-summary [--site <slug>]
 ```
 
-前回サマリ末尾フッタから `head_commit` を取得し、現在の HEAD との差分を反映する。差分がない場合は処理を停止する。
+`--site` 省略時は `claude-code-docs`。前回サマリ末尾フッタから `head_commit` を取得し、現在の HEAD との差分を反映する。差分がない場合は処理を停止する。
 
 ### 初版作成
 
 ```
-/update-official-doc-summary --from <commit>
+/update-official-doc-summary [--site <slug>] --from <commit>
 ```
 
-前回サマリが存在しない場合に必要。`<commit>` は対象期間の起点として扱われる。
+前回サマリが存在しない場合に必要。`<commit>` は対象期間の起点として扱われる。例: `/update-official-doc-summary --site mcp --from 534cac6`。
 
 ## 設計判断と運用ポリシー
 
@@ -67,15 +70,16 @@ LLMs/official-doc-update-summary/
 
 ### URL 併記(ja / en)
 
-`llms.txt` には英語版 URL のみ含まれるため、日本語ページ URL は en URL の `/docs/en/` を `/docs/ja/` に機械的置換して併記する。日本語ページが未公開の場合でも併記する方針(時間差で公開されることが多く、都度ドキュメントを更新する負荷を避ける)。
+URL言語併記=あり のサイト(`claude-code-docs`)では、`llms.txt` に英語版 URL のみ含まれるため、日本語ページ URL を en URL の `/docs/en/` → `/docs/ja/` 機械置換で併記する。日本語ページが未公開でも併記する方針(時間差で公開されることが多く、都度更新の負荷を避ける)。URL言語併記=なし のサイト(`mcp`)は言語サブパスが無いため単一 URL を使う。
 
 ### 差分検出
 
-末尾フッタの `head_commit` を起点に `git diff <BASE_COMMIT> HEAD -- LLMs/official-llms-txts/code.claude.com/docs/` で生差分を取得し、ページ単位で分類する:
+末尾フッタの `head_commit` を起点に `git diff <BASE_COMMIT> HEAD -- <INPUT_BASE>` で生差分を取得し、ページ単位で分類する:
 
 - 新規追加: llms.txt に新 URL エントリ
 - 大幅更新: llms-full.txt で 50 行以上の変更
 - 軽微更新: 上記以外
+- 新着情報: URL に `/whats-new/` を含む(新着情報カテゴリ=あり のサイトのみ。`mcp` 等は持たない)
 
 ### セルフレビュー 2 Phase
 
@@ -94,7 +98,7 @@ LLM 生成の確度を上げるため、英語段階(Phase 1)と日本語化後(
 
 ## 既知の制約と残タスク
 
-- **対象スコープ**: 現状は Claude Code Docs (`code.claude.com/docs/`) のみ。MCP 等は将来別系統として追加予定
+- **対象スコープ**: `claude-code-docs` / `mcp` 対応。新サイトは SKILL.md「サイト設定テーブル」に 1 行追加し、必要ならサイト別テンプレートを用意して拡張する。**段階2**としてサイト設定の外部ファイル化(`sites/<slug>.*`)・`official-llms-txts/` 自動走査・差分型/俯瞰型の設定切替を予定
 - **差分長大時の対応**: 単一 LLM セッションで生成しきれない量の差分が来た場合、複数 Agent への分担化が必要(現状は単一セッションで生成)
 - **セルフレビューチェックリスト**: 初版は一般的観点で運用。運用しながら具体化・整備を継続
 - **自動起動 hook**: 本 Skill の責務外。`dl_llms.sh` 実行直後の Stop hook 等での自動呼び出しは別タスクとして実装予定

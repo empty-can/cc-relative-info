@@ -1,26 +1,38 @@
 ---
 name: update-official-doc-summary
-description: Claude Code 公式ドキュメント (llms.txt / llms-full.txt) の更新差分を、人間向けの changelog / リリースノート風 Markdown として生成する。詳細版を LLM で生成し、ライト版は固定スクリプトで詳細版から機械的に抽出する。
+description: official-llms-txts 配下の公式ドキュメント (llms.txt / llms-full.txt) の更新差分を、人間向けの changelog / リリースノート風 Markdown として生成する。対象サイトは --site で切り替える (claude-code-docs / mcp)。詳細版を LLM で生成し、ライト版は固定スクリプトで詳細版から機械的に抽出する。
 allowed-tools: Read, Write, Edit, Grep, Bash(git diff:*), Bash(git log:*), Bash(git rev-parse:*), Bash(mkdir -p:*), Bash(mv:*), Bash(python:*)
-argument-hint: "[--from <commit>]"
+argument-hint: "[--site <slug>] [--from <commit>]"
 disable-model-invocation: true
 ---
 
 ## 引数パース
 
+- `--site <slug>`: 対象サイト。省略時は `claude-code-docs`(後方互換)。有効値は「サイト設定テーブル」の `slug` 列。値を `SITE` とする
 - `--from <commit>`: 初版作成時の起点コミット。省略時は前回サマリの末尾フッタから `head_commit` を取得し `BASE_COMMIT` とする。前回サマリが無く `--from` も無ければエラー終了
+
+## サイト設定テーブル
+
+`SITE`(`--site`)で以下を決定する。`<INPUT_BASE>` 配下に `llms.txt` / `llms-full.txt` がある前提。
+
+| slug | `<INPUT_BASE>` | 出力slug | URL言語併記 | 新着情報カテゴリ | docs_map | テンプレート |
+|---|---|---|---|---|---|---|
+| `claude-code-docs` | `LLMs/official-llms-txts/code.claude.com/docs/` | `claude-code-docs` | あり(ja/en) | あり | あり | `detail.md.tmpl` |
+| `mcp` | `LLMs/official-llms-txts/modelcontextprotocol.io/` | `mcp` | なし | なし | なし | `detail.mcp.md.tmpl` |
 
 ## 固定パス
 
-- `SUMMARY_DIR` = `LLMs/official-doc-update-summary/claude-code-docs/`
+サイト設定テーブルの選択行に基づき以下を決定する:
+
+- `SUMMARY_DIR` = `LLMs/official-doc-update-summary/<出力slug>/`
 - `LATEST_DETAIL` = `${SUMMARY_DIR}latest-detail.md`
 - `LATEST_LIGHT` = `${SUMMARY_DIR}latest.md`
 - `ARCHIVES_DIR` = `${SUMMARY_DIR}archives/`
-- `TEMPLATE` = `.claude/skills/update-official-doc-summary/templates/detail.md.tmpl`
+- `TEMPLATE` = `.claude/skills/update-official-doc-summary/templates/<テンプレート>`
 - `DERIVE_SCRIPT` = `.claude/skills/update-official-doc-summary/scripts/derive_light.py`
-- `INPUT_LLMS_TXT` = `LLMs/official-llms-txts/code.claude.com/docs/llms.txt`
-- `INPUT_LLMS_FULL` = `LLMs/official-llms-txts/code.claude.com/docs/llms-full.txt`
-- `INPUT_DOCS_MAP` = `LLMs/official-llms-txts/code.claude.com/docs/en/claude_code_docs_map.md`
+- `INPUT_LLMS_TXT` = `<INPUT_BASE>llms.txt`
+- `INPUT_LLMS_FULL` = `<INPUT_BASE>llms-full.txt`
+- `INPUT_DOCS_MAP` = docs_map=あり のとき `<INPUT_BASE>en/claude_code_docs_map.md`。docs_map=なし のとき使用しない
 
 ## 主要処理
 
@@ -52,7 +64,7 @@ git rev-parse HEAD
 
 Bash で実行:
 ```
-git diff <BASE_COMMIT> <HEAD_COMMIT> -- LLMs/official-llms-txts/code.claude.com/docs/
+git diff <BASE_COMMIT> <HEAD_COMMIT> -- <INPUT_BASE>
 ```
 出力が空なら標準出力に `差分なし、処理停止` を出して終了 (exit 0)。
 非空ならその内容を `DIFF_CONTENT` とする。
@@ -62,7 +74,7 @@ git diff <BASE_COMMIT> <HEAD_COMMIT> -- LLMs/official-llms-txts/code.claude.com/
 Read tool で以下を読む:
 - `$INPUT_LLMS_TXT` (URL リスト・1 行説明)
 - `$INPUT_LLMS_FULL` (全文展開) — 大ファイルなので、Grep tool で必要セクションだけ抽出する形でもよい
-- `$INPUT_DOCS_MAP` (ページ見出しマップ)
+- `$INPUT_DOCS_MAP` (ページ見出しマップ) — docs_map=あり のサイトのみ。docs_map=なし のサイトでは読まない
 
 ### 4. ページ分類
 
@@ -73,9 +85,9 @@ Read tool で以下を読む:
 | 新規追加 | リファレンス系で完全に新規追加されたページ (URL パスに `whats-new/` を含まない、`+` のみ) |
 | 大幅更新 | リファレンス系で既存ページ本文に 50 行以上の変更 |
 | 軽微更新 | リファレンス系で上記以外の小規模変更 |
-| 新着情報 | URL パスに `/whats-new/` を含むページ (新規追加・更新を問わずすべてこのカテゴリ) |
+| 新着情報 | URL パスに `/whats-new/` を含むページ (新規追加・更新を問わずすべてこのカテゴリ)。**新着情報カテゴリ=なし のサイトでは本カテゴリを使わず、3 カテゴリ(新規追加/大幅更新/軽微更新)に分類する** |
 
-> 新着情報 (`whats-new/...`) はリリースノート的性質を持ち、リファレンス・ガイドの新規ページとはインパクトが異なるため、別カテゴリとして扱う。
+> 新着情報 (`whats-new/...`) はリリースノート的性質を持ち、リファレンス・ガイドの新規ページとはインパクトが異なるため、別カテゴリとして扱う。新着情報カテゴリ=なし のサイト(例: `mcp`)では `whats-new/` 相当のページが存在しないため、`{{WHATS_NEW_*}}` placeholder と `## 新着情報` セクションを持たないテンプレートを使う。
 
 ### 5. 詳細版テンプレート読み込み
 
@@ -105,7 +117,9 @@ Read tool で `$TEMPLATE` を読み込む。
 | `{{GENERATED_AT_FULL}}` | 生成時刻 (`YYYY-MM-DDTHH:MM:SS+09:00` 形式) |
 | `{{PREV_GENERATED_AT}}` | 前回サマリの `作成日` (初版時は `(none)` 等の placeholder、関連リンクは手動編集で削除) |
 
-URL 併記ルール: en URL の `/docs/en/` を `/docs/ja/` に機械的置換して ja URL とする。
+URL 併記ルール(サイト依存):
+- URL言語併記=あり のサイト: en URL の `/docs/en/` を `/docs/ja/` に機械的置換して ja URL とし、ja/en を併記する
+- URL言語併記=なし のサイト(例: `mcp`): 言語サブパスが無いため **単一 URL** を使う(`.md` 除去のみ)。bullet・末尾リンクの `([日本語](url-ja) / [English](url-en))` 形式は使わず、単一リンクにする。`{{WHATS_NEW_*}}` placeholder はテンプレートに存在しないためスキップする
 
 #### `{{OVERALL_SUMMARY_BULLETS}}` の選定ルール
 
