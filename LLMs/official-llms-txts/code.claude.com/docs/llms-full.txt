@@ -62529,12 +62529,195 @@ Manage every Claude Code session from one screen with agent view, keep Claude wo
 [Full changelog for v2.1.139–v2.1.142 →](/docs/en/changelog#2-1-139)
 
 
+# Week 21 · May 18–22, 2026
+Source: https://code.claude.com/docs/en/whats-new/2026-w21
+
+Use auto mode on the Pro plan and with Sonnet 4.6, see which skills, subagents, and MCP servers drive your plan limits in /usage, and review diffs with the new /code-review command.
+
+<div>
+  <span>Releases <a href="/en/changelog#2-1-143">v2.1.143 → v2.1.149</a></span>
+  <span>1 feature · May 18–22</span>
+</div>
+
+<div>
+  <div>
+    <span>Auto mode on the Pro plan</span>
+    <span>CLI</span>
+  </div>
+
+  <p>Auto mode is now available on the Pro plan and supports Sonnet 4.6 alongside Opus. It replaces permission prompts with background safety checks: routine actions run without interrupting you, and destructive or suspicious ones are blocked and surfaced.</p>
+
+  <p>Update Claude Code, then cycle modes with Shift+Tab; auto mode appears once your account meets the requirements:</p>
+
+  ```bash terminal theme={null}
+  claude update
+  ```
+
+  <a href="/en/permission-modes#eliminate-prompts-with-auto-mode">Auto mode</a>
+</div>
+
+<div>
+  <p>Other wins</p>
+
+  <div>
+    <div><a href="/en/costs#track-your-costs"><code>/usage</code></a> now shows a per-category breakdown of what's driving your plan limits, attributing recent usage to skills, subagents, plugins, and individual MCP servers</div>
+    <div>"Extra usage" is renamed to "usage credits" across the CLI, and <code>/extra-usage</code> is now <code>/usage-credits</code>. The old name still works.</div>
+    <div>New <a href="/en/code-review"><code>/code-review</code></a> command reports correctness bugs at a chosen effort level such as <code>/code-review high</code>, and <code>--comment</code> posts findings as inline GitHub PR comments. <code>/simplify</code> remains as a separate cleanup-only review.</div>
+    <div>Background sessions now appear in <code>/resume</code> alongside interactive ones, marked with <code>bg</code>, and sessions pinned with <code>Ctrl+T</code> in <code>claude agents</code> stay alive when idle</div>
+    <div><code>claude agents --json</code> lists live sessions as JSON for scripting, such as status bars and session pickers</div>
+    <div>The PowerShell tool is now enabled by default on Windows for Bedrock, Vertex, and Foundry users; opt out with <code>CLAUDE\_CODE\_USE\_POWERSHELL\_TOOL=0</code></div>
+    <div><code>claude plugin disable</code> now refuses when another enabled plugin depends on the target, and <code>claude plugin enable</code> force-enables transitive dependencies</div>
+    <div>The <code>/plugin</code> marketplace browse pane shows projected context cost, and the Discover and Browse screens list a plugin's commands, agents, skills, hooks, and MCP/LSP servers before installation</div>
+    <div>New <code>worktree.bgIsolation: "none"</code> setting lets background sessions edit the working copy directly without <code>EnterWorktree</code>, for repos where worktrees are impractical</div>
+    <div>Markdown output renders GFM task list checkboxes, and the <code>/diff</code> detail view scrolls with the keyboard</div>
+    <div>Status line JSON input now includes GitHub repo and PR information when detected</div>
+    <div>Enterprise: the <code>allowAllClaudeAiMcps</code> managed setting loads claude.ai cloud MCP connectors alongside <code>managed-mcp.json</code></div>
+  </div>
+</div>
+
+[Full changelog for v2.1.143–v2.1.149 →](/docs/en/changelog#2-1-143)
+
+
+# Week 22 · May 25–29, 2026
+Source: https://code.claude.com/docs/en/whats-new/2026-w22
+
+Run Claude Code on Claude Opus 4.8, orchestrate large tasks with dynamic workflows, catch security issues with the security-guidance plugin, and use fast mode on Opus 4.8 at a lower price.
+
+<div>
+  <span>Releases <a href="/en/changelog#2-1-150">v2.1.150 → v2.1.157</a></span>
+  <span>4 features · May 25–29</span>
+</div>
+
+<div>
+  <div>
+    <span>Claude Opus 4.8</span>
+    <span>new model</span>
+  </div>
+
+  <p>Opus 4.8 is now the default on Max, Team Premium, Enterprise pay-as-you-go, and the Anthropic API. It defaults to high effort; use <code>/effort xhigh</code> for harder tasks. Requires v2.1.154 or later.</p>
+
+  <Frame>
+    <video />
+  </Frame>
+
+  <p>Switch to Opus 4.8 by name, or pick it from the model picker:</p>
+
+  ```text Claude Code theme={null}
+  > /model claude-opus-4-8
+  ```
+
+  <a href="/en/model-config#available-models">Model configuration</a>
+</div>
+
+<div>
+  <div>
+    <span>Dynamic workflows</span>
+    <span>research preview</span>
+  </div>
+
+  <p>A workflow is an orchestration script Claude writes for your task and runs across many subagents in the background. Use one when a task is too large for one conversation to coordinate: a codebase-wide audit, a large migration, a research question that needs cross-checking. Manage runs with <code>/workflows</code>.</p>
+
+  <Frame>
+    <img alt="Claude Code on Opus 4.8 showing a Dynamic workflow requested indicator for a prompt that asks for a workflow to migrate every internal fetch() call" />
+  </Frame>
+
+  <p>Describe the task and include the word workflow:</p>
+
+  ```text Claude Code theme={null}
+  > create a workflow that migrates every internal fetch() call to the new HttpClient wrapper
+  ```
+
+  <a href="/en/workflows">Dynamic workflows</a>
+</div>
+
+<div>
+  <div>
+    <span>Security guidance plugin</span>
+    <span>plugin</span>
+  </div>
+
+  <p>The security-guidance plugin reviews Claude's code changes for vulnerabilities and fixes them in the same session. It runs a fast pattern check on each edit, a model review at the end of each turn, and a deeper agentic review on commit or push. Add project rules in <code>.claude/claude-security-guidance.md</code>.</p>
+
+  <Frame>
+    <video />
+  </Frame>
+
+  <p>Install it from the official Anthropic marketplace:</p>
+
+  ```text Claude Code theme={null}
+  > /plugin install security-guidance@claude-plugins-official
+  ```
+
+  <p>Then activate it in the current session:</p>
+
+  ```text Claude Code theme={null}
+  > /reload-plugins
+  ```
+
+  <a href="/en/security-guidance">Security guidance plugin</a>
+</div>
+
+<div>
+  <div>
+    <span>Fast mode on Opus 4.8</span>
+    <span>research preview</span>
+  </div>
+
+  <p>Fast mode now defaults to Opus 4.8 at \$10/\$50 per MTok: 2x the standard rate for about 2.5x the speed. Opus 4.7 and 4.6 stay at \$30/\$150. Opus 4.6 fast mode is deprecated.</p>
+
+  <p>Toggle fast mode, now on Opus 4.8:</p>
+
+  ```text Claude Code theme={null}
+  > /fast
+  ```
+
+  <a href="/en/fast-mode#understand-the-cost-tradeoff">Fast mode pricing</a>
+</div>
+
+<div>
+  <p>Other wins</p>
+
+  <div>
+    <div>In <code>claude agents</code>, prefix a shell command with <code>!</code> to run it as a background job you can attach to and detach from; also available as <code>claude --bg --exec 'pytest -x'</code></div>
+    <div>Plugins in <code>.claude/skills</code> directories are now loaded automatically, no marketplace required, and <code>claude plugin init \<name></code> scaffolds a new plugin</div>
+    <div>New <code>/reload-skills</code> command re-scans skill directories without restarting, and <code>SessionStart</code> hooks can return <code>reloadSkills: true</code> to make skills they install available in the same session</div>
+    <div>Skills and commands can set <code>disallowed-tools</code> in frontmatter to remove tools from the model while the skill is active</div>
+    <div>New <code>MessageDisplay</code> hook event lets hooks transform or hide assistant message text as it is displayed</div>
+    <div>Claude Code now switches to your configured <code>--fallback-model</code> for the rest of the session when the primary model is not found, instead of failing every request</div>
+    <div>Plugins can declare <code>defaultEnabled: false</code> in <code>plugin.json</code> or a marketplace entry, so they install without turning on until you enable them</div>
+    <div>Vim mode: <code>/</code> in NORMAL mode opens reverse history search, matching Bash and Zsh vi-mode</div>
+    <div>Streaming tool execution is now always enabled, including with telemetry disabled and on Bedrock, Vertex, and Foundry</div>
+    <div><code>←←</code> to open the agents view now works on Bedrock, Vertex, Foundry, and with telemetry disabled</div>
+    <div>Claude in Chrome: pick which connected browser to use via <code>/chrome</code> → "Select browser…", or in-chat when a browser action runs with multiple connected</div>
+    <div><code>claude mcp list</code> and <code>claude mcp get</code> now show unapproved <code>.mcp.json</code> servers as pending approval instead of auto-approving and connecting when output is piped</div>
+  </div>
+</div>
+
+[Full changelog for v2.1.150–v2.1.157 →](/docs/en/changelog#2-1-150)
+
+
 # What's new
 Source: https://code.claude.com/docs/en/whats-new/index
 
 A weekly digest of notable Claude Code features, with code snippets, demos, and context on why they matter.
 
 The weekly dev digest highlights the features most likely to change how you work. Each entry includes runnable code, a short demo, and a link to the full docs. For every bug fix and minor improvement, see the [changelog](/docs/en/changelog).
+
+<Update label="Week 22" description="May 25–29, 2026">
+  **Claude Opus 4.8**: the new default model for Max, Team Premium, Enterprise pay-as-you-go, and Anthropic API accounts, with high effort by default and `/effort xhigh` for the hardest tasks.
+
+  Also this week: **dynamic workflows** orchestrate dozens to hundreds of subagents from a script Claude writes; the **security-guidance plugin** reviews Claude's changes for vulnerabilities as it works; and **fast mode** runs on Opus 4.8 at \$10/\$50 per MTok.
+
+  [Read the Week 22 digest →](/docs/en/whats-new/2026-w22)
+</Update>
+
+<Update label="Week 21" description="May 18–22, 2026">
+  **Auto mode on the Pro plan**: auto mode now runs on Pro accounts and supports Sonnet 4.6 alongside Opus, replacing permission prompts with background safety checks.
+
+  Also this week: **`/usage`** breaks down what drives your plan limits by skill, subagent, plugin, and MCP server; the new **`/code-review`** command reports correctness bugs; and **background sessions** appear in `/resume` and stay alive when pinned.
+
+  [Read the Week 21 digest →](/docs/en/whats-new/2026-w21)
+</Update>
 
 <Update label="Week 20" description="May 11–15, 2026">
   **Agent view**: `claude agents` opens one screen for every Claude Code session, showing what's running, what's blocked on you, and what's done.
