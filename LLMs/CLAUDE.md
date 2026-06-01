@@ -20,4 +20,5 @@
 - **`llms-txt-official-repos/`**: llms.txt エコシステムの AnswerDotAI 公式リポジトリを submodule で管理するフォルダ。詳細・ツール間の関係は同フォルダの `README.md` / `CLAUDE.md` 参照
 - **`official-llms-txts/`**: ダウンロード済みの公式 llms.txt 等。参照時は同フォルダの `CLAUDE.md`（ナビゲーションファイル）を先に読むと効率的
 - **`scripts/dl_llms.sh`**: `official-llms-txts/` への定期ダウンロードスクリプト。実行: `bash LLMs/scripts/dl_llms.sh`（リポジトリルートから）。`scripts/download_list.tsv` でダウンロード対象を管理
+- **`scripts/gen-llms-txt/gen_llms.sh`**: `targets.txt` を読み、clone → `gen_llms_full.py` → `validate.sh` を一括実行するバッチエントリ。実行: `bash LLMs/scripts/gen-llms-txt/gen_llms.sh`（リポジトリルートから）。生成物の blockquote / description プレースホルダは未補完で残るため、補完が要る場合は `/generate-llms-txt` Skill を併用する
 - WebFetch で `llms.txt` を取得する場合、参照頻度の高いドメインは `.claude/settings.json` の allow リストに既登録あり（`code.claude.com` / `docs.claude.com` / `github.com/anthropics`）。他ドメインは個別に追加する

@@ -1,11 +1,15 @@
-# generate-llms-txt --target-list 用ターゲット一覧テンプレート
+# ターゲット一覧テンプレート（gen_llms.sh / /generate-llms-txt 共用）
 #
 # 使い方:
+#   # シェルから（LLM 補完なしバッチ実行）
+#   bash LLMs/scripts/gen-llms-txt/gen_llms.sh --target-list LLMs/scripts/gen-llms-txt/targets.example.txt
+#
+#   # Skill から（LLM 補完あり）
 #   /generate-llms-txt --target-list LLMs/scripts/gen-llms-txt/targets.example.txt
 #
 # 形式: 1行1ターゲット。# で始まる行・空行は無視される。
 # 各行の先頭トークンが TARGET、残りが行専用オプションとなる。
-# 行ごとのオプションは --target-list 呼び出し時のグローバルオプションより優先される。
+# 行ごとのオプションは呼び出し時のグローバルオプションより優先される。
 #
 # ──────────────────────────────────────────────────────
 # 行ごとに指定可能なオプション
