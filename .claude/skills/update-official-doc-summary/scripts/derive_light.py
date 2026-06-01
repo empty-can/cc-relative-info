@@ -25,8 +25,9 @@ from pathlib import Path
 DETAIL_FILENAME = 'latest-detail.md'
 LIGHT_FILENAME = 'latest.md'
 
-# Marker names whose bullets get anchor-linkified against the detail file.
-LINKED_SECTIONS = frozenset({'highlight-list', 'new-pages', 'updated-pages'})
+# Marker names whose bullets contain internal links (#anchor) that should be
+# rewritten to point at the detail file (./latest-detail.md#anchor).
+LINKED_SECTIONS = frozenset({'highlight-list', 'new-pages', 'updated-pages', 'whats-new'})
 
 # Section header to emit before the extracted content for each marker name.
 # An empty string means "no header" (used for the summary blockquote).
@@ -36,6 +37,7 @@ SECTION_HEADERS = {
     'new-pages':      '## 新規追加されたページ',
     'updated-pages':  '## 大幅に更新されたページ',
     'minor-updates':  '## 軽微な更新',
+    'whats-new':      '## 新着情報',
 }
 
 
@@ -76,14 +78,29 @@ def extract_marker_regions(text: str) -> list[tuple[str, str]]:
 
 
 def linkify_bullets(content: str) -> str:
-    """Wrap `**<title>**` at the start of each bullet with a link to the detail anchor."""
-    def repl(m: re.Match) -> str:
-        title = m.group(1)
-        rest = m.group(2)
-        anchor = make_anchor(title)
-        return f'- [**{title}**](./{DETAIL_FILENAME}#{anchor}){rest}'
+    """Convert internal links to point at the detail file.
 
-    return re.sub(r'^- \*\*([^*\n]+)\*\*(.*)$', repl, content, flags=re.MULTILINE)
+    The detail-side template uses internal anchors (`[label](#anchor)`) for headings
+    that link to other sections within the same detail file. In the light version,
+    those same labels need to point at the detail file, so we rewrite each `(#anchor)`
+    to `(./latest-detail.md#anchor)`.
+
+    Bare bullets in the form `- **<title>**:` (no link) are also wrapped retroactively
+    as a fallback, so a malformed detail still produces a usable light version.
+    """
+    # Pass 1: rewrite internal anchor refs to point at the detail file
+    content = re.sub(r'\]\(#([^)]+)\)', rf'](./{DETAIL_FILENAME}#\1)', content)
+
+    # Pass 2: fallback — if a bullet starts with a bare `**<title>**` (no link), wrap it.
+    # Matches both `- **...**` and `N. **...**` so numbered highlight lists are also handled.
+    def repl(m: re.Match) -> str:
+        marker = m.group(1)
+        title = m.group(2)
+        rest = m.group(3)
+        anchor = make_anchor(title)
+        return f'{marker}[**{title}**](./{DETAIL_FILENAME}#{anchor}){rest}'
+
+    return re.sub(r'^(- |\d+\. )\*\*([^*\n]+)\*\*(?!\])(.*)$', repl, content, flags=re.MULTILINE)
 
 
 def extract_related_links(text: str) -> str:
