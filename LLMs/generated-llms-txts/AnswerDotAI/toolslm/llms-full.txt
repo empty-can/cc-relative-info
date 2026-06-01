@@ -1,0 +1,3543 @@
+# toolslm
+
+> LLM のツール利用・関数呼び出し・XML 変換・シェル操作を簡潔に扱えるユーティリティ群を、Python 開発者向けに提供するライブラリ。
+
+---
+
+## Guide
+
+### xml source
+
+*Source: 00_xml.ipynb | URL: https://github.com/AnswerDotAI/toolslm/blob/main/00_xml.ipynb*
+
+```python
+#|default_exp xml
+```
+
+# xml source
+
+```python
+#| export
+import hashlib, inspect, xml.etree.ElementTree as ET, ast
+from collections import namedtuple
+from ghapi.all import GhApi
+
+from fastcore.utils import *
+from fastcore.meta import delegates
+from fastcore.xtras import hl_md
+from fastcore.xml import to_xml, Document, Documents, Document_content, Src, Source,Out,Outs,Cell,Notebook,Md,Code,Raw
+from fastcore.script import call_parse
+
+from codesigs import file_sigs
+```
+
+```python
+from copy import deepcopy
+
+from fastcore.test import *
+```
+
+## JSON to XML
+
+```python
+#| export
+def json_to_xml(d:dict, # JSON dictionary to convert
+                rnm:str # Root name
+               )->str:
+    "Convert `d` to XML."
+    root = ET.Element(rnm)
+    def build_xml(data, parent):
+        if isinstance(data, dict):
+            for key, value in data.items(): build_xml(value, ET.SubElement(parent, key))
+        elif isinstance(data, list):
+            for item in data: build_xml(item, ET.SubElement(parent, 'item'))
+        else: parent.text = str(data)
+    build_xml(d, root)
+    ET.indent(root)
+    return ET.tostring(root, encoding='unicode')
+```
+
+JSON doesn't map as nicely to XML as the data structure used in `fastcore.xml`, but for simple XML trees it can be convenient -- for example:
+
+```python
+a = dict(surname='Howard', firstnames=['Jeremy','Peter'],
+         address=dict(state='Queensland',country='Australia'))
+hl_md(json_to_xml(a, 'person'))
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+## Including documents
+
+### Notebooks
+
+```python
+nbp = Path('00_xml.ipynb')
+nb = dict2obj(nbp.read_json())
+cells = nb.cells
+cell = cells[7]
+cell
+```
+
+**Outputs:**
+{'cell_type': 'code',
+ 'execution_count': {},
+ 'id': '005a5be4',
+ 'metadata': {},
+ 'outputs': [],
+ 'source': ["a = dict(surname='Howard', firstnames=['Jeremy','Peter'],\n", "         address=dict(stat … (truncated)
+
+```python
+#| export
+def get_mime_text(data):
+    "Get text from MIME bundle, preferring markdown over plain"
+    if 'text/markdown' in data: return ''.join(list(data['text/markdown']))
+    if 'text/plain' in data: return ''.join(list(data['text/plain']))
+```
+
+```python
+#| export
+def cell2out(o):
+    "Convert single notebook output to XML format"
+    if hasattr(o, 'data'): 
+        txt = get_mime_text(o.data)
+        if txt: return Out(txt, mime='markdown' if 'text/markdown' in o.data else 'plain')
+    if hasattr(o, 'text'):
+        txt = o.text if isinstance(o.text, str) else ''.join(o.text)
+        return Out(txt, type='stream', name=o.get('name', 'stdout'))
+    if hasattr(o, 'ename'): return Out(f"{o.ename}: {o.evalue}", type='error')
+```
+
+```python
+for o in cell.outputs: print(to_xml(cell2out(o), do_escape=False))
+```
+
+```python
+#| export
+_ctfuns = {'code': Code, 'markdown': Md, 'raw': Raw}
+
+def cell2xml(cell, out=True, ids=True, nums=False):
+    "Convert notebook cell to concise XML format"
+    src = ''.join(getattr(cell, 'source', ''))
+    if nums: src = '\n'.join(f'{i+1:6d} │ {l}' for i,l in enumerate(src.splitlines()))
+    f = _ctfuns[cell.cell_type]
+    kw = dict(id=cell.id) if ids and hasattr(cell, 'id') else {}
+    if not out: return f(src, **kw)
+    parts = [Source(src)]
+    out_items = L(getattr(cell,'outputs',[])).map(cell2out).filter()
+    if out_items: parts.append(Outs(*out_items))
+    return f(*parts, **kw)
+```
+
+```python
+hl_md(cell2xml(cell, out=False, nums=True))
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+```python
+#| export
+@delegates(cell2xml)
+def cells2xml(cells, wrap=Notebook, **kwargs):
+    "Convert notebook to XML format"
+    res = [cell2xml(c, **kwargs) for c in cells]
+    return to_xml(wrap(*res), do_escape=False)
+
+@delegates(cell2xml)
+def nb2xml(fname=None, nb=None, **kwargs):
+    "Convert notebook to XML format"
+    assert bool(fname)^bool(nb), "Pass either `fname` or `nb`"
+    if not nb: nb = dict2obj(fname.read_json())
+    return cells2xml(nb.cells, **kwargs)
+```
+
+```python
+nbsml = deepcopy(nb)
+del(nbsml.cells[2:])
+
+hl_md(nb2xml(nb=nbsml))
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+```python
+hl_md(nb2xml(nb=nbsml, ids=False))
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+### Documents
+
+According [to Anthropic](https://docs.anthropic.com/claude/docs/long-context-window-tips), "*it's essential to structure your prompts in a way that clearly separates the input data from the instructions*". They recommend using something like the following:
+
+```xml
+Here are some documents for you to reference for your task:
+    
+<documents>
+<document index="1">
+<source>
+(URL, file name, hash, etc)
+</source>
+<document_content>
+(the text content)
+</document_content>
+</document>
+</documents>
+```
+
+We will create some small helper functions to make it easier to generate context in this format, although we're use `<src>` instead of `<source>` to avoid conflict with that HTML tag. Although it's based on Anthropic's recommendation, it's likely to work well with other models too.
+
+```python
+#| export
+doctype = namedtuple('doctype', ['src', 'content'])
+```
+
+We'll use `doctype` to store our pairs.
+
+```python
+#| export
+def _add_nls(s):
+    "Add newlines to start and end of `s` if missing"
+    if not s: return s
+    if s[ 0]!='\n': s = '\n'+s
+    if s[-1]!='\n': s = s+'\n'
+    return s
+```
+
+Since Anthropic's example shows newlines before and after each tag, we'll do the same.
+
+```python
+to_xml(Src('a'))
+```
+
+**Outputs:**
+'<src>a</src>'
+
+```python
+to_xml(Document('a'))
+```
+
+**Outputs:**
+'<document>a</document>'
+
+```python
+#| export
+def mk_doctype(content:str,  # The document content
+           src:Optional[str]=None # URL, filename, etc; defaults to `md5(content)` if not provided
+          ) -> namedtuple:
+    "Create a `doctype` named tuple"
+    if src is None: src = hashlib.md5(content.encode()).hexdigest()[:8]
+    return doctype(_add_nls(str(src).strip()), _add_nls(content.strip()))
+```
+
+This is a convenience wrapper to ensure that a `doctype` has the needed information in the right format.
+
+```python
+doc = 'This is a "sample"'
+mk_doctype(doc)
+```
+
+**Outputs:**
+doctype(src='\n47e19350\n', content='\nThis is a "sample"\n')
+
+```python
+#| export
+def mk_doc(index:int,  # The document index
+           content:str,  # The document content
+           src:Optional[str]=None, # URL, filename, etc; defaults to `md5(content)` if not provided
+           **kwargs
+          ) -> tuple:
+    "Create an `ft` format tuple for a single doc in Anthropic's recommended format"
+    dt = mk_doctype(content, src)
+    content = Document_content(NotStr(dt.content))
+    src = Src(NotStr(dt.src))
+    return Document(src, content, index=index, **kwargs)
+```
+
+We can now generate XML for one document in the suggested format:
+
+```python
+mk_doc(1, doc, title="test")
+```
+
+**Outputs:**
+<document index="1" title="test"><src>
+47e19350
+</src><document-content>
+This is a "sample"
+</document-content></document>
+
+```python
+#| export
+def docs_xml(docs:list[str],  # The content of each document
+             srcs:Optional[list]=None,  # URLs, filenames, etc; each one defaults to `md5(content)` if not provided
+             prefix:bool=False, # Include Anthropic's suggested prose intro?
+             details:Optional[list]=None, # Optional list of dicts with additional attrs for each doc
+             title:str=None # Optional title attr for Documents element
+            )->str:
+    "Create an XML string containing `docs` in Anthropic's recommended format"
+    pre = 'Here are some documents for you to reference for your task:\n\n' if prefix else ''
+    if srcs is None: srcs = [None]*len(docs)
+    if details is None: details = [{}]*len(docs)
+    docs = (mk_doc(i+1, d, s, **kw) for i,(d,s,kw) in enumerate(zip(docs,srcs,details)) if d.strip())
+    kw = dict(title=title) if title else {}
+    return pre + to_xml(Documents(*docs, **kw), do_escape=False)
+```
+
+Putting it all together, we have our final XML format:
+
+```python
+docs = [doc, 'And another one']
+srcs = [None, 'doc.txt']
+print(docs_xml(docs, srcs))
+```
+
+**Outputs:**
+<documents><document index="1"><src>
+47e19350
+</src><document-content>
+This is a "sample"
+</document-content></document><document index="2"><src>
+doc.txt
+</src><document-content>
+And another one
+</doc … (truncated)
+
+## Context creation
+
+Now that we can generate Anthropic's XML format, let's make it easy for a few common cases.
+
+### File list to context
+
+For generating XML context from files, we'll just read them as text and use the file names as `src`.
+
+```python
+#| export
+@delegates(nb2xml)
+def read_file(fname, max_size=None, sigs_only=False, **kwargs):
+    "Read file content, converting notebooks to XML if needed"
+    fname = Path(fname).expanduser()
+    if fname.suffix == '.ipynb': res = nb2xml(fname, **kwargs)
+    elif sigs_only: res = '\n'.join(str(s) for s in file_sigs(fname))
+    else:
+        try: res = fname.read_text()
+        except UnicodeDecodeError: return f"[Skipped: {fname.name} is binary]"
+    if max_size and len(res)>max_size: return f"[Skipped: {fname.name} exceeds {max_size} bytes]"
+    return res
+```
+
+```python
+#| export
+@delegates(docs_xml)
+def files2ctx(
+    fnames:list[Union[str,Path]], # List of file names to add to context
+    srcs:Optional[list]=None, # Use the labels instead of `fnames`
+    max_size:int=None, # Skip files larger than this (bytes)
+    out:bool=True, # Include notebook cell outputs?
+    ids:bool=True,  # Include cell ids in notebooks?
+    nums:bool=False, # Include line numbers in notebook cell source?
+    sigs_only:bool=False, # Only include signatures and docstrings (where supported by `codesigs` lib)
+    **kwargs
+)->str: # XML for LM context
+    "Convert files to XML context, handling notebooks"
+    fnames = [Path(o).expanduser() for o in listify(fnames)]
+    contents = [read_file(o, max_size=max_size, out=out, ids=ids, sigs_only=sigs_only, nums=nums) for o in fnames]
+    return docs_xml(contents, srcs or fnames, **kwargs)
+```
+
+```python
+fnames = ['samples/sample_core.py', 'samples/sample_styles.css']
+hl_md(files2ctx(fnames, max_size=120))
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+### Folder to context
+
+```python
+#| export
+@delegates(globtastic, but='func')
+def folder2ctx(
+    path:Union[str,Path], # Folder to read
+    prefix:bool=False, # Include Anthropic's suggested prose intro?
+    out:bool=True, # Include notebook cell outputs?
+    include_base:bool=True, # Include full path in src?
+    title:str=None, # Optional title attr for Documents element
+    max_size:int=100_000, # Skip files larger than this (bytes)
+    max_total:int=10_000_000,  # Max total output size in bytes
+    readme_first:bool=False,  # Prioritize README files at start of context?
+    files_only:bool=False,  # Return dict of {filename: size} instead of context?
+    sigs_only:bool=False,  # Return signatures instead of full text? (where supported by `codesigs` lib)
+    ids:bool=True,  # Include cell ids in notebooks?
+    **kwargs
+)->Union[str,dict]:
+    "Convert folder contents to XML context, handling notebooks"
+    folder = Path(path).expanduser()
+    fnames = pglob(folder, **kwargs)
+    if files_only: return {str(f.relative_to(folder)): f.stat().st_size for f in fnames}
+    if readme_first: fnames = sorted(fnames, key=lambda f: (0 if 'readme' in f.name.lower() else 1, f))
+    srcs = fnames if include_base else [f.relative_to(folder) for f in fnames]
+    res = files2ctx(fnames, prefix=prefix, out=out, srcs=srcs, title=title, max_size=max_size, sigs_only=sigs_only, ids=ids)
+    suf = f"\n\n[TRUNCATED: output size {{_outsz_}} exceeded max size {max_total} bytes]"
+    if max_total and len(res) > max_total: res = truncstr(res, max_total, suf=suf, sizevar='_outsz_')
+    return res
+```
+
+```python
+print(folder2ctx('samples', prefix=True, types='py'))
+```
+
+**Outputs:**
+Here are some documents for you to reference for your task:
+
+<documents><document index="1"><src>
+samples/sample_core.py
+</src><document-content>
+import inspect
+empty = inspect.Parameter.empty
+models  … (truncated)
+
+```python
+#| export
+def sym2file(sym):
+    "Return md string with filepath and contents for a symbol's source file"
+    f = Path(inspect.getfile(sym))
+    return f"- `{f}`\n\n````\n{f.read_text()}\n````"
+```
+
+```python
+# print(sym2file(Path))
+```
+
+```python
+#| export
+@delegates(folder2ctx)
+def sym2folderctx(
+    sym,
+    types:str|list='py',  # List or comma-separated str of ext types from: py, js, java, c, cpp, rb, r, ex, sh, web, doc, cfg
+    skip_file_re:str=r'^_mod', # Skip files matching regex
+    **kwargs
+):
+    "Return folder context for a symbol's source file location"
+    return folder2ctx(Path(inspect.getfile(sym)).parent, types=types, skip_file_re=skip_file_re, **kwargs)
+```
+
+```python
+# print(sym2folderctx(test_eq))
+```
+
+```python
+#| export
+def sym2pkgpath(sym):
+    "Get root package path for a symbol"
+    mod = sym.__name__ if inspect.ismodule(sym) else sym.__module__
+    root = mod.split('.')[0]
+    return Path(sys.modules[root].__path__[0])
+```
+
+```python
+sym2pkgpath(test_eq)
+```
+
+**Outputs:**
+Path('/Users/jhoward/aai-ws/fastcore/fastcore')
+
+```python
+#| export
+@delegates(folder2ctx)
+def sym2pkgctx(
+    sym,
+    types:str|list='py', # List or comma-separated str of ext types from: py, js, java, c, cpp, rb, r, ex, sh, web, doc, cfg
+    skip_file_re:str=r'^_mod', # Skip files matching regex
+    skip_folder_re:str=r'^(\.|__)', # Skip folders matching regex
+    **kwargs
+):
+    "Return contents of files in a symbol's root package"
+    return folder2ctx(sym2pkgpath(sym), types=types, skip_file_re=skip_file_re, skip_folder_re=skip_folder_re, **kwargs)
+```
+
+```python
+# print(sym2pkgctx(test_eq))
+```
+
+```python
+#| export
+#| hide
+@call_parse
+@delegates(folder2ctx)
+def folder2ctx_cli(
+    path:str='.', # Folder name containing files to add to context
+    out:bool=True, # Include notebook cell outputs?
+    **kwargs # Passed to `folder2ctx`
+)->str: # XML for Claude context
+    "CLI to convert folder contents to XML context, handling notebooks"
+    print(folder2ctx(path, out=out, **kwargs))
+```
+
+:::{.callout-tip}
+
+After you install `toolslm`, `folder2ctx` becomes available from the command line.
+
+:::
+
+```python
+#| eval: false
+!folder2ctx -h
+```
+
+**Outputs:**
+usage: folder2ctx [-h] [--path PATH] [--no-out] [--prefix] [--no-include_base]
+                  [--title TITLE] [--max_size MAX_SIZE] [--max_total MAX_TOTAL]
+                  [--readme_first] [--f … (truncated)
+                   Include Anthropic's suggested prose intro?
+                                   (default: False)
+  --no-include_base                Include full path in src? (default: True)
+  --ti … (truncated)
+
+```python
+#| export
+def parse_gh_url(url):
+    "Parse GitHub URL into (owner, repo, type, ref, path) or None"
+    m = re.match(r'https?://(?:www\.)?github\.com/([^/]+)/([^/]+)(?:/([^/]+)(?:/([^/]+)(?:/(.+))?)?)?', url)
+    return dict(zip('owner repo typ ref path'.split(), m.groups())) if m else None
+```
+
+```python
+#| export
+@delegates(folder2ctx)
+def repo2ctx(
+    owner:str,  # GitHub repo owner or "owner/repo" or a full github URL
+    repo:str=None,   # GitHub repo name (leave empty if using "owner/repo" or URL format for owner param)
+    ref:str=None,  # Git ref (branch/tag/sha) (get from URL not provided); defaults to repo's default branch
+    folder:str=None,  # Only include files under this path (get from URL not provided)
+    show_filters:bool=True,  # Include filter info in title?
+    token:str=None,  # GitHub token (uses GITHUB_TOKEN env var if None)
+    **kwargs  # Passed to `folder2ctx`
+)->Union[str,dict]:  # XML for LM context, or dict of file sizes
+    "Convert GitHub repo to XML context without cloning"
+    import tempfile, tarfile, io
+    if owner.startswith('http'):
+        parsed = parse_gh_url(owner)
+        if not parsed: raise ValueError(f"Invalid GitHub URL: {owner}")
+        owner,repo = parsed['owner'], parsed['repo']
+        ref = ref or parsed.get('ref')
+        folder = folder or parsed.get('path')
+    if repo is None: owner, repo = owner.split('/')
+    api = GhApi(token=token)
+    if ref is None: ref = api.repos.get(owner, repo).default_branch
+    data = api.repos.download_tarball_archive(owner, repo, ref)
+    title = f"GitHub repository contents from {owner}/{repo}/{ref}"
+    if folder: title += f'/{folder}'
+    if show_filters:
+        parts = [f"{k}: {', '.join(v) if isinstance(v, (list,tuple)) else v}" for k,v in kwargs.items() if v]
+        if parts: title += f" (filters applied -- {' | '.join(parts)})"
+    tf = tarfile.open(fileobj=io.BytesIO(data))
+    with tempfile.TemporaryDirectory() as tmp:
+        tf.extractall(tmp, filter='data')
+        subdir = Path(tmp) / tf.getmembers()[0].name.split('/')[0]
+        if folder: subdir = subdir/folder
+        return folder2ctx(subdir, include_base=False, title=title, readme_first=True, **kwargs)
+```
+
+```python
+#| eval: false
+print(repo2ctx('answerdotai/toolslm', exts=('ipynb','py'), skip_file_re='^_', out=False, max_total=500))
+```
+
+**Outputs:**
+<documents title="GitHub repository contents from answerdotai/toolslm/main (filters applied -- exts: ipynb, py | skip_file_re: ^_ | max_total: 500)"><document index="1"><src>
+00_xml.ipynb
+</src><docum … (truncated)
+
+```python
+#| eval: false
+print(repo2ctx('answerdotai/toolslm', types='py', skip_file_re='^_', out=False, files_only=True))
+```
+
+**Outputs:**
+{'00_xml.ipynb': 39890, '01_funccall.ipynb': 66266, '02_shell.ipynb': 6295, '03_download.ipynb': 12178, '04_md_hier.ipynb': 8469, 'index.ipynb': 3089, 'setup.py': 2596, 'samples/sample_core.py': 134,  … (truncated)
+
+```python
+#| eval: false
+print(repo2ctx('https://github.com/AnswerDotAI/toolslm/tree/main/samples'))
+```
+
+**Outputs:**
+<documents title="GitHub repository contents from AnswerDotAI/toolslm/main/samples"><document index="1"><src>
+sample_core.py
+</src><document-content>
+import inspect
+empty = inspect.Parameter.empty
+mod … (truncated)
+
+```python
+#| export
+#| hide
+@call_parse
+@delegates(repo2ctx, but='include_base,title,readme_first')
+def repo2ctx_cli(
+    owner:str,  # GitHub repo owner or "owner/repo" or a full github URL
+    repo:str=None,   # GitHub repo name (leave empty if using "owner/repo" or URL format)
+    ref:str=None,  # Git ref (branch/tag/sha)
+    folder:str=None,  # Only include files under this path
+    out:bool=True, # Include notebook cell outputs?
+    **kwargs # Passed to `repo2ctx`
+)->str: # XML for Claude context
+    "CLI to convert GitHub repo contents to XML context"
+    print(repo2ctx(owner, repo, ref=ref, folder=folder, out=out, **kwargs))
+```
+
+## Export -
+
+```python
+#|hide
+#|eval: false
+from nbdev.doclinks import nbdev_export
+nbdev_export()
+```
+
+### funccall source
+
+*Source: 01_funccall.ipynb | URL: https://github.com/AnswerDotAI/toolslm/blob/main/01_funccall.ipynb*
+
+```python
+#|default_exp funccall
+```
+
+# funccall source
+
+```python
+#| export
+import inspect, ast, keyword
+from collections import abc
+from fastcore.utils import *
+from fastcore.docments import docments
+from typing import get_origin, get_args, Optional, Union, Any
+from types import UnionType
+from typing import get_type_hints
+from inspect import Parameter, Signature
+from decimal import Decimal
+from uuid import UUID
+from functools import reduce
+```
+
+```python
+#|hide
+from fastcore.test import *
+from typing import Dict, List, Tuple
+```
+
+```python
+#| export
+empty = inspect.Parameter.empty
+```
+
+## Function calling
+
+### Function to schema
+
+Many LLMs do function calling (aka tool use) by taking advantage of JSON schema.
+
+We'll use [docments](https://fastcore.fast.ai/docments.html) to make getting JSON schema from Python functions as ergonomic as possible. Each parameter (and the return value) should have a type, and a docments comment with the description of what it is. Here's an example:
+
+```python
+def silly_sum(
+    a:int, # First thing to sum
+    b:int=1, # Second thing to sum
+    c:list[int]=None, # A pointless argument
+) -> int: # The sum of the inputs
+    "Adds a + b."
+    return a + b
+```
+
+This is what `docments` makes of that:
+
+```python
+d = docments(silly_sum, full=True)
+d
+```
+
+**Outputs:**
+{'a': {'docment': 'First thing to sum',
+  'anno': int,
+  'default': inspect._empty},
+ 'b': {'docment': 'Second thing to sum', 'anno': int, 'default': 1},
+ 'c': {'docment': 'A pointless argument', 'ann … (truncated)
+
+Note that this is an [AttrDict](https://fastcore.fast.ai/basics.html#attrdict) so we can treat it like an object, *or* a dict:
+
+```python
+d.a.docment, d['a']['anno']
+```
+
+**Outputs:**
+('First thing to sum', int)
+
+```python
+#| export
+def _param(info, evalable=False):
+    "JSON schema non-type metadata for a parameter"
+    pschema = dict(description=info.docment or "")
+    if info.default is not empty:
+        if evalable:
+            try: ast.literal_eval(repr(info.default))
+            except: pschema["default"] = str(info.default)
+            else: pschema["default"] = info.default
+        else: pschema["default"] = info.default
+    return pschema
+```
+
+This private function converts a key/value pair from the `docments` structure into the `dict` that will be needed for the schema.
+
+```python
+n,o = first(d.items())
+print(n,'//', o)
+_param(o)
+```
+
+**Outputs:**
+a // {'docment': 'First thing to sum', 'anno': <class 'int'>, 'default': <class 'inspect._empty'>}
+
+{'description': 'First thing to sum'}
+
+```python
+n,o
+```
+
+**Outputs:**
+('a',
+ {'docment': 'First thing to sum', 'anno': int, 'default': inspect._empty})
+
+```python
+d
+```
+
+**Outputs:**
+{'a': {'docment': 'First thing to sum',
+  'anno': int,
+  'default': inspect._empty},
+ 'b': {'docment': 'Second thing to sum', 'anno': int, 'default': 1},
+ 'c': {'docment': 'A pointless argument', 'ann … (truncated)
+
+```python
+#| export
+custom_types = {Path, bytes, Decimal, UUID}
+_tmap = {int: "integer", float: "number", str: "string", bool: "boolean", list: "array", dict: "object"}
+_nmap = {k.__name__: v for k, v in _tmap.items()}
+
+def _type_str(t):
+    "JSON Schema type name for a type or string annotation"
+    if isinstance(t, str): return _nmap.get(t, "object")
+    base = _tmap.get(get_origin(t) or t, _nmap.get(getattr(t, '__name__', ''), "object"))
+    if (args := get_args(t)): return f"{base}[{', '.join(_type_str(a) for a in args if a is not Ellipsis)}]"
+    return base
+```
+
+```python
+#| export
+def _handle_type(t, defs):
+    "Convert a type annotation to JSON Schema"
+    ot = ifnone(get_origin(t), t)
+    if t is NoneType: return {'type': 'null'}
+    if ot in (Union, UnionType): return {"anyOf": [_handle_type(arg, defs) for arg in get_args(t)]}
+    if t in custom_types: return {'type': 'string', 'format': t.__name__}
+    if ot is dict:
+        args = get_args(t)
+        return {'type': 'object', 'additionalProperties': _handle_type(args[1], defs)} if args else {'type': 'object'}
+    if ot is tuple:
+        args = get_args(t)
+        if not args: return {'type': 'array', 'items': {}}
+        if args[-1] is Ellipsis: return {'type': 'array', 'items': _handle_type(args[0], defs)}
+        prefix = [_handle_type(a, defs) for a in args]
+        items = prefix[0] if all(p == prefix[0] for p in prefix) else {'anyOf': prefix}
+        return {'type': 'array', 'prefixItems': prefix, 'items': items, 'minItems': len(args), 'maxItems': len(args)}
+    if ot in (list, set):
+        args = get_args(t)
+        schema = {'type': 'array', 'items': _handle_type(args[0], defs) if args else {'type': 'string'}}
+        if ot is set: schema['uniqueItems'] = True
+        return schema
+    if isinstance(t, type) and not issubclass(t, (int, float, str, bool)) and t.__module__ != 'builtins' or inspect.isfunction(t):
+        defs[t.__name__] = _get_nested_schema(t)
+        return {'$ref': f'#/$defs/{t.__name__}'}
+    return {'type': _type_str(t)}
+```
+
+```python
+_handle_type(int, None), _handle_type(Path, None)
+```
+
+**Outputs:**
+({'type': 'integer'}, {'type': 'string', 'format': 'Path'})
+
+Fixed-length tuples (e.g. `tuple[int, str]`) are mapped to a JSON Schema array with `prefixItems` for per-position types, which is accepted by Anthropic. OpenAI/Gemini require `items` so this is added, along with `minItems`/`maxItems` to enforce the fixed length. If all positions share the same type, `items` is that type directly; otherwise it's an `anyOf` of the unique types.
+
+```python
+# gemini expect `items` to be defined for arrays
+_handle_type(list, None), _handle_type(tuple[str], None), _handle_type(set[str], None)
+```
+
+**Outputs:**
+({'type': 'array', 'items': {'type': 'string'}},
+ {'type': 'array',
+  'prefixItems': [{'type': 'string'}],
+  'items': {'type': 'string'},
+  'minItems': 1,
+  'maxItems': 1},
+ {'type': 'array', 'items': … (truncated)
+
+```python
+_handle_type(dict, None), _handle_type(dict[str,str], None)
+```
+
+**Outputs:**
+({'type': 'object'},
+ {'type': 'object', 'additionalProperties': {'type': 'string'}})
+
+```python
+def _example_new_unioin(opt_tup: str | None): pass
+
+d = docments(_example_new_unioin, full=True)
+anno1 = first(d.items())[1].anno
+(anno1, get_origin(anno1), get_args(anno1))
+```
+
+**Outputs:**
+(str | None, types.UnionType, (str, NoneType))
+
+```python
+def _example_old_union(opt_tup: Union[str, type(None)] =None): pass
+
+d = docments(_example_old_union, full=True)
+anno2 = first(d.items())[1].anno
+(anno2, get_origin(anno2), get_args(anno2))
+```
+
+**Outputs:**
+(typing.Optional[str], typing.Union, (str, NoneType))
+
+We treat non-specialised arrays as arrays of strs, since some LLMs require a subtype:
+
+```python
+test_eq(_handle_type(list, {}), {'type': 'array', 'items': {'type': 'string'}})
+test_eq(_handle_type(set, {}), {'type': 'array', 'items': {'type': 'string'}, 'uniqueItems': True})
+```
+
+```python
+#| export
+def _process_property(name, obj, props, req, defs, evalable=False):
+    "Process a single property of the schema"
+    p = _param(obj, evalable=evalable)
+    props[name] = p
+    if obj.default is empty: req[name] = True
+    p.update(_handle_type(obj.anno, defs))
+    if 'anyOf' in p: p.pop('type', None)
+```
+
+```python
+#| export
+def _get_nested_schema(obj, evalable=False, skip_hidden=False):
+    "Generate nested JSON schema for a class or function"
+    d = docments(obj, full=True)
+    props, req, defs = {}, {}, {}
+
+    for n, o in d.items():
+        if n != 'return' and n != 'self' and not (skip_hidden and n.startswith('_')):
+            _process_property(n, o, props, req, defs, evalable=evalable)
+
+    tkw = {}
+    if isinstance(obj, type): tkw['title']=obj.__name__
+    schema = dict(type='object', properties=props, **tkw)
+    if req: schema['required'] = list(req)
+    if defs: schema['$defs'] = defs
+    return schema
+
+```
+
+```python
+# Test primitive types
+defs = {}
+assert _handle_type(int, defs) == {'type': 'integer'}
+assert _handle_type(str, defs) == {'type': 'string'}
+assert _handle_type(bool, defs) == {'type': 'boolean'}
+assert _handle_type(float, defs) == {'type': 'number'}
+
+# Test custom class
+class TestClass:
+    def __init__(self, x: int, y: int): store_attr()
+
+result = _handle_type(TestClass, defs)
+assert result == {'$ref': '#/$defs/TestClass'}
+assert 'TestClass' in defs
+assert defs['TestClass']['type'] == 'object'
+assert 'properties' in defs['TestClass']
+
+# tuple[int, ...] should produce array with items, not prefixItems
+test_eq(_handle_type(tuple[int, ...], {}), {'type': 'array', 'items': {'type': 'integer'}})
+```
+
+```python
+# Test primitive types in containers
+test_eq(_handle_type(list[int], defs), {'type': 'array', 'items': {'type': 'integer'}})
+test_eq(_handle_type(tuple[str], defs), {'type': 'array', 'prefixItems': [{'type': 'string'}], 'items': {'type': 'string'}, 'minItems': 1, 'maxItems': 1})
+test_eq(_handle_type(set[str], defs), dict(type='array', items={'type': 'string'}, uniqueItems=True))
+test_eq(_handle_type(dict[str,bool], defs), {'type': 'object', 'additionalProperties': {'type': 'boolean'}})
+```
+
+```python
+result = _handle_type(list[TestClass], defs)
+assert result == {'type': 'array', 'items': {'$ref': '#/$defs/TestClass'}}
+assert 'TestClass' in defs
+
+# Test complex nested structure
+ComplexType = dict[str, list[TestClass]]
+result = _handle_type(dict[str, list[TestClass]], defs)
+assert result == {'type': 'object', 'additionalProperties': {'type': 'array', 'items': {'$ref': '#/$defs/TestClass'}}}
+```
+
+```python
+# Test processing of a required integer property
+props, req = {}, {}
+class TestClass:
+    "Test class"
+    def __init__(
+        self,
+        x: int, # First thing
+        y: list[float], # Second thing
+        z: str = "default", # Third thing
+    ): store_attr()
+
+d = docments(TestClass, full=True)
+_process_property('x', d.x, props, req, defs)
+assert 'x' in props
+assert props['x']['type'] == 'integer'
+assert 'x' in req
+
+# Test processing of a required list property
+_process_property('y', d.y, props, req, defs)
+assert 'y' in props
+assert props['y']['type'] == 'array'
+assert props['y']['items']['type'] == 'number'
+assert 'y' in req
+
+# Test processing of an optional string property with default
+_process_property('z', d.z, props, req, defs)
+assert 'z' in props
+assert props['z']['type'] == 'string'
+assert props['z']['default'] == "default"
+assert 'z' not in req
+```
+
+```python
+#| export
+def get_schema(
+    f:Union[callable,dict], # Function to get schema for
+    pname='input_schema',   # Key name for parameters
+    evalable=False,  # stringify defaults that can't be literal_eval'd?
+    skip_hidden=False, # skip parameters starting with '_'?
+    name=None # Override function name (useful for dotted paths like 'obj.method')
+)->dict: # {'name':..., 'description':..., pname:...}
+    "Generate JSON schema for a class, function, or method"
+    if isinstance(f, dict): return f
+    if hasattr(f, '__call__') and not isinstance(f, type) and not inspect.isfunction(f) and not inspect.ismethod(f):
+        orig_doc = f.__doc__
+        f = f.__call__
+    else: orig_doc = None
+    schema = _get_nested_schema(f, evalable=evalable, skip_hidden=skip_hidden)
+    desc = f.__doc__ or orig_doc
+    assert desc, "Docstring missing!"
+    d = docments(f, full=True)
+    ret = d.pop('return')
+    has_type = (ret.anno is not empty) and (ret.anno is not None)
+    has_doc = ret.docment
+    if has_type or has_doc:
+        type_str = f'type: {_type_str(ret.anno)}' if has_type else None
+        ret_str = f'{ret.docment} ({type_str})' if has_type and has_doc else (type_str if has_type else ret.docment)
+        desc += f'\n\nReturns:\n- {ret_str}'
+    return {"name": name or f.__name__, "description": desc, pname: schema}
+```
+
+```python
+get_schema(get_schema)
+```
+
+**Outputs:**
+{'name': 'get_schema',
+ 'description': "Generate JSON schema for a class, function, or method\n\nReturns:\n- {'name':..., 'description':..., pname:...} (type: object)",
+ 'input_schema': {'type': 'obje … (truncated)
+
+```python
+def f(
+    o:object, # the o
+    q:tuple[int,str],
+    p:str|list[str] = 'a',
+): "object function"
+```
+
+```python
+s = get_schema(f)
+test_eq(s['name'], 'f')
+inpp = s['input_schema']['properties']
+test_eq(inpp['o'], {'type': 'object', 'description': 'the o'})
+test_eq(inpp['q'], dict(type='array', description='', prefixItems=[{'type': 'integer'}, {'type': 'string'}], items=dict(anyOf=[{'type': 'integer'}, {'type': 'string'}]), minItems=2, maxItems=2))
+test_eq(inpp['p'], dict(description='', default='a', anyOf=[{'type': 'string'}, {'type': 'array', 'items': {'type': 'string'}}]))
+s
+```
+
+**Outputs:**
+{'name': 'f',
+ 'description': 'object function',
+ 'input_schema': {'type': 'object',
+  'properties': {'o': {'description': 'the o', 'type': 'object'},
+   'q': {'description': '',
+    'type': 'array',
+ … (truncated)
+
+```python
+class ClassA:
+    "I am a class"
+    def f(self, a:int): # That is `a`
+        "Do a thing"
+        return 1
+    def __call__(self, b:str): # That is `b`
+        "Do another thing"
+        return 2
+
+ca = ClassA()
+ca.f(2)
+```
+
+**Outputs:**
+1
+
+```python
+get_schema(ca.f)
+```
+
+**Outputs:**
+{'name': 'f',
+ 'description': 'Do a thing',
+ 'input_schema': {'type': 'object',
+  'properties': {'a': {'description': 'That is `a`', 'type': 'integer'}},
+  'required': ['a']}}
+
+```python
+get_schema(ca)
+```
+
+**Outputs:**
+{'name': '__call__',
+ 'description': 'Do another thing',
+ 'input_schema': {'type': 'object',
+  'properties': {'b': {'description': 'That is `b`', 'type': 'string'}},
+  'required': ['b']}}
+
+### Usage examples
+
+Putting this all together, we can now test getting a schema from `silly_sum`. The tool use spec doesn't support return annotations directly, so we put that in the description instead.
+
+```python
+s = get_schema(silly_sum)
+desc = s.pop('description')
+print(desc)
+s
+```
+
+**Outputs:**
+Adds a + b.
+
+Returns:
+- The sum of the inputs (type: integer)
+
+{'name': 'silly_sum',
+ 'input_schema': {'type': 'object',
+  'properties': {'a': {'description': 'First thing to sum', 'type': 'integer'},
+   'b': {'description': 'Second thing to sum',
+    'default':  … (truncated)
+
+This also works with string annotations, e.g:
+
+```python
+def silly_test(
+    a: 'int',  # quoted type hint
+)->int:
+    "Mandatory docstring"
+    return a
+
+get_schema(silly_test)
+```
+
+**Outputs:**
+{'name': 'silly_test',
+ 'description': 'Mandatory docstring\n\nReturns:\n- type: integer',
+ 'input_schema': {'type': 'object',
+  'properties': {'a': {'description': 'quoted type hint', 'type': 'intege … (truncated)
+
+This also works with instance methods:
+
+```python
+class Dummy:
+    def sums(
+        self,
+        a:int,  # First thing to sum
+        b:int=1 # Second thing to sum
+    ): # The sum of the inputs
+        "Adds a + b."
+        print(f"Finding the sum of {a} and {b}")
+        return a + b
+
+get_schema(Dummy.sums)
+```
+
+**Outputs:**
+{'name': 'sums',
+ 'description': 'Adds a + b.',
+ 'input_schema': {'type': 'object',
+  'properties': {'a': {'description': 'First thing to sum', 'type': 'integer'},
+   'b': {'description': 'Second thin … (truncated)
+
+`get_schema` also handles more complicated structures such as nested classes. This is useful for things like structured outputs.
+
+```python
+class Turn:
+    "Turn between two speakers"
+    def __init__(
+        self,
+        speaker_a:str, # First speaker's message
+        speaker_b:str,  # Second speaker's message
+    ): store_attr()
+
+class Conversation:
+    "A conversation between two speakers"
+    def __init__(
+        self,
+        turns:list[Turn], # Turns of the conversation
+    ): store_attr()
+
+get_schema(Conversation)
+```
+
+**Outputs:**
+{'name': 'Conversation',
+ 'description': 'A conversation between two speakers',
+ 'input_schema': {'type': 'object',
+  'properties': {'turns': {'description': 'Turns of the conversation',
+    'type': ' … (truncated)
+
+```python
+class DictConversation:
+    "A conversation between two speakers"
+    def __init__(
+        self,
+        turns:dict[str,object], # dictionary of topics and the Turns of the conversation
+    ): store_attr()
+
+get_schema(DictConversation)
+```
+
+**Outputs:**
+{'name': 'DictConversation',
+ 'description': 'A conversation between two speakers',
+ 'input_schema': {'type': 'object',
+  'properties': {'turns': {'description': 'dictionary of topics and the Turns of … (truncated)
+
+```python
+class SetConversation:
+    "A conversation between two speakers"
+    def __init__(
+        self,
+        turns:set[Turn], # the unique Turns of the conversation
+    ): store_attr()
+
+get_schema(SetConversation)
+```
+
+**Outputs:**
+{'name': 'SetConversation',
+ 'description': 'A conversation between two speakers',
+ 'input_schema': {'type': 'object',
+  'properties': {'turns': {'description': 'the unique Turns of the conversation', … (truncated)
+
+### Additional `get_schema()` Test Cases
+
+Union types are represented in JSON Schema using `anyOf`.
+
+
+```python
+IntPair = tuple[int, int]
+def _union_test(opt_tup: Union[IntPair, str, int]=None):
+    "Mandatory docstring"
+    return ""
+get_schema(_union_test)
+```
+
+**Outputs:**
+{'name': '_union_test',
+ 'description': 'Mandatory docstring',
+ 'input_schema': {'type': 'object',
+  'properties': {'opt_tup': {'description': '',
+    'default': None,
+    'anyOf': [{'type': 'array',
+ … (truncated)
+
+The new (Python 3.10+) union syntax can also be used, producing an equivalent schema.
+
+```python
+def _new_union_test(opt_tup: IntPair | str | int =None):
+    "Mandatory docstring"
+    pass
+get_schema(_new_union_test)
+```
+
+**Outputs:**
+{'name': '_new_union_test',
+ 'description': 'Mandatory docstring',
+ 'input_schema': {'type': 'object',
+  'properties': {'opt_tup': {'description': '',
+    'default': None,
+    'anyOf': [{'type': 'arra … (truncated)
+
+Optional is a special case of union types, limited to two types, one of which is None (mapped to null in JSON schema):
+
+```python
+def _optional_test(opt_tup: Optional[IntPair]=None):
+    "Mandatory docstring"
+    pass
+get_schema(_optional_test)
+```
+
+**Outputs:**
+{'name': '_optional_test',
+ 'description': 'Mandatory docstring',
+ 'input_schema': {'type': 'object',
+  'properties': {'opt_tup': {'description': '',
+    'default': None,
+    'anyOf': [{'type': 'array … (truncated)
+
+```python
+def _param_union_test(items: list[str] | None = None):
+    "Test parameterized container in union"
+    pass
+get_schema(_param_union_test)
+```
+
+**Outputs:**
+{'name': '_param_union_test',
+ 'description': 'Test parameterized container in union',
+ 'input_schema': {'type': 'object',
+  'properties': {'items': {'description': '',
+    'default': None,
+    'anyOf … (truncated)
+
+Containers can also be used, both in their parameterized form (`List[int]`) or as their unparameterized raw type (`List`). In the latter case, the item type is mapped to `object` in JSON schema.
+
+```python
+def _list_test(l: List[int]):
+    "Mandatory docstring"
+    pass
+get_schema(_list_test)
+```
+
+**Outputs:**
+{'name': '_list_test',
+ 'description': 'Mandatory docstring',
+ 'input_schema': {'type': 'object',
+  'properties': {'l': {'description': '',
+    'type': 'array',
+    'items': {'type': 'integer'}}},
+  ' … (truncated)
+
+```python
+def _raw_list_test(l: List):
+    "Mandatory docstring"
+    pass
+get_schema(_raw_list_test)
+```
+
+**Outputs:**
+{'name': '_raw_list_test',
+ 'description': 'Mandatory docstring',
+ 'input_schema': {'type': 'object',
+  'properties': {'l': {'description': '',
+    'type': 'array',
+    'items': {'type': 'string'}}},
+ … (truncated)
+
+The same applies to dictionary, which can similarly be parameterized with key/value types or specified as a raw type.
+
+```python
+def _dict_test(d: Dict[str, int]):
+    "Mandatory docstring"
+    pass
+get_schema(_dict_test)
+```
+
+**Outputs:**
+{'name': '_dict_test',
+ 'description': 'Mandatory docstring',
+ 'input_schema': {'type': 'object',
+  'properties': {'d': {'description': '',
+    'type': 'object',
+    'additionalProperties': {'type': ' … (truncated)
+
+```python
+def _raw_dict_test(d: Dict):
+    "Mandatory docstring"
+get_schema(_raw_dict_test)
+```
+
+**Outputs:**
+{'name': '_raw_dict_test',
+ 'description': 'Mandatory docstring',
+ 'input_schema': {'type': 'object',
+  'properties': {'d': {'description': '', 'type': 'object'}},
+  'required': ['d']}}
+
+```python
+def _path_test(path: Path = Path('.')):
+    "Mandatory docstring"
+get_schema(_path_test)
+```
+
+**Outputs:**
+{'name': '_path_test',
+ 'description': 'Mandatory docstring',
+ 'input_schema': {'type': 'object',
+  'properties': {'path': {'description': '',
+    'default': Path('.'),
+    'type': 'string',
+    'form … (truncated)
+
+Schemas that need to be converted using `ast.literal_eval` will fail with non-primitive defaults:
+
+```python
+test_fail(lambda: ast.literal_eval(str(get_schema(_path_test))), exc=ValueError)
+```
+
+Use `evalable` to have those defaults stringified:
+
+```python
+def _path_test(path: Path = Path('.')):
+    "Mandatory docstring"
+get_schema(_path_test, evalable=True)
+```
+
+**Outputs:**
+{'name': '_path_test',
+ 'description': 'Mandatory docstring',
+ 'input_schema': {'type': 'object',
+  'properties': {'path': {'description': '',
+    'default': '.',
+    'type': 'string',
+    'format': ' … (truncated)
+
+Use `skip_hidden` to exclude parameters starting with `_` from the schema:
+
+```python
+def test_hidden(a: int, _internal: str = "x"):
+    "Test func"
+    pass
+
+get_schema(test_hidden, skip_hidden=True)  # should exclude _internal
+```
+
+**Outputs:**
+{'name': 'test_hidden',
+ 'description': 'Test func',
+ 'input_schema': {'type': 'object',
+  'properties': {'a': {'description': '', 'type': 'integer'}},
+  'required': ['a']}}
+
+```python
+get_schema(test_hidden)
+```
+
+**Outputs:**
+{'name': 'test_hidden',
+ 'description': 'Test func',
+ 'input_schema': {'type': 'object',
+  'properties': {'a': {'description': '', 'type': 'integer'},
+   '_internal': {'description': '', 'default': 'x … (truncated)
+
+```python
+def _ret_list_test(a: int) -> list[str]:
+    "Mandatory docstring"
+
+s = get_schema(_ret_list_test)
+assert 'type: array[string]' in s['description']
+```
+
+```python
+Cmd = str | list[str]
+
+def _cust_type(a: Cmd): "Mandatory docstring"
+
+s = get_schema(_cust_type)
+s
+```
+
+**Outputs:**
+{'name': '_cust_type',
+ 'description': 'Mandatory docstring',
+ 'input_schema': {'type': 'object',
+  'properties': {'a': {'description': '',
+    'anyOf': [{'type': 'string'},
+     {'type': 'array', 'it … (truncated)
+
+### Python tool
+
+In language model clients it's often useful to have a 'code interpreter' -- this is something that runs code, and generally outputs the result of the last expression (i.e like IPython or Jupyter). 
+
+In this section we'll create the `python` function, which executes a string as Python code, with an optional timeout. If the last line is an expression, we'll return that -- just like in IPython or Jupyter, but without needing them installed.
+
+```python
+#| export
+import ast, signal, traceback
+from fastcore.utils import *
+```
+
+```python
+#| export
+def _copy_loc(new, orig):
+    "Copy location information from original node to new node and all children."
+    new = ast.copy_location(new, orig)
+    for field, o in ast.iter_fields(new):
+        if isinstance(o, ast.AST): setattr(new, field, _copy_loc(o, orig))
+        elif isinstance(o, list): setattr(new, field, [_copy_loc(value, orig) for value in o])
+    return new
+```
+
+This is an internal function that's needed for `_run` to ensure that location information is available in the abstract syntax tree (AST), since otherwise python complains.
+
+```python
+#| export
+def _run(code:str, glb:dict=None, loc:dict=None):
+    "Run `code`, returning final expression (similar to IPython)"
+    tree = ast.parse(code)
+    last_node = tree.body[-1] if tree.body else None
+    
+    # If the last node is an expression, modify the AST to capture the result
+    if isinstance(last_node, ast.Expr):
+        tgt = [ast.Name(id='_result', ctx=ast.Store())]
+        assign_node = ast.Assign(targets=tgt, value=last_node.value)
+        tree.body[-1] = _copy_loc(assign_node, last_node)
+
+    compiled_code = compile(tree, filename='<ast>', mode='exec')
+    glb = glb or {}
+    stdout_buffer = io.StringIO()
+    saved_stdout = sys.stdout
+    sys.stdout = stdout_buffer
+    try: exec(compiled_code, glb, loc)
+    finally: sys.stdout = saved_stdout
+    _result = glb.get('_result', None)
+    if _result is not None: return _result
+    return stdout_buffer.getvalue().strip()
+```
+
+This is the internal function used to actually run the code -- we pull off the last AST to see if it's an expression (i.e something that returns a value), and if so, we store it to a special `_result` variable so we can return it.
+
+```python
+_run('import math;math.factorial(12)')
+```
+
+**Outputs:**
+479001600
+
+```python
+_run('print(1+1)')
+```
+
+**Outputs:**
+'2'
+
+We now have the machinery needed to create our `python` function.
+
+```python
+#| export
+def python(
+    code:str, # Code to execute
+    glb:Optional[dict]=None, # Globals namespace
+    loc:Optional[dict]=None, # Locals namespace
+    timeout:int=3600 # Maximum run time in seconds
+):
+    "Executes python `code` with `timeout` and returning final expression (similar to IPython)."
+    def handler(*args): raise TimeoutError()
+    if glb is None: glb = inspect.currentframe().f_back.f_globals
+    if loc is None: loc=glb
+    signal.signal(signal.SIGALRM, handler)
+    signal.alarm(timeout)
+    try: return _run(code, glb, loc)
+    except Exception as e: return traceback.format_exc()
+    finally: signal.alarm(0)
+```
+
+There's no builtin security here -- you should generally use this in a sandbox, or alternatively prompt before running code. It can handle multiline function definitions, and pretty much any other normal Python syntax.
+
+```python
+python("""def factorial(n):
+    if n == 0 or n == 1: return 1
+    else: return n * factorial(n-1)
+factorial(5)""")
+```
+
+**Outputs:**
+120
+
+If the code takes longer than `timeout` then it returns an error string.
+
+```python
+print(python('import time; time.sleep(10)', timeout=1))
+```
+
+**Outputs:**
+Traceback (most recent call last):
+  File "/var/folders/51/b2_szf2945n072c0vj2cyty40000gn/T/ipykernel_61986/3422083997.py", line 13, in python
+    try: return _run(code, glb, loc)
+                ^^^^ … (truncated)
+
+By default the caller's global namespace is used.
+
+```python
+python("a=1")
+a
+```
+
+**Outputs:**
+1
+
+Pass a different `glb` if needed; this requires using `python_ns`.
+
+```python
+glb = {}
+python("a=3", glb=glb)
+a, glb['a']
+```
+
+**Outputs:**
+(1, 3)
+
+```python
+get_schema(python)
+```
+
+**Outputs:**
+{'name': 'python',
+ 'description': 'Executes python `code` with `timeout` and returning final expression (similar to IPython).',
+ 'input_schema': {'type': 'object',
+  'properties': {'code': {'descript … (truncated)
+
+### Tool Calling
+
+Many LLM API providers offer tool calling where an LLM can choose to call a given tool. This is also helpful for structured outputs since the response from the LLM is contrained to the required arguments of the tool.
+
+This section will be dedicated to helper functions for calling tools. We don't want to allow LLMs to call just any possible function (that would be a security disaster!) so we create a namespace -- that is, a dictionary of allowable function names to call.
+
+```python
+#| export
+def mk_ns(fs):
+    if isinstance(fs, abc.Mapping): return fs
+    merged = {}
+    for o in listify(fs):
+        if isinstance(o, dict): merged |= o
+        elif callable(o) and hasattr(o, '__name__'): merged |= {o.__name__: o}
+    return merged
+```
+
+```python
+def sums(a, b): return a + b
+ns = mk_ns(sums)
+ns
+```
+
+**Outputs:**
+{'sums': <function __main__.sums(a, b)>}
+
+```python
+ns['sums'](1, 2)
+```
+
+**Outputs:**
+3
+
+```python
+#| export
+def _ann_outer(ann, types):
+    "Find the outer annotation type if it matches `types`, including inside unions"
+    if (origin := get_origin(ann)) in (Union, UnionType):
+        return first(o for a in get_args(ann) if (o := _ann_outer(a, types)))
+    origin = origin or ann
+    return origin if isinstance(origin, type) and issubclass(origin, types) else None
+
+def _allows_str(ann):
+    "Whether annotation accepts strings directly"
+    if ann is str or (isinstance(ann, type) and issubclass(ann, str)): return True
+    if get_origin(ann) in (Union, UnionType): return any(_allows_str(a) for a in get_args(ann))
+    return False
+
+def coerce_inputs(func, inputs):
+    "Coerce inputs based on function type annotations, repairing common LLM container mistakes"
+    hints = get_type_hints(func) if hasattr(func, '__annotations__') else {}
+    sig, res = inspect.signature(func), {}
+    for k,v in inputs.items():
+        ann = hints.get(k)
+        if v is None and (p := sig.parameters.get(k)) and p.default is not empty: continue
+        if ann in custom_types: res[k] = ann(v); continue
+        cont, arr = _ann_outer(ann, (dict,list,tuple,set)), _ann_outer(ann, (list,tuple,set))
+        if cont and isinstance(v, str) and not _allows_str(ann):
+            try: v = ast.literal_eval(v)
+            except Exception: pass
+        if arr and v == {}: v = []
+        elif arr and isinstance(v, str) and not _allows_str(ann): v = [v]
+        if isinstance(v, dict) and callable(ann): res[k] = ann(**v)
+        else: res[k] = v
+    return res
+```
+
+```python
+ca = ClassA()
+```
+
+```python
+#| export
+def resolve_nm(nm, ns):
+    st,*rest = nm.split('.')
+    return reduce(getattr, rest, ns[st])
+```
+
+```python
+test_eq(resolve_nm('ca.f', globals()), ca.f)
+```
+
+```python
+#| export
+def get_schema_nm(nm:str, ns, dot2dash=False, **kwargs):
+    "Get schema for symbol `nm` in namespace `ns`, preserving the full dotted name"
+    name = nm.replace('.', '-') if dot2dash else nm
+    return get_schema(resolve_nm(nm, ns), name=name, **kwargs)
+```
+
+```python
+schema = get_schema_nm('ca.f', locals())
+test_eq(schema['name'], 'ca.f')
+schema
+```
+
+**Outputs:**
+{'name': 'ca.f',
+ 'description': 'Do a thing',
+ 'input_schema': {'type': 'object',
+  'properties': {'a': {'description': 'That is `a`', 'type': 'integer'}},
+  'required': ['a']}}
+
+```python
+#| export
+def _norm_nm(nm, repl=''): return re.sub(r'\W', repl, nm)
+```
+
+```python
+#| export
+def _py_nm(nm):
+    nm = _norm_nm(nm, '_')
+    if not nm: return '_'
+    if nm and nm[0].isdigit(): nm = f'_{nm}'
+    if keyword.iskeyword(nm): nm = f'{nm}_'
+    return nm
+```
+
+```python
+#| export
+def _nm_map(nms):
+    py2orig = {}
+    for orig in nms:
+        pynm = _py_nm(orig)
+        prev = py2orig.get(pynm)
+        if prev is not None and prev != orig:
+            raise ValueError(f'Name collision after sanitizing: {prev!r} and {orig!r} -> {pynm!r}')
+        py2orig[pynm] = orig
+    return py2orig
+```
+
+```python
+#| export
+def call_func(fc_name, fc_inputs, ns, raise_on_err=True):
+    "Call the function `fc_name` with the given `fc_inputs` using namespace `ns`."
+    if not isinstance(ns, abc.Mapping): ns = mk_ns(ns)
+    func = resolve_nm(fc_name, ns)
+    inps = {_norm_nm(k):v for k,v in fc_inputs.items()}
+    inps = coerce_inputs(func, inps)
+    try: return func(**inps)
+    except Exception as e:
+        if raise_on_err: raise e from None
+        else: return traceback.format_exc()
+```
+
+Now when we an LLM responses with the tool to use and its inputs, we can simply use the same namespace it was given to look up the tool and call it.
+
+```python
+call_func('sums', {'a': 1, 'b': 2}, ns=[sums])
+```
+
+**Outputs:**
+3
+
+```python
+assert "unsupported operand type(s) for +: 'int' and 'str'" in call_func('sums', {'a': 1, 'b': '3'}, ns=ns, raise_on_err=False)
+```
+
+```python
+test_fail(call_func, args=['sums', {'a': 1, 'b': '3'}], kwargs={'ns': ns})
+```
+
+Types that can be constructed from a plain `str` can be used directly, as long as they are in `custom_types` (which you can add to).
+
+```python
+def path_test(
+    a: Path,  # a type hint
+    b: Path   # b type hint
+):
+    "Mandatory docstring"
+    return a/b
+
+test_eq(call_func('path_test', {'a': '/home', 'b': 'user'}, ns=[path_test]), Path('/home/user'))
+```
+
+```python
+test_eq(call_func('ca.f', {'a': 5}, ns=globals()), 1)
+```
+
+Sometimes LLMs accidentally use a str instead of a real dict/list, or pass `{}` instead of a list. We coerce these:
+
+```python
+def list_test(a:list[str], b:list[str]=None, c:str|list[str]='x'): return a,b,c
+test_eq(call_func('list_test', {'a': '["x","y"]', 'b': None, 'c': 'z'}, ns=[list_test]), (['x','y'], None, 'z'))
+test_eq(call_func('list_test', {'a': {}, 'b': 'foo'}, ns=[list_test]), ([], ['foo'], 'x'))
+```
+
+### Async function calling
+
+```python
+async def asums(a, b): return a + b
+ns = mk_ns(asums)
+ns
+```
+
+**Outputs:**
+{'asums': <function __main__.asums(a, b)>}
+
+```python
+#| export
+async def call_func_async(fc_name, fc_inputs, ns, raise_on_err=True):
+    "Awaits the function `fc_name` with the given `fc_inputs` using namespace `ns`."
+    if not isinstance(ns, abc.Mapping): ns = mk_ns(ns)
+    func = resolve_nm(fc_name, ns)
+    try:
+        res = call_func(fc_name, fc_inputs, ns, raise_on_err=raise_on_err)
+        res = await maybe_await(res)
+    except Exception as e:
+        if raise_on_err: raise e from None
+        else: return traceback.format_exc()
+    return res
+```
+
+Testing async `call_func_async` both with sync and async functions.
+
+```python
+test_eq(await call_func_async('asums', {'a': 1, 'b': 2}, ns=[asums]), 3)
+```
+
+```python
+test_eq(await call_func_async('sums', {'a': 1, 'b': 2}, ns=[sums]), 3)
+```
+
+```python
+r = await call_func_async('asums', {'a': 1, 'b': '2'}, ns=[asums], raise_on_err=False)
+assert "unsupported operand type(s) for +: 'int' and 'str'" in r
+```
+
+```python
+ex = False
+try: await call_func_async('asums', {'a': 1, 'b': '2'}, ns=[asums], raise_on_err=True)
+except: ex = True
+assert ex
+```
+
+```python
+class B:
+    async def g(self, x:int): return x*2
+
+b = B()
+res = await call_func_async('b.g', {'x': 5}, ns=globals())
+test_eq(res, 10)
+```
+
+```python
+async def list_test(a:list, b:list[str]=None, c:str|list[str]='x'): return a,b,c
+test_eq(await call_func_async('list_test', {'a': '["x","y"]', 'b': None, 'c': 'z'}, ns=[list_test]), (['x','y'], None, 'z'))
+```
+
+## Schema to function
+
+```python
+#| export
+type_map = dict(string=str, boolean=bool, integer=int, number=float, array=list, object=dict)
+
+def mk_param(orig, props, req, pynm=None):
+    "Create a `Parameter` for `orig` with schema `props`"
+    pynm = ifnone(pynm, orig)
+    kind = Parameter.POSITIONAL_OR_KEYWORD if orig in req else Parameter.KEYWORD_ONLY
+    default = Parameter.empty if orig in req else props.get('default')
+    if props.get('type') == 'array' and 'items' in props:
+        item_type = type_map.get(props['items'].get('type'), Any)
+        anno = list[item_type]
+    else: anno = type_map.get(props.get('type'), Any)
+    return Parameter(pynm, kind, default=default, annotation=anno)
+```
+
+```python
+tool = dict2obj(dict(
+    description='Find real-…',
+    inputSchema={
+        '$schema': 'http://json-schema.org/draft-07/schema#',
+        **dict(
+            additionalProperties=False,
+            properties=dict(
+                language=dict(description='Filter by …', items={'type': 'string'}, type='array'),
+                matchCase=dict(default=False, description='Whether th…', type='boolean'),
+                path=dict(description='Filter by …', type='string'),
+                query=dict(description='The litera…', type='string'),
+                useRegexp=dict(default=False, description='Whether to…', type='boolean')),
+            required=['query'],
+            type='object')},
+    name='searchGitHub'))
+```
+
+```python
+props, req = tool.inputSchema['properties'], tool.inputSchema['required']
+list(props)
+```
+
+**Outputs:**
+['language', 'matchCase', 'path', 'query', 'useRegexp']
+
+```python
+props.matchCase
+```
+
+**Outputs:**
+{'default': False, 'description': 'Whether th…', 'type': 'boolean'}
+
+```python
+p = mk_param('query', props.query, req)
+p, p.kind
+```
+
+**Outputs:**
+(<Parameter "query: str">, <_ParameterKind.POSITIONAL_OR_KEYWORD: 1>)
+
+```python
+p = mk_param('language', props.language, req)
+p, p.kind
+```
+
+**Outputs:**
+(<Parameter "language: list[str] = None">, <_ParameterKind.KEYWORD_ONLY: 3>)
+
+```python
+#| export
+def schema2sig(tool):
+    "Convert json schema `tool` to a `Signature`"
+    props, req = tool.inputSchema['properties'], tool.inputSchema.get('required', [])
+    py2orig = _nm_map(props)
+    params = sorted([mk_param(orig, props[orig], req, pynm) for pynm, orig in py2orig.items()], key=lambda p: p.kind)
+    return Signature(params)
+```
+
+```python
+schema2sig(tool)
+```
+
+**Outputs:**
+<Signature (query: str, *, language: list[str] = None, matchCase: bool = False, path: str = None, useRegexp: bool = False)>
+
+```python
+#| export
+def mk_tool(dispfn, tool):
+    "Create a callable function from a JSON schema tool definition"
+    sig = schema2sig(tool)
+    py2orig = _nm_map(tool.inputSchema['properties'])
+    def fn(*args, **kwargs):
+        bound = sig.bind(*args, **kwargs)
+        kwargs = {py2orig.get(k, k):v for k,v in bound.arguments.items()}
+        return dispfn(tool.name, **kwargs)
+    fn.__doc__ = tool.description
+    fn.__signature__ = sig
+    fn.__name__ = fn.__qualname__ = tool.name
+    fn.__annotations__ = {k: p.annotation for k, p in sig.parameters.items()}
+    return fn
+```
+
+`mk_tool` is the inverse of `get_schema` — it creates a callable Python function from a JSON schema tool definition. This is useful for MCP clients where tools are defined as schemas but need to be called as regular Python functions.
+
+The created function has a proper signature, docstring, and annotations, so it works well with IDE autocomplete and introspection.
+
+```python
+def dispatch_eg(name, **kwargs): return f"Called {name} with {kwargs}"
+
+fn = mk_tool(dispatch_eg, tool)
+fn('hello', path='src/')
+```
+
+**Outputs:**
+"Called searchGitHub with {'query': 'hello', 'path': 'src/'}"
+
+```python
+tool_hy = dict2obj(dict(name='run', description='Run command', inputSchema=dict(type='object', properties={'cmd': {'type': 'string'}, 'approval-policy': {'type': 'string', 'default': 'never'}}, required=['cmd'])))
+
+sig = schema2sig(tool_hy)
+test_eq(list(sig.parameters), ['cmd', 'approval_policy'])
+test_eq(sig.parameters['approval_policy'].default, 'never')
+test_eq(sig.parameters['approval_policy'].kind, Parameter.KEYWORD_ONLY)
+```
+
+```python
+seen = []
+def disp(name, **kwargs):
+    seen.append((name, kwargs))
+    return kwargs
+
+fn = mk_tool(disp, tool_hy)
+test_eq(fn('ls', approval_policy='never'), {'cmd': 'ls', 'approval-policy': 'never'})
+test_eq(seen[-1], ('run', {'cmd': 'ls', 'approval-policy': 'never'}))
+```
+
+```python
+tool_req_hy = dict2obj(dict(name='run', description='Run command', inputSchema=dict(type='object', properties={'approval-policy': {'type': 'string'}, 'cmd': {'type': 'string'}}, required=['approval-policy', 'cmd'])))
+
+seen = []
+fn = mk_tool(disp, tool_req_hy)
+fn('never', 'ls')
+test_eq(seen[-1], ('run', {'approval-policy': 'never', 'cmd': 'ls'}))
+```
+
+```python
+tool_collision = dict2obj(dict(name='run', description='Run command', inputSchema=dict(type='object', properties={'approval-policy': {'type': 'string'}, 'approval_policy': {'type': 'string'}})))
+
+test_fail(lambda: schema2sig(tool_collision), contains='collision')
+```
+
+```python
+test_eq(_py_nm(''), '_')
+```
+
+## Export -
+
+```python
+#|hide
+#|eval: false
+from nbdev.doclinks import nbdev_export
+nbdev_export()
+```
+
+### shell source
+
+*Source: 02_shell.ipynb | URL: https://github.com/AnswerDotAI/toolslm/blob/main/02_shell.ipynb*
+
+```python
+#|default_exp shell
+```
+
+# shell source
+
+```python
+#| exports
+import ast, time, signal, traceback
+from fastcore.utils import *
+```
+
+`get_shell` is like `python`, except it also maintains a stateful interpreter, rather than just running a single line of code. This is implemented using IPython, so that must be installed.
+
+```python
+#| exports
+from IPython.terminal.interactiveshell import TerminalInteractiveShell
+from IPython.utils.capture import capture_output
+```
+
+```python
+def exception2str(ex:Exception)->str:
+    "Convert exception `ex` into a string"
+    return ''.join(traceback.format_exception(type(ex), ex, ex.__traceback__))
+```
+
+```python
+try: print(1/0)
+except Exception as e: print(exception2str(e))
+```
+
+**Outputs:**
+Traceback (most recent call last):
+  File "/var/folders/ss/34z569j921v58v8n1n_8z7h40000gn/T/ipykernel_37260/4058275565.py", line 1, in <module>
+    try: print(1/0)
+               ~^~
+ZeroDivisionError … (truncated)
+
+```python
+#| exports
+TerminalInteractiveShell.orig_run = TerminalInteractiveShell.run_cell
+```
+
+```python
+#| exports
+@patch
+def run_cell(self:TerminalInteractiveShell, cell, timeout=None):
+    "Wrapper for original `run_cell` which adds timeout and output capture"
+    if timeout:
+        def handler(*args): raise TimeoutError()
+        signal.signal(signal.SIGALRM, handler)
+        signal.alarm(timeout)
+    try:
+        with capture_output() as io: result = self.orig_run(cell)
+        result.stdout = io.stdout
+        return result
+    except TimeoutException as e:
+        result = self.ExecutionResult(error_before_exec=None, error_in_exec=e)
+    finally:
+        if timeout: signal.alarm(0)
+```
+
+```python
+#| exports
+def get_shell()->TerminalInteractiveShell:
+    "Get a `TerminalInteractiveShell` with minimal functionality"
+    sh = TerminalInteractiveShell()
+    sh.logger.log_output = sh.history_manager.enabled = False
+    dh = sh.displayhook
+    dh.finish_displayhook = dh.write_output_prompt = dh.start_displayhook = lambda: None
+    dh.write_format_data = lambda format_dict, md_dict=None: None
+    sh.logstart = sh.automagic = sh.autoindent = False
+    sh.autocall = 0
+    sh.system = lambda cmd: None
+    return sh
+```
+
+```python
+shell = get_shell()
+```
+
+```python
+r = shell.run_cell('print(3); 1+1')
+r.result,r.stdout
+```
+
+**Outputs:**
+(2, '3\n')
+
+```python
+r = shell.run_cell('raise Exception("blah")')
+print(exception2str(r.error_in_exec))
+```
+
+**Outputs:**
+Traceback (most recent call last):
+  File "/Users/jhoward/miniconda3/lib/python3.12/site-packages/IPython/core/interactiveshell.py", line 3577, in run_code
+    exec(code_obj, self.user_global_ns, self … (truncated)
+
+```python
+r = shell.run_cell('import time; time.sleep(10)', timeout=1)
+r.error_in_exec
+```
+
+**Outputs:**
+TimeoutError()
+
+## Export -
+
+```python
+#|hide
+#|eval: false
+from nbdev.doclinks import nbdev_export
+nbdev_export()
+```
+
+### Download helpers
+
+*Source: 03_download.ipynb | URL: https://github.com/AnswerDotAI/toolslm/blob/main/03_download.ipynb*
+
+```python
+#| default_exp download
+```
+
+# Download helpers
+
+- Download and process LLM-ready documents
+
+```python
+#| export
+from fastcore.utils import *
+from httpx import get
+from fastcore.meta import delegates
+from urllib.parse import urlparse, urljoin
+from toolslm.xml import parse_gh_url
+```
+
+```python
+from IPython.display import Markdown,HTML
+from fastcore.test import *
+```
+
+```python
+#| export
+def clean_md(text, rm_comments=True, rm_details=True):
+    "Remove comments and `<details>` sections from `text`"
+    if rm_comments: text = re.sub(r'\n?<!--.*?-->\n?', '', text, flags=re.DOTALL)
+    if rm_details: text = re.sub(r'\n?<details>.*?</details>\n?', '', text, flags=re.DOTALL)
+    return text
+```
+
+```python
+#| export
+@delegates(get)
+def read_md(url, rm_comments=True, rm_details=True, **kwargs):
+    "Read text from `url` and clean with `clean_docs`"
+    return clean_md(get(url, **kwargs).text, rm_comments=rm_comments, rm_details=rm_details)
+```
+
+```python
+mdurl = 'https://claudette.answer.ai/index.html.md'
+md = read_md(mdurl)
+# Markdown(md)
+```
+
+```python
+#| export
+def html2md(s:str, ignore_links=True):
+    "Convert `s` from HTML to markdown"
+    import html2text
+    o = html2text.HTML2Text(bodywidth=5000)
+    o.ignore_links = ignore_links
+    o.mark_code = True
+    o.ignore_images = True
+    return o.handle(s)
+```
+
+```python
+#| export
+def read_html(url, # URL to read
+              sel=None, # Read only outerHTML of CSS selector `sel`
+              rm_comments=True, # Removes HTML comments
+              rm_details=True, # Removes `<details>` tags
+              multi=False, # Get all matches to `sel` or first one  
+              wrap_tag=None, #If multi, each selection wrapped with <wrap_tag>content</wrap_tag>
+              ignore_links=True,
+             ): # Cleaned markdown
+    "Get `url`, optionally selecting CSS selector `sel`, and convert to clean markdown"
+    page = get(url).text
+    if sel:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(page, 'html.parser')
+        if multi:
+            page = [str(el) for el in soup.select(sel)]
+            if not wrap_tag: page = "\n".join(page)
+        else: page = str(soup.select_one(sel))
+    mds = map(lambda x: clean_md(html2md(x, ignore_links=ignore_links), rm_comments, rm_details=rm_details), tuplify(page))
+    if wrap_tag: return '\n'.join([f"\n<{wrap_tag}>\n{o}</{wrap_tag}>\n" for o in mds])
+    else: return'\n'.join(mds)
+```
+
+```python
+# test single class selector
+listings = read_html('https://www.answer.ai/', sel='.listing-description')
+assert len(listings) < 500
+
+# Test multi class selector
+listings = read_html('https://www.answer.ai/', sel='.listing-description', multi=True)
+assert len(listings) > 1000 # returns more than single so selecting multi
+
+# Test multi_wrap_tag
+listings = read_html('https://www.answer.ai/', sel='.listing-description', multi=True, wrap_tag='document')
+assert '<document>' in listings and '</document>' in listings 
+```
+
+```python
+read_html('https://www.answer.ai/', sel='.listing-description', ignore_links=False)
+```
+
+**Outputs:**
+'[ How I created a book chapter from video transcripts with SolveIt ](./posts/2025-10-13-video-to-doc.html)\n\n'
+
+```python
+# test tag css selectors
+assert len(read_html('https://www.answer.ai/', sel='div.listing-description', multi=True)) > 1000
+assert len(read_html('https://www.answer.ai/', sel='div', multi=True)) > 1000
+```
+
+```python
+htmlurl = 'https://hypermedia.systems/hypermedia-a-reintroduction/'
+hmd = read_html(htmlurl)
+assert len(hmd) > 100
+# Markdown(hmd)
+```
+
+```python
+#| export
+def get_llmstxt(url, optional=False, n_workers=None):
+    "Get llms.txt file from and expand it with `llms_txt.create_ctx()`"
+    if not url.endswith('llms.txt'): return None
+    import llms_txt
+    resp = get(url)
+    if resp.status_code!=200: return None
+    return llms_txt.create_ctx(resp.text, optional=optional, n_workers=n_workers)
+```
+
+```python
+# print(get_llmstxt('https://llmstxt.org/llms.txt'))
+```
+
+```python
+#| export
+def split_url(url):
+    "Split `url` into base, path, and file name, normalising name to '/' if empty"
+    parsed = urlparse(url.strip('/'))
+    base = f"{parsed.scheme}://{parsed.netloc}"
+    path,spl,fname = parsed.path.rpartition('/')
+    fname = spl+fname
+    if not path and not fname: path='/'
+    return base,path,fname
+```
+
+```python
+urls = ('https://claudette.answer.ai/path/', 'https://claudette.answer.ai/', 'https://llmstxt.org', 'https://llmstxt.org/')
+
+[split_url(o) for o in urls]
+```
+
+**Outputs:**
+[('https://claudette.answer.ai', '', '/path'),
+ ('https://claudette.answer.ai', '/', ''),
+ ('https://llmstxt.org', '/', ''),
+ ('https://llmstxt.org', '/', '')]
+
+```python
+#| export
+def _tryget(url):
+    "Return response from `url` if `status_code!=404`, otherwise `None`"
+    res = get(url)
+    return None if res.status_code==404 else url
+```
+
+```python
+#| export
+def find_docs(url):
+    "If available, return LLM-friendly llms.txt context or markdown file location from `url`"
+    base,path,fname = split_url(url)
+    url = (base+path+fname).strip('/')
+    if fname=='/llms.txt': return url
+    if Path(fname).suffix in('.md', '.txt', '.rst'): return _tryget(url)
+    if '.' in fname: return _tryget(url+'.md') or find_docs(url[:url.rfind('/')])
+    res = _tryget(url+'/llms.txt')
+    if res: return res
+    res = _tryget(url+'/index.md')
+    if res: return res
+    res = _tryget(url+'/index.html.md')
+    if res: return res
+    res = _tryget(url+'/index-commonmark.md')
+    if res: return res
+    parsed_url = urlparse(url)
+    if parsed_url.path == '/' or not parsed_url.path: return None
+    return find_docs(urljoin(url, '..'))
+```
+
+```python
+fl_url = 'https://answerdotai.github.io/fastlite'
+```
+
+```python
+find_docs(fl_url)
+```
+
+**Outputs:**
+'https://answerdotai.github.io/fastlite/llms.txt'
+
+```python
+#| eval: false
+for o in urls: print(find_docs(o))
+```
+
+**Outputs:**
+https://claudette.answer.ai/llms.txt
+https://claudette.answer.ai/llms.txt
+
+https://llmstxt.org/llms.txt
+https://llmstxt.org/llms.txt
+
+
+```python
+#| eval: false
+suffixes = ["/", "/tmp", "/tmp/tmp/"]
+for suff in suffixes:
+    for o in urls:  test_eq(find_docs(o), find_docs(o+suff))
+
+test_eq(find_docs("https://github.com"), "https://github.com/llms.txt")
+test_eq(find_docs("https://github.com/AnswerDotAI"), "https://github.com/llms.txt")
+test_eq(find_docs("https://github.com/AnswerDotAI/"), "https://github.com/llms.txt")
+```
+
+```python
+#| export
+def read_docs(url, optional=False, n_workers=None, rm_comments=True, rm_details=True):
+    "If available, return LLM-friendly llms.txt context or markdown file response for `url`"
+    url = find_docs(url)
+    if url.endswith('/llms.txt'): res = get_llmstxt(url, optional=optional, n_workers=n_workers)
+    else: res = get(url).text
+    return clean_md(res, rm_comments=rm_comments, rm_details=rm_details)
+```
+
+## Export -
+
+```python
+#|hide
+#|eval: false
+from nbdev.doclinks import nbdev_export
+nbdev_export()
+```
+
+### Markdown Hierarchy Parser
+
+*Source: 04_md_hier.ipynb | URL: https://github.com/AnswerDotAI/toolslm/blob/main/04_md_hier.ipynb*
+
+# Markdown Hierarchy Parser
+
+> Parse markdown documents into hierarchical dictionaries for easy navigation and access
+
+```python
+from toolslm.md_hier import *
+from IPython.display import Markdown
+```
+
+```python
+#| hide
+from nbdev.showdoc import show_doc
+```
+
+The `md_hier` module provides utilities for parsing markdown documents and converting them into structured hierarchical dictionaries. This is particularly useful for processing documentation, extracting sections, or navigating complex markdown files programmatically.
+
+## Overview
+
+The module provides a main function and supporting class:
+- `create_heading_dict`: Creates a nested dictionary structure matching the markdown hierarchy  
+- `HeadingDict`: A dictionary-like object that also stores the markdown text content
+
+The function handles code blocks properly by ignoring headings that appear within fenced code blocks.
+
+```python
+show_doc(create_heading_dict)
+```
+
+**Outputs:**
+---
+
+### create_heading_dict
+
+>      create_heading_dict (text, rm_fenced=True)
+
+*Create a nested dictionary structure from markdown headings.*
+
+```python
+sample_md = """
+# Introduction
+
+Welcome to our documentation.
+
+## Getting Started
+
+Follow these steps to begin.
+
+### Installation
+
+Run the following command:
+
+```bash
+# Install the packackge
+pip install our-package
+```
+
+### Configuration
+
+Set up your config file.
+
+## Advanced Usage
+
+For advanced users only.
+
+# Appendix
+
+Additional resources."""
+```
+
+```python
+result = create_heading_dict(sample_md)
+print("Available sections:")
+for key in result.keys(): print(f"  {key}")
+print(f"\nRoot document has {len(result.text)} characters of text")
+```
+
+**Outputs:**
+Available sections:
+  Introduction
+  Appendix
+
+Root document has 328 characters of text
+
+
+You can access any section's content via the `text` attribute:
+
+```python
+print(result['Introduction']['Getting Started']['Installation'].text)
+```
+
+**Outputs:**
+### Installation
+
+Run the following command:
+
+```bash
+# Install the packackge
+
+
+Notice how parent sections contain all their child content in their `text` attribute:
+
+```python
+print(result['Introduction']['Getting Started'].text[:200] + "…")
+```
+
+**Outputs:**
+## Getting Started
+
+Follow these steps to begin.
+
+### Installation
+
+Run the following command:
+
+```bash
+# Install the packackge
+pip install our-package
+```
+
+### Configuration…
+
+
+`create_heading_dict` creates a nested dictionary structure that mirrors the markdown hierarchy. Each heading becomes a dictionary key containing its subheadings.
+
+- **Nested structure**: Creates a tree-like dictionary hierarchy
+- **Navigation friendly**: Easy to traverse programmatically
+- **Code block filtering**: Removes code blocks before processing
+
+Let's see the nested structure:
+
+```python
+result = create_heading_dict(sample_md)
+print("Structure:")
+print(f"Root keys: {list(result.keys())}")
+print(f"Introduction subkeys: {list(result['Introduction'].keys())}")
+print(f"Getting Started subkeys: {list(result['Introduction']['Getting Started'].keys())}")
+
+print(f"\nType of result: {type(result)}")
+print(f"Type of subsection: {type(result['Introduction'])}")
+print(f"Has text attribute: {hasattr(result, 'text')}")
+```
+
+**Outputs:**
+Structure:
+Root keys: ['Introduction', 'Appendix']
+Introduction subkeys: ['Getting Started', 'Advanced Usage']
+Getting Started subkeys: ['Installation', 'Configuration']
+
+Type of result: <class 'tools … (truncated)
+
+### Benefits
+
+This approach provides the best of both worlds:
+
+**Structure Navigation**: Navigate the document hierarchy naturally using dictionary keys
+- `result['Introduction']['Getting Started']` 
+- Check section existence with `'section' in result`
+- Iterate through subsections with `result.keys()`
+
+**Content Access**: Get the actual markdown text at any level
+- `result.text` - entire document  
+- `result['Introduction'].text` - section with all subsections
+- `result['Introduction']['Getting Started']['Installation'].text` - specific subsection only
+
+**Use Cases**:
+- **Documentation processing**: Extract specific sections while preserving formatting
+- **Content analysis**: Analyze document structure and section lengths  
+- **Template generation**: Build navigation interfaces from document structure
+- **Section extraction**: Pull out individual sections with their complete content
+
+### inspecttools
+
+*Source: 05_inspecttools.ipynb | URL: https://github.com/AnswerDotAI/toolslm/blob/main/05_inspecttools.ipynb*
+
+```python
+#| default_exp inspecttools
+```
+
+# inspecttools
+> LLM tools for inspecting the symbol table and importing modules
+- skip_exec: true
+
+This module provides **LLM tools** to dynamically inspect source code, types, and module capabilities. Functions take *string* arguments (dotted symbol paths) rather than Python objects because LLM tool interfaces can only pass serializable values—not live Python references.
+
+```python
+#| export
+from fastcore.utils import *
+from fastcore.meta import delegates
+import inspect, re, sys, ast, builtins, os, linecache
+from importlib import import_module
+
+from toolslm.xml import *
+```
+
+```python
+from IPython.display import display,Markdown
+import textwrap
+```
+
+## Helpers
+
+```python
+#| export
+def _find_frame_dict(var:str):
+    "Find the dict (globals or locals) containing var"
+    frame = inspect.currentframe().f_back
+    while frame:
+        if var in frame.f_globals: return frame.f_globals
+        frame = frame.f_back
+    raise ValueError(f"Could not find {var} in any scope")
+```
+
+```python
+#| export
+@llmtool
+def importmodule(
+    mod: str, # The module to import (e.g. 'torch.nn.functional')
+    caller_symbol:str = '__dialog_name'  # The name of the special variable to find the correct caller namespace
+):
+    """Import a module into the caller's global namespace so it's available for `symsrc`, `symval`, `symdir`, etc.
+    Use this before inspecting or using symbols from modules not yet imported."""
+    g = _find_frame_dict(caller_symbol)
+    import_module(mod)
+    g[mod.split('.')[0]] = import_module(mod.split('.')[0])
+    return True
+```
+
+`importmodule` lets the LLM dynamically import modules by name. Here we import `fastcore.utils` and verify it's available.
+
+```python
+importmodule('fastcore.utils')
+fastcore.__version__
+```
+
+**Outputs:**
+'1.12.5'
+
+```python
+#| export
+class SymbolNotFound(Exception):
+    def __repr__(self): return f"SymbolNotFound({self.args[0]})"
+    __str__ = __repr__
+
+_last = None
+
+def resolve(
+    sym: str  # Dotted symbol path, with optional [n] indexing, e.g. "module.attr.subattr[1]" or "_last" for previous result
+):
+    """Resolve a dotted symbol string to its Python object, with optional [n] indexing.
+    Sets global `_last` to the resolved object for chaining.
+    Pass `"_last"` to reference the result of the previous tool call.
+
+    Examples:
+
+    - `resolve("sympy.sets.sets.Interval")` -> `<class 'sympy.sets.sets.Interval'>`
+    - `resolve("mylist[2]")` -> third element of mylist"""
+    global _last
+    if not isinstance(sym, str): return (_last := sym)
+    if (sym := sym.strip()) == '_last': return _last
+    g = _find_frame_dict('__dialog_name')
+    if match := re.match(r'^(\w+)\[(\d+)\]$', sym):
+        attr, idx = match.groups()
+        parts, _last = ['_last'], _last[int(idx)] if attr == '_last' else g[attr][int(idx)]
+    else: parts = re.split(r'\.(?![^\[]*\])', sym)
+    try: obj = _last if parts[0] == '_last' else g[parts[0]]
+    except KeyError: raise SymbolNotFound(f"Symbol '{parts[0]}' not found. Consider using `importmodule` first.")
+    for part in parts[1:]:
+        match = re.match(r'(\w+)\[(\d+)\]$', part)
+        if match:
+            attr, idx = match.groups()
+            obj = getattr(obj, attr)[int(idx)]
+        else: obj = getattr(obj, part)
+    _last = obj
+    return obj
+```
+
+`resolve` navigates dotted paths like `"a.argfirst"` to reach the actual Python object.
+
+```python
+a = fastcore.utils.L(1)
+resolve('a.argfirst')
+```
+
+**Outputs:**
+<bound method L.argfirst of [1]>
+
+It also sets `_last` for chaining. Since it's used internally by all `get*` tools in this module, the tools all set `_last` too.
+
+```python
+_last
+```
+
+**Outputs:**
+<bound method L.argfirst of [1]>
+
+It works on both objects and classes:
+
+```python
+resolve('fastcore.utils.L.argfirst')
+```
+
+**Outputs:**
+<function fastcore.foundation.L.argfirst(self: fastcore.foundation.L, f, negate=False)>
+
+## Symbol info
+
+```python
+#| export
+def _src_from_lines(lines, start):
+    "Extract a single definition from lines starting at start (0-indexed)"
+    src = ''.join(lines[start:])
+    try: tree = ast.parse(src)
+    except SyntaxError: return None
+    if not tree.body: return None
+    return ''.join(lines[start:start + tree.body[0].end_lineno])
+```
+
+```python
+#| export
+@llmtool
+def symsrc(
+    sym: str  # Dotted symbol path (e.g `Interval` or `sympy.sets.sets.Interval`) or "_last" for previous result
+):
+    """Get the source code for a symbol.
+
+    Examples:
+
+    - `symsrc("Interval")` -> source code of Interval class if it's already imported
+    - `symsrc("sympy.sets.sets.Interval")` -> source code of Interval class
+    - `symsrc("_last")` -> source of object from previous tool call
+    - For dispatchers or registries of callables: `symnth("module.dispatcher.funcs", n) then symsrc("_last")`"""
+    try: obj = resolve(sym)
+    except SymbolNotFound as e: return str(e)
+    if isinstance(obj, type) or callable(obj): pass
+    elif hasattr(obj, '__module__') and not inspect.ismodule(obj): obj = obj.__class__
+    try: fname = inspect.getfile(obj)
+    except (OSError, TypeError): fname = "<session>"
+    try: return f"# File: {fname}\n\n{inspect.getsource(obj)}"
+    except (OSError, TypeError): pass
+    name = getattr(obj, '__name__', None)
+    if not name: raise OSError(f"Cannot get source for {sym}")
+    pat = rf'^(class|def)\s+{name}\b'
+    for fname, (_, _, lines, _) in linecache.cache.items():
+        src = ''.join(lines)
+        if match := re.search(pat, src, re.MULTILINE):
+            start = src[:match.start()].count('\n')
+            if extracted := _src_from_lines(lines, start): return f"# File: {fname}\n\n{extracted}"
+    raise OSError(f"Source for {name} not found")
+```
+
+`symsrc` retrieves the source code of any symbol by path—essential for letting the LLM understand how functions work.
+
+```python
+print(symsrc('a.argfirst'))
+```
+
+**Outputs:**
+# File: /Users/pczapla/aai-ws/fastcore/fastcore/foundation.py
+
+@patch
+@curryable
+def argfirst(self:L, f, negate=False):
+    "Return index of first matching item"
+    if negate: f = not_(f)
+    return  … (truncated)
+
+```python
+print(symsrc(a.argfirst))
+```
+
+**Outputs:**
+# File: /Users/pczapla/aai-ws/fastcore/fastcore/foundation.py
+
+@patch
+@curryable
+def argfirst(self:L, f, negate=False):
+    "Return index of first matching item"
+    if negate: f = not_(f)
+    return  … (truncated)
+
+```python
+class B:
+    def a(): ...
+b = B()
+print(symsrc('b'))
+```
+
+**Outputs:**
+# File: /var/folders/q_/6ypbtk8976j5j9zhzn30df440000gn/T/ipykernel_13390/2711726673.py
+
+class B:
+    def a(): ...
+
+
+
+```python
+def f():
+    "testing"
+    return 1
+print(symsrc('f'))
+```
+
+**Outputs:**
+# File: /var/folders/q_/6ypbtk8976j5j9zhzn30df440000gn/T/ipykernel_13390/242320393.py
+
+def f():
+    "testing"
+    return 1
+
+
+
+```python
+from toolslm import xml
+```
+
+```python
+print(symsrc('xml')[:200])
+```
+
+**Outputs:**
+# File: /Users/pczapla/aai-ws/toolslm/toolslm/xml.py
+
+# AUTOGENERATED! DO NOT EDIT! File to edit: ../00_xml.ipynb.
+
+# %% auto #0
+__all__ = ['doctype', 'json_to_xml', 'get_mime_text', 'cell2out', 'cell … (truncated)
+
+```python
+#| export
+@llmtool
+def symtype(
+    syms: str  # Comma separated str list of dotted symbol paths (e.g `'Interval,a'` or `'sympy.sets.sets.Interval'`); "_last" for prev result
+):
+    """Get the type of a symbol and set `_last`.
+
+    Examples:
+
+    - `symtype("sympy.sets.sets.Interval")` -> `<class 'type'>`
+    - `symtype("doesnotexist")` -> `'SymbolNotFound`
+    - `symtype("_last")` -> type of previous result"""
+    def f(o):
+        try: return type(resolve(o))
+        except SymbolNotFound as e: return str(e)
+    return [f(o) for o in re.split(r'\,\s*', syms)]
+```
+
+`symtype` returns the type of a symbol—useful for the LLM to understand what kind of object it's dealing with.
+
+```python
+symtype('a.argfirst')
+```
+
+**Outputs:**
+[method]
+
+```python
+symtype('fffaa,b')
+```
+
+**Outputs:**
+["SymbolNotFound(Symbol 'fffaa' not found. Consider using `importmodule` first.)",
+ __main__.B]
+
+```python
+#| export
+@llmtool
+def symval(
+    syms: str  # Comma separated str list of dotted symbol paths (e.g `Interval` or `sympy.sets.sets.Interval`); "_last" for prev result
+):
+    """List of repr of symbols' values.
+
+    Examples:
+    
+    - `symval("sympy.sets.sets.Interval")` -> `[<class 'sympy.sets.sets.Interval'>]`
+    - `symval("some_dict.keys")` -> `[dict_keys([...])]`
+    - `symval("a,notexist")` -> `['foo','SymbolNotFound']`"""
+    def f(o):
+        try: return repr(resolve(o))
+        except SymbolNotFound as e: return str(e)
+    return [f(o) for o in re.split(r'\,\s*', syms)]
+```
+
+`symval` returns the `repr()` of a symbol's value—handy for inspecting data without needing to execute arbitrary code.
+
+```python
+a
+```
+
+**Outputs:**
+[1]
+
+```python
+symval('a,foofoo')
+```
+
+**Outputs:**
+['[1]',
+ "SymbolNotFound(Symbol 'foofoo' not found. Consider using `importmodule` first.)"]
+
+```python
+#| export
+def symtype_val(
+    syms: str  # Comma separated str list of dotted symbol paths (e.g `Interval` or `sympy.sets.sets.Interval`); "_last" for prev result
+):
+    """List of 2-ple of (type,repr) of symbols' values.
+
+    Examples:
+    
+    - `symtype_val("a,c,notexist")` -> `[(<class 'str'>,'foo'),(<class 'int'>,1), 'SymbolNotFound']`"""
+    def f(o):
+        try: r = resolve(o)
+        except SymbolNotFound as e: return 'SymbolNotFound'
+        return (type(r), repr(r))
+    return [f(o) for o in re.split(r'\,\s*', syms)]
+```
+
+```python
+symtype_val('a,b,foofoo')
+```
+
+**Outputs:**
+[(fastcore.foundation.L, '[1]'),
+ (__main__.B, '<__main__.B object>'),
+ 'SymbolNotFound']
+
+```python
+#| export
+@llmtool
+def symdir(
+    sym: str,  # Dotted symbol path (e.g `Interval` or `sympy.sets.sets.Interval`) or "_last" for previous result
+    exclude_private: bool=False # Filter out attrs starting with "_"
+):
+    """Get dir() listing of a symbol's attributes and set `_last`. E.g: `symdir("sympy.Interval")` -> `['__add__', '__and__', ...]`"""
+    res = dir(resolve(sym))
+    if not exclude_private: return res
+    return [o for o in res if o[0]!='_']
+```
+
+`symdir` lists all attributes of an object (i.e it calls `dir()`. Here we filter out private names to see the public API of an `L` list.
+
+```python
+' '.join(symdir('a', exclude_private=True))
+```
+
+**Outputs:**
+'accumulate append argfirst argwhere attrgot batched clear combinations compress concat copy copy count cycle dropwhile enumerate extend filter flatmap flatten groupby index insert itemgot items map m … (truncated)
+
+```python
+#| export
+@llmtool
+def symnth(
+    sym: str,  # Dotted symbol path to a dict or object with .values()
+    n: int     # Index into the values (0-based)
+):
+    """Get the nth value from a dict (or any object with .values()). Sets `_last` so you can chain with `symsrc("_last")` etc.
+
+    Examples:
+    
+    - `symnth("dispatcher.funcs", 12)` -> 13th registered function
+    - `symnth("dispatcher.funcs", 0); symsrc("_last")` -> source of first handler"""
+    global _last
+    _last = list(resolve(sym).values())[n]
+    return _last
+```
+
+`symnth` extracts the nth value from a dict (or anything with `.values()`).
+
+```python
+handlers = dict(int=lambda x: x*2, str=lambda x: x.upper(), list=lambda x: len(x))
+symnth('handlers', 0)
+```
+
+**Outputs:**
+<function __main__.<lambda>(x)>
+
+Combined with `_last`, this lets the LLM drill into registries of handlers/dispatchers and then inspect their source.
+
+```python
+symsrc('_last')
+```
+
+**Outputs:**
+'# File: /var/folders/q_/6ypbtk8976j5j9zhzn30df440000gn/T/ipykernel_13390/340145363.py\n\nhandlers = dict(int=lambda x: x*2, str=lambda x: x.upper(), list=lambda x: len(x))\n'
+
+```python
+#| export
+@llmtool
+def symlen(
+    sym: str  # Dotted symbol path or "_last" for previous result
+):
+    "Returns the length of the given symbol"
+    return len(resolve(sym))
+```
+
+```python
+#| export
+@llmtool
+def symslice(
+    sym: str,   # Dotted symbol path or "_last" for previous result
+    start: int, # Starting index for slice
+    end: int    # Ending index for slice
+):
+    "Returns the contents of the symbol from the given start to the end."
+    try: return resolve(sym)[start:end]
+    except Exception as e: return f'Error: {e}'
+```
+
+```python
+a = ['a', 'b', 'c', 'd']
+symslice('a', 1, 3)
+```
+
+**Outputs:**
+['b', 'c']
+
+On failure we get a str error:
+
+```python
+symslice('resolve', 0, 1)
+```
+
+**Outputs:**
+"Error: 'function' object is not subscriptable"
+
+```python
+#| export
+@llmtool
+def symsearch(
+    sym:str,      # Dotted symbol path or "_last" for previous result
+    term:str,     # Search term (exact string or regex pattern)
+    regex:bool=True,  # If True, regex search; if False, exact match
+    flags:int=0   # Regex flags (e.g., re.IGNORECASE)
+):
+    """Search contents of symbol, which is assumed to be str for regex, or iterable for non-regex.
+    Regex mode returns (match, start, end) tuples; otherwise returns (item, index) tuples"""
+    if regex: return str([(m.group(), m.start(), m.end()) for m in re.finditer(term, resolve(sym), flags)])
+    else: return str([(x, i) for i, x in enumerate(resolve(sym)) if x == term])
+```
+
+```python
+symsearch('a', 'c', regex=False), symsearch('a', 'z', regex=False)
+```
+
+**Outputs:**
+("[('c', 2)]", '[]')
+
+```python
+text = "The quick brown fox jumps over 3 lazy dogs and 12 cats"
+```
+
+```python
+symsearch('text', r'\d+', regex=True)
+```
+
+**Outputs:**
+"[('3', 31, 32), ('12', 47, 49)]"
+
+```python
+symsearch('text', r'\b[aeiou]\w*', regex=True, flags=re.IGNORECASE)
+```
+
+**Outputs:**
+"[('over', 26, 30), ('and', 43, 46)]"
+
+```python
+#| export
+def symset(
+    val: str  # Value to assign to _ai_sym
+):
+    "Set _ai_sym to the given value"
+    _find_frame_dict('__dialog_name')['_ai_sym'] = val
+```
+
+```python
+symset('Otters are awesome!'); _ai_sym
+```
+
+**Outputs:**
+'Otters are awesome!'
+
+## Symbol context
+
+```python
+#| export
+@llmtool
+@delegates(sym2folderctx)
+def symfiles_folder(
+    sym:str,      # Dotted symbol path or "_last" for previous result
+    **kwargs
+):
+    "Return XML context of files in the folder containing `sym`'s definition"
+    try: s = resolve(sym)
+    except SymbolNotFound as e: return str(e)
+    return sym2folderctx(s, **kwargs)
+```
+
+```python
+# print(symfiles_folder('xml'))
+```
+
+```python
+#| export
+@llmtool
+@delegates(sym2pkgctx)
+def symfiles_package(
+    sym:str,      # Dotted symbol path or "_last" for previous result
+    **kwargs
+):
+    "Return XML context of all files in `sym`'s top-level package"
+    try: s = resolve(sym)
+    except SymbolNotFound as e: return str(e)
+    return sym2pkgctx(s, **kwargs)
+```
+
+```python
+# print(symfiles_package('xml'))
+```
+
+### toolslm
+
+*Source: index.ipynb | URL: https://github.com/AnswerDotAI/toolslm/blob/main/index.ipynb*
+
+```python
+#| hide
+from toolslm.xml import *
+```
+
+# toolslm
+
+> Tools to make language models a bit easier to use
+
+This is a work in progress...
+
+## Install
+
+```sh
+pip install toolslm
+```
+
+## How to use
+
+### Context creation
+
+toolslm has some helpers to make it easier to generate XML context from files, for instance `folder2ctx`:
+
+```python
+print(folder2ctx('samples', prefix=False, file_glob='*.py'))
+```
+
+**Outputs:**
+<documents><document index="1"><src>
+samples/sample_core.py
+</src><document-content>
+import inspect
+empty = inspect.Parameter.empty
+models = 'claude-3-opus-20240229','claude-3-sonnet-20240229','claude … (truncated)
+
+JSON doesn't map as nicely to XML as the `ft` data structure from `fastcore.xml`, but for simple XML trees it can be convenient. The `json_to_xml` function handles that conversion:
+
+```python
+a = dict(surname='Howard', firstnames=['Jeremy','Peter'],
+         address=dict(state='Queensland',country='Australia'))
+print(json_to_xml(a, 'person'))
+```
+
+**Outputs:**
+<person>
+  <surname>Howard</surname>
+  <firstnames>
+    <item>Jeremy</item>
+    <item>Peter</item>
+  </firstnames>
+  <address>
+    <state>Queensland</state>
+    <country>Australia</country>
+  </addres … (truncated)
+
+---
+
+## Optional
+
+### Release notes
+
+*Source: CHANGELOG.md | URL: https://github.com/AnswerDotAI/toolslm/blob/main/CHANGELOG.md*
+
+# Release notes
+
+<!-- do not remove -->
+
+## 0.3.38
+
+### New Features
+
+- Default unspecialised list/set schemas to string items for LLM compatibility ([#87](https://github.com/AnswerDotAI/toolslm/issues/87))
+
+
+## 0.3.37
+
+### New Features
+
+- Coerce LLM container input mistakes in `call_func` ([#86](https://github.com/AnswerDotAI/toolslm/issues/86))
+- Support tuple schema generation for OpenAI/Gemini compatibility ([#85](https://github.com/AnswerDotAI/toolslm/pull/85)), thanks to [@jackhogan](https://github.com/jackhogan)
+
+
+## 0.3.36
+
+### New Features
+
+- Support tuple schema generation for OpenAI/Gemini compatibility ([#85](https://github.com/AnswerDotAI/toolslm/pull/85)), thanks to [@jackhogan](https://github.com/jackhogan)
+- Make symsrc easier to use in pyrun. ([#84](https://github.com/AnswerDotAI/toolslm/pull/84)), thanks to [@PiotrCzapla](https://github.com/PiotrCzapla)
+
+
+## 0.3.35
+
+### New Features
+
+- Refactor type handling: replace `_types`/`_handle_container`/`_schema_for_type` with unified `_type_str`/`_handle_type`, expose `type_map`, and add set/Union/dict support ([#83](https://github.com/AnswerDotAI/toolslm/issues/83))
+- Unify container and type schema dispatch ([#82](https://github.com/AnswerDotAI/toolslm/issues/82))
+
+
+## 0.3.34
+
+### New Features
+
+- Add Python identifier sanitization helpers ([#81](https://github.com/AnswerDotAI/toolslm/pull/81)), thanks to [@ncoop57](https://github.com/ncoop57)
+
+
+## 0.3.33
+
+### Bugs Squashed
+
+- fix: remove stale type key from union schemas ([#80](https://github.com/AnswerDotAI/toolslm/pull/80)), thanks to [@thechandru](https://github.com/thechandru)
+
+
+## 0.3.32
+
+### New Features
+
+- Add proper JSON Schema tuple support with prefixItems, ellipsis, and simplified container handling ([#79](https://github.com/AnswerDotAI/toolslm/issues/79))
+
+
+## 0.3.31
+
+### New Features
+
+- look for `__dialog_name` ([#78](https://github.com/AnswerDotAI/toolslm/issues/78))
+
+
+## 0.3.30
+
+### New Features
+
+- Skip builtin types (e.g. object) from nested schema generation ([#77](https://github.com/AnswerDotAI/toolslm/issues/77))
+- run sync tools with threads in `call_func_async` ([#73](https://github.com/AnswerDotAI/toolslm/pull/73)), thanks to [@KeremTurgutlu](https://github.com/KeremTurgutlu)
+
+
+## 0.3.29
+
+### New Features
+
+- run sync tools with threads in `call_func_async` ([#73](https://github.com/AnswerDotAI/toolslm/pull/73)), thanks to [@KeremTurgutlu](https://github.com/KeremTurgutlu)
+
+
+## 0.3.28
+
+### New Features
+
+- Use callable class docstring when `__call__` lacks one ([#71](https://github.com/AnswerDotAI/toolslm/issues/71))
+
+
+## 0.3.27
+
+### New Features
+
+- Add dotted name support for resolving and calling methods on objects ([#70](https://github.com/AnswerDotAI/toolslm/issues/70))
+
+### Bugs Squashed
+
+- Add 'items' field to JSON schema for Gemini compatibility ([#68](https://github.com/AnswerDotAI/toolslm/pull/68)), thanks to [@PiotrCzapla](https://github.com/PiotrCzapla)
+
+
+## 0.3.26
+
+### New Features
+
+- Add @llmtool decorators to inspecttools functions and improve type hints ([#67](https://github.com/AnswerDotAI/toolslm/issues/67))
+
+
+## 0.3.25
+
+### New Features
+
+- Add inspecttools module for LLM symbol inspection ([#66](https://github.com/AnswerDotAI/toolslm/issues/66))
+- Use `codesigs` for signatures ([#66](https://github.com/AnswerDotAI/toolslm/issues/66))
+
+
+## 0.3.24
+
+### New Features
+
+- Add UnionType support to `get_schema` ([#65](https://github.com/AnswerDotAI/toolslm/issues/65))
+
+
+## 0.3.23
+
+### Bugs Squashed
+
+- `get_schema` fails if return docment but no type ([#64](https://github.com/AnswerDotAI/toolslm/issues/64))
+
+
+## 0.3.22
+
+### New Features
+
+- Add repo2ctx CLI command ([#63](https://github.com/AnswerDotAI/toolslm/issues/63))
+
+
+## 0.3.21
+
+### New Features
+
+- Default `folder2ctx_cli` to current folder ([#62](https://github.com/AnswerDotAI/toolslm/issues/62))
+
+
+## 0.3.20
+
+### New Features
+
+- Add return docments to schema ([#61](https://github.com/AnswerDotAI/toolslm/issues/61))
+
+
+## 0.3.19
+
+- line numbers support, raw cells, and expanduser for ~ paths
+
+
+## 0.3.18
+
+### New Features
+
+- Add `sigs_only` ([#60](https://github.com/AnswerDotAI/toolslm/issues/60))
+
+
+## 0.3.17
+
+### New Features
+
+- Add `ids` to ctx funcs ([#59](https://github.com/AnswerDotAI/toolslm/issues/59))
+
+
+## 0.3.16
+
+### Bugs Squashed
+
+- missing import ghapi ([#58](https://github.com/AnswerDotAI/toolslm/issues/58))
+
+
+## 0.3.14
+
+### New Features
+
+- Add `sym2{file,folder,pkg}ctx` ([#57](https://github.com/AnswerDotAI/toolslm/issues/57))
+
+
+## 0.3.13
+
+### New Features
+
+- Much improved `repo2ctx` ([#56](https://github.com/AnswerDotAI/toolslm/issues/56))
+
+
+## 0.3.11
+
+### New Features
+
+- Add `skip_hidden` ([#55](https://github.com/AnswerDotAI/toolslm/issues/55))
+
+
+## 0.3.10
+
+### New Features
+
+- Add `evalable` to `get_schema` ([#54](https://github.com/AnswerDotAI/toolslm/issues/54))
+
+
+## 0.3.9
+
+### New Features
+
+- Add `max_size` and `title` to `folder2ctx` et al ([#53](https://github.com/AnswerDotAI/toolslm/issues/53))
+
+
+## 0.3.8
+
+### New Features
+
+- Add `repo2ctx` ([#52](https://github.com/AnswerDotAI/toolslm/issues/52))
+
+
+## 0.3.7
+
+### New Features
+
+- Add `folder2ctx` `out` param ([#51](https://github.com/AnswerDotAI/toolslm/issues/51))
+
+
+## 0.3.6
+
+### New Features
+
+- Automatically handle `{Path, bytes, Decimal, UUID}` in schemas ([#49](https://github.com/AnswerDotAI/toolslm/issues/49))
+- Add schema to function capabilities ([#47](https://github.com/AnswerDotAI/toolslm/issues/47))
+
+### Bugs Squashed
+
+- fix line misalignment when code block is between headings ([#40](https://github.com/AnswerDotAI/toolslm/pull/40)), thanks to [@jackhogan](https://github.com/jackhogan)
+
+
+## 0.3.4
+
+### New Features
+
+- Support notebook context ([#41](https://github.com/AnswerDotAI/toolslm/issues/41))
+- Only add title when needed to schemas ([#39](https://github.com/AnswerDotAI/toolslm/issues/39))
+
+
+## 0.3.2
+
+### Breaking changes
+
+- New combined API ([#38](https://github.com/AnswerDotAI/toolslm/issues/38))
+
+
+## 0.3.1
+
+### New Features
+
+- Add `rm_fenced` ([#37](https://github.com/AnswerDotAI/toolslm/issues/37))
+
+### Bugs Squashed
+
+- Add edge case tests and fix them ([#36](https://github.com/AnswerDotAI/toolslm/issues/36))
+
+
+## 0.3.0
+
+### Breaking changes
+
+- Remove object enumeration of tools ([#35](https://github.com/AnswerDotAI/toolslm/issues/35))
+
+
+## 0.2.3
+
+### New Features
+
+- Handle list and dict args to `mk_ns` ([#34](https://github.com/AnswerDotAI/toolslm/issues/34))
+
+
+## 0.2.2
+
+### New Features
+
+- Auto clean up bad param names in `call_func` ([#33](https://github.com/AnswerDotAI/toolslm/issues/33))
+
+### Bugs Squashed
+
+- python() function can't be used as a tool ([#32](https://github.com/AnswerDotAI/toolslm/issues/32))
+
+
+## 0.2.1
+
+### New Features
+
+- Optionally dont raise error on `call_func` ([#31](https://github.com/AnswerDotAI/toolslm/pull/31)), thanks to [@erikgaas](https://github.com/erikgaas)
+- dict support in `get_schema` ([#30](https://github.com/AnswerDotAI/toolslm/issues/30))
+
+
+## 0.2.0
+
+### Breaking changes
+
+- Optional libs (http2text, beautifulsoup, llms_txt) are no longer automatically installed
+
+### New Features
+
+- Lazily load optional modules ([#29](https://github.com/AnswerDotAI/toolslm/issues/29))
+
+
+## 0.1.3
+
+### New Features
+
+- Pass glb,loc to python ([#28](https://github.com/AnswerDotAI/toolslm/issues/28))
+
+## 0.1.2
+
+### New Features
+
+- Adds `call_func_async` ([#27](https://github.com/AnswerDotAI/toolslm/pull/27)), thanks to [@mikonapoli](https://github.com/mikonapoli)
+- Add arg ignore links ([#26](https://github.com/AnswerDotAI/toolslm/pull/26)), thanks to [@Isaac-Flath](https://github.com/Isaac-Flath)
+
+
+## 0.1.1
+
+### New Features
+
+- Add arg ignore links ([#26](https://github.com/AnswerDotAI/toolslm/pull/26)), thanks to [@Isaac-Flath](https://github.com/Isaac-Flath)
+
+### Bugs Squashed
+
+- fix: prevent markdown heading detection inside code blocks ([#25](https://github.com/AnswerDotAI/toolslm/pull/25)), thanks to [@franckalbinet](https://github.com/franckalbinet)
+- Fix markdown hierarchy parsing for arbitrary header levels ([#22](https://github.com/AnswerDotAI/toolslm/pull/22)), thanks to [@erikgaas](https://github.com/erikgaas)
+
+
+## 0.1.0
+
+### Breaking changes
+
+- Replace `source` with `src` in context generation ([#17](https://github.com/AnswerDotAI/toolslm/issues/17))
+
+
+## 0.0.8
+
+### New Features
+
+- Escape and print context in `folder2ctx` et al ([#16](https://github.com/AnswerDotAI/toolslm/issues/16))
+
+
+## 0.0.7
+
+### New Features
+
+- Add `dict2obj` to `md_hier` funcs ([#15](https://github.com/AnswerDotAI/toolslm/issues/15))
+- Migrate call_func from claudette to toolslm ([#14](https://github.com/AnswerDotAI/toolslm/pull/14)), thanks to [@ncoop57](https://github.com/ncoop57)
+- Allow for getting schemas from nested structures ([#11](https://github.com/AnswerDotAI/toolslm/pull/11)), thanks to [@ncoop57](https://github.com/ncoop57)
+- Allow for `sel` to select and wrap multiple element results ([#10](https://github.com/AnswerDotAI/toolslm/pull/10)), thanks to [@Isaac-Flath](https://github.com/Isaac-Flath)
+
+### Bugs Squashed
+
+- Using `get_schema` on class method results in type missing error ([#12](https://github.com/AnswerDotAI/toolslm/issues/12))
+
+
+## 0.0.6
+
+### New Features
+
+- Add `read_docs` and `find_docs` ([#8](https://github.com/AnswerDotAI/toolslm/issues/8))
+
+
+## 0.0.5
+
+### Bugs Squashed
+
+- XML tools assume all files have content ([#3](https://github.com/AnswerDotAI/toolslm/issues/3))
+
+
+## 0.0.4
+
+- Minor updates
+
+## 0.0.2
+
+- Rename project
+
+
+## 0.0.1
+
+- Initial alpha release
+
+---
+
+## Source Modules
+
+### toolslm.download
+
+*Source: toolslm/download.py | URL: https://github.com/AnswerDotAI/toolslm/blob/main/toolslm/download.py*
+
+- `clean_md`
+- `read_md`
+- `html2md`
+- `read_html`
+- `get_llmstxt`
+- `split_url`
+- `find_docs`
+- `read_docs`
+
+### toolslm.funccall
+
+*Source: toolslm/funccall.py | URL: https://github.com/AnswerDotAI/toolslm/blob/main/toolslm/funccall.py*
+
+- `get_schema`
+- `python`
+- `handler`
+- `mk_ns`
+- `coerce_inputs`
+- `resolve_nm`
+- `get_schema_nm`
+- `call_func`
+- `call_func_async`
+- `mk_param`
+- `schema2sig`
+- `mk_tool`
+- `fn`
+
+### toolslm.inspecttools
+
+*Source: toolslm/inspecttools.py | URL: https://github.com/AnswerDotAI/toolslm/blob/main/toolslm/inspecttools.py*
+
+- `importmodule`: Import a module into the caller's global namespace so it's available for `symsrc`, `symval`, `symdir`, etc.
+- `SymbolNotFound`
+- `resolve`: Resolve a dotted symbol string to its Python object, with optional [n] indexing.
+- `symsrc`: Get the source code for a symbol.
+- `symtype`: Get the type of a symbol and set `_last`.
+- `f`
+- `symval`: List of repr of symbols' values.
+- `f`
+- `symtype_val`: List of 2-ple of (type,repr) of symbols' values.
+- `f`
+- `symdir`: Get dir() listing of a symbol's attributes and set `_last`. E.g: `symdir("sympy.Interval")` -> `['__add__', '__and__', ...]`
+- `symnth`: Get the nth value from a dict (or any object with .values()). Sets `_last` so you can chain with `symsrc("_last")` etc.
+- `symlen`
+- `symslice`
+- `symsearch`: Search contents of symbol, which is assumed to be str for regex, or iterable for non-regex.
+- `symset`
+- `symfiles_folder`
+- `symfiles_package`
+
+### toolslm.shell
+
+*Source: toolslm/shell.py | URL: https://github.com/AnswerDotAI/toolslm/blob/main/toolslm/shell.py*
+
+- `run_cell`
+- `get_shell`

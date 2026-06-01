@@ -1,0 +1,34 @@
+# 🦑 use-mcp 🦑
+
+> use-mcp is a React library that provides the `useMcp` hook, enabling web applications to connect to Model Context Protocol (MCP) servers with built-in browser-side OAuth authentication and seamless tool integration.
+
+A TypeScript/React package from the Model Context Protocol organization that abstracts MCP server connectivity—including OAuth PKCE flows, multi-server management, and tool discovery—so front-end developers can add AI tool-calling capabilities to any React app with minimal boilerplate.
+
+## Guide
+
+- [use-mcp Project Guidelines](https://github.com/modelcontextprotocol/use-mcp/blob/main/AGENT.md): - pnpm dev: Run development build with watch mode and start all examples/servers - Chat UI: http://localhost:5002 - Inspector: http://localhost:5001 -…
+- [AI Chat Template - Development Guide](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/AGENT.md): - Dev server: pnpm dev - Build: pnpm build (runs TypeScript compilation then Vite build) - Lint: pnpm lint (ESLint) - Deploy: pnpm deploy (builds and …
+- [Model Selector Guide](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/MODEL_SELECTOR_GUIDE.md): This guide explains how to use the new favorites-based model selector system.
+- [AI Chat Template - Development Guide](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/inspector/AGENT.md): - Dev server: pnpm dev - Build: pnpm build (runs TypeScript compilation then Vite build) - Lint: pnpm lint (ESLint) - Deploy: pnpm deploy (builds and …
+
+## Source Modules
+
+- [examples.chat-ui.api.index](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/api/index.ts)
+- [examples.chat-ui.src.hooks.useIndexedDB](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/hooks/useIndexedDB.ts)
+- [examples.chat-ui.src.hooks.useModels](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/hooks/useModels.ts)
+- [examples.chat-ui.src.hooks.useTheme](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/hooks/useTheme.ts)
+- [examples.chat-ui.src.utils.auth](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/utils/auth.ts)
+- [examples.chat-ui.src.utils.modelOptions](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/utils/modelOptions.ts)
+- [examples.chat-ui.src.utils.modelPreferences](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/utils/modelPreferences.ts)
+- [examples.servers.cf-agents.src.index](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/servers/cf-agents/src/index.ts)
+- [src.auth.browser-provider](https://github.com/modelcontextprotocol/use-mcp/blob/main/src/auth/browser-provider.ts)
+- [src.auth.callback](https://github.com/modelcontextprotocol/use-mcp/blob/main/src/auth/callback.ts)
+- [src.react.useMcp](https://github.com/modelcontextprotocol/use-mcp/blob/main/src/react/useMcp.ts)
+- [src.utils.assert](https://github.com/modelcontextprotocol/use-mcp/blob/main/src/utils/assert.ts)
+- [examples.chat-ui.src.App](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/App.tsx)
+- [examples.chat-ui.src.components.McpServerModal](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/components/McpServerModal.tsx)
+- [examples.chat-ui.src.components.McpServers](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/components/McpServers.tsx)
+- [examples.chat-ui.src.components.OAuthCallback](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/chat-ui/src/components/OAuthCallback.tsx)
+- [examples.inspector.src.App](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/inspector/src/App.tsx)
+- [examples.inspector.src.components.McpServers](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/inspector/src/components/McpServers.tsx)
+- [examples.inspector.src.components.OAuthCallback](https://github.com/modelcontextprotocol/use-mcp/blob/main/examples/inspector/src/components/OAuthCallback.tsx)

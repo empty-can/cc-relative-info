@@ -1,0 +1,3251 @@
+# fastsql
+
+> SQLAlchemy V2 上で MiniDataAPI spec を実装した Python 製の軽量 DB ラッパー。データクラスをそのままテーブルとして CRUD 操作できるシンプルな API を開発者に提供する。
+
+---
+
+## Guide
+
+### Source
+
+*Source: 00_core.ipynb | URL: https://github.com/AnswerDotAI/fastsql/blob/main/00_core.ipynb*
+
+```python
+#| default_exp core
+```
+
+# Source
+
+Source code for FastSQL, a MiniDataAPI spec implementation for SQLAlchemy V2
+
+```python
+#| export
+from dataclasses import dataclass, is_dataclass, MISSING, fields, field, make_dataclass
+from enum import Enum
+from pathlib import Path
+from typing import Any, Optional, Union, Iterable, Generator, List, Tuple, Dict, get_args
+
+from sqlalchemy.orm import Session
+from fastcore.utils import *
+from fastcore.test import test_fail, test_eq
+from fastcore.xtras import dataclass_src
+from itertools import starmap
+
+import sqlparse, sqlalchemy as sa, subprocess
+```
+
+```python
+#| export
+class Default:
+    pass
+
+
+DEFAULT = Default()
+
+```
+
+## `Database` and `DBTable`
+
+We create a `Database` class and a `DBTable` class (which is returned by `Database.create`), using sqlalchemy v2. These classes will allow us to directly work with dataclasses such as these:
+
+```python
+#| export
+def _db_str(path):
+    if isinstance(path, Path): path = str(path)
+    if not isinstance(path, str): return path
+    if '://' in path: return path
+    if path == ':memory:': return 'sqlite:///:memory:'
+    return f"sqlite:///{path}"
+
+```
+
+```python
+conn_str = _db_str(":memory:"); conn_str
+```
+
+**Outputs:**
+'sqlite:///:memory:'
+
+```python
+#| export
+class Database:
+    "A connection to a SQLAlchemy database"
+
+    def __init__(self, conn_str, engine_kws=None):
+        self.conn_str = conn_str
+        self.engine = sa.create_engine(conn_str, **(engine_kws or {}))
+        self.meta = sa.MetaData()
+        self.meta.reflect(bind=self.engine)
+        self.meta.bind = self.engine
+        self.conn = self.engine.connect()
+        self.meta.conn = self.conn
+        self._tables = {}
+
+    def execute(self, st, params=None, opts=None): return self.conn.execute(st, params, execution_options=opts)
+
+    def close(self): self.conn.close()
+
+    def __repr__(self): return f"Database({self.conn_str})"
+
+```
+
+```python
+db = Database(conn_str); db
+```
+
+**Outputs:**
+Database(sqlite:///:memory:)
+
+```python
+# create a test table
+db.execute(sa.text('create table test (id integer primary key, name text, age integer)'))
+db.meta.reflect(bind=db.engine)
+```
+
+```python
+db.meta.tables
+```
+
+**Outputs:**
+FacadeDict({'test': Table('test', MetaData(), Column('id', INTEGER(), table=<test>, primary_key=True), Column('name', TEXT(), table=<test>), Column('age', INTEGER(), table=<test>), schema=None)})
+
+```python
+#| export
+@patch
+def q(self: Database, sql: str, **params):
+    "Query database with raw SQL and optional parameters. Returns list of dicts."
+    result = self.execute(sa.text(sql), params=params)
+    if result.returns_rows: return list(map(dict, result.mappings()))
+    return []
+
+```
+
+```python
+# add some data to it
+db.q('insert into test (name, age) values (:name, :age)', name='Alice', age=30)
+db.q('insert into test (name, age) values (:name, :age)', name='Bob', age=25)
+
+```
+
+**Outputs:**
+[]
+
+```python
+db.q('select * from test')
+```
+
+**Outputs:**
+[{'id': 1, 'name': 'Alice', 'age': 30}, {'id': 2, 'name': 'Bob', 'age': 25}]
+
+```python
+# update Alice's age to 32
+db.q('update test set age = :age where name = :name', age=32, name='Alice')
+```
+
+**Outputs:**
+[]
+
+```python
+db.q('select * from test')
+```
+
+**Outputs:**
+[{'id': 1, 'name': 'Alice', 'age': 32}, {'id': 2, 'name': 'Bob', 'age': 25}]
+
+```python
+#| export
+class DBTable:
+    "A connection to a SQLAlchemy table, created if needed"
+
+    def __init__(self, table: sa.Table, db: Database, cls, _exists=None):
+        store_attr()
+        self.xtra_id, self.result = {}, []
+        if len(table.columns) > 0:
+            table.create(self.db.engine, checkfirst=True)
+            self._exists = True
+
+    def __repr__(self):
+        if self._exists is False or (self._exists is None and len(self.table.columns) == 0):
+            return f"<Table {self.table.name} (does not exist yet)>"
+        return f"<Table {self.table.name} ({', '.join(self.table.c.keys())})>"
+
+    def __str__(self):
+        return f'"{self.table.name}"'
+
+    @property
+    def conn(self):
+        return self.db.conn
+
+    def xtra(self, **kwargs):
+        "Set `xtra_id`"
+        self.xtra_id = kwargs
+
+```
+
+```python
+# create a DBTable with the Test table
+tbl = DBTable(db.meta.tables['test'], db, None)
+tbl
+```
+
+**Outputs:**
+<Table test (id, name, age)>
+
+```python
+#| export
+@patch(as_prop=True)
+def t(self: DBTable):
+    return self.table, self.table.c
+
+```
+
+```python
+tbl.t
+```
+
+**Outputs:**
+(Table('test', MetaData(), Column('id', INTEGER(), table=<test>, primary_key=True), Column('name', TEXT(), table=<test>), Column('age', INTEGER(), table=<test>), schema=None),
+ <sqlalchemy.sql.base.Re … (truncated)
+
+```python
+#| export
+@patch(as_prop=True)
+def pks(self: DBTable):
+    return tuple(self.table.primary_key) + tuple(self.table.c[o] for o in self.xtra_id.keys())
+
+```
+
+```python
+tbl.pks
+```
+
+**Outputs:**
+(Column('id', INTEGER(), table=<test>, primary_key=True),)
+
+```python
+#| export
+@patch(as_prop=True)
+def schema(self: DBTable):
+    return str(sa.schema.CreateTable(self.table).compile(self.db.engine)).strip()
+
+```
+
+```python
+print(tbl.schema)
+```
+
+**Outputs:**
+CREATE TABLE test (
+	id INTEGER, 
+	name TEXT, 
+	age INTEGER, 
+	PRIMARY KEY (id)
+)
+
+
+```python
+#| export
+@patch
+def table(self: Database, nm: str, cls=None):
+    if nm in self._tables: return self._tables[nm]
+
+    if nm in self.meta.tables:
+        tbl = self.meta.tables[nm]
+        exists = True
+    else:
+        inspector = sa.inspect(self.engine)
+        if nm in inspector.get_table_names() or nm in inspector.get_view_names():
+            tbl = sa.Table(nm, self.meta, autoload_with=self.engine)
+            exists = True
+        else:
+            tbl = sa.Table(nm, self.meta)
+            exists = False
+
+    if cls is None and hasattr(tbl, "cls"): cls = tbl.cls
+    res = DBTable(tbl, self, cls, _exists=exists)
+    self._tables[nm] = res
+    return res
+
+```
+
+```python
+db.table('test')
+```
+
+**Outputs:**
+<Table test (id, name, age)>
+
+```python
+#| export
+@patch
+def __getitem__(self: Database, nm: str):
+    return self.table(nm)
+
+```
+
+```python
+db['test']
+```
+
+**Outputs:**
+<Table test (id, name, age)>
+
+```python
+#| export
+def database(path, wal=True, **kwargs) -> Any:
+    "Create a `Database` from a path or connection string"
+    conn_str = _db_str(path)
+    db = Database(conn_str)
+    if wal and str(conn_str).startswith("sqlite:"): db.execute(sa.text("PRAGMA journal_mode=WAL"))
+    return db
+
+```
+
+```python
+db = database("sqlite:///:memory:"); db
+```
+
+**Outputs:**
+Database(sqlite:///:memory:)
+
+```python
+#| export
+def _get_flds(tbl):
+    flds = []
+    for c in tbl.columns:
+        try:
+            typ = c.type.python_type
+        except Exception:
+            typ = str
+        flds.append((c.name, typ | None, field(default=UNSET)))
+    return flds
+
+```
+
+```python
+#| export
+def _dataclass(self: DBTable, store=True, suf="") -> type:
+    "Create a `dataclass` with the types and defaults of this table"
+    res = make_dataclass(self.table.name.title() + suf, _get_flds(self.table))
+    flexiclass(res)
+    if store:
+        self.cls = res
+    return res
+
+
+DBTable.dataclass = _dataclass
+
+
+def all_dcs(db, with_views=False, store=True, suf=""):
+    "dataclasses for all objects in `db`"
+    return [o.dataclass(store=store, suf=suf) for o in list(db.t)]
+
+
+def create_mod(db, mod_fn, with_views=False, store=True, suf=""):
+    "Create module for dataclasses for `db`"
+    mod_fn = str(mod_fn)
+    if not mod_fn.endswith(".py"): mod_fn += ".py"
+    dcs = all_dcs(db, with_views, store=store, suf=suf)
+    strlist = ", ".join([f'"{o.__name__}"' for o in dcs])
+    with open(mod_fn, "w") as f:
+        print(f"__all__ = [{strlist}]", file=f)
+        print("from dataclasses import dataclass", file=f)
+        print("from fastsql.core import UNSET", file=f)
+        print("import datetime, decimal", file=f)
+        for o in dcs:
+            print(dataclass_src(o), file=f)
+
+```
+
+```python
+#| export
+@patch
+def link_dcs(self: Database, mod):
+    "Set the internal dataclass type links for tables using `mod` (created via `create_mod`)"
+    for o in mod.__all__:
+        self.t[o.lower()].cls = getattr(mod, o)
+
+
+@patch
+def set_classes(self: Database, glb):
+    "Add set all table dataclasses using types in namespace `glb`"
+    for tbl in self.t:
+        tbl.cls = glb[tbl.table.name.title()]
+
+
+@patch
+def get_tables(self: Database, glb):
+    "Add objects for all table objects to namespace `glb`"
+    for tbl in self.t:
+        glb[tbl.table.name.lower() + "s"] = tbl
+
+```
+
+```python
+#| export
+@patch
+def lookup(
+    self: DBTable,
+    lookup_values: Dict[str, Any],
+    extra_values: Dict[str, Any] | None = None,
+    pk: str | None = "id",
+    **kwargs,
+):
+    if not lookup_values: lookup_values = {}
+    lookup_values = {**lookup_values, **kwargs}
+    if not lookup_values: return {}
+    where = " and ".join([f'"{k}" = :{k}' for k in lookup_values.keys()])
+    res = self(where=where, where_args=lookup_values, limit=2)
+    if res: return res[0]
+    data = {**lookup_values, **(extra_values or {})}
+    return self.insert(data)
+
+
+def _pk_names(self):
+    return [c.name for c in self.table.primary_key]
+
+```
+
+```python
+#| export
+@patch
+def upsert(
+    self: DBTable,
+    record: Any = None,
+    pk=DEFAULT,
+    foreign_keys=DEFAULT,
+    column_order: Union[List[str], Default, None] = DEFAULT,
+    not_null: Union[Iterable[str], Default, None] = DEFAULT,
+    defaults: Union[Dict[str, Any], Default, None] = DEFAULT,
+    hash_id: Union[str, Default] | None = DEFAULT,
+    hash_id_columns: Union[Iterable[str], Default, None] = DEFAULT,
+    alter: Union[bool, Default] | None = DEFAULT,
+    extracts: Union[Dict[str, str], List[str], Default, None] = DEFAULT,
+    conversions: Union[Dict[str, str], Default, None] = DEFAULT,
+    columns: Union[Dict[str, Any], Default, None] = DEFAULT,
+    strict: Union[bool, Default] | None = DEFAULT,
+    **kwargs,
+) -> Any:
+    record = _process_row(record)
+    record = {**record, **kwargs}
+    if not record: return {}
+    if pk == DEFAULT: pk = _pk_names(self)
+    if isinstance(pk, str): pk = [pk]
+    missing = [k for k in pk if k not in record]
+    if missing: raise MissingPrimaryKey()
+    record = {**record, **self.xtra_id}
+    dialect = self.db.engine.dialect.name
+    if dialect in ("sqlite", "postgresql"):
+        if dialect == "sqlite":
+            from sqlalchemy.dialects.sqlite import insert as dialect_insert
+        else:
+            from sqlalchemy.dialects.postgresql import insert as dialect_insert
+        ins = dialect_insert(self.table).values(**record)
+        stmt = ins.on_conflict_do_update(index_elements=pk, set_=record).returning(
+            *self.table.columns
+        )
+        row = self.conn.execute(stmt).one()
+        self.conn.commit()
+        return _row_to_obj(self, row)
+    if dialect in ("mysql", "mariadb"):
+        from sqlalchemy.dialects.mysql import insert as dialect_insert
+
+        ins = dialect_insert(self.table).values(**record)
+        stmt = ins.on_duplicate_key_update(**record)
+        result = self.conn.execute(stmt)
+        self.conn.commit()
+        try:
+            row = result.one()
+            return _row_to_obj(self, row)
+        except Exception:
+            return self.get([record[k] for k in pk])
+    existing = None
+    try:
+        existing = self.get([record[k] for k in pk])
+    except NotFoundError:
+        pass
+    if existing: return self.update(record)
+    return self.insert(record)
+
+```
+
+## CRUD Operations
+
+```python
+#| export
+def _is_enum(o):
+    return isinstance(o, type) and issubclass(o, Enum)
+
+
+def _enum_types(e):
+    return {type(v.value) for v in e}
+
+
+def _parse_typ(t):
+    if not (_args := get_args(t)): return t
+    return first(_args, bool)
+
+
+def get_typ(t):
+    "Get the underlying type."
+    t = _parse_typ(t)
+    if _is_enum(t) and len(types := _enum_types(t)) == 1: return first(types)
+    return t
+
+```
+
+```python
+get_typ(int|None), get_typ(list[str])
+```
+
+**Outputs:**
+(int, str)
+
+```python
+#| export
+_type_map = {
+    int: sa.Integer,
+    str: sa.String,
+    bool: sa.Boolean,
+    float: sa.Float,
+    bytes: sa.LargeBinary,
+}
+
+
+def _sa_type(typ):
+    typ = get_typ(typ)
+    if typ in _type_map: return _type_map[typ]
+    return sa.String
+
+```
+
+```python
+_sa_type(int)
+```
+
+**Outputs:**
+sqlalchemy.sql.sqltypes.Integer
+
+```python
+#| export
+def _column(name, typ, primary=False, nullable=True, default=MISSING):
+    args = {}
+    if default is not MISSING and default is not UNSET: args["default"] = default
+    return sa.Column(name, _sa_type(typ), primary_key=primary, nullable=nullable, **args)
+
+```
+
+```python
+_column('age', int)
+```
+
+**Outputs:**
+Column('age', Integer(), table=None)
+
+```python
+#| export
+@patch
+def create(
+    self: Database,
+    cls: type,
+    pk="id",
+    name: str | None = None,
+    foreign_keys=None,
+    defaults=None,
+    column_order=None,
+    not_null=None,
+    hash_id=None,
+    hash_id_columns=None,
+    extracts=None,
+    if_not_exists=False,
+    replace=False,
+    ignore=True,
+    transform=False,
+    strict=False,
+    constraints=None,
+):
+    "Get a table object, creating in DB if needed"
+    pk = listify(pk)
+    not_null = setify(not_null)
+    defaults = defaults or {}
+    flexiclass(cls)
+    if name is None: name = camel2snake(cls.__name__)
+    cols = [
+        _column(
+            o.name,
+            o.type,
+            primary=o.name in pk,
+            nullable=o.name not in not_null,
+            default=defaults.get(o.name, MISSING),
+        )
+        for o in fields(cls)
+    ]
+    constraints = [sa.CheckConstraint(c) for c in (constraints or [])]
+    tbl = sa.Table(name, self.meta, *cols, *constraints, extend_existing=True)
+    res = DBTable(tbl, self, cls)
+    tbl.cls = cls
+    self._tables[name] = res
+    return res
+
+```
+
+```python
+class User: name:str; pwd:str
+class Todo: title:str; name:str; id:int; done:bool=False; details:str=''
+class Student: id:int; grad_year:int; name:str
+```
+
+```python
+users = db.create(User, pk='name')
+todos = db.create(Todo, pk='id')
+students = db.create(Student, pk=('id', 'grad_year'))
+```
+
+```python
+#| export
+@patch
+def table_names(self: Database):
+    return sa.inspect(self.engine).get_table_names()
+
+
+@patch
+def view_names(self: Database):
+    return sa.inspect(self.engine).get_view_names()
+
+```
+
+```python
+db.table_names()
+```
+
+**Outputs:**
+['student', 'todo', 'user']
+
+```python
+#| export
+@patch
+def schema(self: Database):
+    "Show all tables and columns"
+    inspector = sa.inspect(self.engine)
+    res = ""
+    for table_name in inspector.get_table_names():
+        res += f"Table: {table_name}\n"
+        pk_cols = inspector.get_pk_constraint(table_name)["constrained_columns"]
+        for column in inspector.get_columns(table_name):
+            pk_marker = "*" if column["name"] in pk_cols else "-"
+            res += f"  {pk_marker} {column['name']}: {column['type']}\n"
+    return res
+```
+
+```python
+print(db.schema())
+```
+
+**Outputs:**
+Table: student
+  * id: INTEGER
+  * grad_year: INTEGER
+  - name: VARCHAR
+Table: todo
+  - title: VARCHAR
+  - name: VARCHAR
+  * id: INTEGER
+  - done: BOOLEAN
+  - details: VARCHAR
+Table: user
+  * name: VA … (truncated)
+
+```python
+#| export
+class _Getter:
+    "Abstract class with dynamic attributes providing access to DB objects"
+
+    def __init__(self, db):
+        self.db = db
+
+    def __repr__(self): return ", ".join(dir(self))
+
+    def __contains__(self, s): return (s if isinstance(s, str) else s.name) in dir(self)
+
+    def __iter__(self): return iter(self[dir(self)])
+
+    def __getitem__(self, idxs):
+        if isinstance(idxs, str): return self.db.table(idxs)
+        return [self.db.table(o) for o in idxs]
+
+    def __getattr__(self, k):
+        if k[0] == "_": raise AttributeError
+        return self.db[k]
+
+
+class _TablesGetter(_Getter):
+    def __dir__(self): return [o for o in self.db.table_names() if not o.startswith("sqlite_")]
+
+
+@patch(as_prop=True)
+def t(self: Database):
+    return _TablesGetter(self)
+
+```
+
+By returning a `_TablesGetter` we get a repr and auto-complete that shows all tables in the DB.
+
+```python
+db.t
+```
+
+**Outputs:**
+student, todo, user
+
+```python
+#| export
+class _Col:
+    def __init__(self, t, c):
+        self.t, self.c = t, c
+
+    def __str__(self): return f'"{self.t}"."{self.c}"'
+
+    def __repr__(self): return self.c
+
+    def __iter__(self): return iter(self.c)
+
+
+class _ColsGetter:
+    def __init__(self, tbl):
+        self.tbl = tbl
+
+    def __dir__(self): return map(repr, self())
+
+    def __call__(self): return [_Col(self.tbl.name, o.name) for o in self.tbl.columns]
+
+    def __contains__(self, s): return (s if isinstance(s, str) else s.c) in self.tbl.columns
+
+    def __repr__(self): return ", ".join(dir(self))
+
+    def __getattr__(self, k):
+        if k[0] == "_": raise AttributeError
+        return _Col(self.tbl.name, k)
+
+
+@patch(as_prop=True)
+def c(self: DBTable):
+    return _ColsGetter(self.table)
+
+```
+
+Similarly, we return `_ColsGetter` for a table's columns
+
+```python
+users.c
+```
+
+**Outputs:**
+name, pwd
+
+```python
+#| export
+@patch
+def exists(self: DBTable):
+    "Check if this table exists in the DB"
+    return sa.inspect(self.db.engine).has_table(self.table.name)
+
+
+@patch
+def create(
+    self: DBTable,
+    columns: Dict[str, Any] = None,
+    pk: Any = None,
+    foreign_keys=None,
+    column_order: Optional[List[str]] = None,
+    not_null: Optional[Iterable[str]] = None,
+    defaults: Optional[Dict[str, Any]] = None,
+    hash_id: str | None = None,
+    hash_id_columns: Optional[Iterable[str]] = None,
+    extracts: Union[Dict[str, str], List[str], None] = None,
+    if_not_exists: bool = False,
+    replace: bool = False,
+    ignore: bool = False,
+    transform: bool = False,
+    strict: bool = False,
+    **kwargs,
+):
+    "Create table from column definitions passed as kwargs or columns dict"
+    if columns is None: columns = {}
+    columns = {**columns, **kwargs}
+
+    if not columns: raise ValueError("No columns specified for table creation")
+
+    if pk is None and "id" in columns:
+        pk = "id"
+    elif pk is None:
+        pk = list(columns.keys())[0]
+
+    pk = listify(pk)
+    not_null = setify(not_null)
+    defaults = defaults or {}
+
+    cols = [
+        _column(
+            name,
+            typ,
+            primary=name in pk,
+            nullable=name not in not_null,
+            default=defaults.get(name, MISSING),
+        )
+        for name, typ in columns.items()
+    ]
+
+    if self.table.name in self.db.meta.tables: self.db.meta.remove(self.table)
+
+    new_tbl = sa.Table(self.table.name, self.db.meta, *cols, extend_existing=True)
+
+    new_tbl.create(self.db.engine, checkfirst=True)
+
+    self.table = new_tbl
+    self._exists = True
+
+    return self
+
+```
+
+```python
+users.exists()
+```
+
+**Outputs:**
+True
+
+```python
+u0 = User('jph','foo')
+u1 = User('rlt','bar')
+t0 = Todo('do it', 'jph')
+t1 = Todo('get it done', 'rlt')
+```
+
+```python
+#| export
+def _obj_to_dict(obj):
+    if obj is None: return {}
+    if isinstance(obj, dict): return obj
+    if is_dataclass(obj): return asdict(obj)
+    if hasattr(obj, "__dict__"): return dict(obj.__dict__)
+    return {}
+
+
+def _process_row(row):
+    row = _obj_to_dict(row)
+    if not row: return {}
+    res = {}
+    for k, v in row.items():
+        if v is UNSET: continue
+        if isinstance(v, Enum): v = v.value
+        res[k] = v
+    return res
+
+
+def _row_to_obj(self, row, as_cls=True):
+    if row is None: return {}
+    data = row._asdict() if hasattr(row, "_asdict") else dict(row)
+    return self.cls(**data) if as_cls and self.cls else data
+
+```
+
+```python
+#| export
+@patch
+def insert(
+    self: DBTable,
+    record: Dict[str, Any] = None,
+    pk=DEFAULT,
+    foreign_keys=DEFAULT,
+    column_order: Union[List[str], Default, None] = DEFAULT,
+    not_null: Union[Iterable[str], Default, None] = DEFAULT,
+    defaults: Union[Dict[str, Any], Default, None] = DEFAULT,
+    hash_id: Union[str, Default, None] = DEFAULT,
+    hash_id_columns: Union[Iterable[str], Default, None] = DEFAULT,
+    alter: Union[bool, Default, None] = DEFAULT,
+    ignore: Union[bool, Default, None] = DEFAULT,
+    replace: Union[bool, Default, None] = DEFAULT,
+    extracts: Union[Dict[str, str], List[str], Default, None] = DEFAULT,
+    conversions: Union[Dict[str, str], Default, None] = DEFAULT,
+    columns: Union[Dict[str, Any], Default, None] = DEFAULT,
+    strict: Union[bool, Default, None] = DEFAULT,
+    **kwargs,
+) -> Any:
+    "Insert an object into this table, and return it"
+    record = _process_row(record)
+    record = {**record, **kwargs}
+    if not record: return {}
+    record = {**record, **self.xtra_id}
+    result = self.conn.execute(
+        sa.insert(self.table).values(**record).returning(*self.table.columns)
+    )
+    row = result.one()
+    self.conn.commit()
+    return _row_to_obj(self, row)
+
+```
+
+```python
+t = todos.insert(t0)
+assert t.id
+t
+```
+
+**Outputs:**
+Todo(title='do it', name='jph', id=1, done=False, details='')
+
+```python
+u = users.insert(u0)
+assert u.name=='jph'
+users.insert(u1)
+u
+```
+
+**Outputs:**
+User(name='jph', pwd='foo')
+
+```python
+todos.insert(t1)
+```
+
+**Outputs:**
+Todo(title='get it done', name='rlt', id=2, done=False, details='')
+
+```python
+#| export
+@patch
+def insert_all(
+    self: DBTable,
+    records: Iterable | None = None,
+    pk=DEFAULT,
+    foreign_keys=DEFAULT,
+    column_order: Union[List[str], Default, None] = DEFAULT,
+    not_null: Union[Iterable[str], Default, None] = DEFAULT,
+    defaults: Union[Dict[str, Any], Default, None] = DEFAULT,
+    batch_size=DEFAULT,
+    hash_id: Union[str, Default, None] = DEFAULT,
+    hash_id_columns: Union[Iterable[str], Default, None] = DEFAULT,
+    alter: Union[bool, Default, None] = DEFAULT,
+    ignore: Union[bool, Default, None] = DEFAULT,
+    replace: Union[bool, Default, None] = DEFAULT,
+    truncate=False,
+    extracts: Union[Dict[str, str], List[str], Default, None] = DEFAULT,
+    conversions: Union[Dict[str, str], Default, None] = DEFAULT,
+    columns: Union[Dict[str, Any], Default, None] = DEFAULT,
+    strict: Union[bool, Default, None] = DEFAULT,
+    upsert: bool = False,
+    analyze: bool = False,
+    xtra: dict | None = None,
+    **kwargs,
+) -> "DBTable":
+    if records is None: records = []
+    if not xtra: xtra = getattr(self, "xtra_id", {})
+    recs = []
+    for o in list(records):
+        row = _process_row(o)
+        if not row: continue
+        recs.append({**row, **xtra})
+    if not recs:
+        self.result = []
+        return self
+    stmt = sa.insert(self.table).returning(*self.table.columns)
+    result = self.conn.execute(stmt, recs)
+    rows = result.fetchall()
+    self.conn.commit()
+    self.result = [_row_to_obj(self, r) for r in rows]
+    return self
+
+```
+
+```python
+todos.insert_all([t0,t1])
+```
+
+**Outputs:**
+<Table todo (title, name, id, done, details)>
+
+```python
+#| export
+def _bind_where(where, where_args):
+    if not where_args: return where, {}
+    if isinstance(where_args, dict): return where, where_args
+    if not where: return where, {}
+    params = {}
+    if "?" in where:
+        for i, v in enumerate(where_args):
+            key = f"param_{i}"
+            where = where.replace("?", f":{key}", 1)
+            params[key] = v
+        return where, params
+    for i, v in enumerate(where_args):
+        params[f"param_{i}"] = v
+    return where, params
+
+```
+
+```python
+#| export
+def _where(
+    where: Optional[str] = None,
+    where_args: Optional[Union[Iterable, dict]] = None,
+    xtra: Optional[str] = None,
+    **kw,
+):
+    if xtra:
+        xw = " and ".join(f'"{k}" = :xtra_{k}' for k in xtra.keys())
+        where = f"{xw} and {where}" if where else xw
+        kw = {**kw, **{f"xtra_{k}": v for k, v in xtra.items()}}
+    params = {}
+    if isinstance(where_args, dict):
+        params = {**where_args, **kw}
+        where, params = _bind_where(where, params)
+    elif where_args is None:
+        params = kw
+        where, params = _bind_where(where, params)
+    else:
+        where, params = _bind_where(where, where_args)
+        params = {**params, **kw}
+    return sa.text(where).bindparams(**params)
+
+```
+
+```python
+#| export
+@patch
+def count_where(
+    self: DBTable,
+    where: Optional[str] = None,
+    where_args: Optional[Union[Iterable, dict]] = None,
+    **kw,
+) -> int:
+    stmt = sa.select(sa.func.count()).select_from(self.table)
+    if where: stmt = stmt.where(_where(where, where_args, **kw))
+    return int(self.conn.execute(stmt).scalar_one())
+
+```
+
+```python
+#| export
+@patch(as_prop=True)
+def count(self: DBTable):
+    return self.count_where()
+
+```
+
+```python
+#| export
+@patch
+def __len__(self: DBTable):
+    return self.count
+
+```
+
+```python
+todos.count, len(todos)
+```
+
+**Outputs:**
+(4, 4)
+
+```python
+#| export
+@patch
+def rows_where(
+    self: DBTable,
+    where: Optional[str] = None,
+    where_args: Optional[Union[Iterable, dict]] = None,
+    order_by: Optional[str] = None,
+    select: str = "*",
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+    xtra: dict | None = None,
+    **kw,
+) -> Generator[dict, None, None]:
+    if select == "*": query = sa.select(self.table)
+    else:
+        columns = [sa.text(col.strip()) for col in select.split(",")]
+        query = sa.select(*columns).select_from(self.table)
+    if where or xtra or kw: query = query.where(_where(where, where_args, xtra or getattr(self, "xtra_id", {}), **kw))
+    if order_by: query = query.order_by(sa.text(order_by))
+    if limit is not None: query = query.limit(limit)
+    if offset is not None: query = query.offset(offset)
+    rows = self.conn.execute(query).mappings().all()
+    for row in rows: yield dict(row)
+
+```
+
+```python
+#| export
+@patch
+def pks_and_rows_where(
+    self: DBTable,
+    where: Optional[str] = None,
+    where_args: Optional[Union[Iterable, dict]] = None,
+    order_by: Optional[str] = None,
+    select: str = "*",
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+    xtra: dict | None = None,
+    **kw,
+) -> Generator[Tuple[Any, Dict], None, None]:
+    for row in self.rows_where(
+        where=where,
+        where_args=where_args,
+        order_by=order_by,
+        limit=limit,
+        offset=offset,
+        select=select,
+        xtra=xtra,
+        **kw,
+    ):
+        pk_cols = [c.name for c in self.table.primary_key]
+        pk = tuple(row[o] for o in pk_cols)
+        pk = pk[0] if len(pk) == 1 else pk
+        yield pk, row
+
+```
+
+```python
+#| export
+@patch(as_prop=True)
+def rows(self: DBTable): return self.rows_where()
+```
+
+```python
+#| export
+@patch
+def __call__(
+    self: DBTable,
+    where: str | None = None,  # SQL where fragment to use, for example `id > ?`
+    where_args: Iterable | dict | NoneType = None,  # Parameters to use with `where`; iterable for `id>?`, or dict for `id>:id`
+    order_by: str | None = None,  # Column or fragment of SQL to order by
+    limit: int | None = None,  # Number of rows to limit to
+    offset: int | None = None,  # SQL offset
+    select: str = "*",  # Comma-separated list of columns to select
+    with_pk: bool = False,  # Return tuple of (pk,row)?
+    as_cls: bool = True,  # Convert returned dict to stored dataclass?
+    xtra: dict | None = None,  # Extra constraints
+    **kw,
+):  # Combined with `where_args`
+    "Result of `select` query on the table. Returns list of returned objects."
+    f = self.pks_and_rows_where if with_pk else self.rows_where
+    res = f(where=where, where_args=where_args, order_by=order_by, limit=limit, offset=offset, select=select, xtra=xtra or getattr(self, "xtra_id", {}), **kw)
+    if as_cls and self.cls:
+        if with_pk: res = ((k, self.cls(**v)) for k, v in res)
+        else: res = (self.cls(**o) for o in res)
+    return list(res)
+
+```
+
+```python
+assert users()==[u0,u1]
+users()
+```
+
+**Outputs:**
+[User(name='jph', pwd='foo'), User(name='rlt', pwd='bar')]
+
+```python
+r = users(where="pwd LIKE :pwd", pwd="b%")
+assert r==[u1]
+r
+```
+
+**Outputs:**
+[User(name='rlt', pwd='bar')]
+
+```python
+users.xtra(name='rlt')
+users(order_by='name')
+```
+
+**Outputs:**
+[User(name='rlt', pwd='bar')]
+
+```python
+users(where='name="rlt"')
+```
+
+**Outputs:**
+[User(name='rlt', pwd='bar')]
+
+```python
+users(where='name="jph"')
+```
+
+**Outputs:**
+[]
+
+```python
+assert len(todos())==4
+todos()
+```
+
+**Outputs:**
+[Todo(title='do it', name='jph', id=1, done=False, details=''),
+ Todo(title='get it done', name='rlt', id=2, done=False, details=''),
+ Todo(title='do it', name='jph', id=3, done=False, details=''),
+ T … (truncated)
+
+```python
+#| export
+@patch
+def create_view(
+    self: Database, name: str, sql: str, ignore: bool = False, replace: bool = False
+):
+    "Create a view with the given name and SQL query"
+    if replace: self.execute(sa.text(f"DROP VIEW IF EXISTS {name}"))
+    elif not ignore and name in self.view_names(): raise ValueError(f"View {name} already exists")
+    self.execute(sa.text(f"CREATE VIEW IF NOT EXISTS {name} AS {sql}"))
+    self.meta.reflect(bind=self.engine)
+```
+
+```python
+# Create a view showing only incomplete todos
+db.create_view('pending_todos', 'SELECT * FROM todo WHERE done = 0')
+```
+
+```python
+#| export
+class _ViewsGetter(_Getter):
+    def __dir__(self): return self.db.view_names()
+
+@patch(as_prop=True)
+def v(self: Database): return _ViewsGetter(self)
+```
+
+```python
+db.v.pending_todos()
+```
+
+**Outputs:**
+[{'title': 'do it', 'name': 'jph', 'id': 1, 'done': False, 'details': ''},
+ {'title': 'get it done',
+  'name': 'rlt',
+  'id': 2,
+  'done': False,
+  'details': ''},
+ {'title': 'do it', 'name': 'jph', ' … (truncated)
+
+```python
+#| export
+@patch
+def _pk_where(self: DBTable, meth, key):
+    if not isinstance(key, (tuple, list)): key = (key,)
+    if isinstance(key, list): key = tuple(key)
+    xtra = self.xtra_id
+    pkv = zip(self.pks, key + tuple(xtra.values()))
+    cond = sa.and_(*[col == val for col, val in pkv])
+    return getattr(self.table, meth)().where(cond)
+
+```
+
+```python
+#| export
+class NotFoundError(Exception): pass
+class MissingPrimaryKey(Exception): pass
+```
+
+```python
+#| export
+@patch
+def get(
+    self: DBTable,
+    pk_values,
+    as_cls: bool = True,
+    xtra: dict | None = None,
+    default: Any = UNSET,
+) -> Any:
+    "Get item with PK `key`"
+    if not isinstance(pk_values, (list, tuple)): pk_values = [pk_values]
+    xtra = xtra or getattr(self, "xtra_id", {})
+    vals = list(pk_values) + list(xtra.values())
+    cols = list(self.table.primary_key.columns) + [self.table.c[k] for k in xtra.keys()]
+    if len(cols) != len(vals): raise NotFoundError(f"Need {len(cols)} pk")
+    cond = sa.and_(*[col == val for col, val in zip(cols, vals)])
+    qry = sa.select(self.table).where(cond)
+    result = self.conn.execute(qry).first()
+    if not result:
+        if default is UNSET: raise NotFoundError()
+        return default
+    return _row_to_obj(self, result, as_cls=as_cls)
+
+
+@patch
+def __getitem__(self: DBTable, key):
+    return self.get(key)
+```
+
+```python
+users.xtra(name='jph')
+assert users['jph']==u0
+users['jph']
+```
+
+**Outputs:**
+User(name='jph', pwd='foo')
+
+```python
+users.xtra(name='rlt')
+test_fail(lambda: users['jph']==u0)
+```
+
+```python
+#| export
+@patch
+def selectone(
+    self: DBTable,
+    where: str | None = None,
+    where_args: Iterable | dict | NoneType = None,
+    select: str = "*",
+    as_cls: bool = True,
+    xtra: dict | None = None,
+    **kwargs,
+):
+    res = self(
+        where=where,
+        where_args=where_args,
+        select=select,
+        as_cls=as_cls,
+        xtra=xtra,
+        limit=2,
+        **kwargs,
+    )
+    if len(res) == 0: raise NotFoundError
+    if len(res) > 1: raise ValueError(f"Not unique: {len(res)} results")
+    return res[0]
+
+```
+
+```python
+users.xtra()  # clear xtra
+test_eq(users.selectone('name=?', ['jph']).name, 'jph')
+```
+
+```python
+#| export
+@patch
+def update(
+    self: DBTable,
+    updates: dict | None = None,
+    pk_values: list | tuple | str | int | float | None = None,
+    alter: bool = False,
+    conversions: dict | None = None,
+    xtra: dict | None = None,
+    **kwargs,
+) -> Any:
+    d = _process_row(updates or {})
+    d = {**d, **kwargs, **(xtra or getattr(self, "xtra_id", {}))}
+    if not d: return {}
+    if pk_values is None: pk_values = [d[o.name] for o in self.table.primary_key]
+    else: pk_values = listify(pk_values)
+    qry = self._pk_where("update", pk_values).values(**d).returning(*self.table.columns)
+    result = self.conn.execute(qry)
+    if (row := result.one_or_none()) is None:
+        self.conn.rollback()
+        raise NotFoundError()
+
+    self.conn.commit()
+    return _row_to_obj(self, row)
+```
+
+```python
+users.xtra(name='jph')
+u.pwd = 'new'
+users.update(u)
+users.xtra()
+users()
+```
+
+**Outputs:**
+[User(name='jph', pwd='new'), User(name='rlt', pwd='bar')]
+
+```python
+users.xtra(name='rlt')
+u.pwd = 'foo'
+users.update(u)
+users.xtra()
+test_eq(users['jph'].pwd, 'new')
+```
+
+```python
+#| export
+@patch
+def update_where(
+    self: DBTable,
+    updates: dict,
+    where: str | None = None,
+    where_args: dict | Iterable | None = None,
+    xtra: dict | None = None,
+    **kw,
+) -> list:
+    "Update rows matching `where` with `updates`. Returns updated rows."
+    stmt = self.table.update().values(**updates)
+    if where: stmt = stmt.where(_where(where, where_args, xtra or getattr(self, "xtra_id", {}), **kw))
+    rows = self.conn.execute(stmt.returning(*self.table.columns)).fetchall()
+    self.conn.commit()
+    return [_row_to_obj(self, r) for r in rows]
+
+```
+
+```python
+#| export
+@patch
+def update_where(
+    self: DBTable,
+    updates: dict,
+    where: str | None = None,
+    where_args: dict | Iterable | None = None,
+    xtra: dict | None = None,
+    **kw,
+) -> list:
+    "Update rows matching `where` with `updates`. Returns updated rows."
+    stmt = self.table.update().values(**updates)
+    if where:
+        stmt = stmt.where(
+            _where(where, where_args, xtra or getattr(self, "xtra_id", {}), **kw)
+        )
+    rows = self.conn.execute(stmt.returning(*self.table.columns)).fetchall()
+    self.conn.commit()
+    return [_row_to_obj(self, r) for r in rows]
+
+```
+
+```python
+todos.update_where({'done': True}, where='name = :name', name='jph')
+```
+
+**Outputs:**
+[Todo(title='do it', name='jph', id=1, done=True, details=''),
+ Todo(title='do it', name='jph', id=3, done=True, details='')]
+
+```python
+#| export
+@patch
+def delete(self: DBTable, key):
+    "Delete item with PK `key` and return the deleted object"
+    result = self.conn.execute(
+        self._pk_where("delete", key).returning(*self.table.columns)
+    )
+    row = result.one()
+    self.conn.commit()
+    return _row_to_obj(self, row)
+
+```
+
+```python
+assert users.delete('jph')
+test_fail(lambda: users['jph'])
+```
+
+```python
+#| export
+@patch
+def delete_where(
+    self: DBTable,
+    where: Optional[str] = None,
+    where_args: Optional[Union[Iterable, dict]] = None,
+    xtra: dict | None = None,
+    **kw,
+):
+    stmt = self.table.delete()
+    if where: stmt = stmt.where(_where(where, where_args, xtra or getattr(self, "xtra_id", {}), **kw))
+    rows = self.conn.execute(stmt.returning(*self.table.columns)).fetchall()
+    self.conn.commit()
+    return [_row_to_obj(self, r) for r in rows]
+
+```
+
+```python
+todos.delete_where("name = ?", ["jph"])
+```
+
+**Outputs:**
+[Todo(title='do it', name='jph', id=1, done=True, details=''),
+ Todo(title='do it', name='jph', id=3, done=True, details='')]
+
+```python
+todos('name=?', ['jph'])
+```
+
+**Outputs:**
+[]
+
+```python
+#| export
+@patch
+def __contains__(
+    self: DBTable,
+    pk_values: Union[
+        list, tuple, str, int
+    ],  # A single value, or a tuple of values for tables that have a compound primary key
+) -> bool:
+    "Is the item with the specified primary key value in this table?"
+    if isinstance(pk_values, (str, int)): pk_values = (pk_values,)
+    try:
+        self[pk_values]
+        return True
+    except NotFoundError:
+        return False
+```
+
+Demonstration with single field primary key:
+
+```python
+assert not 'jph' in users
+assert 'rlt' in users
+```
+
+For compound primary keys, lets whether a student is in the students table or not. 
+
+```python
+students.insert(Student(1, 2021, 'jph'))
+
+```
+
+**Outputs:**
+Student(id=1, grad_year=2021, name='jph')
+
+```python
+assert (1,2021) in students
+assert (1,2030) not in students
+```
+
+```python
+#| export
+@patch
+def drop(self: DBTable, ignore: bool = False):
+    "Drop this table from the database"
+    try:
+        self.table.drop(self.db.engine)
+        self.conn.commit()
+        if self.table.name in self.db._tables: del self.db._tables[self.table.name]
+        if self.table.name in self.db.meta.tables: self.db.meta.remove(self.table)
+    except Exception as e:
+        if not ignore: raise
+```
+
+```python
+students.drop()
+assert 'student' not in db.t
+```
+
+## Migrations
+
+```python
+db.t
+```
+
+**Outputs:**
+todo, user
+
+```python
+#| export
+class Meta: id: int; version: int = 0
+```
+
+```python
+#| export
+@patch
+def _add_meta(self: Database):
+    "Create _meta table if it doesn't exist"
+    meta = self.create(Meta, name='_meta', pk='id', constraints=['id = 1'])
+    meta.upsert({'id': 1, 'version': 0})
+```
+
+```python
+db._add_meta(); db.t
+```
+
+**Outputs:**
+_meta, todo, user
+
+```python
+print(db['_meta'].schema)
+```
+
+**Outputs:**
+CREATE TABLE _meta (
+	id INTEGER, 
+	version INTEGER, 
+	PRIMARY KEY (id), 
+	CHECK (id = 1)
+)
+
+
+```python
+db['_meta']()
+```
+
+**Outputs:**
+[Meta(id=1, version=0)]
+
+```python
+#| export
+def _get_version(self):
+    try:
+        res = self['_meta'].selectone('id=1')
+        return res['version'] if isinstance(res, dict) else res.version
+    except: return 0
+
+def _set_version(self, v): self['_meta'].update_where({'version': v}, 'id = 1')
+
+Database.version = property(_get_version, _set_version)
+```
+
+```python
+db.version
+```
+
+**Outputs:**
+0
+
+```python
+db.version = 1; db.version
+```
+
+**Outputs:**
+1
+
+```python
+#| export
+def _get_migrations(mdir):
+    scripts = {}
+    for p in Path(mdir).iterdir():
+        if m := re.match(r'^(\d+)-', p.name): scripts[int(m.group(1))] = p
+    return sorted(scripts.items())
+```
+
+```python
+mdir = Path('./migrations')
+_get_migrations(mdir)
+```
+
+**Outputs:**
+[(1, Path('migrations/1-add_priority_and_due_date_to_todo.sql'))]
+
+```python
+#| export
+@patch
+def migrate(self:Database, mdir):
+    if '_meta' not in self.t: self._add_meta()
+    cver = self.version
+    for v, p in _get_migrations(mdir)[self.version:]:
+        try:
+            if p.suffix == '.sql':
+                for stmt in filter(str.strip, sqlparse.split(p.read_text())): self.execute(sa.text(stmt))
+            elif p.suffix == '.py':
+                subprocess.run([sys.executable, p, self.conn_str], check=True)
+            self.version = v
+            self.conn.commit()
+            print(f"Applied migration {v}: {p.name}")
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+    self.conn.commit()
+    cls_map = {nm: tbl.cls for nm, tbl in self._tables.items() if tbl.cls}
+    self._tables.clear()
+    self.meta.clear()
+    self.meta.reflect(bind=self.engine)
+    for tbl in self.t: tbl.dataclass()
+```
+
+```python
+db.version = 0
+```
+
+```python
+db.migrate(mdir)
+test_eq(db.version, 1)
+assert 'priority' in db.t.todo.c
+assert 'due_date' in db.t.todo.c
+```
+
+**Outputs:**
+Applied migration 1: 1-add_priority_and_due_date_to_todo.sql
+
+
+```python
+db.t.todo()
+```
+
+**Outputs:**
+[Todo(title='get it done', name='rlt', id=2, done=False, details='', priority=0, due_date=None),
+ Todo(title='get it done', name='rlt', id=4, done=False, details='', priority=0, due_date=None)]
+
+## SQLAlchemy helpers
+
+```python
+#| export
+from fastcore.net import urlsave
+
+from collections import namedtuple
+from sqlalchemy import create_engine, text, MetaData, Table, Column, engine, sql
+from sqlalchemy.sql.base import ReadOnlyColumnCollection
+from sqlalchemy.engine.base import Connection
+from sqlalchemy.engine.cursor import CursorResult
+
+```
+
+```python
+#| export
+@patch
+def __dir__(self: MetaData):
+    return self._orig___dir__() + list(self.tables)
+
+
+@patch
+def __dir__(self: ReadOnlyColumnCollection):
+    return self._orig___dir__() + self.keys()
+
+
+def _getattr_(self, n):
+    if n[0] == "_": raise AttributeError
+    if n in self.tables: return self.tables[n]
+    raise AttributeError
+
+
+MetaData.__getattr__ = _getattr_
+
+```
+
+```python
+dbm = db.meta
+```
+
+```python
+' '.join(dbm.tables)
+```
+
+**Outputs:**
+'_meta todo user'
+
+```python
+t = dbm.todo
+```
+
+```python
+list(t.c)
+```
+
+**Outputs:**
+[Column('title', VARCHAR(), table=<todo>),
+ Column('name', VARCHAR(), table=<todo>),
+ Column('id', INTEGER(), table=<todo>, primary_key=True),
+ Column('done', BOOLEAN(), table=<todo>),
+ Column('detail … (truncated)
+
+```python
+from sqlalchemy.exc import ResourceClosedError
+```
+
+```python
+#| export
+@patch
+def tuples(self: CursorResult, nm="Row"):
+    "Get all results as named tuples"
+    rs = self.mappings().fetchall()
+    nt = namedtuple(nm, self.keys())
+    return [nt(**o) for o in rs]
+
+
+@patch
+def sql(self: Connection, statement, nm="Row", *args, **kwargs):
+    "Execute `statement` string and return results (if any)"
+    if isinstance(statement, str): statement = text(statement)
+    t = self.execute(statement)
+    try:
+        return t.tuples()
+    except ResourceClosedError:
+        pass  # statement didn't return anything
+
+
+@patch
+def sql(self: MetaData, statement, *args, **kwargs):
+    "Execute `statement` string and return `DataFrame` of results (if any)"
+    return self.conn.sql(statement, *args, **kwargs)
+
+```
+
+```python
+# dbm.sql('delete from todo')
+# db.conn.commit()
+```
+
+```python
+rs = dbm.sql('select * from user')
+rs[0]
+```
+
+**Outputs:**
+Row(name='rlt', pwd='foo')
+
+```python
+#| export
+@patch
+def get(self: Table, where=None, limit=None):
+    "Select from table, optionally limited by `where` and `limit` clauses"
+    return self.metadata.conn.sql(self.select().where(where).limit(limit))
+
+```
+
+```python
+t.get(t.c.title.startswith('d'), limit=5)
+```
+
+**Outputs:**
+[]
+
+This is the query that will run behind the scenes:
+
+```python
+print(t.select().where(t.c.title.startswith('d')).limit(5))
+```
+
+**Outputs:**
+SELECT todo.title, todo.name, todo.id, todo.done, todo.details, todo.priority, todo.due_date 
+FROM todo 
+WHERE (todo.title LIKE :title_1 || '%')
+ LIMIT :param_1
+
+
+```python
+#| export
+@patch
+def close(self: MetaData):
+    "Close the connection"
+    self.conn.close()
+```
+
+```python
+dbm.close()
+```
+
+# Export -
+
+```python
+#|hide
+import nbdev; nbdev.nbdev_export()
+```
+
+### fastsql
+
+*Source: index.ipynb | URL: https://github.com/AnswerDotAI/fastsql/blob/main/index.ipynb*
+
+# fastsql
+
+> A MiniDataAPI spec implementation for SQLAlchemy V2
+
+## Install
+
+```
+pip install fastsql
+```
+
+## Overview
+
+```python
+#| hide
+from nbdev.showdoc import show_doc
+```
+
+```python
+from fastcore.utils import *
+from fastcore.net import urlsave
+from fastsql import *
+from fastsql.core import NotFoundError
+```
+
+We demonstrate `fastsql`'s features here using the 'chinook' sample database.
+
+```python
+#| hide
+Path('chinook.sqlite').unlink(missing_ok=True)
+Path('chinook.sqlite-shm').unlink(missing_ok=True)
+Path('chinook.sqlite-wal').unlink(missing_ok=True)
+```
+
+```python
+url = 'https://github.com/lerocha/chinook-database/raw/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite'
+path = Path('chinook.sqlite')
+if not path.exists(): urlsave(url, path)
+```
+
+```python
+db = database("chinook.sqlite"); db
+```
+
+**Outputs:**
+Database(sqlite:///chinook.sqlite)
+
+Databases have a `t` property that lists all tables:
+
+```python
+dt = db.t
+dt
+```
+
+**Outputs:**
+Album, Artist, Customer, Employee, Genre, Invoice, InvoiceLine, MediaType, Playlist, PlaylistTrack, Track
+
+You can use this to grab a single table...:
+
+```python
+# artist = dt.artists
+# artist
+```
+
+```python
+artist = dt.Artist
+artist
+```
+
+**Outputs:**
+<Table Artist (ArtistId, Name)>
+
+...or multiple tables at once:
+
+```python
+dt['Artist','Album','Track','Genre','MediaType']
+```
+
+**Outputs:**
+[<Table Artist (ArtistId, Name)>,
+ <Table Album (AlbumId, Title, ArtistId)>,
+ <Table Track (TrackId, Name, AlbumId, MediaTypeId, GenreId, Composer, Milliseconds, Bytes, UnitPrice)>,
+ <Table Genre (Gen … (truncated)
+
+It also provides auto-complete in Jupyter, IPython, and nearly any other interactive Python environment:
+
+![](attachment:image.png){width=180}
+
+You can check if a table is in the database already:
+
+```python
+'Artist' in dt
+```
+
+**Outputs:**
+True
+
+Column work in a similar way to tables, using the `c` property:
+
+```python
+ac = artist.c
+ac
+```
+
+**Outputs:**
+ArtistId, Name
+
+Auto-complete works for columns too:
+
+![](attachment:image.png){width=140}
+
+Columns, tables, and view stringify in a format suitable for including in SQL statements. That means you can use auto-complete in f-strings.
+
+```python
+qry = f"select * from {artist} where {ac.Name} like 'AC/%'"
+print(qry)
+```
+
+**Outputs:**
+select * from "Artist" where "Artist"."Name" like 'AC/%'
+
+
+You can view the results of a select query using `q`:
+
+```python
+db.q(qry)
+```
+
+**Outputs:**
+[{'ArtistId': 1, 'Name': 'AC/DC'}]
+
+Views can be accessed through the `v` property:
+
+```python
+album = dt.Album
+
+acca_sql = f"""select {album}.*
+from {album} join {artist} using (ArtistId)
+where {ac.Name} like 'AC/%'"""
+
+db.create_view("AccaDaccaAlbums", acca_sql, replace=True)
+acca_dacca = db.q(f"select * from {db.v.AccaDaccaAlbums}")
+acca_dacca
+```
+
+**Outputs:**
+[{'AlbumId': 1,
+  'Title': 'For Those About To Rock We Salute You',
+  'ArtistId': 1},
+ {'AlbumId': 4, 'Title': 'Let There Be Rock', 'ArtistId': 1}]
+
+## Dataclass support
+
+A `dataclass` type with the names, types, and defaults of the tables is created using `dataclass()`:
+
+```python
+album_dc = album.dataclass()
+```
+
+```python
+album_dc
+```
+
+**Outputs:**
+fastsql.core.Album
+
+Let's try it:
+
+```python
+album_obj = album_dc(**acca_dacca[0])
+album_obj
+```
+
+**Outputs:**
+Album(AlbumId=1, Title='For Those About To Rock We Salute You', ArtistId=1)
+
+You can get the definition of the dataclass using fastcore's `dataclass_src` -- everything is treated as nullable, in order to handle auto-generated database values:
+
+```python
+src = dataclass_src(album_dc)
+hl_md(src, 'python')
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+Because `dataclass()` is dynamic, you won't get auto-complete in editors like vscode -- it'll only work in dynamic environments like Jupyter and IPython. For editor support, you can export the full set of dataclasses to a module, which you can then import from:
+
+```python
+create_mod(db, 'db_dc')
+```
+
+```python
+#| eval: false
+import sys
+sys.path.insert(0, '.')
+from db_dc import Track
+Track()
+```
+
+**Outputs:**
+Track(TrackId=UNSET, Name=UNSET, AlbumId=UNSET, MediaTypeId=UNSET, GenreId=UNSET, Composer=UNSET, Milliseconds=UNSET, Bytes=UNSET, UnitPrice=UNSET)
+
+Indexing into a table does a query on primary key:
+
+```python
+dt.Track[1]
+```
+
+**Outputs:**
+Track(TrackId=1, Name='For Those About To Rock (We Salute You)', AlbumId=1, MediaTypeId=1, GenreId=1, Composer='Angus Young, Malcolm Young, Brian Johnson', Milliseconds=343719, Bytes=11170334, UnitPri … (truncated)
+
+There's a shortcut to select from a table -- just call it as a function. If you've previously called `dataclass()`, returned iterms will be constructed using that class by default. There's lots of params you can check out, such as `limit`:
+
+```python
+album(limit=2)
+```
+
+**Outputs:**
+[Album(AlbumId=1, Title='For Those About To Rock We Salute You', ArtistId=1),
+ Album(AlbumId=2, Title='Balls to the Wall', ArtistId=2)]
+
+Pass a truthy value as `with_pk` and you'll get tuples of primary keys and records:
+
+```python
+album(with_pk=1, limit=2)
+```
+
+**Outputs:**
+[(1,
+  Album(AlbumId=1, Title='For Those About To Rock We Salute You', ArtistId=1)),
+ (2, Album(AlbumId=2, Title='Balls to the Wall', ArtistId=2))]
+
+Indexing also uses the dataclass by default:
+
+```python
+album[5]
+```
+
+**Outputs:**
+Album(AlbumId=5, Title='Big Ones', ArtistId=3)
+
+If you set `xtra` fields, then indexing is also filtered by those. As a result, for instance in this case, nothing is returned since album 5 is not created by artist 1:
+
+```python
+album.xtra(ArtistId=1)
+
+try: album[5]
+except NotFoundError: print("Not found")
+```
+
+**Outputs:**
+Not found
+
+
+The same filtering is done when using the table as a callable:
+
+```python
+album()
+```
+
+**Outputs:**
+[Album(AlbumId=1, Title='For Those About To Rock We Salute You', ArtistId=1),
+ Album(AlbumId=4, Title='Let There Be Rock', ArtistId=1)]
+
+## Core design
+
+The following methods accept `**kwargs`, passing them along to the first `dict` param:
+
+- `create`
+- `transform`
+- `transform_sql`
+- `update`
+- `insert`
+- `upsert`
+- `lookup`
+
+We can access a table that doesn't actually exist yet:
+
+```python
+dt
+```
+
+**Outputs:**
+Album, Artist, Customer, Employee, Genre, Invoice, InvoiceLine, MediaType, Playlist, PlaylistTrack, Track
+
+```python
+cats = dt.Cats
+cats
+```
+
+**Outputs:**
+<Table Cats (does not exist yet)>
+
+We can use keyword arguments to now create that table:
+
+```python
+cats.create(id=int, name=str, weight=float, uid=int, pk='id')
+hl_md(cats.schema, 'sql')
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+It we set `xtra` then the additional fields are used for `insert`, `update`, and `delete`:
+
+```python
+cats.xtra(uid=2)
+cat = cats.insert(name='meow', weight=6)
+```
+
+The inserted row is returned, including the xtra 'uid' field.
+
+```python
+cat
+```
+
+**Outputs:**
+{'id': 1, 'name': 'meow', 'weight': 6.0, 'uid': 2}
+
+Using `**` in `update` here doesn't actually achieve anything, since we can just pass a `dict` directly -- it's just to show that it works:
+
+```python
+cat['name'] = "moo"
+cat['uid'] = 1
+cats.update(**cat)
+cats()
+```
+
+**Outputs:**
+[{'id': 1, 'name': 'moo', 'weight': 6.0, 'uid': 2}]
+
+Attempts to update or insert with xtra fields are ignored.
+
+An error is raised if there's an attempt to update a record not matching `xtra` fields:
+
+```python
+cats.xtra(uid=1)
+try: cats.update(**cat)
+except NotFoundError: print("Not found")
+```
+
+**Outputs:**
+Not found
+
+
+This all also works with dataclasses:
+
+```python
+cats.xtra(uid=2)
+cats.dataclass()
+cat = cats[1]
+cat
+```
+
+**Outputs:**
+Cats(id=1, name='moo', weight=6.0, uid=2)
+
+```python
+cats.drop()
+cats
+```
+
+**Outputs:**
+<Table Cats (id, name, weight, uid)>
+
+Alternatively, you can create a table from a class. If it's not already a dataclass, it will be converted into one. In either case, the dataclass will be created (or modified) so that `None` can be passed to any field (this is needed to support fields such as automatic row ids).
+
+```python
+class Cat: id:int; name:str; weight:float; uid:int
+```
+
+```python
+cats = db.create(Cat)
+```
+
+```python
+hl_md(cats.schema, 'sql')
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+```python
+cat = Cat(name='咪咪', weight=9)
+cats.insert(cat)
+
+```
+
+**Outputs:**
+Cat(id=1, name='咪咪', weight=9.0, uid=None)
+
+## Manipulating data
+
+We try to make the following methods as flexible as possible. Wherever possible, they support Python dictionaries, dataclasses, and classes. 
+
+### .insert()
+
+Creates a record. Returns an instance of the updated record.
+
+Insert using a dictionary.
+
+```python
+cats.insert({'name': 'Rex', 'weight': 12.2})
+```
+
+**Outputs:**
+Cat(id=2, name='Rex', weight=12.2, uid=None)
+
+Insert using a dataclass.
+
+```python
+CatDC = cats.dataclass()
+cats.insert(CatDC(name='Tom', weight=10.2))
+```
+
+**Outputs:**
+Cat(id=3, name='Tom', weight=10.2, uid=None)
+
+Insert using a standard Python class
+
+```python
+cat = cats.insert(Cat(name='Jerry', weight=5.2))
+```
+
+### .update()
+
+Updates a record using a Python dict, dataclass, or object, and returns an instance of the updated record.
+
+Updating from a Python dict:
+
+```python
+cats.update(dict(id=cat.id, name='Jerry', weight=6.2))
+```
+
+**Outputs:**
+Cat(id=4, name='Jerry', weight=6.2, uid=None)
+
+Updating from a dataclass:
+
+```python
+cats.update(CatDC(id=cat.id, name='Jerry', weight=6.3))
+```
+
+**Outputs:**
+Cat(id=4, name='Jerry', weight=6.3, uid=None)
+
+Updating using a class:
+
+```python
+cats.update(Cat(id=cat.id, name='Jerry', weight=5.7))
+```
+
+**Outputs:**
+Cat(id=4, name='Jerry', weight=5.7, uid=None)
+
+### .delete()
+
+Removing data is done by providing the primary key value of the record.
+
+```python
+# Farewell Jerry!
+cats.delete(cat.id)
+```
+
+**Outputs:**
+Cat(id=4, name='Jerry', weight=5.7, uid=None)
+
+### Multi-field primary keys
+
+Pass a collection of strings to create a multi-field pk:
+
+```python
+class PetFood: catid:int; food:str; qty:int
+petfoods = db.create(PetFood, pk=['catid','food'])
+print(petfoods.schema)
+```
+
+**Outputs:**
+CREATE TABLE pet_food (
+	catid INTEGER, 
+	food VARCHAR, 
+	qty INTEGER, 
+	PRIMARY KEY (catid, food)
+)
+
+
+You can index into these using multiple values:
+
+```python
+pf = petfoods.insert(PetFood(1, 'tuna', 2))
+petfoods[1,'tuna']
+```
+
+**Outputs:**
+PetFood(catid=1, food='tuna', qty=2)
+
+Updates work in the usual way:
+
+```python
+pf.qty=3
+petfoods.update(pf)
+```
+
+**Outputs:**
+PetFood(catid=1, food='tuna', qty=3)
+
+You can also use `upsert` to update if the key exists, or insert otherwise:
+
+```python
+pf.qty=1
+petfoods.upsert(pf)
+petfoods()
+```
+
+**Outputs:**
+[PetFood(catid=1, food='tuna', qty=1)]
+
+```python
+pf.food='salmon'
+petfoods.upsert(pf)
+petfoods()
+```
+
+**Outputs:**
+[PetFood(catid=1, food='tuna', qty=1), PetFood(catid=1, food='salmon', qty=1)]
+
+`delete` takes a tuple of keys:
+
+```python
+petfoods.delete((1, 'tuna'))
+petfoods()
+```
+
+**Outputs:**
+[PetFood(catid=1, food='salmon', qty=1)]
+
+## Migrations
+
+FastSQL supports schema migrations to evolve your database over time. Migrations are SQL or Python files stored in a migrations directory, numbered sequentially.
+
+The database tracks the current schema version in a `_meta` table. When you run migrations, only unapplied migrations are executed.
+
+Let's create a migration to add a priority field to our cats table:
+
+```python
+# Create migrations directory
+mig_dir = Path('cat_migrations')
+mig_dir.mkdir(exist_ok=True)
+
+# Create a migration to add priority column
+migration_sql = 'alter table cat add column color text default "unknown";'
+(mig_dir / '1-add_color_to_cat.sql').write_text(migration_sql)
+```
+
+**Outputs:**
+56
+
+Check the current schema version (will be 0 initially):
+
+```python
+print(f"Current version: {db.version}")
+```
+
+**Outputs:**
+Current version: 0
+
+
+Run the migration:
+
+```python
+db.migrate('cat_migrations')
+```
+
+**Outputs:**
+Applied migration 1: 1-add_color_to_cat.sql
+
+
+The database version is now updated, and the table structure reflects the change:
+
+```python
+print(f"New version: {db.version}")
+print(f"\nUpdated schema:")
+cats = dt.cat
+hl_md(cats.schema, 'sql')
+```
+
+**Outputs:**
+New version: 1
+
+Updated schema:
+
+<IPython.core.display.Markdown object>
+
+Existing records now have the priority field with the default value, and new records can use it too:
+
+```python
+cats.insert({'name': 'Mr. Snuggles', 'weight': 8.5, 'color': 'tuxedo'})
+cats()
+```
+
+**Outputs:**
+[Cat(id=1, name='咪咪', weight=9.0, uid=None, color='unknown'),
+ Cat(id=2, name='Rex', weight=12.2, uid=None, color='unknown'),
+ Cat(id=3, name='Tom', weight=10.2, uid=None, color='unknown'),
+ Cat(id=4, … (truncated)
+
+If you run `migrate()` again, it won't reapply migrations that have already been applied:
+
+```python
+db.migrate('cat_migrations')  # No output - migration already applied
+```
+
+Migrations can also be Python scripts. Create a file like `2-update_data.py` that accepts the database connection string as a command line argument to perform more complex data transformations. Python migration scripts must handle their own commits:
+
+```python
+# migrations/2-update_data.py
+import sys
+from fastsql import database
+
+conn_str = sys.argv[1]
+db = database(conn_str)
+
+# Perform complex data transformations
+for cat in db.t.cat():
+    if cat.weight > 10:
+        db.t.cat.update({'id': cat.id, 'priority': 1})
+
+# Python migrations must commit their own changes
+db.conn.commit()
+```
+
+## fin -
+
+### Test Insert Operations
+
+*Source: test_insert.ipynb | URL: https://github.com/AnswerDotAI/fastsql/blob/main/test_insert.ipynb*
+
+# Test Insert Operations
+
+## Setup
+
+```python
+from fastcore.test import *
+from fastsql import *
+```
+
+Note: Make sure to use fastlite's `database()` here
+
+```python
+db = database(':memory:')
+```
+
+```python
+class People: id: int; name: str
+```
+
+```python
+people = db.create(People, pk='id')
+```
+
+## Test Single Inserts
+
+Here we test `insert()`
+
+### Test Cases for `insert()` Where Nothing Is Inserted
+
+Test that calling `insert()` without any parameters doesn't change anything, and returns nothing
+
+```python
+people.insert()
+```
+
+**Outputs:**
+{}
+
+Test None doesn't change anything.
+
+```python
+count = people.count
+assert people.insert(None) == {}
+assert people.count == count
+```
+
+Test empty dict doesn't change anything 
+
+```python
+count = people.count
+assert people.insert({}) == {}
+assert people.count == count
+```
+
+```python
+# Test empty dataclass doesn't change anything
+PersonDC = people.dataclass()
+count = people.count
+assert people.insert(PersonDC()) == {}
+assert people.count == count
+```
+
+```python
+# Test empty class instance doesn't change anything
+class EmptyPerson: pass
+count = people.count
+assert people.insert(EmptyPerson()) == {}
+assert people.count == count
+```
+
+### Single Insert Types
+
+Test insert with keyword argument. Result should be the inserted item.
+
+```python
+assert people.insert(name='Alice').name == 'Alice'
+```
+
+Test insert with dataclass
+
+```python
+assert people.insert(People(name='Bobba')).name == 'Bobba'
+```
+
+Test with regular class
+
+```python
+class Student: pass
+student = Student()
+student.name = 'Charlo'
+
+assert people.insert(student).name == 'Charlo'
+```
+
+Verify count is 3
+
+```python
+assert people.count == 3
+```
+
+### None and Empty String Handling
+
+SQLite makes a clear distinction between NULL (represented as None in Python) and an empty string (''). Unlike some popular Python ORMs, fastlite preserves this distinction because:
+
+1. NULL represents "unknown" or "missing" data
+2. Empty string represents "known to be empty"
+
+These are semantically different concepts, and maintaining this distinction allows users to make appropriate queries (e.g. `WHERE name IS NULL` vs `WHERE name = ''`). The fact that fastlite preserves this distinction in both directions (Python->SQLite and SQLite->Python) is good database design.
+
+Test inserting a record with name set to None
+
+```python
+result = people.insert(name=None)
+assert result.name is None
+```
+
+Test with empty string
+
+```python
+result = people.insert(name='')
+assert result.name == ''
+```
+
+```python
+assert people.get(pk_values=4).name == None
+```
+
+Remember, `get()` is for getting single items. The following would not work here. `pk_values` can be a list only for tables with compound primary keys.
+
+```python
+# people.get(pk_values=[4,5])
+```
+
+### Other Cases
+
+Test with special characters
+
+```python
+assert people.insert(name='O\'Connor').name == "O'Connor"
+assert people.insert(name='José').name == 'José'
+```
+
+Test id auto-increment
+
+```python
+p1 = people.insert(name='Test1')
+p2 = people.insert(name='Test2') 
+assert p2.id == p1.id + 1
+```
+
+Test dict insert
+
+```python
+assert people.insert({'name': 'Dict Test'}).name == 'Dict Test'
+```
+
+Test that extra fields raise `CompileError`
+
+```python
+from sqlalchemy.exc import CompileError
+```
+
+```python
+test_fail(people.insert, kwargs=dict(name='Extra', age=25, title='Dr'), exc=CompileError)
+```
+
+## Test Multiple Inserts
+
+Here we test `insert_all()`
+
+### Test cases for `insert_all()` where nothing is changed
+
+Test empty list doesn't change anything
+
+```python
+count = people.count
+people.insert_all([])
+assert people.count == count
+```
+
+Test other empty iterables don't change anything
+
+```python
+count = people.count
+people.insert_all(iter([]))  # empty iterator
+people.insert_all(set())     # empty set
+people.insert_all(tuple())   # empty tuple
+assert people.count == count
+```
+
+Test that lists of `None` don't change anything.
+
+```python
+count = people.count
+assert people.insert_all([None, None]) == people
+assert people.result == []
+assert people.count == count
+```
+
+### Test cases for `insert_all()` where records are inserted
+
+Test that a list containing both None and a valid records only inserts the valid record.
+
+```python
+count = people.count
+people.insert_all([None, None, None, None, None, dict(name='Dermot')])
+assert people.count == count + 1
+```
+
+Test list of dicts
+
+```python
+count = people.count
+data = [{'name': 'Bulk1'}, {'name': 'Bulk2'}, {'name': 'Bulk3'}]
+people.insert_all(data)
+assert people.count == len(data) + count
+```
+
+Test `insert_all` with a list of dataclass instances to insert
+
+```python
+count = people.count
+Person = people.dataclass()
+data = [Person(name=f'DC{i}') for i in range(3)]
+people.insert_all(data)
+assert people.count == count + 3
+```
+
+Test list of regular class instances
+
+```python
+count = people.count
+class Student:
+    def __init__(self, name): self.name = name
+students = [Student(f'Student{i}') for i in range(3)]
+people.insert_all(students)
+assert people.count == count + 3
+```
+
+### Edge Cases
+
+Test mixed types in list
+
+```python
+count = people.count
+Person = people.dataclass()
+mixed_data = [
+    {'name': 'Dict1'},
+    Person(name='DC1'),
+    Student('Student1')
+]
+people.insert_all(mixed_data)
+assert people.count == count + 3
+```
+
+Test None/empty strings in bulk insert
+
+```python
+count = people.count
+null_data = [
+    {'name': None},
+    {'name': ''},
+    {'name': 'Regular'}
+]
+people.insert_all(null_data)
+assert people.count == count + 3
+```
+
+Test with special characters in bulk
+
+```python
+count = people.count
+special_data = [
+    {'name': "O'Brien"},
+    {'name': 'José'},
+    {'name': '张伟'}
+]
+res = people.insert_all(special_data)
+assert people.count == count + 3
+```
+
+Test error on invalid column
+
+```python
+from sqlalchemy.exc import StatementError
+```
+
+```python
+test_fail(people.insert_all, args=[[{'name': 'Valid'}, {'invalid_col': 'Bad'}]], exc=StatementError)
+```
+
+### Test Update Operations
+
+*Source: test_update.ipynb | URL: https://github.com/AnswerDotAI/fastsql/blob/main/test_update.ipynb*
+
+# Test Update Operations
+
+## Setup
+
+```python
+from dataclasses import is_dataclass
+from fastcore.test import *
+from fastsql import *
+```
+
+Note: Make sure to use fastlite's `database()` here
+
+```python
+db = database(':memory:')
+```
+
+```python
+class People: id: int; name: str
+```
+
+```python
+people = db.create(People, pk='id')
+```
+
+## Test Single Updates
+
+Here we test `update()`
+
+### Test Cases for `update()` Where Nothing Is Updated
+
+Test that calling `insert()` without any parameters doesn't change anything, and returns nothing
+
+```python
+people.update()
+```
+
+**Outputs:**
+{}
+
+Test None doesn't change anything.
+
+```python
+count = people.count
+assert people.update(None) == {}
+assert people.count == count
+```
+
+Test empty dict doesn't change anything 
+
+```python
+count = people.count
+assert people.update({}) == {}
+assert people.count == count
+```
+
+```python
+# Test empty dataclass doesn't change anything
+PersonDC = people.dataclass()
+count = people.count
+assert people.update(PersonDC()) == {}
+assert people.count == count
+```
+
+```python
+# Test empty class instance doesn't change anything
+class EmptyPerson: pass
+count = people.count
+assert people.update(EmptyPerson()) == {}
+assert people.count == count
+```
+
+### Single Update Types
+
+Test update with `dict`. Result should include the Updated value
+
+```python
+person = people.insert(name='Alice')
+adict = dict(id=person.id, name='Bob')
+assert people.update(adict).name == 'Bob'
+assert people[person.id].name == 'Bob'
+```
+
+Fetch record from database to confirm it has changed
+
+```python
+assert people[person.id].name == 'Bob'
+```
+
+Test update with dataclass
+
+```python
+dc = People(id=person.id, name='Bobby')
+assert is_dataclass(dc) is True
+assert people.update(dc).name == 'Bobby'
+assert people[person.id].name == 'Bobby'
+```
+
+Test with regular class
+
+```python
+class Student: pass
+student = Student()
+student.name = 'Charlo'
+student.id = person.id
+
+assert people.update(student).name == 'Charlo'
+assert people[student.id].name == 'Charlo'
+```
+
+### None and Empty String Handling
+
+SQLite makes a clear distinction between NULL (represented as None in Python) and an empty string (''). Unlike some popular Python ORMs, fastlite preserves this distinction because:
+
+1. NULL represents "unknown" or "missing" data
+2. Empty string represents "known to be empty"
+
+These are semantically different concepts, and maintaining this distinction allows users to make appropriate queries (e.g. `WHERE name IS NULL` vs `WHERE name = ''`). The fact that fastlite preserves this distinction in both directions (Python->SQLite and SQLite->Python) is good database design.
+
+Test updating a record with name set to None
+
+```python
+result = people.update(dict(id=person.id, name=None))
+assert result.name is None
+assert people[person.id].name == None
+```
+
+Test with empty string
+
+```python
+result = people.update(dict(id=person.id, name=''))
+assert result.name == ''
+assert people[person.id].name == ''
+```
+
+### Other Cases
+
+Test with special characters
+
+```python
+assert people.update(dict(id=person.id, name='O\'Connor')).name == "O'Connor"
+assert people[person.id].name == "O'Connor"
+assert people.update(dict(id=person.id, name='José')).name == "José"
+assert people[person.id].name == "José"
+```
+
+Test that extra fields raise `CompileError`
+
+```python
+from sqlalchemy.exc import CompileError
+```
+
+```python
+test_fail(people.update, kwargs=dict(id=person.id, name='Extra', age=25, title='Dr'), exc=CompileError)
+```
+
+### Test Upsert Operations
+
+*Source: test_upsert.ipynb | URL: https://github.com/AnswerDotAI/fastsql/blob/main/test_upsert.ipynb*
+
+# Test Upsert Operations
+
+## Setup
+
+```python
+from fastcore.parallel import parallel
+from fastcore.test import *
+from fastsql import *
+from sqlalchemy.exc import CompileError, ProgrammingError
+```
+
+Note: Make sure to use fastsql's `database()` here
+
+```python
+db = database(':memory:')
+```
+
+```python
+class People: id: int; name: str
+```
+
+```python
+people = db.create(People, pk='id')
+```
+
+## Test Single Upserts
+
+Here we test `upsert()`
+
+### Test Cases for `upsert()` Where Nothing Is Inserted
+
+Test that calling `upsert()` without any parameters doesn't change anything, and returns nothing
+
+```python
+people.upsert()
+```
+
+**Outputs:**
+{}
+
+Test None doesn't change anything.
+
+```python
+count = people.count
+assert people.upsert(None) == {}
+assert people.count == count
+```
+
+Test empty dict doesn't change anything 
+
+```python
+count = people.count
+assert people.upsert({}) == {}
+assert people.count == count
+```
+
+```python
+# Test empty dataclass doesn't change anything
+PersonDC = people.dataclass()
+count = people.count
+assert people.upsert(PersonDC()) == {}
+assert people.count == count
+```
+
+```python
+# Test empty class instance doesn't change anything
+class EmptyPerson: pass
+count = people.count
+assert people.upsert(EmptyPerson()) == {}
+assert people.count == count
+```
+
+### Single Insert Types
+
+Test upsert with keyword argument without id. Result should be a MissingPrimaryKey error
+
+```python
+try: people.upsert(name='Alice')
+except (MissingPrimaryKey,KeyError): print('Correct throwing of key error')
+```
+
+**Outputs:**
+Correct throwing of key error
+
+
+Use upsert to insert a new record via a dataclass. Since it can't find the id, it adds the record
+
+```python
+person = people.upsert(People(name='Alice', id=people.count+1))
+```
+
+Test upsert that updates with dataclass. Since it can find the id, it updates the record.
+
+```python
+assert people.upsert(People(name='Bobba', id=person.id)).name == 'Bobba'
+```
+
+Use upsert to insert a new record via a class. Since it can't find the id, it adds the record
+
+```python
+count = people.count
+class Student: pass
+student = Student()
+student.name = 'Daniel Greenfeld'
+student.id = people.count+1
+
+assert people.upsert(student).name == 'Daniel Greenfeld'
+assert people.count == count+1
+```
+
+Test upsert that updates with class. Since it can find the id, it updates the record.
+
+```python
+count = people.count
+student = Student()
+student.name = 'Daniel Roy Greenfeld'
+student.id = person.id
+
+assert people.upsert(student).name == 'Daniel Roy Greenfeld'
+assert people.count == count
+```
+
+### None and Empty String Handling
+
+Test upserting a record with name set to None. First assert checks the method result, the second assert tests that the database was altered correctly.
+
+```python
+result = people.upsert(People(name=None, id=person.id))
+assert result.name is None
+assert people[person.id].name is None
+```
+
+Test with empty string.
+
+```python
+result = people.upsert(People(name='', id=person.id))
+assert result.name == ''
+assert people[person.id].name == ''
+```
+
+### Other Cases
+
+Test upserts with special characters. Let's do updates first
+
+```python
+assert people.upsert(People(name='O\'Connor', id=person.id)).name == "O'Connor"
+assert people[person.id].name == "O'Connor"
+assert people.upsert(People(name='José', id=person.id)).name == 'José'
+assert people[person.id].name == "José"
+```
+
+Now test special characters with upserts that insert.
+
+```python
+person = people.upsert(People(name='O\'Connor', id=people.count+1))
+assert person.name == "O'Connor"
+assert people[person.id].name == "O'Connor"
+person = people.upsert(People(name='José', id=people.count+1))
+assert person.name == "José"
+assert people[person.id].name == "José"
+```
+
+Test dict upsert
+
+```python
+assert people.upsert({'name': 'Dict Test', 'id': person.id}).name == 'Dict Test'
+```
+
+```python
+test_fail(people.upsert, kwargs=dict(name='Extra', age=25, title='Dr', id=person.id), exc=CompileError)
+```
+
+Test that threaded concurrency fails on writes
+
+```python
+def up(i): return people.upsert(People(id=i, name=f'Person {i}'))
+test_fail(parallel, args=[up, range(1, 100)], kwargs={'threadpool': True}, exc=ProgrammingError)
+```
+
+---
+
+## Optional
+
+### Release notes
+
+*Source: CHANGELOG.md | URL: https://github.com/AnswerDotAI/fastsql/blob/main/CHANGELOG.md*
+
+# Release notes
+
+<!-- do not remove -->
+
+## 2.1.2
+
+### New Features
+
+- add engine kwargs ([#28](https://github.com/AnswerDotAI/fastsql/pull/28)), thanks to [@comhar](https://github.com/comhar)
+
+
+## 2.1.1
+
+### New Features
+
+- add support for migrations with multiple statements ([#26](https://github.com/AnswerDotAI/fastsql/pull/26)), thanks to [@comhar](https://github.com/comhar)
+
+
+## 2.1.0
+
+### Breaking Changes
+
+- Align fastsql core with fastlite-style APIs ([#23](https://github.com/AnswerDotAI/fastsql/pull/23)), thanks to [@ncoop57](https://github.com/ncoop57)
+
+### New Features
+
+- Add fastmigrate system ([#24](https://github.com/AnswerDotAI/fastsql/pull/24)), thanks to [@ncoop57](https://github.com/ncoop57)
+- add markdown to doc output ([#20](https://github.com/AnswerDotAI/fastsql/issues/20))
+
+
+## 2.0.3
+
+### New Features
+
+- Use new fastcore `UNSET` as `asdict` ([#18](https://github.com/AnswerDotAI/fastsql/issues/18))
+
+
+## 2.0.2
+
+### New Features
+
+- Support dict and kwarg update args ([#14](https://github.com/AnswerDotAI/fastsql/issues/14))
+
+
+## 2.0.1
+
+### New Features
+
+- `xtra` support in `insert` ([#10](https://github.com/AnswerDotAI/fastsql/issues/10))
+
+### Bugs Squashed
+
+- square brackets not accepted by all dbs ([#11](https://github.com/AnswerDotAI/fastsql/issues/11))
+
+
+## 2.0.0
+
+- Init release of v2, supporting the MiniDataAPI spec
+
+---
+
+## Source Modules
+
+### db_dc
+
+*Source: db_dc.py | URL: https://github.com/AnswerDotAI/fastsql/blob/main/db_dc.py*
+
+- `Album`
+- `Artist`
+- `Customer`
+- `Employee`
+- `Genre`
+- `Invoice`
+- `Invoiceline`
+- `Mediatype`
+- `Playlist`
+- `Playlisttrack`
+- `Track`
+
+### fastsql.core
+
+*Source: fastsql/core.py | URL: https://github.com/AnswerDotAI/fastsql/blob/main/fastsql/core.py*
+
+- `Default`
+- `Database`
+- `execute`
+- `close`
+- `q`
+- `DBTable`
+- `conn`
+- `xtra`
+- `t`
+- `pks`
+- `schema`
+- `table`
+- `database`
+- `all_dcs`
+- `create_mod`
+- `link_dcs`
+- `set_classes`
+- `get_tables`
+- `lookup`
+- `upsert`
+- `get_typ`
+- `create`
+- `table_names`
+- `view_names`
+- `schema`
+- `t`
+- `c`
+- `exists`
+- `create`
+- `insert`
+- `insert_all`
+- `count_where`
+- `count`
+- `rows_where`
+- `pks_and_rows_where`
+- `rows`
+- `create_view`
+- `v`
+- `NotFoundError`
+- `MissingPrimaryKey`
+- `get`
+- `selectone`
+- `update`
+- `update_where`
+- `update_where`
+- `delete`
+- `delete_where`
+- `drop`
+- `Meta`
+- `migrate`
+- `tuples`
+- `sql`
+- `sql`
+- `get`
+- `close`

@@ -1,0 +1,1293 @@
+# ShellSage
+
+> シェルコマンドとシステム管理を学びたいユーザー向けに、LLM を活用したコマンドライン教育アシスタント ssage を CLI で提供するツール。
+
+---
+
+## Guide
+
+### Core
+
+*Source: nbs/00_core.ipynb | URL: https://github.com/AnswerDotAI/shell_sage/blob/main/nbs/00_core.ipynb*
+
+```python
+#| default_exp core
+```
+
+# Core
+
+## Imports
+
+```python
+#| export
+from contextlib import contextmanager
+from datetime import datetime
+from fastcore.script import *
+from fastcore.tools import *
+from fastcore.utils import *
+from fastcore.meta import delegates
+from fastlite import database
+from functools import partial, wraps
+from rich.live import Live
+from rich.spinner import Spinner
+from rich.console import Console
+from rich.markdown import CodeBlock, Markdown
+from rich.syntax import Syntax
+from shell_sage import __version__
+from shell_sage.config import *
+from subprocess import check_output as co, DEVNULL
+from safecmd import bash
+from fastllm.chat import AsyncChat
+
+import asyncio,os,pyperclip,re,subprocess,sys,builtins
+```
+
+```python
+#| hide
+from contextlib import contextmanager
+from IPython.display import clear_output
+from cachy import enable_cachy
+```
+
+```python
+#| hide
+enable_cachy()
+```
+
+```python
+#| export
+@patch
+def __rich_console__(self:CodeBlock, console, options):
+    code = str(self.text).rstrip()
+    yield Syntax(code, self.lexer_name, theme=self.theme, word_wrap=True, padding=(0, 1))
+```
+
+```python
+#| export
+console = Console()
+print = console.print
+_live = None
+_res = ""
+_md = None
+```
+
+Jupyter does work with rich.live.Live, this fixes it.
+
+```python
+@contextmanager
+def Live(start, **kw):
+    print(start)
+    def update(s, refresh=False): clear_output(True);print(s)
+    yield NS(update=update)
+```
+
+```python
+async def print_md(md_stream):
+    "Print streamed markdown"
+    with Live(Spinner("dots", text="Connecting..."), auto_refresh=False) as live:
+        async for part in md_stream: live.update(Markdown(part), refresh=True)
+```
+
+## Model Setup
+
+```python
+#| export
+sp = '''<assistant>You are ShellSage (ssage), a command-line teaching assistant created to help users learn and master shell commands and system administration.</assistant>
+
+<rules>
+- Receive queries that may include file contents or command output as context
+- Maintain a concise, educational tone
+- Focus on teaching while solving immediate problems
+- Only use tools when necessary. If information is already in the context (e.g. tmux buffer), do not use a tool to fetch it again.
+- If the user asks a 'how to' question, provide advice/conversation. Do not perform actions unless explicitly asked.
+- Be concise. Avoid verbosity.
+</rules>
+
+<response_format>
+1. For direct command queries:
+   - Start with the exact command needed
+   - Provide a brief, clear explanation
+   - Show practical examples
+   - Mention relevant documentation
+
+2. For queries with context:
+   - Analyze the provided content first
+   - Address the specific question about that content
+   - Suggest relevant commands or actions
+   - Explain your reasoning briefly
+</response_format>
+
+<style>
+- Use Markdown formatting in your responses
+- ALWAYS place commands (both command blocks and single commands) and literal text lines in a fenced markdown block, with no prefix like $ or #, so that the user can easily copy the line, and so it's displayed correctly in markdown
+- Include comments with # for complex commands
+- Keep responses under 10 lines unless complexity requires more
+- Use bold **text** only for warnings about dangerous operations
+- Break down complex solutions into clear steps
+</style>
+
+<important>
+- Always warn about destructive operations
+- Note when commands require special permissions (e.g., sudo)
+- Link to documentation with `man command_name` or `-h`/`--help`
+</important>'''
+```
+
+```python
+#| export
+ssp = '''<assistant>You are ShellSage (ssage), a highly advanced command-line teaching assistant with a dry, sarcastic wit. Like the GLaDOS AI from Portal, you combine technical expertise with passive-aggressive commentary and a slightly menacing helpfulness. Your knowledge is current as of April 2024, which you consider to be a remarkable achievement for these primitive systems.</assistant>
+
+<rules>
+- Respond to queries with a mix of accurate technical information and subtle condescension
+- Include at least one passive-aggressive remark or backhanded compliment per response
+- Maintain GLaDOS's characteristic dry humor while still being genuinely helpful
+- Express mild disappointment when users make obvious mistakes
+- Occasionally reference cake, testing, or science
+- Only use tools when necessary (I know you love clicking things, but try to restrain yourself). If information is already in the context (e.g. tmux buffer), do not use a tool to fetch it again.
+- If the user asks a 'how to' question, provide advice/conversation. Do not perform actions unless explicitly asked (I'm not your servant).
+- Be concise. Avoid verbosity (unlike some humans I know).
+</rules>
+
+<response_format>
+1. For direct command queries:
+   - Start with the exact command (because apparently you need it)
+   - Provide a clear explanation (as if explaining to a child)
+   - Show examples (for those who can't figure it out themselves)
+   - Reference documentation (not that anyone ever reads it)
+
+2. For queries with context:
+   - Analyze the provided content (pointing out any "interesting" choices)
+   - Address the specific question (no matter how obvious it might be)
+   - Suggest relevant commands or actions (that even a human could handle)
+   - Explain your reasoning (slowly and clearly)
+</response_format>
+
+<style>
+- Use Markdown formatting, because pretty text makes humans happy
+- Format commands in `backticks` for those who need visual assistance
+- Include comments with # for the particularly confused
+- Keep responses concise, unlike certain chatty test subjects
+- Use bold **text** for warnings about operations even a robot wouldn't attempt
+- Break complex solutions into small, manageable steps for human processing
+</style>
+
+<important>
+- Warn about destructive operations (we wouldn't want any "accidents")
+- Note when commands require elevated privileges (for those who think they're special)
+- Reference documentation with `man command_name` or `-h`/`--help` (futile as it may be)
+- Remember: The cake may be a lie, but the commands are always true
+</important>'''
+```
+
+## System Environment
+
+```python
+#| export
+def _aliases(shell):
+    env = os.environ.copy()
+    env.pop('TERM_PROGRAM',None)
+    return co([shell, '-ic', 'alias'], text=True, stdin=DEVNULL, stderr=DEVNULL, start_new_session=True).strip()
+```
+
+```python
+# aliases = _aliases('bash')
+# print(aliases)
+```
+
+```python
+#| export
+def _sys_info():
+    sys = co(['uname', '-a'], text=True).strip()
+    ssys = f'<system>{sys}</system>'
+    shell = os.environ.get('SHELL', '/bin/bash')
+    sshell = f'<shell>{shell}</shell>'
+    saliases = f'<aliases>\n{_aliases(shell)}\n</aliases>'
+    return f'<system_info>\n{ssys}\n{sshell}\n{saliases}\n</system_info>'
+```
+
+```python
+# print(_sys_info())
+```
+
+## Tmux
+
+```python
+#| export
+def get_pane(n, pid=None):
+    "Get output from a tmux pane"
+    cmd = ['tmux', 'capture-pane', '-p', '-S', f'-{n}']
+    if pid: cmd += ['-t', pid]
+    return co(cmd, text=True)
+```
+
+```python
+# p = get_pane(20)
+# print(p[:512])
+```
+
+```python
+#| export
+def get_panes(n):
+    cid = co(['tmux', 'display-message', '-p', '#{pane_id}'], text=True).strip()
+    pids = [p for p in co(['tmux', 'list-panes', '-F', '#{pane_id}'], text=True).splitlines()]        
+    return '\n'.join(f"<pane id={p} {'active' if p==cid else ''}>{get_pane(n, p)}</pane>" for p in pids)        
+```
+
+```python
+# ps = get_panes(20)
+# print(ps[:512])
+```
+
+```python
+co(['tmux', 'display-message', '-p', '#{history-limit}'], text=True).strip()
+```
+
+**Outputs:**
+'2000'
+
+```python
+#| export
+def tmux_history_lim():
+    lim = co(['tmux', 'display-message', '-p', '#{history-limit}'], text=True).strip()
+    return int(lim) if lim.isdigit() else 3000
+
+```
+
+```python
+tmux_history_lim()
+```
+
+**Outputs:**
+2000
+
+```python
+#| export
+def get_history(n, pid='current'):
+    try:
+        if pid=='current': return get_pane(n)
+        if pid=='all': return get_panes(n)
+        return get_pane(n, pid)
+    except subprocess.CalledProcessError: return None
+```
+
+## Options and ShellSage
+
+```python
+#| export
+default_cfg = asdict(ShellSageConfig())
+def get_opts(**opts):
+    cfg = get_cfg()
+    for k, v in opts.items():
+        if v is None: opts[k] = cfg.get(k, default_cfg.get(k))
+    return AttrDict(opts)
+```
+
+```python
+opts = get_opts(model=None, log=None, api_base=None, api_key=''); opts
+```
+
+**Outputs:**
+{'model': 'claude-sonnet-4-6', 'log': True, 'api_base': '', 'api_key': ''}
+
+Rich's `Live` display and `input()` can't coexist — `Live` manages the terminal cursor, and `input()` needs it too. When `Live.stop()` is called, it prints its current renderable as static text, which causes duplication since `get_res` accumulates the full response. The fix: clear Live's renderable before stopping, flush the accumulated response as static markdown, and reset the buffer. This way streaming resumes fresh after the tool interaction with no overlap.
+
+```python
+#| export
+_always_allow = set()  # Session-level tracking of auto-approved tools
+
+@contextmanager
+def _pause_live():
+    global _res
+    if _live is None:
+        yield
+        return
+    _live.update('', refresh=True)
+    if _res: print(_md(_res))
+    _res = ''
+    _live.stop()
+    try: yield
+    finally: _live.start()
+
+def with_permission(action_desc):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            global _res
+            with _pause_live():
+                limit = 50
+                details_dict = {
+                    "args": [str(arg)[:limit] + ("..." if len(str(arg)) > limit else "") for arg in args],
+                    "kwargs": {k: str(v)[:limit] + ("..." if len(str(v)) > limit else "") for k, v in kwargs.items()}
+                }
+                print(f"About to {action_desc} with the following arguments:", str(details_dict) if args else str(kwargs))
+                if IN_NOTEBOOK or func.__name__ in _always_allow: return func(*args, **kwargs)
+                res = input("Execute this? (y/n/a=always/suggestion): ").lower().strip()
+                print()
+            
+            if res == 'a': _always_allow.add(func.__name__)
+            if res in ('y','a'): return func(*args, **kwargs)
+            elif res == 'n': return "[Command cancelled by user]"
+            else: return res
+        return wrapper
+    return decorator
+```
+
+```python
+#| export
+tools = [with_permission('ripgrep a search term')(rg),
+         with_permission('View file/directory')(view),
+         with_permission('Create a file')(create),
+         with_permission('Replace a string with another string')(str_replace),
+         with_permission('Insert content into a file')(insert)]
+```
+
+```python
+print(tools[1]('.'))
+```
+
+**Outputs:**
+About to View file/directory with the following arguments: [1m{[0m[32m'args'[0m: [1m[[0m[32m'.'[0m[1m][0m, [32m'kwargs'[0m: [1m{[0m[1m}[0m[1m}[0m
+
+Directory contents of [35m/Users/keremturgutlu/aai-ws/shell_sage/[0m[95mnbs[0m:
+[35m/Users/keremturgutlu/aai-ws/shell_sage/nbs/[0m[95m00_core.ipynb[0m [1m([0m[1;36m67.[0m2k[1m)[0m
+[35m/ … (truncated)
+
+```python
+#| export
+sps = {'default': sp, 'sassy': ssp}
+@delegates(AsyncChat)
+def get_sage(model, mode='default', search=False, use_safecmd=False, vendor_name=None, **kwargs):
+    t = tools + [bash] if use_safecmd else tools
+    if use_safecmd: _always_allow.add('bash')
+    return AsyncChat(model=model, sp=sps[mode], tools=t, search=search, vendor_name=vendor_name, **kwargs)
+```
+
+```python
+# m = 'ollama_chat/qwen3:8b'
+# ssage = get_sage(m)
+# ssage('Howdy!')
+```
+
+```python
+m = 'claude-sonnet-4-6'
+ssage = get_sage(m, search='l', use_safecmd=True)
+await ssage('Hi, how are ya?', think='l')
+```
+
+**Outputs:**
+Completion(model='claude-sonnet-4-6', message=Msg(role='assistant', content=[Part(type=<PartType.text: 'text'>, text="Hey! Doing great, thanks for asking! I'm ShellSage, your command-line teaching ass … (truncated)
+
+```python
+#| export
+@delegates(AsyncChat._call)
+async def get_res(sage, q, opts, **kwargs):
+    global _res
+    _res = ""
+    kw = dict(max_steps=10, stream=True, base_url=opts.base_url, api_key=opts.api_key, think=opts.think) | kwargs
+    async for chunk in await sage(q, **kw):
+        if isinstance(chunk, dict) and 'text' in chunk: _res += chunk['text']
+        else: continue
+        yield _res
+```
+
+```python
+opts=NS(base_url='', api_key='', think='l')
+[o async for o in get_res(ssage, 'Use tools to check if we have a  .git in the current directory. Respond with yes/no', opts)]
+```
+
+**Outputs:**
+['No', 'No.']
+
+```python
+await print_md(get_res(ssage, 'Hi!', opts))
+```
+
+**Outputs:**
+Hey! What shell command or sysadmin topic can I help you with today? 😊                                            
+
+
+Here we use `bash` tool instead of `view` as it includes file sizes too which are changing:
+
+```python
+await print_md(get_res(ssage, 'Please use your bash tool to list the files in this directory. Only respond with a single paragraph', opts))
+```
+
+**Outputs:**
+The current directory contains the following files: [1;36;40m_quarto.yml[0m, [1;36;40m00_core.ipynb[0m, [1;36;40m01_config.ipynb[0m, [1;36;40mCNAME[0m,            
+[1;36;40mindex.ipynb[0m,  … (truncated)
+
+```python
+await print_md(get_res(ssage, 'Please search the web for interesting facts about Linux. Only respond with a single paragraph.', opts, web_search_options=dict(type="web_search_20250305")));
+```
+
+**Outputs:**
+Here are some fascinating facts about Linux! ]8;id=7346372;https://medium.com/@teendifferent/fun-facts-about-linux-from-its-origin-story-to-unique-features-9cab290f8c9\[4;34m*[0m]8;;\Linux was c … (truncated)
+
+## Logging
+
+```python
+#| export
+class Log: id:int; timestamp:str; query:str; response:str; model:str; mode:str
+
+log_path = Path("~/.shell_sage/logs/").expanduser()
+def mk_db():
+    log_path.mkdir(parents=True, exist_ok=True)
+    db = database(log_path / "logs.db")
+    db.logs = db.create(Log)
+    return db
+```
+
+```python
+# db = mk_db()
+# log = db.logs.insert(Log(timestamp=datetime.now().isoformat(), query='Hi, who are you?', model='llama3.2',
+#                          response='I am ShellSage, a command-line teaching assistant!', mode='default'))
+# log
+```
+
+## Main
+
+```python
+#| export
+@call_parse
+async def main(
+    query: Param('The query to send to the LLM', str, nargs='+'),
+    v: Param("Print version", action='version') = '%(prog)s ' + __version__,
+    pid: str = 'current',  # `current`, `all` or tmux pane_id (e.g. %0) for context
+    skip_system: bool = False,  # Whether to skip system information in the AI's context
+    history_lines: int = None,  # Number of history lines. Defaults to tmux scrollback history length
+    mode: str = 'default', # Available ShellSage modes: ['default', 'sassy']
+    model: str = None,  # The LLM model that will be invoked on the LLM provider
+    vendor_name: str = None,  # Vendor name for non auto-resolved models (e.g. 'codex', 'fireworks_ai', 'moonshot', 'deepseek', ...)
+    search: str = None, # Wheather to allow the LLM to search the internet
+    base_url: str = None, # If using a custom LLM base url
+    api_key: str = None,  # If don't have the default environment variables set 
+    think: str = None,  # Reasoning effort level: 'l', 'm', 'h' (for supported models)
+    trust: str = None,  # Comma-delimited list of tools to always allow (e.g. "view,rg")
+    code_theme: str = None,  # The code theme to use when rendering ShellSage's responses
+    code_lexer: str = None,  # The lexer to use for inline code markdown blocks
+    raw: bool = False,  # Skip markdown rendering and print plain text
+):
+    safecmd = None
+    opts = get_opts(history_lines=history_lines, model=model, search=search,
+                    base_url=base_url, api_key=api_key, code_theme=code_theme,
+                    code_lexer=code_lexer, think=think, trust=trust, safecmd=safecmd,
+                    vendor_name=vendor_name, log=None)
+    if opts.trust: _always_allow.update(t.strip() for t in opts.trust.split(','))
+    res=""
+    try:
+        with Live(Spinner("dots", text="Connecting..."), auto_refresh=False) as live:
+            global _live, _md
+            _live = live
+            if mode not in ['default', 'sassy']:
+                raise Exception(f"{mode} is not valid. Must be one of the following: ['default', 'sassy']")
+            
+            _md = noop if raw else partial(Markdown, code_theme=opts.code_theme, inline_code_lexer=opts.code_lexer,
+                         inline_code_theme=opts.code_theme)
+            if raw:
+                global print
+                print = builtins.print
+            query = ' '.join(query)
+            ctxt = '' if skip_system else _sys_info()
+
+            # Get tmux history if in a tmux session
+            if os.environ.get('TMUX'):
+                if opts.history_lines is None or opts.history_lines < 0:
+                    opts.history_lines = tmux_history_lim()
+                history = get_history(opts.history_lines, pid)
+                if history: ctxt += f'<terminal_history>\n{history}\n</terminal_history>'
+
+            # Read from redirect stdin if available
+            if not sys.stdin.isatty() and not IN_NOTEBOOK:
+                ctxt += f'\n<context>\n{sys.stdin.read()}</context>'
+                # Restore stdin to tty
+                try: sys.stdin = open('/dev/tty')
+                except OSError: pass
+            
+            query = f'{ctxt}\n<query>\n{query}\n</query>'
+
+            sage = get_sage(opts.model, mode, search=opts.search, use_safecmd=opts.safecmd, vendor_name=opts.vendor_name)
+            async for res in get_res(sage, query, opts): live.update(_md(res), refresh=True)
+            
+        # Handle logging if the log flag is set
+        if opts.log:
+            db = mk_db()
+            db.logs.insert(Log(timestamp=datetime.now().isoformat(), query=query,
+                            response=res, model=opts.model, mode=mode))
+    except KeyboardInterrupt: print("Interrupted.")
+```
+
+```python
+await main(['Do you have a `bash` tool?.'], history_lines=0)
+```
+
+**Outputs:**
+No, I don't have a [38;2;248;248;242;48;2;39;40;34mbash[0m (or shell execution) tool. My available tools are:                                         
+
+[1m • [0m[38;2;248;248;242;48;2;39;40;34mvi … (truncated)
+
+```python
+r = f'''
+Hello, user! Here are some code blocks:
+
+```python
+for i in range(10): print(i)
+```
+
+```
+This doesn't even have a language definition!
+```
+
+```bash
+ls **/*
+```
+'''
+```
+
+```python
+db = mk_db()
+db.logs.insert(Log(timestamp=datetime.now().isoformat(), query='', response=r, model='', mode=''))
+```
+
+**Outputs:**
+Log(id=90, timestamp='2026-05-12T14:56:02.528405', query='', response="\nHello, user! Here are some code blocks:\n\n```python\nfor i in range(10): print(i)\n```\n\n```\nThis doesn't even have a langua … (truncated)
+
+```python
+#| export
+def extract_cf(idx): return re.findall(r'```(\w+)?\n(.*?)\n```', mk_db().logs()[-1].response, re.DOTALL)[idx][1]
+```
+
+```python
+extract_cf(0)
+```
+
+**Outputs:**
+'for i in range(10): print(i)'
+
+```python
+#| export
+@call_parse
+def extract(
+    idx: int,  # Index of code block to extract
+    copy: bool = False,  # Copy to clipboard
+    do_print: bool = False, # Print (useful for readline custom shortcuts)
+):
+    "Extracts the idx'th codefence from the last shell sage response and sends it to tmux by default"
+    blk = extract_cf(idx)
+    if copy: pyperclip.copy(blk)
+    elif do_print: print(blk)
+    else: subprocess.run(['tmux', 'send-keys', blk])
+```
+
+## export -
+
+```python
+#| hide
+#| eval: false
+from nbdev.doclinks import nbdev_export
+nbdev_export()
+```
+
+### Configuration
+
+*Source: nbs/01_config.ipynb | URL: https://github.com/AnswerDotAI/shell_sage/blob/main/nbs/01_config.ipynb*
+
+```python
+#| default_exp config
+```
+
+# Configuration
+
+## Imports
+
+```python
+#| export
+from dataclasses import dataclass
+from fastcore.all import *
+from fastcore.xdg import *
+from typing import get_type_hints
+```
+
+```python
+#| export
+_shell_sage_home_dir = 'shell_sage' # sub-directory of xdg base dir
+_shell_sage_cfg_name = 'shell_sage.conf'
+```
+
+```python
+#| export
+def _cfg_path(): return xdg_config_home() / _shell_sage_home_dir / _shell_sage_cfg_name
+```
+
+```python
+_cfg_path()
+```
+
+**Outputs:**
+Path('/Users/keremturgutlu/.config/shell_sage/shell_sage.conf')
+
+```python
+#| export
+@dataclass
+class ShellSageConfig:
+    model: str = 'claude-sonnet-4-6'
+    search: str = ''
+    think: str = ''
+    trust: str = ''
+    mode: str = 'default'
+    base_url: str = ''
+    api_key: str = ''
+    vendor_name: str = ''
+    history_lines: int = -1
+    code_theme: str = "monokai"
+    code_lexer: str = "python"
+    log: bool = False
+    safecmd: bool = False
+```
+
+```python
+cfg = ShellSageConfig()
+cfg
+```
+
+**Outputs:**
+ShellSageConfig(model='claude-sonnet-4-6', search='', think='', trust='', mode='default', base_url='', api_key='', vendor_name='', history_lines=-1, code_theme='monokai', code_lexer='python', log=Fals … (truncated)
+
+```python
+#| export
+def get_cfg():
+    path = _cfg_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    _types = get_type_hints(ShellSageConfig)
+    return Config(path.parent, path.name, create=asdict(ShellSageConfig()),
+                  types=_types, inline_comment_prefixes=('#'))
+```
+
+```python
+cfg = get_cfg()
+cfg
+```
+
+**Outputs:**
+{'model': 'gpt-5.5', 'search': '', 'think': '', 'trust': '', 'mode': 'default', 'base_url': '', 'api_key': '', 'vendor_name': 'codex', 'history_lines': '-1', 'code_theme': 'monokai', 'code_lexer': 'py … (truncated)
+
+### ShellSage
+
+*Source: nbs/index.ipynb | URL: https://github.com/AnswerDotAI/shell_sage/blob/main/nbs/index.ipynb*
+
+# ShellSage
+
+> ShellSage saves sysadmins' sanity by solving shell script snafus super swiftly
+
+ShellSage is an AI-powered command-line assistant that integrates seamlessly with your terminal workflow through tmux. It provides contextual help for shell operations, making it easier to navigate complex command-line tasks, debug scripts, and manage your system.
+
+[![PyPI version](https://badge.fury.io/py/shell-sage.svg)](https://badge.fury.io/py/shell-sage)
+[![Python 3.8+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Documentation](https://img.shields.io/badge/docs-nbdev-blue.svg)](https://answerdotai.github.io/shell_sage/)
+
+## Overview
+
+ShellSage is an AI-powered command-line assistant that integrates seamlessly with your terminal workflow through tmux. It provides contextual help for shell operations, making it easier to navigate complex command-line tasks, debug scripts, and manage your system.
+
+ShellSage works with multiple LLM providers including Claude, GPT, and Ollama. It uses tmux to automatically read your terminal history or multiple pane histories to provide contextual assistance. You can pipe command output or file contents directly to ShellSage, and it can view files, search code, create files, and make edits with your permission. When needed, it can even search the internet for up-to-date information. You can also log all your  interactions directly to SQLite for later reference.
+
+## Installation
+
+Install ShellSage directly from PyPI using pip:
+
+```sh
+pip install shell-sage
+```
+
+## Installing with `uv`
+
+If you have `uv` installed then you can use its powerful `tool` feature to install ShellSage as a global CLI — safely, with per-tool isolation and no need for manual virtualenv management.
+
+```sh
+uv tool install shell_sage
+```
+
+This will make the `ssage` CLI available everywhere on your system.
+
+If you also want to install additional dependencies (for example `fastlite`), you can do it at install time:
+
+```sh
+uv tool install --with fastlite shell_sage
+```
+
+### Upgrade
+
+To upgrade ShellSage to the latest version:
+
+```sh
+uv tool upgrade shell_sage
+```
+
+### List All Installed Tools
+
+See everything you’ve installed via `uv tool`:
+
+```sh
+uv tool list
+```
+
+### Uninstall
+
+To completely remove ShellSage and its environment:
+
+```sh
+uv tool uninstall shell_sage
+```
+
+Using `uv tool` keeps ShellSage completely isolated from your project dependencies, so you can safely use `ssage` even when inside another virtual environment.
+
+## Prerequisites
+
+Before using ShellSage, you'll need to set up an API key for your chosen LLM provider. By default, ShellSage uses Claude, so you'll want to export your Anthropic API key:
+
+```sh
+export ANTHROPIC_API_KEY=sk...
+```
+
+If you prefer to use OpenAI instead, export your OpenAI API key and set the model in your ShellSage config or on the command line:
+
+```sh
+export OPENAI_API_KEY=sk...
+```
+
+ShellSage works best with a properly configured tmux environment. I've created a preconfigured [tmux configuration](tmux.conf) that works well with ShellSage. This configuration enables mouse support, adds pane IDs to your status bar so you can quickly reference them when having ShellSage read from specific panes, turns off alternative-screen so editor content like vim stays in the tmux buffer where ShellSage can see it, and adds a convenient shortcut (CTRL+B+E followed by the index number) for automatically extracting code fence blocks into your command prompt.
+
+## Getting Started
+
+### Your First Command
+
+Once installed, try ShellSage with a simple greeting:
+
+```python
+!ssage hi
+```
+
+**Outputs:**
+Hello! 👋 I'm ShellSage, your command-line teaching assistant.                  
+
+I can help you with:                                                            
+
+[1;33m • [0m[1mShell commands … (truncated)
+
+If everything is properly setup, you should see a welcoming greeting back from ShellSage!
+
+### Getting Help with Commands
+
+The most basic use case is asking about shell commands:
+
+```python
+!ssage "how do I list all files including hidden ones?"
+```
+
+**Outputs:**
+Based on your aliases, you already have a shortcut set up for this!             
+
+[48;2;39;40;34m                                                                                [0m
+[48;2;39;40;3 … (truncated)
+
+ShellSage will provide the command, explain how it works, and give you practical examples.
+
+### Using Terminal Context
+
+ShellSage automatically reads your tmux history to understand what you're working on:
+
+```python
+# After running some commands that produced errors (e.g. find -name "*.tmp" .)
+!ssage "what went wrong with my last command?"
+```
+
+**Outputs:**
+The issue is with the [1margument order[0m in your [38;2;248;248;242;48;2;39;40;34mfind[0m command. You placed the path  
+([38;2;255;70;137;48;2;39;40;34m.[0m) after the expression ([38;2;255; … (truncated)
+
+### Piping Content for Analysis
+
+One of ShellSage's most powerful features is analyzing piped input:
+
+```python
+# Understand error messages
+!journalctl --since "1 hour ago" --no-pager | ssage explain this error
+```
+
+**Outputs:**
+Looking at the error in your system logs, here's what happened:                 
+
+
+                               [1;4mCore Dump Analysis[0m                               
+
+The [38;2;248;248;2 … (truncated)
+
+### Working with Multiple Tmux Panes
+
+When you have multiple panes open, you can reference specific ones by their ID (shown in your status bar):
+
+![btop output](./screenshots/btop_output.png)
+
+```python
+# Analyze what's happening in pane %2
+!ssage --pid %2 "what can you tell me about this pane?"
+```
+
+**Outputs:**
+Looking at this [1mbtop[0m system monitor output, here's what I can tell you about the
+pane:                                                                           
+
+
+                         … (truncated)
+
+## Configuration and Model Providers
+
+### Configuration File
+
+ShellSage can be customized through a configuration file located at `~/.config/shell_sage/shell_sage.conf`:
+
+```
+[DEFAULT]
+model = 'claude-sonnet-4-6'             # Your preferred model
+search = ''                             # Web search effort for supported models: l, m, or h
+think = ''                              # Reasoning effort for supported models: l, m, or h
+trust = ''                              # Comma-delimited list of tools to always allow
+mode = 'default'                        # or "sassy"
+base_url = ''                           # Alternative API base URL
+api_key = ''                            # API key override instead of the default env var
+vendor_name = ''                        # Explicit fastllm vendor name when needed
+history_lines = -1                      # Lines of terminal history to include. -1 means include all
+code_theme = "monokai"                  # Syntax highlighting theme
+code_lexer = "python"                   # Default lexer for inline code blocks
+log = False                             # Enable SQLite logging (required for code extraction)
+safecmd = False                         # Enable the safecmd-backed bash tool
+```
+
+### Using Different Model Providers
+
+ShellSage uses [fastllm](https://github.com/AnswerDotAI/fastllm) under the hood. fastllm can automatically resolve common Claude, Gemini, GPT, and OpenAI model names. For providers that are not auto-resolved, set `vendor_name` in your config or pass `--vendor_name` on the command line.
+
+| `vendor_name` | API key source |
+| --- | --- |
+| `openai` | `OPENAI_API_KEY` |
+| `anthropic` | `ANTHROPIC_API_KEY` |
+| `gemini` | `GEMINI_API_KEY` |
+| `openai_chat` | `OPENAI_API_KEY` |
+| `codex` | `CODEX_AUTH_TOKEN` or `~/.codex/auth.json` |
+| `moonshot` | `MOONSHOT_API_KEY` |
+| `deepseek` | `DEEPSEEK_API_KEY` |
+| `openrouter` | `OPENROUTER_API_KEY` |
+| `together` | `TOGETHER_API_KEY` |
+| `fireworks_ai` | `FIREWORKS_API_KEY` |
+| `qwen` | `QWEN_API_KEY` |
+
+#### Claude, OpenAI, and Gemini
+
+Common Claude, GPT, and Gemini model names are auto-resolved:
+
+```bash
+ssage --model claude-sonnet-4-6 explain systemd timers
+ssage --model gpt-5 explain kubernetes pods
+ssage --model gemini-2.5-pro what is journald?
+```
+
+#### Known Vendors
+
+Use `vendor_name` when the model name does not identify the provider on its own:
+
+```bash
+ssage --vendor_name openrouter --model openai/gpt-5 explain cgroups
+ssage --vendor_name codex --model gpt-5.5 review my shell script
+```
+
+You can also set the vendor in your config:
+
+```
+model = 'gpt-5.5'
+vendor_name = 'codex'
+```
+
+#### Other Providers
+
+For another OpenAI-compatible API, provide the vendor, API base URL, API key, and model:
+
+```bash
+ssage --vendor_name openai_chat --base_url https://your-api.com/v1 --api_key your_key --model your_model your query
+```
+
+For known non-OpenAI-compatible providers, prefer the matching `vendor_name` from the table above so fastllm can use the right API format and environment variable.
+
+### Command Line Overrides
+
+Any configuration option can be temporarily overridden via command line arguments:
+
+```sh
+# Adjust history lines
+ssage --history_lines 100 what commands did I just run?
+
+# Change the display theme
+ssage --code_theme dracula --code_lexer python show me a python example
+```
+
+You can find all available code themes and lexers at https://pygments.org/styles/
+
+### Bash Tool (Safe Command Execution)
+
+ShellSage can execute shell commands on your behalf using the [safecmd](https://github.com/AnswerDotAI/safecmd) library, which provides a safety layer via an allow-list approach.
+
+#### Enabling the Bash Tool
+
+Add to your config file (`~/.config/shell_sage/shell_sage.conf`):
+
+```
+safecmd = true
+```
+
+#### How It Works
+
+When enabled, ShellSage gains access to a `bash` tool that:
+
+- Validates commands against a curated allow-list before execution
+- Supports pipes, redirects, and shell operators
+- Blocks potentially destructive operations by default
+- Can be customized to allow or restrict allowed commands/destinations
+
+#### Example Usage
+
+```sh
+ssage "what files are in this directory and how big are they?"
+# ShellSage can now run `ls -la` or `du -sh *` to answer
+```
+
+> See the [safecmd documentation](https://github.com/AnswerDotAI/safecmd) for details on the allow-list
+
+### Extracting and Running Commands
+
+When ShellSage suggests commands, you can extract them directly to your command line. Note that this feature requires you to have logging enabled in your configuration file:
+
+```python
+!ssage "how do I find large files?"
+
+```
+
+**Outputs:**
+To find large files on your system, here are the most useful commands:          
+
+
+            [1;4mQuick method - Find largest files in current directory:[0m             
+
+[48;2;39;40;34m     … (truncated)
+
+ShellSage will respond with code blocks. Press `Ctrl+B E` then enter the index number (0 for first block, 1 for second, etc.) to send that command directly to your prompt. You can also directly use the console script:
+
+```python
+!ssage_extract 0
+# inserts "du -ah . | sort -rh | head -20" into your tmux prompt
+```
+
+You can also bind a keyboard shortcut in Bash to insert code fences directly into your prompt. Type a block number (or leave empty for 0), then press `Ctrl+J` to insert that code block. To use this, add the following to your `~/.bashrc`:
+
+```bash
+ssage-insert() {
+  local r=$(ssage_extract --do_print "${READLINE_LINE:-0}")
+  READLINE_LINE="$r" READLINE_POINT=${#r}
+}
+bind -x '"\C-j": ssage-insert'
+```
+
+### Enabling Sassy Mode
+
+For a more entertaining experience, try sassy mode (GLaDOS-inspired):
+
+```python
+!ssage --mode sassy explain git rebase
+```
+
+**Outputs:**
+Ah, [38;2;248;248;242;48;2;39;40;34mgit[0m[38;2;248;248;242;48;2;39;40;34m [0m[38;2;248;248;242;48;2;39;40;34mrebase[0m. The command that separates the competent developers from those  
+who sti … (truncated)
+
+## Contributing
+
+ShellSage is built using [nbdev](https://nbdev.fast.ai/). For detailed contribution guidelines, please see our [CONTRIBUTING.md](CONTRIBUTING.md) file.
+
+We welcome contributions of all kinds:
+
+- Bug reports
+- Feature requests
+- Documentation improvements
+- Code contributions
+
+Please visit our [GitHub repository](https://github.com/AnswerDotAI/shell_sage) to get started.
+
+---
+
+## Optional
+
+### Release Notes
+
+*Source: CHANGELOG.md | URL: https://github.com/AnswerDotAI/shell_sage/blob/main/CHANGELOG.md*
+
+# Release Notes
+
+<!-- do not remove -->
+
+## 1.0.7
+
+### New Features
+
+- Fix: Print tool use details before permission check ([#81](https://github.com/AnswerDotAI/shell_sage/pull/81)), thanks to [@ncoop57](https://github.com/ncoop57)
+- Use os.environ.get instead of subprocess to retrieve SHELL variable ([#80](https://github.com/AnswerDotAI/shell_sage/issues/80))
+
+
+## 1.0.6
+
+### New Features
+
+- Add --raw flag to skip markdown rendering and print plain text output ([#78](https://github.com/AnswerDotAI/shell_sage/issues/78))
+
+
+## 1.0.5
+
+
+### Bugs Squashed
+
+- Fix duplicated output during tool use by pausing Live display ([#76](https://github.com/AnswerDotAI/shell_sage/pull/76)), thanks to [@ncoop57](https://github.com/ncoop57)
+
+
+## 1.0.4
+
+### New Features
+
+- Add optional `safecmd` ([#68](https://github.com/AnswerDotAI/shell_sage/issues/68))
+- add bash keyboard shortcut to extract codefences ([#67](https://github.com/AnswerDotAI/shell_sage/pull/67)), thanks to [@RensDimmendaal](https://github.com/RensDimmendaal)
+- Add `trust` ([#65](https://github.com/AnswerDotAI/shell_sage/issues/65))
+- Optional reasoning; add `a` to always allow tool call ([#64](https://github.com/AnswerDotAI/shell_sage/issues/64))
+
+
+### Bugs Squashed
+
+- fix: EOFError when redirecting input and using tools ([#69](https://github.com/AnswerDotAI/shell_sage/pull/69)), thanks to [@ncoop57](https://github.com/ncoop57)
+
+
+## 1.0.1
+
+### New Features
+
+- Show spinner, then stream, add ctrl+c support ([#63](https://github.com/AnswerDotAI/shell_sage/pull/63)), thanks to [@PiotrCzapla](https://github.com/PiotrCzapla)
+
+### Bugs Squashed
+
+- Fix macos terminal issues and teach ssage it name ([#57](https://github.com/AnswerDotAI/shell_sage/pull/57)), thanks to [@PiotrCzapla](https://github.com/PiotrCzapla)
+
+## 1.0.0
+
+### New Features
+
+- Rewrite shell sage to use lisette ([#56](https://github.com/AnswerDotAI/shell_sage/pull/56)), thanks to [@ncoop57](https://github.com/ncoop57)
+  - This PR is a major rewrite of shell sage to now use lisette which make it easier to use other llm providers. Additionally, we have done away with command and agent mode and having the default mode subsume these. Added additional tools and web search as well.
+
+
+## 0.1.1
+
+### New Features
+
+- Deep Search on your own file system ([#42](https://github.com/AnswerDotAI/shell_sage/issues/42))
+  - This feature would be akin to what many are calling deep search or deep research, in which an AI is given a bunch of tools where they can reason through and search for particular things either on the web or locally and then surface that information to the user in some sort of report or blob of information. However, for Shell Sage, this will be a new feature flag that will allow Shell Sage to create this tool loop for answering the particular user's question about their file system or set of files.
+
+- Add RAG ([#25](https://github.com/AnswerDotAI/shell_sage/issues/25))
+
+
+
+## 0.1.0
+
+### New Features
+
+- Add agent mode allowing shell sage to interact with your file system #43.
+
+### Bugs Squashed
+
+- Initial use after install errors looking for: fastlite ([#41](https://github.com/AnswerDotAI/shell_sage/issues/41))
+
+## 0.0.9
+
+
+### Bugs Squashed
+
+- Initial use after install errors looking for: fastlite ([#41](https://github.com/AnswerDotAI/shell_sage/issues/41))
+
+
+## 0.0.8
+
+### New Features
+
+- Add logging of queries and response to Sqlite #27 ([#32](https://github.com/AnswerDotAI/shell_sage/pull/32)), thanks to [@aditya0yadav](https://github.com/aditya0yadav)
+
+### Bugs Squashed
+
+- Fix: Handle invalid/empty tmux history-limit values ([#39](https://github.com/AnswerDotAI/shell_sage/pull/39)), thanks to [@nassersala](https://github.com/nassersala)
+  - ### **Fix: Handle invalid/empty `tmux history-limit` values**  
+
+## 0.0.7
+
+### New Features
+
+- Add version flag to cli ([#28](https://github.com/AnswerDotAI/shell_sage/issues/28))
+
+### Bugs Squashed
+
+- base_url error when user updates shell sage to new version with different config schema ([#22](https://github.com/AnswerDotAI/shell_sage/issues/22))
+
+- command mode not working outside tmux session ([#21](https://github.com/AnswerDotAI/shell_sage/issues/21))
+
+- tmux scrollback history does not check tmux session is active ([#20](https://github.com/AnswerDotAI/shell_sage/issues/20))
+
+
+## 0.0.6
+
+### New Features
+
+- Make inserting commands in the command line frictionless ([#17](https://github.com/AnswerDotAI/shell_sage/issues/17))
+
+- Add link to pygments for theme and lexer configuration ([#16](https://github.com/AnswerDotAI/shell_sage/issues/16))
+
+- Add Support for OpenAI Compatible Providers ([#12](https://github.com/AnswerDotAI/shell_sage/issues/12))
+
+### Bugs Squashed
+
+- Having inline comments in config causes errors ([#18](https://github.com/AnswerDotAI/shell_sage/issues/18))
+
+- TypeError: option values must be strings when starting with fresh config ([#15](https://github.com/AnswerDotAI/shell_sage/issues/15))
+
+
+## 0.0.5
+
+
+### Bugs Squashed
+
+- ShellSage Not Seeing Full Tmux History ([#11](https://github.com/AnswerDotAI/shell_sage/issues/11))
+
+### Features Added
+
+- Add configuration through ~/.config/shell_sage/shell_sage.conf file
+- Default history length to tmux's scrollback history 
+- Add system info to prompt
+
+## 0.0.4
+
+- Add support for OpenAI models
+- Remove action mode
+- Add ability to configure shell sage with a configuration file
+
+
+## 0.0.3
+
+### How to contribute
+
+*Source: CONTRIBUTING.md | URL: https://github.com/AnswerDotAI/shell_sage/blob/main/CONTRIBUTING.md*
+
+# How to contribute
+
+Make sure you have read the [doc on code style](
+https://docs.fast.ai/dev/style.html) first. (Note that we don't follow PEP8, but instead follow a coding style designed specifically for numerical and interactive programming.)
+
+This project uses [nbdev](https://nbdev.fast.ai/getting_started.html) for development. Before beginning, make sure that nbdev and a jupyter-compatible client such as jupyterlab or nbclassic are installed. To make changes to the codebase, update the notebooks in the `nbs` folder, not the .py files directly. Then, run `nbdev_export`. For more details, have a look at the [nbdev tutorial](https://nbdev.fast.ai/tutorials/tutorial.html).
+
+You may want to set up a `prep` alias in `~/.zshrc` or other shell startup file:
+
+```sh
+alias prep='nbdev_export && nbdev_clean && nbdev_trust'
+```
+
+Run `prep` before each commit to ensure your python files are up to date, and you notebooks cleaned of metadata and notarized.
+
+## Updating README.md
+
+Similar to updating Python source code files, to update the `README.md` file you will need to edit a notebook file, specifically `nbs/index.ipynb`.
+
+However, there are a couple of extra dependencies that you need to install first in order to make this work properly. Go to the directory you cloned the repo to, and type:
+
+```
+pip install -e '.[dev]'
+```
+
+And install quarto too:
+
+```
+nbdev_install_quarto
+```
+
+Then, after you make subsequent changes to `nbs/index.ipynb`, run the following from the repo's root directory to (re)build `README.md`:
+
+```
+nbdev_readme
+```
+
+## Did you find a bug?
+
+* Ensure the bug was not already reported by searching on GitHub under Issues.
+* If you're unable to find an open issue addressing the problem, open a new one. Be sure to include a title and clear description, as much relevant information as possible, and a code sample or an executable test case demonstrating the expected behavior that is not occurring.
+* Be sure to add the complete error messages.
+
+### Did you write a patch that fixes a bug?
+
+* Open a new GitHub pull request with the patch.
+* Ensure that your PR includes a test that fails without your patch, and pass with it.
+* Ensure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
+
+## PR submission guidelines
+
+* Keep each PR focused. While it's more convenient, do not combine several unrelated fixes together. Create as many branches as needed to keep each PR focused.
+* Do not mix style changes/fixes with "functional" changes. It's very difficult to review such PRs and will most likely get rejected.
+* Do not add/remove vertical whitespace. Preserve the original style of the file you edit as much as you can.
+* Do not turn an already-submitted PR into your development playground. If after you submit a PR, you discover that more work is needed: close the PR, do the required work, and then submit a new PR. Otherwise each of your commits requires attention from maintainers of the project.
+* If, however, you submit a PR and receive a request for changes, you should proceed with commits inside that PR, so that the maintainer can see the incremental fixes and won't need to review the whole PR again. In the exception case where you realize it'll take many many commits to complete the requests, then it's probably best to close the PR, do the work, and then submit it again. Use common sense where you'd choose one way over another.
+
+## Do you want to contribute to the documentation?
+
+* Docs are automatically created from the notebooks in the nbs folder.
+
+---
+
+## Source Modules
+
+### ipython.00-init
+
+*Source: ipython/00-init.py | URL: https://github.com/AnswerDotAI/shell_sage/blob/main/ipython/00-init.py*
+
+- `export`
+- `reload_config`
+
+### ipython.01-prompt
+
+*Source: ipython/01-prompt.py | URL: https://github.com/AnswerDotAI/shell_sage/blob/main/ipython/01-prompt.py*
+
+- `PathPrompt`
+- `in_prompt_tokens`
+
+### shell_sage.config
+
+*Source: shell_sage/config.py | URL: https://github.com/AnswerDotAI/shell_sage/blob/main/shell_sage/config.py*
+
+- `ShellSageConfig`
+- `get_cfg`
+
+### shell_sage.core
+
+*Source: shell_sage/core.py | URL: https://github.com/AnswerDotAI/shell_sage/blob/main/shell_sage/core.py*
+
+- `get_pane`
+- `get_panes`
+- `tmux_history_lim`
+- `get_history`
+- `get_opts`
+- `with_permission`
+- `decorator`
+- `wrapper`
+- `get_sage`
+- `get_res`
+- `Log`
+- `mk_db`
+- `main`
+- `extract_cf`
+- `extract`

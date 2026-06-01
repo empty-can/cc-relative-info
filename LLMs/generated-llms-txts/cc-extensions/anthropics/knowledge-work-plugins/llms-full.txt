@@ -1,0 +1,174 @@
+# Knowledge Work Plugins
+
+> バイオ研究（single-cell RNA-seq・scvi-tools・Nextflow・Allotrope 変換）とデータ抽出を対象とした 5 Skill を含む Claude Code 拡張セット。
+
+---
+
+## Source Modules
+
+### bio-research.skills.instrument-data-to-allotrope.scripts.convert_to_asm
+
+*Source: bio-research/skills/instrument-data-to-allotrope/scripts/convert_to_asm.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/instrument-data-to-allotrope/scripts/convert_to_asm.py*
+
+- `get_allotropy`
+- `get_pandas`
+- `detect_instrument_type`: Auto-detect instrument type from file contents.
+- `convert_with_allotropy`: Convert file using allotropy library.
+- `get_deterministic_timestamp`: Get deterministic timestamp for file.
+- `calculate_file_hash`: Calculate SHA256 hash of file for provenance tracking.
+- `get_library_version`: Get version of installed library.
+- `add_provenance_metadata`: Add provenance metadata to ASM for reproducibility and audit trail.
+- `flexible_parse`: Flexible fallback parser when allotropy fails.
+- `build_flexible_asm`: Build ASM-like JSON structure from parsed DataFrame.
+- `main`: Main entry point.
+
+### bio-research.skills.instrument-data-to-allotrope.scripts.export_parser
+
+*Source: bio-research/skills/instrument-data-to-allotrope/scripts/export_parser.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/instrument-data-to-allotrope/scripts/export_parser.py*
+
+- `generate_script`: Generate standalone Python script for given vendor.
+- `generate_notebook`: Generate Jupyter notebook for given vendor.
+- `main`
+
+### bio-research.skills.instrument-data-to-allotrope.scripts.flatten_asm
+
+*Source: bio-research/skills/instrument-data-to-allotrope/scripts/flatten_asm.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/instrument-data-to-allotrope/scripts/flatten_asm.py*
+
+- `detect_technique`: Detect the ASM technique type from document structure.
+- `flatten_value`: Flatten a single ASM value, handling value datum patterns.
+- `extract_device_info`: Extract device/instrument information from ASM.
+- `flatten_asm`: Flatten ASM JSON to list of row dictionaries.
+- `flatten_asm_to_csv`: Flatten ASM and write to CSV file.
+- `flatten_asm_to_dict`: Flatten ASM and return as dictionary with rows and columns.
+- `main`: Main entry point.
+
+### bio-research.skills.nextflow-development.scripts.utils.file_discovery
+
+*Source: bio-research/skills/nextflow-development/scripts/utils/file_discovery.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/nextflow-development/scripts/utils/file_discovery.py*
+
+- `FileInfo`: Information about a discovered file.
+- `discover_files`: Recursively discover files of specified type.
+- `count_files_by_type`: Count files by type in directory.
+- `find_index_file`: Find index file for a BAM or CRAM file.
+- `detect_input_type`: Auto-detect predominant input file type in directory.
+
+### bio-research.skills.nextflow-development.scripts.utils.sample_inference
+
+*Source: bio-research/skills/nextflow-development/scripts/utils/sample_inference.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/nextflow-development/scripts/utils/sample_inference.py*
+
+- `extract_sample_info`: Extract sample metadata from filepath.
+- `infer_tumor_normal_status`: Infer tumor (1) or normal (0) status from sample name.
+- `extract_replicate_number`: Extract replicate number from sample name.
+- `match_read_pairs`: Match R1/R2 read pairs using scored pattern matching.
+- `infer_patient_groupings`: Infer patient groupings from sample names.
+
+### bio-research.skills.nextflow-development.scripts.utils.validators
+
+*Source: bio-research/skills/nextflow-development/scripts/utils/validators.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/nextflow-development/scripts/utils/validators.py*
+
+- `ValidationResult`: Result of samplesheet validation.
+- `summary`: Generate human-readable summary.
+- `load_pipeline_config`: Load pipeline configuration from YAML file.
+- `validate_samplesheet`: Validate samplesheet rows against pipeline requirements.
+- `validate_file_exists`: Check if file exists and is accessible.
+- `validate_absolute_path`: Check if path is absolute.
+
+### bio-research.skills.scvi-tools.scripts.cluster_embed
+
+*Source: bio-research/skills/scvi-tools/scripts/cluster_embed.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/cluster_embed.py*
+
+- `cluster_and_embed`: Cluster and compute UMAP embedding.
+- `plot_results`: Generate and save visualization plots.
+- `main`
+
+### bio-research.skills.scvi-tools.scripts.differential_expression
+
+*Source: bio-research/skills/scvi-tools/scripts/differential_expression.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/differential_expression.py*
+
+- `run_de_analysis`: Run differential expression analysis.
+- `plot_volcano`: Create volcano plot of DE results.
+- `main`
+
+### bio-research.skills.scvi-tools.scripts.integrate_datasets
+
+*Source: bio-research/skills/scvi-tools/scripts/integrate_datasets.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/integrate_datasets.py*
+
+- `integrate_datasets`: Integrate multiple datasets.
+- `plot_integration`: Plot integration results.
+- `main`
+
+### bio-research.skills.scvi-tools.scripts.model_utils
+
+*Source: bio-research/skills/scvi-tools/scripts/model_utils.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/model_utils.py*
+
+- `get_mito_genes`: Identify mitochondrial genes for both human and mouse data.
+- `prepare_adata`: Prepare AnnData for scvi-tools models.
+- `train_scvi`: Train scVI or scANVI model.
+- `evaluate_integration`: Evaluate integration quality using basic metrics.
+- `get_marker_genes`: Get marker genes using scVI differential expression.
+- `plot_training_history`: Plot model training history.
+- `save_results`: Save model, processed data, and visualization.
+- `auto_select_model`: Suggest the best scvi-tools model based on available data.
+- `compare_integrations`: Compare multiple integration methods using standard metrics.
+- `quick_clustering`: Quick clustering pipeline on latent representation.
+
+### bio-research.skills.scvi-tools.scripts.train_model
+
+*Source: bio-research/skills/scvi-tools/scripts/train_model.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/train_model.py*
+
+- `train_scvi`: Train scVI model.
+- `train_scanvi`: Train scANVI model (scVI + labels).
+- `train_totalvi`: Train totalVI model for CITE-seq.
+- `train_peakvi`: Train PeakVI model for scATAC-seq.
+- `train_velovi`: Train veloVI model for RNA velocity.
+- `train_multivi`: Train MultiVI model for multiome (RNA + ATAC).
+- `main`
+
+### bio-research.skills.scvi-tools.scripts.transfer_labels
+
+*Source: bio-research/skills/scvi-tools/scripts/transfer_labels.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/transfer_labels.py*
+
+- `transfer_labels`: Transfer labels from reference to query.
+- `plot_predictions`: Plot prediction results.
+- `main`
+
+### bio-research.skills.scvi-tools.scripts.validate_adata
+
+*Source: bio-research/skills/scvi-tools/scripts/validate_adata.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/scvi-tools/scripts/validate_adata.py*
+
+- `ValidationResult`: Results from AnnData validation.
+- `add_error`: Add an error (makes validation fail).
+- `add_warning`: Add a warning (doesn't fail validation).
+- `add_recommendation`: Add a recommendation for improvement.
+- `summary`: Generate summary report.
+- `validate_for_scvi`: Validate AnnData for scvi-tools compatibility.
+- `suggest_model`: Suggest appropriate scvi-tools model based on data.
+- `main`: Command-line interface.
+
+### bio-research.skills.single-cell-rna-qc.scripts.qc_core
+
+*Source: bio-research/skills/single-cell-rna-qc/scripts/qc_core.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/single-cell-rna-qc/scripts/qc_core.py*
+
+- `calculate_qc_metrics`: Calculate QC metrics for single-cell RNA-seq data.
+- `detect_outliers_mad`: Detect outliers using Median Absolute Deviation (MAD).
+- `apply_hard_threshold`: Apply a hard threshold filter.
+- `filter_cells`: Filter cells based on a boolean mask.
+- `filter_genes`: Filter genes based on detection thresholds.
+- `print_qc_summary`: Print summary statistics for QC metrics.
+
+### bio-research.skills.single-cell-rna-qc.scripts.qc_plotting
+
+*Source: bio-research/skills/single-cell-rna-qc/scripts/qc_plotting.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/bio-research/skills/single-cell-rna-qc/scripts/qc_plotting.py*
+
+- `plot_qc_distributions`: Create comprehensive QC distribution plots.
+- `plot_filtering_thresholds`: Visualize filtering thresholds overlaid on distributions.
+- `plot_with_threshold`
+- `plot_qc_after_filtering`: Create QC plots for filtered data (simplified version without outlier overlay).
+
+### data.skills.data-context-extractor.scripts.package_data_skill
+
+*Source: data/skills/data-context-extractor/scripts/package_data_skill.py | URL: https://github.com/anthropics/knowledge-work-plugins/blob/main/data/skills/data-context-extractor/scripts/package_data_skill.py*
+
+- `validate_skill`: Basic validation of skill structure.
+- `package_skill`: Package a skill folder into a .skill file.
+- `main`

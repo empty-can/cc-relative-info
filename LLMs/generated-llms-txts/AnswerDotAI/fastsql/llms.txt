@@ -1,0 +1,20 @@
+# fastsql
+
+> SQLAlchemy V2 上で MiniDataAPI spec を実装した Python 製の軽量 DB ラッパー。データクラスをそのままテーブルとして CRUD 操作できるシンプルな API を開発者に提供する。
+
+## Guide
+
+- [Source](https://github.com/AnswerDotAI/fastsql/blob/main/00_core.ipynb): Source code for FastSQL, a MiniDataAPI spec implementation for SQLAlchemy V2
+- [fastsql](https://github.com/AnswerDotAI/fastsql/blob/main/index.ipynb): A MiniDataAPI spec implementation for SQLAlchemy V2
+- [Test Insert Operations](https://github.com/AnswerDotAI/fastsql/blob/main/test_insert.ipynb): Note: Make sure to use fastlite's database() here
+- [Test Update Operations](https://github.com/AnswerDotAI/fastsql/blob/main/test_update.ipynb): Note: Make sure to use fastlite's database() here
+- [Test Upsert Operations](https://github.com/AnswerDotAI/fastsql/blob/main/test_upsert.ipynb): Note: Make sure to use fastsql's database() here
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/fastsql/blob/main/CHANGELOG.md): - add engine kwargs (#28), thanks to @comhar
+
+## Source Modules
+
+- [db_dc](https://github.com/AnswerDotAI/fastsql/blob/main/db_dc.py)
+- [fastsql.core](https://github.com/AnswerDotAI/fastsql/blob/main/fastsql/core.py)

@@ -1,0 +1,3624 @@
+# ghapi
+
+> GitHub API 全操作を Python から型安全・直感的に呼び出せる完全クライアント。開発者向けに認証・ページネーション・GitHub Actions 連携・GraphQL サポートをワンパッケージで提供する。
+
+---
+
+## Guide
+
+### GhApi details
+
+*Source: 00_core.ipynb | URL: https://github.com/AnswerDotAI/ghapi/blob/main/00_core.ipynb*
+
+```python
+#| default_exp core
+```
+
+# GhApi details
+
+> Detailed information on the GhApi API
+
+```python
+#| export
+from fastcore.all import *
+from ghapi.metadata import funcs
+
+import mimetypes,base64
+from inspect import signature,Parameter,Signature
+from urllib.request import Request
+from urllib.error import HTTPError
+from urllib.parse import quote
+from datetime import datetime, timedelta, timezone
+from pprint import pprint
+from time import sleep
+import os, shutil, tempfile, subprocess, fnmatch
+```
+
+```python
+#| hide
+from nbdev import *
+from IPython.display import Markdown
+```
+
+```python
+#| export
+GH_HOST = os.getenv('GH_HOST', "https://api.github.com")
+_DOC_URL = 'https://docs.github.com/'
+```
+
+You can set an environment variable named `GH_HOST` to override the default of `https://api.github.com` incase you are running [GitHub Enterprise](https://github.com/enterprise)(GHE).  However, this library has not been tested on GHE, so proceed at your own risk.
+
+```python
+#| export
+def _preview_hdr(preview): return {'Accept': f'application/vnd.github.{preview}-preview+json'} if preview else {}
+
+def _mk_param(nm, **kwargs): return Parameter(nm, kind=Parameter.POSITIONAL_OR_KEYWORD, **kwargs)
+def _mk_sig_detls(o):
+    res = {}
+    if o[0]!=object: res['annotation']=o[0]
+    res['default'] = o[1] if len(o)>1 else None
+    return res
+def _mk_sig(req_args, opt_args, anno_args):
+    params =  [_mk_param(k) for k in req_args]
+    params += [_mk_param(k, default=v) for k,v in opt_args.items()]
+    params += [_mk_param(k, **_mk_sig_detls(v)) for k,v in anno_args.items()]
+    return Signature(params)
+
+class _GhObj: pass
+```
+
+```python
+#| export
+class _GhVerb(_GhObj):
+    __slots__ = 'path,verb,tag,name,summary,url,route_ps,params,data,preview,client,__doc__'.split(',')
+    def __init__(self, path, verb, oper, summary, url, params, data, preview, client, kwargs):
+        tag,*name = oper.split('/')
+        name = '__'.join(name)
+        name = name.replace('-','_')
+        path,_,_ = partial_format(path, **kwargs)
+        route_ps = stringfmt_names(path)
+        __doc__ = summary
+        data = {o[0]:o[1:] for o in data}
+        store_attr()
+
+    def __call__(self, *args, headers=None, **kwargs):
+        headers = {**_preview_hdr(self.preview),**(headers or {})}
+        d = list(self.data)
+        flds = [o for o in self.route_ps+self.params+d if o not in kwargs]
+        for a,b in zip(args,flds): kwargs[b]=a
+        route_p,query_p,data_p = [{p:kwargs[p] for p in o if p in kwargs}
+                                 for o in (self.route_ps,self.params,d)]
+        return self.client(self.path, self.verb, headers=headers, route=route_p, query=query_p, data=data_p)
+
+    def __str__(self): return f'{self.tag}.{self.name}{signature(self)}\n{self.doc_url}'
+    @property
+    def __signature__(self): return _mk_sig(self.route_ps, dict.fromkeys(self.params), self.data)
+    __call__.__signature__ = __signature__
+    @property
+    def doc_url(self): return _DOC_URL + self.url.replace(" ","_")
+
+    def _repr_markdown_(self):
+        params = ', '.join(self.route_ps+self.params+list(self.data))
+        return f'[{self.tag}.{self.name}]({self.doc_url})({params}): *{self.summary}*'
+    __repr__ = _repr_markdown_
+```
+
+```python
+#| export
+class _GhVerbGroup(_GhObj):
+    def __init__(self, name, verbs):
+        self.name,self.verbs = name,verbs
+        for o in verbs: setattr(self, o.name, o)
+    def __str__(self): return "\n".join(str(v) for v in self.verbs)
+    def _repr_markdown_(self): return "\n".join(f'- {v._repr_markdown_()}' for v in self.verbs)
+```
+
+```python
+#| export
+_docroot = 'https://docs.github.com/rest/reference/'
+```
+
+```python
+#| export
+def print_summary(req:Request):
+    "Print `Request.summary` with the token (if any) removed"
+    pprint(req.summary('Authorization'))
+```
+
+## GhApi -
+
+```python
+#| export
+_binary_cts = ('octet-stream', 'zip', 'gzip', 'tar', 'image/', 'audio/', 'video/')
+```
+
+```python
+#| export
+class GhApi(_GhObj):
+    def __init__(self, owner=None, repo=None, token=None, jwt_token=None, debug=None, limit_cb=None, gh_host=None,
+                 authenticate=True, **kwargs):
+        self.headers = { 'Accept': 'application/vnd.github.v3+json' }
+        if authenticate:
+            token = token or os.getenv('GITHUB_TOKEN', None)
+            jwt_token = jwt_token or os.getenv('GITHUB_JWT_TOKEN', None)
+            if jwt_token: self.headers['Authorization'] = 'Bearer ' + jwt_token
+            elif token: self.headers['Authorization'] = 'token ' + token
+            else: warn('Neither GITHUB_TOKEN nor GITHUB_JWT_TOKEN found: running as unauthenticated')
+        if owner: kwargs['owner'] = owner
+        if repo:  kwargs['repo' ] = repo
+        funcs_ = L(funcs).starmap(_GhVerb, client=self, kwargs=kwargs)
+        self.func_dict = {f'{o.path}:{o.verb.upper()}':o for o in funcs_}
+        self.groups = {k.replace('-','_'):_GhVerbGroup(k,v) for k,v in groupby(funcs_, 'tag').items()}
+        self.debug,self.limit_cb,self.limit_rem = debug,limit_cb,5000
+        self.gh_host = gh_host or GH_HOST
+
+    def __call__(self, path:str, verb:str=None, headers:dict=None, route:dict=None, query:dict=None, data=None, timeout=None):
+        "Call a fully specified `path` using HTTP `verb`, passing arguments to `fastcore.core.urlsend`"
+        if verb is None: verb = 'POST' if data else 'GET'
+        headers = {**self.headers,**(headers or {})}
+        if not path.startswith(('http://', 'https://')):
+            path = self.gh_host + path
+        if route:
+            for k,v in route.items(): route[k] = quote(str(route[k]), safe='')
+        debug = self.debug if self.debug else print_summary if os.getenv('GHAPI_DEBUG') else None
+        res,self.recv_hdrs = urlsend(path, verb, headers=headers or None, decode=False, debug=debug, return_headers=True,
+                                     route=route or None, query=query or None, data=data or None, return_json=False, timeout=timeout)
+        ct = self.recv_hdrs.get('Content-Type', '')
+        if not any(t in ct for t in _binary_cts): res = res.decode()
+        if 'json' in ct: res = loads(res)
+        if 'X-RateLimit-Remaining' in self.recv_hdrs:
+            newlim = self.recv_hdrs['X-RateLimit-Remaining']
+            if self.limit_cb is not None and newlim != self.limit_rem:
+                self.limit_cb(int(newlim),int(self.recv_hdrs['X-RateLimit-Limit']))
+            self.limit_rem = newlim
+
+        return dict2obj(res) if isinstance(res, (dict, list)) else res
+
+    def __dir__(self): return super().__dir__() + list(self.groups)
+    def _repr_markdown_(self): return "\n".join(f"- [{o}]({_docroot + o.replace('_', '-')})" for o in sorted(self.groups))
+    def __getattr__(self,k): return self.groups[k] if 'groups' in vars(self) and k in self.groups else stop(AttributeError(k))
+
+    def __getitem__(self, k):
+        "Lookup and call an endpoint by path and verb (which defaults to 'GET')"
+        a,b = k if isinstance(k,tuple) else (k,'GET')
+        return self.func_dict[f'{a}:{b.upper()}']
+
+    def full_docs(self):
+        return '\n'.join(f'## {gn}\n\n{group._repr_markdown_()}\n' for gn,group in sorted(self.groups.items()))
+```
+
+```python
+#| hide
+token = os.environ['GITHUB_TOKEN']
+```
+
+### Access by path
+
+```python
+show_doc(GhApi.__call__)
+```
+
+**Outputs:**
+```python
+
+def __call__(
+    path:str, verb:str=None, headers:dict=None, route:dict=None, query:dict=None, data:NoneType=None,
+    timeout:NoneType=None, decode:bool=True
+):
+
+
+```
+
+*Call a fully speci … (truncated)
+
+```python
+api = GhApi()
+```
+
+You can call a `GhApi` object as a function, passing in the path to the endpoint, the HTTP verb, and any route, query parameter, or post data parameters as required.
+
+```python
+api('/repos/{owner}/{repo}/git/ref/{ref}', 'GET', route=dict(
+    owner='fastai', repo='ghapi-test', ref='heads/master'))
+```
+
+**Outputs:**
+{'ref': 'refs/heads/master',
+ 'node_id': 'MDM6UmVmMzE1NzEyNTg4OnJlZnMvaGVhZHMvbWFzdGVy',
+ 'url': 'https://api.github.com/repos/fastai/ghapi-test/git/refs/heads/master',
+ 'object': {'sha': 'b72d6c87a92 … (truncated)
+
+```python
+show_doc(GhApi.__getitem__)
+```
+
+**Outputs:**
+```python
+
+def __getitem__(
+    k
+):
+
+
+```
+
+*Lookup and call an endpoint by path and verb (which defaults to 'GET')*
+
+You can access endpoints by indexing into the object. When using the API this way, you do not need to specify what type of parameter (route, query, or post data) is being used. This is, therefore, the same call as above:
+
+```python
+api['/repos/{owner}/{repo}/git/ref/{ref}'](owner='fastai', repo='ghapi-test', ref='heads/master')
+```
+
+**Outputs:**
+{'ref': 'refs/heads/master',
+ 'node_id': 'MDM6UmVmMzE1NzEyNTg4OnJlZnMvaGVhZHMvbWFzdGVy',
+ 'url': 'https://api.github.com/repos/fastai/ghapi-test/git/refs/heads/master',
+ 'object': {'sha': 'b72d6c87a92 … (truncated)
+
+### Media types
+
+For some endpoints GitHub lets you specify a [media type](https://docs.github.com/en/rest/overview/media-types) the for response data, using the `Accept` header. If you choose a media type that is not JSON formatted (for instance `application/vnd.github.v3.sha`) then the call to the `GhApi` object will return a string instead of an object.
+
+```python
+api('/repos/{owner}/{repo}/commits/{ref}', 'GET', route=dict(
+    owner='fastai', repo='ghapi-test', ref='refs/heads/master'),
+    headers={'Accept': 'application/vnd.github.VERSION.sha'})
+```
+
+**Outputs:**
+'b72d6c87a9237ca3c26298a64a6acf06217ace4a'
+
+### Rate limits
+
+GitHub has various [rate limits](https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting) for their API. After each call, the response includes information about how many requests are remaining in the hourly quota. If you'd like to add alerts, or indications showing current quota usage, you can register a callback with `GhApi` by passing a callable to the `limit_cb` parameter. This callback will be called whenever the amount of quota used changes. It will be called with two arguments: the new quota remaining, and the total hourly quota.
+
+```python
+def _f(rem,quota): print(f"Quota remaining: {rem} of {quota}")
+
+api = GhApi(limit_cb=_f)
+api['/repos/{owner}/{repo}/git/ref/{ref}'](owner='fastai', repo='ghapi-test', ref='heads/master').ref
+```
+
+**Outputs:**
+Quota remaining: 4799 of 5000
+
+'refs/heads/master'
+
+You can always get the remaining quota from the `limit_rem` attribute:
+
+```python
+api.limit_rem
+```
+
+**Outputs:**
+'4799'
+
+## Operations
+
+Instead of passing a path to `GhApi`, you will more often use the operation methods provided in the API's operation groups, which include documentation, signatures, and auto-complete.
+
+If you provide `owner` and/or `repo` to the constructor, they will be automatically inserted into any calls which use them (except when calling `GhApi` as a function). You can also pass any other arbitrary keyword arguments you like to have them used as defaults for any relevant calls.
+
+You must include a GitHub API token if you need to access any authenticated endpoints. If don't pass the `token` param, then your `GITHUB_TOKEN` environment variable will be used, if available.
+
+```python
+api = GhApi(owner='AnswerDotAI', repo='ghapi-test', token=token)
+```
+
+### Operation groups
+
+The following groups of endpoints are provided, which you can list at any time along with a link to documentation for all endpoints in that group, by displaying the `GhApi` object:
+
+```python
+api
+```
+
+**Outputs:**
+<__main__.GhApi>
+
+```python
+api.codes_of_conduct
+```
+
+**Outputs:**
+<__main__._GhVerbGroup>
+
+### Calling endpoints
+
+The GitHub API's endpoint names generally start with a verb like "get", "list", "delete", "create", etc, followed `_`, then by a noun such as "ref", "webhook", "issue", etc.
+
+Each endpoint has a different signature, which you can see by using <kbd>Shift</kbd>-<kbd>Tab</kbd> in Jupyter, or by just printing the endpoint object (which also shows a link to the GitHub docs):
+
+```python
+print(api.repos.create_webhook)
+```
+
+**Outputs:**
+repos.create_webhook(name: str = None, config: dict = None, events: list = ['push'], active: bool = True)
+https://docs.github.com/rest/repos/webhooks#create-a-repository-webhook
+
+
+Displaying an endpoint object in Jupyter also provides a formatted summary and link to the official GitHub documentation:
+
+```python
+api.repos.create_webhook
+```
+
+**Outputs:**
+[repos.create_webhook](https://docs.github.com/rest/repos/webhooks#create-a-repository-webhook)(name, config, events, active): *Create a repository webhook*
+
+Endpoint objects are called using standard Python method syntax:
+
+```python
+ref = api.git.get_ref('heads/master')
+test_eq(ref.object.type, 'commit')
+```
+
+Information about the endpoint are available as attributes:
+
+```python
+api.git.get_ref.path,api.git.get_ref.verb
+```
+
+**Outputs:**
+('/repos/AnswerDotAI/ghapi-test/git/ref/{ref}', 'get')
+
+You can get a list of all endpoints available in a group, along with a link to documentation for each, by viewing the group:
+
+```python
+api.git
+```
+
+**Outputs:**
+<__main__._GhVerbGroup>
+
+For "list" endpoints, the noun will be a plural form, e.g.:
+
+```python
+#| hide
+for hook in api.repos.list_webhooks():
+    api.repos.delete_webhook(hook.id)
+```
+
+```python
+hooks = api.repos.list_webhooks()
+test_eq(len(hooks), 0)
+```
+
+You can pass dicts, lists, etc. directly, where they are required for GitHub API endpoints:
+
+```python
+url = 'https://example.com'
+cfg = dict(url=url, content_type='json', secret='XXX')
+hook = api.repos.create_webhook(config=cfg, events=['ping'])
+test_eq(hook.config.url, url)
+```
+
+Let's confirm that our new webhook has been created:
+
+```python
+hooks = api.repos.list_webhooks()
+test_eq(len(hooks), 1)
+test_eq(hooks[0].events, ['ping'])
+```
+
+Finally, we can delete our new webhook:
+
+```python
+api.repos.delete_webhook(hooks[0].id)
+```
+
+**Outputs:**
+{}
+
+### Convenience functions
+
+```python
+#| export
+def date2gh(dt:datetime)->str:
+    "Convert `dt` (which is assumed to be in UTC time zone) to a format suitable for GitHub API operations"
+    return f'{dt.replace(microsecond=0).isoformat()}Z'
+```
+
+The GitHub API assumes that dates will be in a specific string format. `date2gh` converts Python standard `datetime` objects to that format. For instance, to find issues opened in the 'fastcore' repo in the last 4 weeks:
+
+```python
+dt = date2gh(datetime.now(timezone.utc) - timedelta(weeks=4))
+issues = GhApi('fastai').issues.list_for_repo(repo='fastcore', since=dt)
+len(issues)
+```
+
+**Outputs:**
+4
+
+```python
+#| export
+def gh2date(dtstr:str)->datetime:
+    "Convert date string `dtstr` received from a GitHub API operation to a UTC `datetime`"
+    return datetime.fromisoformat(dtstr.replace('Z', ''))
+```
+
+```python
+# created = issues[0].created_at
+# print(created, '->', gh2date(created))
+```
+
+You can set the `debug` attribute to any callable to intercept all requests, for instance to print `Request.summary`. `print_summary` is provided for this purpose. Using this, we can see the preview header that is added for preview functionality, e.g.
+
+```python
+api.debug=print_summary
+api.codes_of_conduct.get_all_codes_of_conduct()[0]
+api.debug=None
+```
+
+**Outputs:**
+{'data': None,
+ 'full_url': 'https://api.github.com/codes_of_conduct',
+ 'headers': {'Accept': 'application/vnd.github.v3+json'},
+ 'method': 'GET'}
+
+
+### Preview endpoints
+
+GitHub's preview API functionality requires a special header to be passed to enable it. This is added automatically for you.
+
+## Convenience methods
+
+Some methods in the GitHub API are a bit clunky or unintuitive. In these situations we add convenience methods to `GhApi` to make things simpler. There are also some multi-step processes in the GitHub API that `GhApi` provide convenient wrappers for. The methods currently available are shown below; do not hesitate to [create an issue](https://github.com/fastai/ghapi-test/issues) or pull request if there are other processes that you'd like to see supported better.
+
+```python
+#| export
+img_md_pat = re.compile(r'!\[(?P<alt>.*?)\]\((?P<url>[^\s]+)\)')
+
+def _run_subp(cmd): 
+    r = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    if r.returncode != 0: raise RuntimeError(r.stderr)
+
+@patch
+def create_gist(self:GhApi, description, content, filename='gist.txt', public=False, img_paths=None):
+    'Create a gist, optionally with images where each md img url will be placed with img upload urls.'
+    gist = self.gists.create(description, public=public, files={filename: {"content": content}})
+    if not img_paths: return gist
+    with tempfile.TemporaryDirectory() as clone_dir:
+        token = self.headers['Authorization'].split('token ')[1]
+        _run_subp(['git', 'clone', f'https://{token}@gist.github.com/{gist.id}.git', clone_dir])
+        clone_dir, img_paths = Path(clone_dir), L(img_paths).map(Path)
+        for o in img_paths: shutil.copy2(o, clone_dir/o.name)
+        _run_subp(['git', '-C', clone_dir, 'add', '.'])
+        _run_subp(['git', '-C', clone_dir, 'commit', '-m', 'Add images'])
+        _run_subp(['git', '-C', clone_dir, 'push'])    
+    updated_gist = self.gists.get(gist.id)
+    img_urls = {o.name: updated_gist.files[o.name].raw_url for o in img_paths}
+    content = img_md_pat.sub(lambda m: f"![{m['alt']}]({img_urls.get(m['url'], m['url'])})", content)
+    return self.gists.update(gist.id, files={filename:{'content':content}})
+```
+
+```python
+gist = api.create_gist("some description", "some content")
+print(gist.html_url)
+```
+
+**Outputs:**
+https://gist.github.com/KeremTurgutlu/299c624d1175231e3d92e91be81afb41
+
+
+```python
+gist.files['gist.txt'].content
+```
+
+**Outputs:**
+'some content'
+
+```python
+gist = api.create_gist("some description", "some image\n\n![image](puppy.jpg)", 'gist.md', img_paths=['puppy.jpg'])
+print(gist.html_url)
+```
+
+**Outputs:**
+https://gist.github.com/KeremTurgutlu/5e4197bbcaa63d426b990a841ed55d49
+
+
+```python
+gist.files['gist.md'].content
+```
+
+**Outputs:**
+'some image\n\n![image](https://gist.githubusercontent.com/KeremTurgutlu/5e4197bbcaa63d426b990a841ed55d49/raw/c7f420c839f58c6ac0c05f1116317645d31d7e80/puppy.jpg)'
+
+Note that if you want to create a gist with multiple files, call the GitHub API directly, e.g.:
+
+```python
+api.gists.create("some description", files={"f1.txt": {"content": "my content"}, ...})
+```
+
+### Releases
+
+```python
+#| export
+@patch
+def delete_release(self:GhApi, release):
+    "Delete a release and its associated tag"
+    self.repos.delete_release(release.id)
+    self.git.delete_ref(f'tags/{release.tag_name}')
+```
+
+```python
+#| hide
+for rel in api.repos.list_releases(): api.delete_release(rel)
+```
+
+```python
+#| export
+@patch
+def upload_file(self:GhApi, rel, fn):
+    "Upload `fn` to endpoint for release `rel`"
+    fn = Path(fn)
+    url = rel.upload_url.replace('{?name,label}','')
+    mime = mimetypes.guess_type(fn, False)[0] or 'application/octet-stream'
+    return self(url, 'POST', headers={'Content-Type':mime}, query = {'name':fn.name}, data=fn.read_bytes())
+```
+
+```python
+#| export
+@patch
+def create_release(self:GhApi, tag_name, branch='master', name=None, body='',
+                   draft=False, prerelease=False, files=None):
+    "Wrapper for `GhApi.repos.create_release` which also uploads `files`"
+    if name is None: name = 'v'+tag_name
+    rel = self.repos.create_release(tag_name, target_commitish=branch, name=name, body=body,
+                                   draft=draft, prerelease=prerelease)
+    for file in listify(files): self.upload_file(rel, file)
+    return rel
+```
+
+Creating a release and attaching files to it is normally a multi-stage process, so `create_release` wraps this up for you. It takes the same arguments as [`repos.create_release`](https://docs.github.com/rest/reference/repos#create-a-release), along with `files`, which can contain a single file name, or a list of file names to upload to your release:
+
+```python
+rel = api.create_release('0.0.1', files=['README.md'])
+test_eq(rel.name, 'v0.0.1')
+```
+
+```python
+sleep(0.2)
+rels = api.repos.list_releases()
+test_eq(len(rels), 1)
+```
+
+We can check that our file has been uploaded; GitHub refers to them as "assets":
+
+```python
+assets = api.repos.list_release_assets(rels[0].id)
+test_eq(assets[0].name, 'README.md')
+```
+
+```python
+show_doc(GhApi.delete_release)
+```
+
+**Outputs:**
+```python
+
+def delete_release(
+    release
+):
+
+
+```
+
+*Delete a release and its associated tag*
+
+### Branches and tags
+
+```python
+#| export
+@patch
+def list_tags(self:GhApi, prefix:str=''):
+    "List all tags, optionally filtered to those starting with `prefix`"
+    return self.git.list_matching_refs(f'tags/{prefix}')
+```
+
+With no `prefix`, all tags are listed.
+
+```python
+test_eq(len(api.list_tags()), 1)
+```
+
+Using the full tag name will return just that tag.
+
+```python
+test_eq(len(api.list_tags(rel.tag_name)), 1)
+```
+
+```python
+#| export
+@patch
+def list_branches(self:GhApi, prefix:str=''):
+    "List all branches, optionally filtered to those starting with `prefix`"
+    return self.git.list_matching_refs(f'heads/{prefix}')
+```
+
+Branches can be listed in the exactly the same way as tags.
+
+```python
+test_eq(len(api.list_branches('master')), 1)
+```
+
+We can delete our release and confirm that it is removed:
+
+```python
+api.delete_release(rels[0])
+test_eq(len(api.repos.list_releases()), 0)
+```
+
+```python
+#| export
+# See https://stackoverflow.com/questions/9765453
+EMPTY_TREE_SHA = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
+```
+
+```python
+# #| hide
+# #not working
+# #| export
+# @patch
+# def create_branch_empty(self:GhApi, branch):
+#     c = self.git.create_commit(f'create {branch}', EMPTY_TREE_SHA)
+#     return self.git.create_ref(f'refs/heads/{branch}', c.sha)
+```
+
+```python
+#| export
+@patch
+def create_branch_empty(self:GhApi, branch):
+    t = self.git.create_tree(base_tree=EMPTY_TREE_SHA, tree = [dict(
+        path='.dummy', content='ignore me', mode='100644', type='blob')])
+    c = self.git.create_commit(f'create {branch}', t.sha)
+    return self.git.create_ref(f'refs/heads/{branch}', c.sha)
+```
+
+```python
+ref = api.create_branch_empty("testme")
+test_eq(len(api.list_branches('testme')), 1)
+```
+
+```python
+#| export
+@patch
+def delete_tag(self:GhApi, tag:str):
+    "Delete a tag"
+    return self.git.delete_ref(f'tags/{tag}')
+```
+
+```python
+#| export
+@patch
+def delete_branch(self:GhApi, branch:str):
+    "Delete a branch"
+    return self.git.delete_ref(f'heads/{branch}')
+```
+
+```python
+api.delete_branch('testme')
+test_eq(len(api.list_branches('testme')), 0)
+```
+
+```python
+#| export
+@patch
+def get_branch(self:GhApi, branch=None):
+    branch = branch or self.repos.get().default_branch
+    return self.list_branches(branch)[0]
+```
+
+### Content (git files)
+
+```python
+#| export
+@patch
+def list_files(self:GhApi, branch=None):
+    ref = self.get_branch(branch)
+    res = self.git.get_tree(ref.object.sha).tree
+    return {o.path:o for o in res}
+```
+
+```python
+files = api.list_files()
+files['README.md']
+```
+
+**Outputs:**
+{'path': 'README.md',
+ 'mode': '100644',
+ 'type': 'blob',
+ 'sha': 'eaea0f2698e76c75602058bf4e2e9fd7940ac4e3',
+ 'size': 72,
+ 'url': 'https://api.github.com/repos/AnswerDotAI/ghapi-test/git/blobs/eaea0f … (truncated)
+
+```python
+#| export
+@patch
+def get_content(self:GhApi, path):
+    res = self.repos.get_content(path)
+    return base64.b64decode(res.content)
+```
+
+```python
+readme = api.get_content('README.md').decode()
+assert 'ghapi' in readme
+```
+
+```python
+#| export
+@patch
+def create_or_update_file(self:GhApi, path, message, committer, author, content=None, sha=None, branch=''):
+    if not branch: branch = api.repos.get()['default_branch']
+    if not isinstance(content,bytes): content = content.encode()
+    content = base64.b64encode(content).decode()
+    kwargs = {'sha':sha} if sha else {}
+    return self.repos.create_or_update_file_contents(path, message, content=content,
+        branch=branch, committer=committer or {}, author=author or {}, **kwargs)
+```
+
+```python
+#| export
+@patch
+def create_file(self:GhApi, path, message, committer, author, content=None, branch=None):
+    if not branch: branch = api.repos.get()['default_branch']
+    return self.create_or_update_file(path, message, branch=branch, committer=committer, content=content, author=author)
+```
+
+```python
+person = dict(name="Monalisa Octocat", email="octocat@github.com")
+res = api.create_file(
+    path='foo',
+    message="Create foo",
+    content="foobar",
+    committer=person, author=person
+)
+test_eq('foobar', api.get_content('foo').decode())
+```
+
+```python
+#| export
+@patch
+def delete_file(self:GhApi, path, message, committer, author, sha=None, branch=None):
+    if not branch: branch = api.repos.get()['default_branch']
+    if sha is None: sha = self.list_files()[path].sha
+    return self.repos.delete_file(path, message=message, sha=sha,
+                                  branch=branch, committer=committer, author=author)
+```
+
+```python
+api.delete_file('foo', 'delete foo', committer=person, author=person)
+assert 'foo' not in api.list_files()
+```
+
+```python
+#| export
+@patch
+def update_contents(self:GhApi, path, message, committer, author, content, sha=None, branch=None):
+    if not branch: branch = api.repos.get()['default_branch']
+    if sha is None: sha = self.list_files()[path].sha
+    return self.create_or_update_file(path, message, committer=committer, author=author, content=content, sha=sha, branch=branch)
+```
+
+```python
+res = api.update_contents(
+    path='README.md',
+    message="Update README",
+    committer=person, author=person,
+    content=readme+"foobar"
+)
+res.content.size
+```
+
+**Outputs:**
+78
+
+```python
+readme = api.get_content('README.md').decode()
+assert 'foobar' in readme
+api.update_contents('README.md', "Revert README", committer=person, author=person, content=readme[:-6]);
+```
+
+```python
+api = GhApi(token=token)
+```
+
+```python
+owner, repo, branch = "AnswerDotAI", "fastcore", "main"
+```
+
+Repo files can be filtered using [fnmatch](https://docs.python.org/3/library/fnmatch.html) Unix shell-style wildcards.
+
+```python
+#| export
+def _find_matches(path, pats):
+    "Returns matched patterns"
+    return L(pats).filter(lambda p: fnmatch.fnmatch(path, p))
+```
+
+```python
+_find_matches('README.md', ['*.py', '*test_*', '*/test*/*', '*.md', 'README.md'])
+```
+
+**Outputs:**
+['*.md', 'README.md']
+
+The include/exclude logic follows the **rsync/grep model**: a file must match at least one `include` pattern (if specified), AND must not match any `exclude` pattern. Exclude always wins—there's no ambiguity. This is simpler and more predictable than gitignore-style ordering rules. Additionally, LLMs are already familiar with this common pattern from tools like `rg` and `rsync`, making it natural to use when this function is provided as an AI tool.
+
+```python
+#| export
+def _include(path, include, exclude):
+    "Returns True if path matches include patterns (if any) and doesn't match any exclude pattern."
+    if include and not any(fnmatch.fnmatch(path, p) for p in listify(include)): return False
+    if exclude and any(fnmatch.fnmatch(path, p) for p in listify(exclude)): return False
+    return True
+```
+
+With rsync/grep style, exclude always wins. To get "all .md except README.md", you'd include README.md explicitly in your results separately.
+
+```python
+assert not _include('README.md', ['README.md'], ['*.md'])  # exclude wins
+assert not _include('CONTRIBUTING.md', ['README.md'], ['*.md'])
+```
+
+Include all .py files except for tests
+
+```python
+assert not _include('examples/test_fastcore2.py', ['*.py'], ['*test_*', '*/test*/*'])
+assert not _include('examples/tests/some_test.py', ['*.py'], ['*test_*', '*/tests/*'])
+assert not _include('examples/test/some_test.py', ['*.py'], ['*test_*', '*/test/*'])
+```
+
+```python
+assert _include('cool/module.py', ['*.py'], ['setup.py'])
+assert not _include('cool/_modidx', ['*.py'], ['*/_modidx'])
+assert not _include('setup.py', ['*.py'], ['setup.py'])
+```
+
+```python
+test_repo_files = ['README.md', 'CONTRIBUTING.md', 'dir/MARKDOWN.md', 'tests/file.py', 
+                   'module/file.py', 'module/app/file.py', 'nbs/00.ipynb', 'file2.py',
+                   '.gitignore', 'module/.dotfile', '_hidden.py', 'module/_hidden.py']
+```
+
+Here is an example where we filter to include the README, all python files except for the ones under tests directory, include all notebooks, and exclude all files starting with an underscore.
+
+```python
+inc,exc = ['README.md', '*.py', '*.ipynb'], ['tests/*.py', '_*', '*/_*']
+[fn for fn in test_repo_files if _include(fn,inc,exc)]
+```
+
+**Outputs:**
+['README.md',
+ 'module/file.py',
+ 'module/app/file.py',
+ 'nbs/00.ipynb',
+ 'file2.py']
+
+Let's exclude files starting with `test_` and `setup.py` too.
+
+```python
+exc += ['*test_*.py', '*/*test*.py', 'setup.py']; exc
+```
+
+**Outputs:**
+['tests/*.py', '_*', '*/_*', '*test_*.py', '*/*test*.py', 'setup.py']
+
+A function to get repo files with optional filtering
+
+```python
+#| export
+@patch
+def _get_repo_files(self:GhApi, owner, repo, branch="main"):
+    return self.git.get_tree(owner=owner, repo=repo, tree_sha=branch, recursive=True)
+
+@patch
+def get_repo_files(self:GhApi, owner, repo, branch="main", inc=None, exc=None):
+    "Get all file items of a repo, optionally filtered."
+    tree = self._get_repo_files(owner, repo, branch)
+    return L(tree['tree']).filter(lambda o: o['type'] == 'blob' and _include(o.path, inc, exc))
+```
+
+The list of files that are kept based on the filtering logic:
+
+```python
+repo_files = api.get_repo_files(owner, repo, inc=inc, exc=exc)
+test_eq(len(repo_files), 41); repo_files.attrgot("path")
+```
+
+**Outputs:**
+['README.md', 'fastcore/all.py', 'fastcore/ansi.py', 'fastcore/basics.py', 'fastcore/dispatch.py', 'fastcore/docments.py', 'fastcore/docscrape.py', 'fastcore/foundation.py', 'fastcore/imghdr.py', 'fas … (truncated)
+
+```python
+#| export
+@patch
+def get_file_content(self:GhApi, path, owner, repo, branch="main"):
+    o = self.repos.get_content(owner, repo, path, ref=branch)
+    o['content_decoded'] = base64.b64decode(o.content).decode('utf-8')
+    return o
+```
+
+```python
+#| export
+@patch
+@delegates(GhApi.get_repo_files)
+def get_repo_contents(self:GhApi, owner, repo, branch='main', **kwargs):
+    repo_files = self.get_repo_files(owner, repo, **kwargs)
+    for s in ('inc','exc',): kwargs.pop(s)
+    return parallel(self.get_file_content, repo_files.attrgot("path"), owner=owner, repo=repo, branch=branch)
+```
+
+```python
+contents = api.get_repo_contents(owner, repo, inc=inc, exc=exc)
+md = "\n\n".join(f"**[{o.path}]({o.html_url})**\n```{o.path.split('.')[-1]}\n{chr(10).join(o.content_decoded.split(chr(10))[:5])}\n```" for o in contents[:3])
+display(Markdown(md))
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+### GitHub Pages
+
+```python
+#| export
+@patch
+def enable_pages(self:GhApi, branch=None, path="/"):
+    "Enable or update pages for a repo to point to a `branch` and `path`."
+    if path not in ('/docs','/'): raise Exception("path not in ('/docs','/')")
+    r = self.repos.get()
+    branch = branch or r.default_branch
+    source = {"branch": branch, "path": path}
+    if r.has_pages: return # self.repos.update_information_about_pages_site(source=source)
+    if len(self.list_branches(branch))==0: self.create_branch_empty(branch)
+    return self.repos.create_pages_site(source=source)
+```
+
+`branch` is set to the default branch if `None`. `path` must be `/docs` or `/`.
+
+```python
+api = GhApi(owner='AnswerDotAI', repo='ghapi-test', token=token)
+```
+
+```python
+res = api.enable_pages(branch='new-branch', path='/')
+
+test_eq(res.source.branch, 'new-branch')
+test_eq(res.source.path, '/')
+
+api.repos.delete_pages_site()
+api.delete_branch('new-branch')
+```
+
+**Outputs:**
+{}
+
+## Export -
+
+```python
+#| hide
+import nbdev; nbdev.nbdev_export()
+```
+
+### GitHub Actions details
+
+*Source: 01_actions.ipynb | URL: https://github.com/AnswerDotAI/ghapi/blob/main/01_actions.ipynb*
+
+```python
+#| default_exp actions
+```
+
+# GitHub Actions details
+
+> Functionality for helping to create GitHub Actions workflows in Python
+
+```python
+#| export
+from fastcore.all import *
+from ghapi.core import *
+from ghapi.templates import *
+
+import textwrap
+from contextlib import contextmanager
+from enum import Enum
+```
+
+```python
+#| hide
+from nbdev import *
+```
+
+## Workflow setup
+
+In your GitHub Actions workflow, include the following in your `run` step:
+
+```bash
+env:
+  CONTEXT_GITHUB: ${{ toJson(github) }}
+```
+
+This stores the full [github context](https://docs.github.com/actions/reference/context-and-expression-syntax-for-github-actions#github-context), which includes information such as the name of the current workflow being run, the GitHub access token, and so forth.
+
+As well as the `github` context, you can do that same thing for any of the other GitHub Actions contexts, which are:
+
+`github` `env` `job` `steps` `runner` `secrets` `strategy` `matrix` `needs`
+
+For instance, for the [needs](https://docs.github.com/actions/reference/workflow-syntax-for-github-actions#jobsjob_idneeds) context, information about previous jobs specified in your `needs` clause, add this underneath your `CONTEXT_GITHUB` line:
+
+```bash
+  CONTEXT_NEEDS: ${{ toJson(needs) }}
+```
+
+Note that here's no harm having entries that are not used -- GitHub Actions will set them to an empty dictionary by default.
+
+```python
+#| export
+# So we can run this outside of GitHub actions too, read from file if needed
+for a,b in (('CONTEXT_GITHUB',context_example), ('CONTEXT_NEEDS',needs_example), ('GITHUB_REPOSITORY','octocat/Hello-World')):
+    if a not in os.environ: os.environ[a] = b
+
+contexts = 'github', 'env', 'job', 'steps', 'runner', 'secrets', 'strategy', 'matrix', 'needs'
+for context in contexts:
+    globals()[f'context_{context}'] = dict2obj(loads(os.getenv(f"CONTEXT_{context.upper()}", "{}")))
+```
+
+```python
+#| export
+_all_ = ['context_github', 'context_env', 'context_job', 'context_steps', 'context_runner', 'context_secrets', 'context_strategy', 'context_matrix', 'context_needs']
+```
+
+GitHub also adds a number of [`GITHUB_*` environment variables](https://docs.github.com/actions/reference/environment-variables#default-environment-variables) to all runners. These are available through the `env_github` `AttrDict`, with the `GITHUB_` prefix removed, and remainder converted to lowercase. For instance:
+
+```python
+#| export
+env_github = dict2obj({k[7:].lower():v for k,v in os.environ.items() if k.startswith('GITHUB_')})
+```
+
+```python
+env_github.repository
+```
+
+**Outputs:**
+'octocat/Hello-World'
+
+```python
+#| export
+def user_repo():
+    "List of `user,repo` from `env_github.repository"
+    return env_github.repository.split('/')
+```
+
+```python
+user_repo()
+```
+
+**Outputs:**
+['octocat', 'Hello-World']
+
+The possible events are available in the `Event` `enum`.
+
+```python
+#| hide
+print(','.join(repr(o) for o in Path('examples/').ls(file_exts=['.json']).attrgot('stem')))
+```
+
+**Outputs:**
+'page_build','content_reference','repository_import','create','workflow_run','delete','organization','sponsorship','project_column','push','context','milestone','project_card','project','package','pul … (truncated)
+
+```python
+#| export
+Event = str_enum('Event',
+    'page_build','content_reference','repository_import','create','workflow_run','delete','organization','sponsorship',
+    'project_column','push','context','milestone','project_card','project','package','pull_request','repository_dispatch',
+    'team_add','workflow_dispatch','member','meta','code_scanning_alert','public','needs','check_run','security_advisory',
+    'pull_request_review_comment','org_block','commit_comment','watch','marketplace_purchase','star','installation_repositories',
+    'check_suite','github_app_authorization','team','status','repository_vulnerability_alert','pull_request_review','label',
+    'installation','release','issues','repository','gollum','membership','deployment','deploy_key','issue_comment','ping',
+    'deployment_status','fork','schedule')
+```
+
+```python
+', '.join(Event)
+```
+
+**Outputs:**
+'page_build, content_reference, repository_import, create, workflow_run, delete, organization, sponsorship, project_column, push, context, milestone, project_card, project, package, pull_request, repo … (truncated)
+
+```python
+#| export
+def _create_file(path:Path, fname:str, contents):
+    if contents and not (path/fname).exists(): (path/fname).write_text(contents)
+
+def _replace(s:str, find, repl, i:int=0, suf:str=''):
+    return s.replace(find, textwrap.indent(repl, ' '*i)+suf)
+```
+
+```python
+#| export
+def create_workflow_files(fname:str, workflow:str, build_script:str, prebuild:bool=False):
+    "Create workflow and script files in suitable places in `github` folder"
+    if not os.path.exists('.git'): return print('This does not appear to be the root of a git repo')
+    wf_path  = Path('.github/workflows')
+    scr_path = Path('.github/scripts')
+    wf_path .mkdir(parents=True, exist_ok=True)
+    scr_path.mkdir(parents=True, exist_ok=True)
+    _create_file(wf_path, f'{fname}.yml', workflow)
+    _create_file(scr_path, f'build-{fname}.py', build_script)
+    if prebuild: _create_file(scr_path, f'prebuild-{fname}.py', build_script)
+```
+
+```python
+#| export
+def fill_workflow_templates(name:str, event, run, context, script, opersys='ubuntu', prebuild=False):
+    "Function to create a simple Ubuntu workflow that calls a Python `ghapi` script"
+    c = wf_tmpl
+    if event=='workflow_dispatch:': event=''
+    needs = '    needs: [prebuild]' if prebuild else None
+    for find,repl,i in (('NAME',name,0), ('EVENT',event,2), ('RUN',run,8), ('CONTEXTS',context,8),
+                       ('OPERSYS',f'[{opersys}]',0), ('NEEDS',needs,0), ('PREBUILD',pre_tmpl if prebuild else '',2)):
+        c = _replace(c, f'${find}', str(repl), i)
+    create_workflow_files(name, c, script, prebuild=prebuild)
+```
+
+`event` is the event to trigger on. `run` is the shell lines to run before running the script, such as a `pip install` step. `context` are the env var context lines to include in the `env:` section of the workflow, normally created with `env_contexts`. `opersys` can be a string containing a comma-separated list of operating systems, e.g. `macos, ubuntu, windows`, which will be used to create a parallel matrix build.
+
+The `prebuild` bool tells `ghapi` to include a prebuild job, which contains the following workflow:
+
+```bash
+runs-on: ubuntu-latest
+outputs:
+  out: ${{ toJson(steps) }}
+steps:
+- uses: actions/checkout@v1
+- uses: actions/setup-python@v2
+  with: {python-version: '3.8'}
+- name: Create release
+  id: step1
+  env:
+    CONTEXT_GITHUB: ${{ toJson(github) }}
+  run: |
+    pip install -q ghapi
+    python .github/scripts/prebuild.py
+```
+
+```python
+#| export
+def env_contexts(contexts):
+    "Create a suitable `env:` line for a workflow to make a context available in the environment"
+    contexts = uniqueify(['github'] + listify(contexts))
+    return "\n".join("CONTEXT_" + o.upper() + ": ${{ toJson(" + o.lower() + ") }}" for o in contexts)
+```
+
+```python
+#| export
+def_pipinst = 'pip install -Uq ghapi'
+```
+
+```python
+#| export
+def create_workflow(name:str, event:Event, contexts:list=None, opersys='ubuntu', prebuild=False):
+    "Function to create a simple Ubuntu workflow that calls a Python `ghapi` script"
+    script = "from fastcore.all import *\nfrom ghapi import *"
+    fill_workflow_templates(name, f'{event}:', def_pipinst, env_contexts(contexts),
+                            script=script, opersys=opersys, prebuild=prebuild)
+```
+
+```python
+create_workflow('test', Event.release)
+```
+
+To create a basic `ghapi` workflow, call `create_workflow`, passing in the event that you wish to respond to, and a name for your workflow.
+
+```python
+#| export
+@call_parse
+def gh_create_workflow(
+    name:str,  # Name of the workflow file
+    event:str,  # Event to listen for
+    contexts:str=''  # Space-delimited extra contexts to include in `env` in addition to github
+):
+    "Supports `gh-create-workflow`, a CLI wrapper for `create_workflow`."
+    create_workflow(name, Event[event], contexts.split())
+```
+
+## Accessing contexts from Python
+
+The information from these variables are provided by `context_github`, `context_needs`, and so forth for each named context. These variables are `AttrDict` objects.
+
+```python
+L(context_github)
+```
+
+**Outputs:**
+(#26) ['token','job','ref','sha','repository','repository_owner','repositoryUrl','run_id','run_number','retention_days'...]
+
+```python
+context_github.ref
+```
+
+**Outputs:**
+'refs/heads/master'
+
+If you use our recommended workflow template, you will have this included in your prebuild step (if you have any):
+
+```bash
+outputs:
+  out: ${{ toJson(steps) }}
+```
+
+You can access this content as a dictionary like so:
+
+```python
+loads(nested_idx(context_needs, "prebuild", "outputs", "out"))
+```
+
+**Outputs:**
+{'step1': {'outputs': {'tag': 'v0.79.0'},
+  'outcome': 'success',
+  'conclusion': 'success'}}
+
+```python
+#| export
+_example_url = 'https://raw.githubusercontent.com/fastai/ghapi/master/examples/{}.json'
+```
+
+```python
+#| export
+def example_payload(event):
+    "Get an example of a JSON payload for `event`"
+    return dict2obj(urljson(_example_url.format(event)))
+```
+
+## Workflow helper functions
+
+```python
+#| export
+def github_token():
+    "Get GitHub token from `GITHUB_TOKEN` env var if available, or from `github` context"
+    return os.getenv('GITHUB_TOKEN', context_github.get('token', None))
+```
+
+```python
+#| export
+def actions_output(name, value):
+    "Print the special GitHub Actions `::set-output` line for `name::value`"
+    print(f"::set-output name={name}::{value}")
+```
+
+Details in the [GitHub Documentation for `set-output`](https://docs.github.com/actions/reference/workflow-commands-for-github-actions#setting-an-output-parameter).
+
+```python
+#| export
+def actions_debug(message):
+    "Print the special `::debug` line for `message`"
+    print(f"::debug::{message}")
+```
+
+Details in the [GitHub Documentation for `debug`](https://docs.github.com/actions/reference/workflow-commands-for-github-actions#setting-a-debug-message). Note that you must create a secret named `ACTIONS_STEP_DEBUG` with the value true to see the debug messages set by this command in the log.
+
+```python
+#| export
+def actions_warn(message, details=''):
+    "Print the special `::warning` line for `message`"
+    print(f"::warning {details}::{message}")
+```
+
+Details in the [GitHub Documentation for `warning`](https://docs.github.com/actions/reference/workflow-commands-for-github-actions#setting-a-warning-message). For the optional `details`, you can provide comma-delimited file, line, and column information, e.g.: `file=app.js,line=1,col=5`.
+
+```python
+#| export
+def actions_error(message, details=''):
+    "Print the special `::error` line for `message`"
+    print(f"::error {details}::{message}")
+```
+
+Details in the [GitHub Documentation for `error`](https://docs.github.com/actions/reference/workflow-commands-for-github-actions#setting-an-error-message). For the optional `details`, you can provide comma-delimited file, line, and column information, e.g.: `file=app.js,line=1,col=5`.
+
+```python
+#| export
+@contextmanager
+def actions_group(title):
+    "Context manager to print the special `::group`/`::endgroup` lines for `title`"
+    print(f"::group::{title}")
+    yield
+    print(f"::endgroup::")
+```
+
+```python
+with actions_group('Adding numbers...'): print(1+1)
+```
+
+**Outputs:**
+::group::Adding numbers...
+2
+::endgroup::
+
+
+Details in the GitHub Documentation for [grouping log lines](https://docs.github.com/actions/reference/workflow-commands-for-github-actions#grouping-log-lines).
+
+```python
+#| export
+def actions_mask(value):
+    "Print the special `::add-mask` line for `value`"
+    print(f"::add-mask::{value}")
+```
+
+Details in the [GitHub Documentation for `add-mask`](https://docs.github.com/actions/reference/workflow-commands-for-github-actions#masking-a-value-in-log).
+
+```python
+#| export
+def set_git_user(api=None):
+    "Set git user name/email to authenticated user (if `api`) or GitHub Actions bot (otherwise)"
+    if api:
+        user  = api.users.get_authenticated().name
+        email = first(api.users.list_emails_for_authenticated(), attrgetter('primary')).email
+    else:
+        user  = 'github-actions[bot]'
+        email = 'github-actions[bot]@users.noreply.github.com'
+    run(f'git config --global user.email "{email}"')
+    run(f'git config --global user.name  "{user}"')
+```
+
+When pushing to git from a workflow, you'll need to set your username and email address. You can set them to the `GhApi` authenticated user's details by passing `api`. Otherwise, `github-actions[bot]` and `github-actions[bot]@users.noreply.github.com` will be used, which will make a push appear to be from "GitHub Actions".
+
+## Export -
+
+```python
+#| hide
+from nbdev import nbdev_export
+nbdev_export()
+```
+
+**Outputs:**
+Converted 00_core.ipynb.
+Converted 01_actions.ipynb.
+Converted 02_auth.ipynb.
+Converted 03_page.ipynb.
+Converted 04_event.ipynb.
+Converted 10_cli.ipynb.
+Converted 50_fullapi.ipynb.
+Converted 80_tutori … (truncated)
+
+### Authentication
+
+*Source: 02_auth.ipynb | URL: https://github.com/AnswerDotAI/ghapi/blob/main/02_auth.ipynb*
+
+```python
+#| default_exp auth
+```
+
+# Authentication
+> Helpers for creating GitHub API tokens
+
+```python
+#| export
+from fastcore.all import *
+from ghapi.core import *
+
+import webbrowser,time
+from urllib.parse import parse_qs,urlsplit
+```
+
+## Scopes
+
+```python
+#| export
+_scopes =(
+    'repo','repo:status','repo_deployment','public_repo','repo:invite','security_events','admin:repo_hook','write:repo_hook',
+    'read:repo_hook','admin:org','write:org','read:org','admin:public_key','write:public_key','read:public_key','admin:org_hook',
+    'gist','notifications','user','read:user','user:email','user:follow','delete_repo','write:discussion','read:discussion',
+    'write:packages','read:packages','delete:packages','admin:gpg_key','write:gpg_key','read:gpg_key','workflow'
+)
+```
+
+```python
+#| export
+Scope = AttrDict({o.replace(':','_'):o for o in _scopes})
+```
+
+```python
+#| export
+def scope_str(*scopes)->str:
+    "Convert `scopes` into a comma-separated string"
+    return ','.join(str(o) for o in scopes if o)
+```
+
+```python
+scope_str(Scope.repo,Scope.admin_public_key,Scope.public_repo)
+```
+
+**Outputs:**
+'repo,admin:public_key,public_repo'
+
+## GhDeviceAuth -
+
+```python
+#| export
+_def_clientid = '71604a89b882ab8c8634'
+```
+
+```python
+#| export
+class GhDeviceAuth(GetAttrBase):
+    "Get an oauth token using the GitHub API device flow"
+    _attr="params"
+    def __init__(self, client_id=_def_clientid, *scopes):
+        url = 'https://github.com/login/device/code'
+        self.client_id = client_id
+        self.params = parse_qs(urlread(url, client_id=client_id, scope=scope_str(*scopes)))
+
+    def _getattr(self,v): return v[0]
+```
+
+Creating a `GhDeviceAuth` will complete the first step in the GitHub API device flow, getting device and user codes.
+
+```python
+ghauth = GhDeviceAuth()
+ghauth.device_code,ghauth.user_code
+```
+
+**Outputs:**
+('62956bc850018fb2e5c4b62501df72bbe5583a5a', '247D-B1A6')
+
+```python
+#| export
+@patch
+def url_docs(self:GhDeviceAuth)->str:
+    "Default instructions on how to authenticate"
+    return f"""First copy your one-time code: {self.user_code}
+Then visit {self.verification_uri} in your browser, and paste the code when prompted."""
+```
+
+You can provide your own instructions on how to authenticate, or just print this out:
+
+```python
+print(ghauth.url_docs())
+```
+
+**Outputs:**
+First copy your one-time code: 247D-B1A6
+Then visit https://github.com/login/device in your browser, and paste the code when prompted.
+
+
+```python
+#| export
+@patch
+def open_browser(self:GhDeviceAuth):
+    "Open a web browser with the verification URL"
+    webbrowser.open(self.verification_uri)
+```
+
+This uses Python's `webbrowser.open`, which will use the user's default web browser. This won't work well if the user is using a remote terminal.
+
+```python
+#| export
+@patch
+def auth(self:GhDeviceAuth)->str:
+    "Return token if authentication complete, or `None` otherwise"
+    resp = parse_qs(urlread(
+        'https://github.com/login/oauth/access_token',
+        client_id=self.client_id, device_code=self.device_code,
+        grant_type='urn:ietf:params:oauth:grant-type:device_code'))
+    err = nested_idx(resp, 'error', 0)
+    if err == 'authorization_pending': return None
+    if err: raise Exception(resp['error_description'][0])
+    return resp['access_token'][0]
+```
+
+Until the user has completed authentication in the browser, this will return None. Normally, you won't call this directly, but will call `wait` (see below), which will repeatedly call `auth` until authentication is complete.
+
+```python
+print(ghauth.auth())
+```
+
+**Outputs:**
+None
+
+
+```python
+#| export
+@patch
+def wait(self:GhDeviceAuth, cb:callable=None, n_polls=9999)->str:
+    "Wait up to `n_polls` times for authentication to complete, calling `cb` after each poll, if passed"
+    interval = int(self.interval)+1
+    res = None
+    for i in range(n_polls):
+        res = self.auth()
+        if res: return res
+        if cb: cb()
+        time.sleep(interval)
+```
+
+If you pass a callback to `cb`, it will be called after each unsuccessful check for user authentication. For instance, to print a `.` to the screen after each poll, and store the token in a variable `token` when complete, you could use:
+
+```python
+token = ghauth.wait(lambda: print('.', end=''))
+```
+
+```python
+#| hide
+# token = ghauth.wait(lambda: print('.', end=''))
+```
+
+```python
+#| export
+def github_auth_device(wb='', n_polls=9999):
+    "Authenticate with GitHub, polling up to `n_polls` times to wait for completion"
+    auth = GhDeviceAuth()
+    print(f"First copy your one-time code: \x1b[33m{auth.user_code}\x1b[m")
+    print(f"Then visit {auth.verification_uri} in your browser, and paste the code when prompted.")
+    if not wb: wb = input("Shall we try to open the link for you? [y/n] ")
+    if wb[0].lower()=='y': auth.open_browser()
+
+    print("Waiting for authorization...", end='')
+    token = auth.wait(lambda: print('.', end=''), n_polls=n_polls)
+    if not token: return print('Authentication not complete!')
+    print("Authenticated with GitHub")
+    return token
+```
+
+When we run this we'll be shown a URL to visit and a code to enter in order to authenticate. Normally we'll be prompted to open a browser, and the function will wait for authentication to complete -- for demonstrating here we'll skip both of these steps:
+
+```python
+github_auth_device('n',n_polls=0)
+```
+
+**Outputs:**
+First copy your one-time code: [33m4ACE-3C18[m
+Then visit https://github.com/login/device in your browser, and paste the code when prompted.
+Waiting for authorization...Authentication not complete!
+
+
+## Export -
+
+```python
+#| hide
+from nbdev import nbdev_export
+nbdev_export()
+```
+
+**Outputs:**
+Converted 00_core.ipynb.
+Converted 01_actions.ipynb.
+Converted 02_auth.ipynb.
+Converted 03_page.ipynb.
+Converted 04_event.ipynb.
+Converted 10_cli.ipynb.
+Converted 50_fullapi.ipynb.
+Converted 80_tutori … (truncated)
+
+### Pagination
+
+*Source: 03_page.ipynb | URL: https://github.com/AnswerDotAI/ghapi/blob/main/03_page.ipynb*
+
+```python
+#| default_exp page
+```
+
+# Pagination
+
+> Parallel and serial pagination
+
+```python
+#| export
+from fastcore.all import *
+from ghapi.core import *
+
+import re
+from urllib.parse import parse_qs,urlsplit
+```
+
+### Paged operations
+
+Some GitHub API operations return their results one page at a time. For instance, there are many thousands of [gists](https://docs.github.com/github/writing-on-github/creating-gists), but if we call `list_public` we only see the first 30:
+
+```python
+api = GhApi()
+```
+
+```python
+gists = api.gists.list_public()
+len(gists)
+```
+
+**Outputs:**
+30
+
+That's because this operation takes two optional parameters, `per_page`, and `page`:
+
+```python
+api.gists.list_public
+```
+
+**Outputs:**
+[gists.list_public](https://docs.github.com/v3/gists/#list-public-gists)(since, per_page, page): *List public gists*
+
+This is a common pattern for `list_*` operations in the GitHub API. One way to get more results is to increase `per_page`:
+
+```python
+len(api.gists.list_public(per_page=100))
+```
+
+**Outputs:**
+100
+
+However, `per_page` has a maximum of `100`, so if you want more, you'll have to pass `page=` to get pages beyond the first. An easy way to iterate through all pages is to use `paged`. `paged` returns a generator 
+
+```python
+#| export
+def paged(oper, *args, per_page=30, max_pages=9999, **kwargs):
+    "Convert operation `oper(*args,**kwargs)` into an iterator"
+    yield from itertools.takewhile(noop, (oper(*args, per_page=per_page, page=i, **kwargs) for i in range(1,max_pages+1)))
+```
+
+We'll demonstrate this using the `repos.list_for_org` method:
+
+```python
+api.repos.list_for_org
+```
+
+**Outputs:**
+[repos.list_for_org](https://docs.github.com/v3/repos/#list-organization-repositories)(org, type, sort, direction, per_page, page): *List organization repositories*
+
+```python
+repos = api.repos.list_for_org(org='fastai')
+len(repos),repos[0].name
+```
+
+**Outputs:**
+(30, 'docs')
+
+To convert this operation into a Python iterator, pass the operation itself, along with any arguments (either keyword or positional) to `paged`.  Note how the function and arguments are passed separately:
+
+```python
+repos = paged(api.repos.list_for_org, org='fastai')
+```
+
+Note that the object returned from `paged` is a generator.  You can iterate through this generator `repos` in the normal way:
+
+```python
+for page in repos: print(len(page), page[0].name)
+```
+
+**Outputs:**
+30 docs
+30 fastscript
+25 wireguard-fast
+
+
+### Link header (RFC 5988)
+
+GitHub tells us how many pages are available using the [link header](https://tools.ietf.org/html/rfc5988). Unfortunately the pypi [LinkHeader](https://pypi.org/project/LinkHeader/) library appears to no longer be maintained, so we've put a refactored version of it here.
+
+```python
+#| export
+class _Scanner:
+    def __init__(self, buf): self.buf,self.match = buf,None
+    def __getitem__(self, key): return self.match.group(key)
+    def scan(self, pattern):
+        self.match = re.compile(pattern).match(self.buf)
+        if self.match: self.buf = self.buf[self.match.end():]
+        return self.match
+
+_QUOTED        = r'"((?:[^"\\]|\\.)*)"'
+_TOKEN         = r'([^()<>@,;:\"\[\]?={}\s]+)'
+_RE_COMMA_HREF = r' *,? *< *([^>]*) *> *'
+_RE_ATTR       = rf'{_TOKEN} *(?:= *({_TOKEN}|{_QUOTED}))? *'
+```
+
+```python
+#| export
+def _parse_link_hdr(header):
+    "Parse an RFC 5988 link header, returning a `list` of `tuple`s of URL and attr `dict`"
+    scanner,links = _Scanner(header),[]
+    while scanner.scan(_RE_COMMA_HREF):
+        href,attrs = scanner[1],[]
+        while scanner.scan('; *'):
+            if scanner.scan(_RE_ATTR):
+                attr_name, token, quoted = scanner[1], scanner[3], scanner[4]
+                if quoted is not None: attrs.append([attr_name, quoted.replace(r'\"', '"')])
+                elif token is not None: attrs.append([attr_name, token])
+                else: attrs.append([attr_name, None])
+        links.append((href,dict(attrs)))
+    if scanner.buf: raise Exception(f"parse() failed at {scanner.buf!r}")
+    return links
+```
+
+```python
+#| export
+def parse_link_hdr(header):
+    "Parse an RFC 5988 link header, returning a `dict` from rels to a `tuple` of URL and attrs `dict`"
+    return {a.pop('rel'):(u,a) for u,a in _parse_link_hdr(header)}
+```
+
+Here's an example of a link header with just one link:
+
+```python
+parse_link_hdr('<http://example.com>; rel="foo bar"; type=text/html')
+```
+
+**Outputs:**
+{'foo bar': ('http://example.com', {'type': 'text/html'})}
+
+```python
+links = parse_link_hdr('<http://example.com>; rel="foo bar"; type=text/html')
+link = links['foo bar']
+test_eq(link[0], 'http://example.com')
+test_eq(link[1]['type'], 'text/html')
+```
+
+Let's test it on the headers we received on our last call to GitHub. You can access the last call's headers in `recv_hdrs':
+
+```python
+api.recv_hdrs['Link']
+```
+
+**Outputs:**
+'<https://api.github.com/organizations/20547620/repos?per_page=30&page=4>; rel="prev", <https://api.github.com/organizations/20547620/repos?per_page=30&page=4>; rel="last", <https://api.github.com/org … (truncated)
+
+Here's what happens when we parse that:
+
+```python
+parse_link_hdr(api.recv_hdrs['Link'])
+```
+
+**Outputs:**
+{'prev': ('https://api.github.com/organizations/20547620/repos?per_page=30&page=4',
+  {}),
+ 'last': ('https://api.github.com/organizations/20547620/repos?per_page=30&page=4',
+  {}),
+ 'first': ('https: … (truncated)
+
+### Getting pages in parallel
+
+Rather than requesting each page one at a time, we can save some time by getting all the pages we need in parallel.
+
+```python
+#| export
+@patch
+def last_page(self:GhApi):
+    "Parse RFC 5988 link header from most recent operation, and extract the last page"
+    header = self.recv_hdrs.get('Link', '')
+    last = nested_idx(parse_link_hdr(header), 'last', 0) or ''
+    qs = parse_qs(urlsplit(last).query)
+    return int(nested_idx(qs,'page',0) or 0)
+```
+
+To help us know the number of pages needed, we can use `last_page`, which uses the link header we just looked at to grab the last page from GitHub.
+
+We will need multiple pages to get all the repos in the `github` organization, even if we get 100 at a time:
+
+```python
+api.repos.list_for_org('github', per_page=100)
+api.last_page()
+```
+
+**Outputs:**
+4
+
+```python
+#| export
+def _call_page(i, oper, args, kwargs, per_page):
+    return oper(*args, per_page=per_page, page=i, **kwargs)
+```
+
+```python
+#| export
+def pages(oper, n_pages, *args, n_workers=None, per_page=100, **kwargs):
+    "Get `n_pages` pages from `oper(*args,**kwargs)`"
+    return parallel(_call_page, range(1,n_pages+1), oper=oper, per_page=per_page, args=args, kwargs=kwargs,
+                    progress=False, n_workers=ifnone(n_workers,n_pages), threadpool=True)
+```
+
+`pages` by default passes `per_page=100` to the operation.
+
+Let's look at some examples. To get all the pages for the repos in the `github` organization in parallel, we can use this:
+
+```python
+gh_repos = pages(api.repos.list_for_org, api.last_page(), 'github').concat()
+len(gh_repos)
+```
+
+**Outputs:**
+367
+
+If you already know ahead of time the number of pages required, there's no need to call `last_page`. For instance, the GitHub docs specify that we can get at most 3000 gists:
+
+```python
+gists = pages(api.gists.list_public, 30).concat()
+len(gists)
+```
+
+**Outputs:**
+3000
+
+GitHub ignores the `per_page` parameter for some API calls, such as listing public events, which it limits to 8 pages of 30 items per page. To retrieve all pages in these cases, you need to explicitly pass the lower per page limit:
+
+```python
+api.activity.list_public_events()
+api.last_page()
+```
+
+**Outputs:**
+8
+
+```python
+evts = pages(api.activity.list_public_events, api.last_page(), per_page=30).concat()
+len(evts)
+```
+
+**Outputs:**
+232
+
+## Export -
+
+```python
+#| hide
+from nbdev import nbdev_export
+nbdev_export()
+```
+
+**Outputs:**
+Converted 00_core.ipynb.
+Converted 01_actions.ipynb.
+Converted 02_auth.ipynb.
+Converted 03_page.ipynb.
+Converted 04_event.ipynb.
+Converted 10_cli.ipynb.
+Converted 50_fullapi.ipynb.
+Converted 80_tutori … (truncated)
+
+### The events API
+
+*Source: 04_event.ipynb | URL: https://github.com/AnswerDotAI/ghapi/blob/main/04_event.ipynb*
+
+```python
+#| default_exp event
+```
+
+# The events API
+
+> Helpers for getting GitHub API events
+
+```python
+#| export
+from fastcore.all import *
+from ghapi.core import *
+from ghapi.page import *
+from ghapi.actions import *
+
+import time,json,gzip
+from itertools import islice
+```
+
+```python
+#| hide
+from nbdev.showdoc import show_doc
+from IPython.display import Markdown
+import matplotlib.pyplot as plt
+from collections import Counter
+```
+
+```python
+api = GhApi()
+```
+
+```python
+#| export
+def _list_events(g, username=None, org=None, owner=None, repo=None):
+    if (username or org or owner) and \
+        not (bool(username) ^ bool(org) ^ bool(owner)): raise Exception('Can not pass more than one of username, org, and owner')
+    if (owner and not repo): owner,repo = repo.split('/')
+    if owner: return g.list_public_events_for_repo_network,{'owner':owner,'repo':repo}
+    if org: return g.list_public_org_events,{'org':org}
+    if username: return g.list_public_events_for_user,{'username':username}
+    return g.list_public_events,{}
+```
+
+```python
+#| export
+def _id2int(x):
+    x.id = int(x.id)
+    return x
+```
+
+```python
+#| export
+@patch
+@delegates(_list_events)
+def list_events(self:GhApi, per_page=30, page=1, **kwargs):
+    "Fetch public events for repo network, org, user, or all"
+    oper,kw = _list_events(self.activity, **kwargs)
+    return oper(per_page=per_page, page=page, **kw).map(_id2int)
+```
+
+```python
+#| export
+@patch
+@delegates(_list_events)
+def list_events_parallel(self:GhApi, per_page=30, n_pages=8, **kwargs):
+    "Fetch as many events from `list_events` in parallel as available"
+    oper,kw = _list_events(self.activity, **kwargs)
+    return pages(oper, n_pages, per_page=per_page, **kw).concat().map(_id2int)
+```
+
+`list_events` and `list_events_parallel` support the following:
+
+|Events from|Example|
+|:-|:-|
+|Organization|`api.list_events_parallel(org='fastai')`
+|User|`api.list_events_parallel(username='jph00')`
+|Repository network|`api.list_events_parallel(owner='fastai', repo='fastcore')`
+|All public|`api.list_events_parallel()`
+
+```python
+#| export
+_bot_re = re.compile('b[o0]t')
+def _want_evt(o, types, incl_bot):
+    if not incl_bot and _bot_re.search(nested_attr(o, 'actor.login') or ''): return False
+    if types and o.type not in types: return False
+    return True
+```
+
+```python
+#| export
+class GhEvent(AttrDict):
+    "Class for events returned from `fetch_events"
+    pass
+
+for o in Event: exec(f'class {snake2camel(o)}Event(GhEvent):pass')
+```
+
+```python
+show_doc(GhEvent, title_level=4)
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+```python
+print([snake2camel(o)+'Event' for o in Event])
+```
+
+**Outputs:**
+['PageBuildEvent', 'ContentReferenceEvent', 'RepositoryImportEvent', 'CreateEvent', 'WorkflowRunEvent', 'DeleteEvent', 'OrganizationEvent', 'SponsorshipEvent', 'ProjectColumnEvent', 'PushEvent', 'Cont … (truncated)
+
+```python
+#| export
+_all_ = [
+    'PageBuildEvent', 'ContentReferenceEvent', 'RepositoryImportEvent', 'CreateEvent', 'WorkflowRunEvent', 'DeleteEvent', 'OrganizationEvent',
+    'SponsorshipEvent', 'ProjectColumnEvent', 'PushEvent', 'ContextEvent', 'MilestoneEvent', 'ProjectCardEvent', 'ProjectEvent', 'PackageEvent',
+    'PullRequestEvent', 'RepositoryDispatchEvent', 'TeamAddEvent', 'WorkflowDispatchEvent', 'MemberEvent', 'MetaEvent', 'CodeScanningAlertEvent',
+    'PublicEvent', 'NeedsEvent', 'CheckRunEvent', 'SecurityAdvisoryEvent', 'PullRequestReviewCommentEvent', 'OrgBlockEvent',
+    'CommitCommentEvent', 'WatchEvent', 'MarketplacePurchaseEvent', 'StarEvent', 'InstallationRepositoriesEvent', 'CheckSuiteEvent',
+    'GithubAppAuthorizationEvent', 'TeamEvent', 'StatusEvent', 'RepositoryVulnerabilityAlertEvent', 'PullRequestReviewEvent', 'LabelEvent',
+    'InstallationEvent', 'ReleaseEvent', 'IssuesEvent', 'RepositoryEvent', 'GollumEvent', 'MembershipEvent', 'DeploymentEvent', 'DeployKeyEvent',
+    'IssueCommentEvent', 'PingEvent', 'DeploymentStatusEvent', 'ForkEvent', 'ScheduleEvent']
+```
+
+```python
+#| export
+def _cast_evt(o): return globals()[o.type](o)
+```
+
+```python
+#| export
+@patch
+@delegates(_list_events)
+def fetch_events(self:GhApi, n_pages=3, pause=0.4, per_page=30, types=None, incl_bot=False, **kwargs):
+    "Generate an infinite stream of events, optionally filtered to `types, with `pause` seconds between requests"
+    seen = set()
+    if types: types=setify(types or None)
+    g = globals()
+    while True:
+        evts = self.list_events_parallel(n_pages=n_pages, per_page=per_page, **kwargs)
+        new_evts = L(_cast_evt(o) for o in evts if o.id not in seen and _want_evt(o, types, incl_bot))
+        seen.update(new_evts.attrgot('id'))
+        yield from new_evts
+        if pause: time.sleep(pause)
+```
+
+```python
+#| export
+def load_sample_events():
+    "Load sample events, downloading if needed"
+    name = 'sample_evts.json.gz'
+    url = f'https://raw.githubusercontent.com/fastai/ghapi/master/examples/{name}'
+    try: path = Path(__file__).parent
+    except NameError: path = Path()/'examples'
+    path = path/name
+    if not path.exists():path.write_bytes(urlread(url, decode=False))
+    return dict2obj(json.load(open_file(path))).map(_cast_evt)
+```
+
+```python
+#| export
+def save_sample_events(n=5000):
+    "Save the most recent `n` events as compressed JSON"
+    evts = list(islice(api.fetch_events(incl_bot=True), n))
+    with gzip.open('sample_evts.json.gz', 'wt') as f: json.dump(obj2dict(evts), f)
+```
+
+```python
+#| export
+#| hide
+@patch(as_prop=True)
+def full_type(self:GhEvent):
+    "Concatenation of `type` and `payload.action` (if available)"
+    act = getattr(self.payload, 'action', '')
+    return f'{self.type}_{act}' if act else self.type
+```
+
+5000 sample events (taken from a single recent period) are available, and are downloaded and cached by `load_sample_events`. `full_type` provides the combination of `type` and `payload.action` (where available) for each event. Here's the frequency of all `full_types` in the sample:
+
+```python
+evts = load_sample_events()
+x,y = zip(*Counter([o.full_type for o in evts]).most_common())
+plt.figure(figsize=(8, 6))
+plt.barh(x,y);
+```
+
+**Outputs:**
+<Figure size 576x432 with 1 Axes>
+
+```python
+#| export
+_all_ = ['PageBuildEvent', 'ContentReferenceEvent', 'RepositoryImportEvent', 'CreateEvent', 'WorkflowRunEvent', 'DeleteEvent', 'OrganizationEvent', 'SponsorshipEvent', 'ProjectColumnEvent', 'PushEvent', 'ContextEvent', 'MilestoneEvent', 'ProjectCardEvent', 'ProjectEvent', 'PackageEvent', 'PullRequestEvent', 'RepositoryDispatchEvent', 'TeamAddEvent', 'WorkflowDispatchEvent', 'MemberEvent', 'MetaEvent', 'CodeScanningAlertEvent',     'PublicEvent', 'NeedsEvent', 'CheckRunEvent', 'SecurityAdvisoryEvent', 'PullRequestReviewCommentEvent', 'OrgBlockEvent', 'CommitCommentEvent', 'WatchEvent', 'MarketplacePurchaseEvent', 'StarEvent', 'InstallationRepositoriesEvent', 'CheckSuiteEvent', 'GithubAppAuthorizationEvent', 'TeamEvent', 'StatusEvent', 'RepositoryVulnerabilityAlertEvent', 'PullRequestReviewEvent', 'LabelEvent', 'InstallationEvent', 'ReleaseEvent', 'IssuesEvent', 'RepositoryEvent', 'GollumEvent', 'MembershipEvent', 'DeploymentEvent', 'DeployKeyEvent', 'IssueCommentEvent', 'PingEvent', 'DeploymentStatusEvent', 'ForkEvent', 'ScheduleEvent']
+```
+
+```python
+#| export
+evt_emojis = dict(
+    PushEvent=                             '⭐',
+    CreateEvent=                           '🏭',
+    IssueCommentEvent_created=             '💬',
+    WatchEvent_started=                    '👀',
+    PullRequestEvent_closed=               '📪',
+    PullRequestReviewEvent_created=        '💌',
+    PullRequestEvent_opened=               '📬',
+    PullRequestReviewCommentEvent_created= '🗨',
+    DeleteEvent=                           '✂',
+    ForkEvent=                             '🍽',
+    IssuesEvent_opened=                    '🐛',
+    IssuesEvent_closed=                    '🎁',
+    ReleaseEvent_published=                '🚀',
+    MemberEvent_added=                     '💃',
+    CommitCommentEvent=                    '🎉',
+    GollumEvent=                           '📚',
+    PublicEvent=                           '♥',
+    IssuesEvent_reopened=                  '🔁',
+    PullRequestEvent_reopened=             '🔁'
+)
+```
+
+```python
+#| export
+def _ref(pay, pre=''): return f'{pre} "{pay.ref.split("/")[-1]}"' if pay.ref else ''
+def _ref_detl(pay): return pay.ref_type + _ref(pay)
+
+def _action(self):
+    pay = self.payload
+    det = (f'issue #{pay.issue.number} on' if isinstance(self,IssuesEvent) else
+           f'PR #{pay.number} on' if isinstance(self,PullRequestEvent) else
+           f'member {pay.member.login} in' if isinstance(self,MemberEvent) else
+           f'review comment on PR #{pay.pull_request.number} in' if isinstance(self,PullRequestReviewCommentEvent) else
+           f'comment on issue #{pay.issue.number} in' if isinstance(self,IssueCommentEvent) else
+           f'release {pay.release.tag_name} in' if isinstance(self,ReleaseEvent) else
+           'PR review in' if isinstance(self,PullRequestReviewEvent) else
+           'watching' if isinstance(self,WatchEvent) else '')
+    if det: return f'{pay.action} {det}'
+```
+
+```python
+#| export
+#| hide
+@patch(as_prop=True)
+def description(self:GhEvent):
+    "Description of event"
+    act,pay,cls,repo = self.actor,self.payload,type(self),self.repo
+    res = _action(self)
+    return res if res else (
+        f'deleted {_ref_detl(pay)} in' if isinstance(self,DeleteEvent) else
+        f'created {_ref_detl(pay)} in' if isinstance(self,CreateEvent) else
+        f'pushed {len(pay.commits)} commits{_ref(pay," to")} in' if isinstance(self,PushEvent) else
+        f'created commit comment in' if isinstance(self,CommitCommentEvent) else
+        f'{pay.pages[0].action} wiki page in' if isinstance(self,GollumEvent) else
+        f'forked' if isinstance(self,ForkEvent) else
+        f'made public repo ' if isinstance(self,PublicEvent) else
+        remove_suffix(self.type, "Event")
+    )
+
+#export
+@patch(as_prop=True)
+def emoji(self:GhEvent):
+    "Emoji for event from `evt_emojis`"
+    return evt_emojis.get(self.full_type, '❌')
+```
+
+```python
+#| export
+#| hide
+described_evts = (PushEvent,CreateEvent,IssueCommentEvent,WatchEvent,PullRequestEvent,PullRequestReviewEvent,PullRequestReviewCommentEvent,
+                  DeleteEvent,ForkEvent,IssuesEvent,ReleaseEvent,MemberEvent,CommitCommentEvent,GollumEvent,PublicEvent)
+
+_text_keys = dict(
+    CreateEvent = "description",
+    PullRequestEvent = "pull_request.title",
+    PullRequestReviewCommentEvent = "comment.body",
+    ForkEvent = "forkee.description",
+    CommitCommentEvent = "comment.body",
+    PullRequestReviewEvent = "review.body",
+    ReleaseEvent = "release.body",
+    IssuesEvent = "issue.title",
+    IssueCommentEvent = "comment.body"
+)
+
+@patch(as_prop=True)
+def text(self:GhEvent):
+    "Text (e.g. body or title) of event, if exists"
+    return nested_idx(self.payload, *_text_keys.get(self.type, '').split('.')) or ''
+```
+
+You can use the `description`, `text`, and `emoji` properties to display events, e.g:
+
+```python
+exs = [first(evts, risinstance(o)) for o in described_evts]
+
+def _fmt_evt(o):
+    res = f'{o.emoji} **{o.actor.login}** ' + truncstr(f'{o.description} *{o.repo.name}',60) + '*'
+    if o.text: res += f': "{truncstr(o.text, 50)}"'
+    return res.replace('\n',' ')
+
+Markdown('|Type|Description|\n|:--|:--|\n' +
+         '\n'.join(f'|{camel2words(o.type.replace("PullRequest","PR ")[:-5])}|{_fmt_evt(o)}|' for o in exs))
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+## Export -
+
+```python
+#| hide
+from nbdev import nbdev_export
+nbdev_export()
+```
+
+**Outputs:**
+Converted 00_core.ipynb.
+Converted 01_actions.ipynb.
+Converted 02_auth.ipynb.
+Converted 03_page.ipynb.
+Converted 04_event.ipynb.
+Converted 10_cli.ipynb.
+Converted 50_fullapi.ipynb.
+Converted 80_tutori … (truncated)
+
+### graphql
+
+*Source: 05_graphql.ipynb | URL: https://github.com/AnswerDotAI/ghapi/blob/main/05_graphql.ipynb*
+
+# graphql
+
+> GitHub GraphQL API support for ghapi
+
+- skip_showdoc: true
+- skip_exec: true
+
+```python
+#| default_exp graphql
+```
+
+```python
+#| export
+import os
+from gql import gql, Client
+from gql.transport.requests import RequestsHTTPTransport
+```
+
+## GhGql Client
+
+The `GhGql` class provides a lazy-loaded GraphQL client. The schema is fetched on first use, not at import time.
+
+```python
+#| export
+#| export
+class GhGql:
+    "GitHub GraphQL client with lazy-loaded schema"
+    def __init__(self, token=None):
+        self.token = token or os.getenv('GITHUB_TOKEN')
+        self._client = None
+    
+    @property
+    def client(self):
+        "Lazy-load the GraphQL client and schema"
+        if self._client is None:
+            if not self.token: raise ValueError("GITHUB_TOKEN not set")
+            transport = RequestsHTTPTransport(
+                url='https://api.github.com/graphql',
+                headers={'Authorization': f'bearer {self.token}'}
+            )
+            self._client = Client(transport=transport, fetch_schema_from_transport=True)
+            self._client.execute(gql('{ __typename }'))  # Trigger schema fetch
+        return self._client
+    
+    @property
+    def schema(self): return self.client.schema
+    
+    def __call__(self, query, variables=None):
+        "Execute a GraphQL query"
+        return self.client.execute(gql(query), variable_values=variables)
+    
+    def list_queries(self):
+        "List all available top-level GraphQL query types"
+        return list(self.schema.query_type.fields.keys())
+    
+    def query_args(self, name):
+        "Show arguments for a query type"
+        return self.schema.query_type.fields[name].args
+    
+    def type_fields(self, name):
+        "List fields on a GraphQL type (use PascalCase, e.g. 'Repository')"
+        return list(self.schema.type_map[name].fields.keys())
+```
+
+## Module-level convenience functions
+
+These use a default client instance, similar to how powertools works.
+
+```python
+#| export
+#| export
+_default_client = None
+
+def _get_client():
+    "Get or create the default client"
+    global _default_client
+    if _default_client is None: _default_client = GhGql()
+    return _default_client
+
+def list_queries():
+    "List all available top-level GraphQL query types"
+    return _get_client().list_queries()
+
+def query_args(name:str):
+    "Show arguments for a query type"
+    return _get_client().query_args(name)
+
+def type_fields(name:str):
+    "List fields on a GraphQL type (use PascalCase, e.g. 'Repository')"
+    return _get_client().type_fields(name)
+
+def gh_query(query:str, variables:dict[str,any]=None):
+    "Execute a GraphQL query"
+    return _get_client()(query, variables)
+```
+
+## Examples
+
+```python
+#| eval: false
+# List available query types
+list_queries()[:10]
+```
+
+```python
+#| eval: false
+# See what args a query takes
+query_args('repository')
+```
+
+```python
+#| eval: false
+# See fields on a type
+type_fields('Repository')[:10]
+```
+
+```python
+#| eval: false
+# Execute a query
+gh_query('''
+query($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    description
+    stargazerCount
+  }
+}
+''', {'owner': 'AnswerDotAI', 'name': 'ghapi'})
+```
+
+### Command line interface
+
+*Source: 10_cli.ipynb | URL: https://github.com/AnswerDotAI/ghapi/blob/main/10_cli.ipynb*
+
+```python
+#| default_exp cli
+```
+
+```python
+#| export
+from fastcore.all import *
+import ghapi.core as gh,inspect
+from ghapi.core import *
+from collections import defaultdict
+```
+
+# Command line interface
+> Access to the GitHub API from the command line
+
+You can use `GhApi` via the command line, and can access nearly everything in the [GitHub API](https://docs.github.com/rest).
+
+There are three commands provided. For most people, `ghapi` will be the easiest to use. All three commands take the following parameters:
+
+- `--help`: list all parameters to this command and endpoint
+- `--headers`: A list of extra headers to pass, JSON-encoded
+- `--token`: A GitHub authentation token
+- `--debug`: Print requests before sending them
+
+If you have an environment variable `GITHUB_TOKEN` defined, then it will be used for the token if `--token` is not passed. If neither is provided, then the commands will not be able to acces any authentication functionality.
+
+We'll now look at each of the three commands in turn.
+
+## The `ghapi` command
+
+To get started with the `ghapi` command, first find the name of the operation you wish to perform. If you've used the Python API, then you already know the operation names - they're whatever you type in Python after "`api.`". To find the name of the operation you need, search the [full API reference](https://ghapi.fast.ai/fullapi.html) which contains information about every endpoint in the entire GitHub API. For instance, if you want to work with GitHub Issues, then searching for "issues" on the full reference page will take you to [this section](https://ghapi.fast.ai/fullapi.html#issues).
+
+The first operation listed there is [issues.list](https://docs.github.com/rest/reference/issues#list-issues-assigned-to-the-authenticated-user), shown with a link to the official GitHub documentation, and a list of parameters that the command accepts. You'll see the official docs list some parameters, such as "`accept`", which aren't listed in the GhApi reference - that's because GhApi automatically set some parameters for you.
+
+You'll also see that the parameter list on the official docs includes a column marked "**in**", which can be "header", "query", "path", or "body". The `ghapi` command handles that distinction for you, so you can ignore it for now.
+
+```python
+#| export
+def _parse_args(a):
+    "Extract positional and keyword arguments from `a`=`sys.argv`"
+    pos,kw = [],{}
+    i=1
+    while i<len(a):
+        x = a[i]
+        if x[:2]=='--':
+            k = x[2:]
+            if k in ('help','debug'): y = 1
+            else:
+                i += 1
+                y = a[i]
+            kw[k] = y
+        else: pos.append(a[i])
+        i += 1
+    return a[0],pos,kw
+
+def _api():
+    "Result of `_parse_args` along with `GhApi`"
+    cmd,pos,kw = _parse_args(sys.argv)
+    token = kw.pop('token',None) or os.getenv('GITHUB_TOKEN')
+    api = GhApi(token=token, debug=print_summary if kw.pop('debug',None) else None)
+    return cmd,api,pos,kw
+
+def _call_api(f):
+    "Call `f`, passing in args parsed from `sys.argv`"
+    cmd,api,pos,kw = _api()
+    if not pos: return print(f"Usage: `{cmd}` operation <params>")
+    call = f(pos, api)
+    return call if kw.get('help', None) else call(*pos, **kw)
+```
+
+```python
+#| export
+def _ghapi(arg, api):
+    for part in arg.pop(0).split('.'): api = getattr(api,part)
+    return api
+```
+
+```python
+#| hide
+#| export
+def ghapi():
+    "Python backend for the `ghapi` command, which calls an endpoint by operation name"
+    res = _call_api(_ghapi)
+    if isinstance(res, (gh._GhObj,dict,L)): print(res)
+    elif res: print(inspect.signature(res))
+```
+
+To use `ghapi`, pass the method name (exactly the same as you'd use in the Python API) as the first parameter, followed by any positional parameters required, and then keyword arguments with "`--`" before each parameter name.
+
+For instance, [git.get_ref](https://ghapi.fast.ai/fullapi.html#git) takes three parameters: `owner`, `repo`, and `ref`. If we wish to pass the first two as positional parameters, and the last as a named argument, then we'd call:
+
+```python
+! ghapi git.get_ref fastai ghapi-test --ref heads/master
+```
+
+**Outputs:**
+- ref: refs/heads/master
+- node_id: MDM6UmVmMzE1NzEyNTg4OnJlZnMvaGVhZHMvbWFzdGVy
+- url: https://api.github.com/repos/fastai/ghapi-test/git/refs/heads/master
+- object: 
+  - sha: f086d17cc9ec8e99f46 … (truncated)
+
+(NB: The "`!`" before the examples such as the one above is only needed when calling the commands from Jupyer Notebook. In your terminal, do not include the "`!`" prefix.)
+
+If you pass just `--help` after the operation name, you'll see a full list of all parameters accepted, and a link to the official GitHub documentation.
+
+```python
+! ghapi git.get_ref --help
+```
+
+**Outputs:**
+git.get_ref(owner, repo, ref)
+https://docs.github.com/rest/reference/git#get-a-reference
+
+
+Helper methods are also supported, e.g:
+
+```python
+! ghapi create_release --help
+```
+
+**Outputs:**
+(tag_name, branch='master', name=None, body='', draft=False, prerelease=False, files=None)
+
+
+## The `ghpath` command
+
+If you find the endpoint you want in the GitHub docs, rather than the GhApi reference, you'll see a `path` and a `verb` instead of an operation name. For example, here's the GitHub documentation for [git.getref](https://docs.github.com/rest/reference/git#get-a-reference). The white text on blue background section shows that the verb required is "`GET`". Next to that is the path, which is listed as "`/repos/{owner}/{repo}/git/ref/{ref}`".
+
+To call an endpoint when you have this information from the GitHub docs, use the `ghpath` command. The arguments are exactly the same as `ghapi`, except that instead of an operation name, you provide the path (which you can paste directly from the GitHub docs) and verb.
+
+```python
+#| export
+def _ghpath(arg, api): return api[arg.pop(0),arg.pop(0)]
+```
+
+```python
+#| hide
+#| export
+def ghpath():
+    "Python backend for the `ghpath` command, which calls an endpoint by path"
+    print(_call_api(_ghpath) or '')
+```
+
+Just like with `ghapi`, `ghpath` handles header, query, path and body parameters for you automatically.
+
+For instance, the previous `git.get_ref` command using `ghpath` is:
+
+```python
+! ghpath '/repos/{owner}/{repo}/git/ref/{ref}' get fastai ghapi-test --ref heads/master
+```
+
+**Outputs:**
+- ref: refs/heads/master
+- node_id: MDM6UmVmMzE1NzEyNTg4OnJlZnMvaGVhZHMvbWFzdGVy
+- url: https://api.github.com/repos/fastai/ghapi-test/git/refs/heads/master
+- object: 
+  - sha: f086d17cc9ec8e99f46 … (truncated)
+
+## The `ghraw` command
+
+```python
+#| hide
+#| export
+def ghraw():
+    "Python backend for the `ghraw` command, which calls a fully-specified endpoint"
+    cmd,api,pos,kw = _api()
+    if not pos: return print(f"Usage: `{cmd}` operation <params>")
+    print(api(*pos, **kw))
+```
+
+Sometimes, you just want to call an exact path directly, handling the path and query parameters yourself. The `ghraw` command provides that functionality. Like with `ghpath`, you pass the path and verb as the first two arguments, but now you have to fill in all the path parameters yourself, plus construct the query string yourself (if one is required). If you need to pass body parameters, use the `--data` parameter, which requires that you encode the request body appropriately (which is JSON-encoded for most GitHub endpoints).
+
+For instance, the `git.git_ref` example show in the previous two sections does not have any header, body, or query parameters, so we need only insert the path parameters, which results in this call:
+
+```python
+! ghraw /repos/fastai/ghapi-test/git/ref/heads/master get
+```
+
+**Outputs:**
+- ref: refs/heads/master
+- node_id: MDM6UmVmMzE1NzEyNTg4OnJlZnMvaGVhZHMvbWFzdGVy
+- url: https://api.github.com/repos/fastai/ghapi-test/git/refs/heads/master
+- object: 
+  - sha: f086d17cc9ec8e99f46 … (truncated)
+
+## Shell completions
+
+Shell completions are provided for `ghapi` behind the scenes by the `completion-ghapi` command (which is implemented with the `completion_ghapi` function). You probably won't need to call this yourself - it will be called for you as part by your shell.
+
+```python
+#| hide
+#| export
+_TAB_COMPLETION="""
+_do_ghapi_completions()
+{
+    COMP="$(completion-ghapi "${COMP_WORDS[1]}")"
+    COMPREPLY=($COMP)
+}
+
+complete -F _do_ghapi_completions ghapi
+"""
+```
+
+```python
+#| hide
+#| export
+def completion_ghapi():
+    "Python backend for `completion-ghapi` command"
+    if len(sys.argv) == 2 and sys.argv[1] == '--install':
+        print(_TAB_COMPLETION)
+        return
+    *parts,final = (sys.argv[1] if len(sys.argv)>1 else '').split('.')
+    call = GhApi()
+    for part in parts: call = getattr(call,part)
+    if hasattr(call,final): res = [final]
+    else: res = [o for o in dir(call) if o.startswith(final) and not o.startswith('_')]
+    pre = '.'.join(parts+[final])
+    print(' '.join(pre + remove_prefix(o, final) for o in res))
+```
+
+```python
+! completion-ghapi git
+```
+
+**Outputs:**
+git
+
+
+```python
+! completion-ghapi gi
+```
+
+**Outputs:**
+gists git gitignore
+
+
+```python
+! completion-ghapi git.
+```
+
+**Outputs:**
+git.create_blob git.create_commit git.create_ref git.create_tag git.create_tree git.delete_ref git.get_blob git.get_commit git.get_ref git.get_tag git.get_tree git.list_matching_refs git.name git.upda … (truncated)
+
+```python
+! completion-ghapi git.g
+```
+
+**Outputs:**
+git.get_blob git.get_commit git.get_ref git.get_tag git.get_tree
+
+
+## Tab completion
+
+You can enable tab completion for `ghapi` by placing the following command at the end of your `~/.bashrc` or `~/.zshrc` file:
+
+```bash
+eval "$(completion-ghapi --install)"
+```
+
+```python
+#| hide
+! completion-ghapi --install
+```
+
+**Outputs:**
+
+_do_ghapi_completions()
+{
+    COMP="$(completion-ghapi "${COMP_WORDS[1]}")"
+    COMPREPLY=($COMP)
+}
+
+complete -F _do_ghapi_completions ghapi
+
+
+
+## Export -
+
+```python
+#| hide
+from nbdev import nbdev_export
+nbdev_export()
+```
+
+**Outputs:**
+Converted 00_core.ipynb.
+Converted 01_cli.ipynb.
+Converted 50_fullapi.ipynb.
+Converted 90_build_lib.ipynb.
+Converted Enable Pages.ipynb.
+Converted Untitled.ipynb.
+Converted index.ipynb.
+
+### Full GitHub API reference
+
+*Source: 50_fullapi.ipynb | URL: https://github.com/AnswerDotAI/ghapi/blob/main/50_fullapi.ipynb*
+
+```python
+#| hide
+from ghapi.core import *
+from IPython.display import Markdown
+```
+
+# Full GitHub API reference
+
+> All operations available through the GitHub API
+
+By calling the `full_docs` method, we can get the name, documentation link, parameters, and summary for every endpoint in the GitHub API. Here is the full reference:
+
+```python
+Markdown(GhApi().full_docs())
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+### Internal - OpenAPI Parser
+
+*Source: 90_build_lib.ipynb | URL: https://github.com/AnswerDotAI/ghapi/blob/main/90_build_lib.ipynb*
+
+```python
+#| default_exp build_lib
+```
+
+```python
+#| export
+from fastcore.all import *
+
+import pprint
+# from json import loads
+from jsonref import loads
+from collections import namedtuple
+```
+
+# Internal - OpenAPI Parser
+
+This library leverages the [OpenAPI Specification](https://github.com/OAI/OpenAPI-Specification) to create a python client for the GitHub API.  The OpenAPI specification contains metadata on all of the endpoints and how to access them properly.  Using this metadata, we can construct a python client dynamically that updates automatically along with the OpenAPI Spec. 
+
+```python
+#| export
+GH_OPENAPI_URL = 'https://github.com/github/rest-api-description/raw/main/descriptions/api.github.com/api.github.com.json?raw=true'
+_DOC_URL = 'https://docs.github.com/'
+```
+
+```python
+#| hide
+if 0:
+    s = urlread(GH_OPENAPI_URL)
+    js = loads(s)['paths']
+    sj = {o['operationId']:o for p in js.values() for o in p.values()}
+
+    j = js['/repos/{owner}/{repo}/issues/{issue_number}/labels']['post']
+    n = nested_idx(j, *'requestBody content application/json schema'.split())
+```
+
+```python
+#| export
+_lu_type = dict(zip(
+    'NA string object array boolean number integer'.split(),
+    map(PrettyString,'object str dict list bool int int'.split())
+))
+
+def _detls(k,v):
+    res = [_lu_type[v.get('type', 'NA')]]
+    try: res.append(v['default'])
+    except KeyError: pass
+    return [k]+res
+
+def _find_data(d):
+    if 'properties' in d: return d['properties']
+    if 'oneOf' in d:
+        for o in d['oneOf']:
+            if 'properties' in o: return o['properties']
+    return {}
+```
+
+```python
+#| export
+def build_funcs(nm='ghapi/metadata.py', url=GH_OPENAPI_URL, docurl=_DOC_URL):
+    "Build module metadata.py from an Open API spec and optionally filter by a path `pre`"
+    def _get_detls(o):
+        data = nested_idx(o, *'requestBody content application/json schema'.split()) or {}
+        data = _find_data(data)
+        url = o['externalDocs']['url'][len(docurl):]
+        params = o.get('parameters',None)
+        qparams = [p['name'] for p in params if p['in']=='query'] if params else []
+        d = [_detls(*o) for o in data.items()]
+        preview = nested_idx(o, 'x-github','previews',0,'name') or ''
+        return (o['operationId'], o['summary'], url, qparams, d, preview)
+
+    js = loads(urlread(url))
+    _funcs = [(path, verb) + _get_detls(detls)
+              for path,verbs in js['paths'].items() for verb,detls in verbs.items()
+              if 'externalDocs' in detls]
+    Path(nm).write_text("funcs = " + pprint.pformat(_funcs, width=360))
+```
+
+```python
+#| hide
+build_funcs()
+```
+
+This module created by `build_funcs` contains a list of metadata for each endpoint, containing the path, verb, operation id, summary, documentation relative URL, and list of parameters (if any), e.g:
+
+```python
+#| export
+GhMeta = namedtuple('GhMeta', 'path verb oper_id summary doc_url params data preview'.split())
+```
+
+```python
+from ghapi.metadata import funcs
+```
+
+```python
+GhMeta(*funcs[3])
+```
+
+**Outputs:**
+GhMeta(path='/app', verb='get', oper_id='apps/get-authenticated', summary='Get the authenticated app', doc_url='rest/apps/apps#get-the-authenticated-app', params=[], data=[], preview='')
+
+## Export -
+
+```python
+#| hide
+from nbdev import nbdev_export
+nbdev_export()
+```
+
+###  Create Examples
+
+*Source: examples/_create_examples.ipynb | URL: https://github.com/AnswerDotAI/ghapi/blob/main/examples/_create_examples.ipynb*
+
+```python
+from fastcore.utils import *
+from fastcore.foundation import *
+
+from bs4 import BeautifulSoup
+```
+
+```python
+hooks_url = 'https://docs.github.com/developers/webhooks-and-events/webhook-events-and-payloads'
+soup = BeautifulSoup(urlread(hooks_url))
+events = L(soup.select('li.ml-0')).attrgot('text')[1:]
+# As at 2020/01/12 the 'sponsor' event has two examples
+sponsor_evt = events.argwhere(lambda o: o.startswith('sponsor'))[0]
+elems = L(soup.select('div.height-constrained-code-block > pre:nth-child(1) > code:nth-child(1)')).attrgot('text')
+# Delete the 2nd sponsor example
+del(elems[sponsor_evt+1])
+```
+
+```python
+exs = Path('.')
+for ev,el in zip(events,elems): (exs/f'{ev}.json').write_text(el)
+```
+
+### ghapi
+
+*Source: index.ipynb | URL: https://github.com/AnswerDotAI/ghapi/blob/main/index.ipynb*
+
+```python
+#| hide
+from ghapi.core import *
+import os
+```
+
+# ghapi
+
+> A delightful and complete interface to GitHub's amazing API
+
+`ghapi` provides 100% always-updated coverage of the entire [GitHub API](https://docs.github.com/rest). Because we automatically convert the [OpenAPI spec](https://docs.github.com/rest/overview/openapi-description) to a Pythonic API, `ghapi` is always up to date with the latest changes to GitHub APIs. Furthermore, because this is all done dynamically, the entire package is only 35kB in size!
+
+Using `ghapi`, you can automate nearly anything that you can do through the GitHub web interface or through the `git` client, such as:
+
+- Open, list, comment on, or modify [issues](https://guides.github.com/features/issues/) or [pull requests](https://docs.github.com/github/collaborating-with-issues-and-pull-requests/about-pull-requests)
+- Create, list, or modify [git tags](https://git-scm.com/book/en/v2/Git-Basics-Tagging) or [GitHub releases](https://docs.github.com/github/administering-a-repository/managing-releases-in-a-repository), including uploading release assets
+- Configure and run GitHub [Actions](https://github.com/features/actions) and [webhooks](https://docs.github.com/developers/webhooks-and-events/about-webhooks)
+- Set up GitHub [users](https://docs.github.com/rest/reference/users) and [organizations](https://docs.github.com/github/setting-up-and-managing-organizations-and-teams/about-organizations)
+- Manage your [deployments](https://docs.github.com/rest/guides/delivering-deployments)
+- ...and much, much more.
+
+There are two ways to use `ghapi`: either through Python, or from the command line. An overview of each is provided below.
+
+## Installation
+
+To install, run either `pip install ghapi` or `conda install -c fastai ghapi`.
+
+## How to use - Python
+
+Throughout this documentation, you will see code inputs and outputs shown in this format:
+
+```python
+1+1
+```
+
+**Outputs:**
+2
+
+We recommend reading the documentation on the [official site](https://ghapi.fast.ai/), rather than on GitHub, since not all the functionality described on this page is available through the GitHub viewer.
+
+All of the documentation is available directly as Jupyter Notebooks, for instance the current page you're reading is available as a notebook [here](https://github.com/fastai/ghapi/blob/master/index.ipynb). To open any page as an interactive notebook in Google Colab, click the *Colab* badge at the top of the page.
+
+```python
+#| hide
+github_token = os.environ['GITHUB_TOKEN']
+```
+
+To access the GitHub API, first create a `GhApi` object:
+
+```python
+from ghapi.all import GhApi
+api = GhApi()
+```
+
+Every part of the API includes documentation directly in the `api` object itself. For instance, here's how to explore the groups of functionality provided by the API by displaying the object:
+
+```python
+api
+```
+
+**Outputs:**
+<ghapi.core.GhApi>
+
+Then we can explore the endpoints provided by the API in each group, e.g. for the `git` group:
+
+```python
+api.git
+```
+
+**Outputs:**
+<ghapi.core._GhVerbGroup>
+
+Here's how to learn about an endpoint you want to use, e.g.:
+
+```python
+api.git.get_ref
+```
+
+**Outputs:**
+[git.get_ref](https://docs.github.com/rest/git/refs#get-a-reference)(owner, repo, ref): *Get a reference*
+
+In Jupyter Notebook full tab completion, parameter lists, etc are provided for all endpoints. Endpoints are called as standard Python methods:
+
+```python
+api.git.get_ref(owner='fastai', repo='fastcore', ref='heads/master')
+```
+
+**Outputs:**
+{'ref': 'refs/heads/master',
+ 'node_id': 'MDM6UmVmMjI1NDYwNTk5OnJlZnMvaGVhZHMvbWFzdGVy',
+ 'url': 'https://api.github.com/repos/AnswerDotAI/fastcore/git/refs/heads/master',
+ 'object': {'sha': 'c0608379 … (truncated)
+
+To use `ghapi` to access authenticated operations (other than when running through GitHub Actions), you will need a GitHub [personal access token](https://docs.github.com/github/authenticating-to-github/creating-a-personal-access-token), which is a secret code used to access your account. If you don't have one, [click here](https://github.com/settings/tokens/new) to create one. You'll be asked to enter a name -- choose anything you like, for instance "*ghapi*". You'll also be asked to choose "scopes"; this limits what you'll be able to do with the API using this token. If you're not sure, click "*repo*" "*gist*", "*notifications*", and "*workflow*". Then click "Generate Token" at the bottom of the screen, and copy the token (the long string of letters and numbers shown). You can easily do that by clicking the little clipboard icon next to the token.
+
+Rather than pasting that token into every script, it's easiest to save it as an environment variable. If you save it as `$GITHUB_TOKEN` then it will be most convenient, so add this to the end of your `.bashrc` or `.zshrc` file:
+
+    export GITHUB_TOKEN=xxx
+
+...replacing the `xxx` with the token you just copied. (Don't forget to `source` that file after you change it.), pass a [GitHub token].
+
+As well as your `token`, you can also pass any parameters you want auto-inserted into relevant methods, such as `owner` and `repo`:
+
+```python
+api = GhApi(owner='fastai', repo='fastcore', token=github_token)
+```
+
+We can now repeat the previous method, but only need to pass `ref`:
+
+```python
+api.git.get_ref('heads/master')
+```
+
+**Outputs:**
+{'ref': 'refs/heads/master',
+ 'node_id': 'MDM6UmVmMjI1NDYwNTk5OnJlZnMvaGVhZHMvbWFzdGVy',
+ 'url': 'https://api.github.com/repos/AnswerDotAI/fastcore/git/refs/heads/master',
+ 'object': {'sha': 'c0608379 … (truncated)
+
+Now that we've provided our token, we can use authenticated endpoints such as creating an issue:
+
+```python
+issue = api.issues.create("Remember to check out GhApi!")
+```
+
+Since we've now checked out GhApi, let's close this issue. 😎
+
+```python
+api.issues.update(issue.number, state='closed')
+```
+
+## How to use - command line
+
+You can use `GhApi` via the command line, and can access nearly everything in the [GitHub API](https://docs.github.com/rest). We provide an overview here of one of the command line programs, `ghapi` -- see the full CLI docs page for details on all the programs available.
+
+We strongly recommend enabling tab completion for `ghapi`, which you can do by placing the following command at the end of your `~/.bashrc` or `~/.zshrc` file:
+
+```bash
+eval "$(completion-ghapi --install)"
+```
+
+To get started with the `ghapi` command, first find the name of the operation you wish to perform, for instance by searching the [full API reference](https://ghapi.fast.ai/fullapi.html).
+
+To use `ghapi`, pass the method name (exactly the same as you'd use in the Python API) as the first parameter, followed by any positional parameters required, and then keyword arguments with "`--`" before each parameter name.
+
+For instance, [git.get_ref](https://ghapi.fast.ai/fullapi.html#git) takes three parameters: `owner`, `repo`, and `ref`. If we wish to pass the first two as positional parameters, and the last as a named argument, then we'd call:
+
+```bash
+ghapi git.get_ref fastai ghapi-test --ref heads/master
+```
+
+If you have enabled tab completion, then after you've typed `ghapi g` try pressing <kbd>Tab</kbd>, and you'll see all the operation groups available in the GitHub API that start with `g`. If you keep typing, e.g. `ghapi git.`, and hit <kbd>Tab</kbd> again, you'll now see all the operations available in the `git` group, i.e:
+
+```
+git.create_blob git.create_commit git.create_ref git.create_tag git.create_tree git.delete_ref git.get_blob git.get_commit git.get_ref git.get_tag git.get_tree git.list_matching_refs git.name git.update_ref git.verbs
+```
+
+If you pass just `--help` after the operation name, you'll see a full list of all parameters accepted, and a link to the official GitHub documentation.
+
+```bash
+ghapi git.get_ref --help
+>>> git.get_ref(owner, repo, ref)
+>>> https://docs.github.com/rest/reference/git#get-a-reference
+```
+
+In addition to `--help` and the GitHub operation parameters, you can also pass the following:
+
+- `--headers`: A list of extra headers to pass, JSON-encoded
+- `--token`: A GitHub authentation token
+- `--debug`: Print requests before sending them
+
+### Getting started with GitHub Actions
+
+*Source: tutorials/tutorial_actions.ipynb | URL: https://github.com/AnswerDotAI/ghapi/blob/main/tutorials/tutorial_actions.ipynb*
+
+# Getting started with GitHub Actions
+
+## About GitHub Actions
+
+[GitHub Actions](https://docs.github.com/actions) help you automate tasks within your software development life cycle. GitHub say that:
+
+> "*GitHub Actions are event-driven, meaning that you can run a series of commands after a specified event has occurred. For example, every time someone creates a pull request for a repository, you can automatically run a command that executes a software testing script.*"
+
+They are a powerful system for automating many software development processes, and open source projects get unlimited compute hours for free! A sequence of steps in GitHub Actions are be combined together into a "workflow", which can furthermore contain multiple "jobs", which are run on multiple machines, with (if needed) multiple operating systems, in parallel. For more information, read GitHub's [Introduction to GitHub Actions](https://docs.github.com/actions/learn-github-actions/introduction-to-github-actions).
+
+However, workflows can be difficult to create and debug, because:
+
+- They run in a special environment which is difficult to replicate locally
+- Each time you make a change it takes quite a few minutes before your updated workflow is run and you can see the results
+- It is difficult to develop interatively and iteratively
+- The actions environment and contexts are complex and the documentation, whilst detailed, provides few real examples to work from
+- The main "language" for building workflows is a YAML-based language which is quite verbose, and doesn't allow you to leverage your knowledge of other programming languages
+- Building full-featured extensions requires using TypeScript, which is not a language that most developers are used to using for scripting, sysadmin, and continuous integration tasks.
+
+However, with `ghapi` you can write your workflows in Python and shell, and can do nearly all your development on your local machine. We'll start by importing from the library, along with `fastcore`:
+
+```python
+from ghapi.all import *
+from fastcore.all import *
+```
+
+## Your first Python-based workflow
+
+We're going to help you get started by building a simple workflow which will add a comment to all new pull requests, saying "thank you" to the contributor.
+
+`GhApi` makes developing workflows easier, because your actual YAML file is created for you entirely automatically. To create the new workflow, run the `create_workflow` function, like so:
+
+```python
+create_workflow(name='thankyou', event=Event.pull_request)
+```
+
+Now it's time to create our python script. You'll find it in `.github/scripts`, named based on your `create_workflow` parameters. The initial skeleton just contains import statements.
+
+It will be much easier for us to iterate on our script if we have a sample *context* that the GitHub workflow runner will provide to us. We can get one by calling `example_payload`:
+
+```python
+example = example_payload(Event.pull_request)
+list(example)
+```
+
+**Outputs:**
+['action', 'number', 'pull_request', 'repository', 'sender']
+
+For information about all the fields in a *payload*, use the GitHub [webhook payload](https://docs.github.com/developers/webhooks-and-events/webhook-events-and-payloads#pull_request) documentation. For instance, the docs tell us that the "action" field can be:
+
+> "*opened, edited, closed, assigned, unassigned, review_requested, review_request_removed, ready_for_review, labeled, unlabeled, synchronize, locked, unlocked, or reopened*"
+
+Let's see what it contains for our example payload:
+
+```python
+example.action
+```
+
+**Outputs:**
+'opened'
+
+For our script, we should ensure that it's only run for the `opened` action. Next up, we need to find out how to add a comment to a pull request. First, we'll need to create our `GhApi` object. On your own PC, your GitHub token should be in the `GITHUB_TOKEN` environment variable, whereas when run in a workflow it will be part of the `github` context. The `github_token` function handles this for you automatically, so we can say:
+
+```python
+api = GhApi(owner='fastai', repo='ghapi-test', token=github_token())
+```
+
+One way to find the correct operation to call is to search the [full API reference](https://ghapi.fast.ai/fullapi.html). Operations are generally named as `{verb}_{object}`, so search for `create_comment`. Alternatively, you can jump to the section that you expect to contain your required operation -- in this case, it's important to know that GitHub considers a "pull request" to be a special kind of "issue". After some looking through the page, we found this operation:
+
+```python
+api.issues.create_comment
+```
+
+**Outputs:**
+[issues.create_comment](https://docs.github.com/rest/reference/issues#create-an-issue-comment)(issue_number, body): *Create an issue comment*
+
+The hyperlink provided will take you to the GitHub docs for this operation, so take a look at that now. We need to provide an `issue_number` and the `body` of the comment. We can look inside the payload to find the issue number we need to use:
+
+```python
+', '.join(example.pull_request)
+```
+
+**Outputs:**
+'url, id, node_id, html_url, diff_url, patch_url, issue_url, number, state, locked, title, user, body, created_at, updated_at, closed_at, merged_at, merge_commit_sha, assignee, assignees, requested_re … (truncated)
+
+Since the docs call the parameter `issue_number`, and there is a `number` field here, that's probably what we should use.
+
+To test this out, we'll first create a PR or issue, and then create our comment:
+
+```python
+com = api.issues.create_comment(issue_number=1, body='Thank you for your *valuable* contribution')
+```
+
+We can view the comment by visiting its URL:
+
+```python
+com.url
+```
+
+**Outputs:**
+'https://api.github.com/repos/fastai/ghapi-test/issues/comments/1194507697'
+
+...and then delete it since we were just testing:
+
+```python
+com = api.issues.delete_comment(com.id)
+```
+
+The payload will be available in the [`github` context](https://docs.github.com/actions/reference/context-and-expression-syntax-for-github-actions#github-context), which is provided automatically to you using the `context_github` variable. When running locally, an example github context will be used instead. (This example github context will not, in general, have the same payload as the event you're using, so use the `example payload` for that.)
+
+The `event` contains the actual payload:
+
+```python
+list(context_github.event)
+```
+
+**Outputs:**
+['inputs', 'organization', 'ref', 'repository', 'sender', 'workflow']
+
+When we called `create_workflow`, the workflow it created can also be triggered using [workflow dispatch](https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/), which is more convenient for testing. In this case, our payload will not have the same information, so we should write our function in a way that can handle workflow dispatch as well.
+
+```python
+dispatch = example_payload(Event.workflow_dispatch)
+```
+
+We can check what type of trigger we're responding to, by checking the keys of our payload:
+
+```python
+'workflow' in dispatch
+```
+
+**Outputs:**
+True
+
+In that case, we'll use a fixed issue number, instead of using the actual payload number.
+
+We can now write our function.
+
+```python
+def reply_thanks():
+    api = GhApi(owner='fastai', repo='ghapi', token=github_token())
+    payload = context_github.event
+    if 'workflow' in payload: issue = 1
+    else:
+        if payload.action != 'opened': return
+        issue = payload.number
+    api.issues.create_comment(issue_number=issue, body='Thank you for your *valuable* contribution')
+```
+
+Finally, copy this to the script in `.github/scripts`, along with a line to run it (`reply_thanks()`), and commit it to GitHub.
+
+You can now test the workflow by going to GitHub, clicking the "Actions" tab, then clicking the workflow you just created, and then clicking the "Run workflow" button.
+
+Alternatively, you can run it using `GhApi`, which we'll do now:
+
+```python
+wf = api.actions.get_workflow('thankyou-pull_request.yml')
+api.actions.create_workflow_dispatch(wf.id, ref='master')
+```
+
+**Outputs:**
+{}
+
+To find out if the dispatch succeeded, go to the Actions tab on your repo and look for a yellow circle, which means it's running, or a green tick, which means it succeeded. If you get a red cross, it failed - you can click the item for details. You can also get the results of the latest run through the API (but be sure to wait at least 30 seconds for the workflow to kick off):
+
+```python
+last_run = api.actions.list_workflow_runs(wf.id).workflow_runs[0]
+last_run.conclusion
+```
+
+**Outputs:**
+'failure'
+
+If it doesn't work, you can add `print(payload)` after the first line, and when GitHub runs your workflow you'll see the whole payload in your "Actions" panel.
+
+Once it's working OK using the manual workflow dispatch, try creating a pull request.
+
+## Advanced multi-job workflow
+
+Sometimes, you need to join more than one *job* in a workflow. This isn't common, but one example it's absolutely needed is if you want to build software or run tests on multiple platforms, and then have some step that runs before or after all of them. For instance, building and releasing software that needs to be built on each platform requires one job to create a release, and then a separate job to do the builds and add artifacts to the release, since GitHub Actions runs all your steps in a job in a single platform. Furthermore, we need to set up [dependencies between jobs](https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#creating-dependent-jobs) using `needs`. `ghapi` provides helpers to set up multi-job workflows with depedencies for you, which we'll show an example of here.
+
+In this tutorial we're going to show how we created [hugo-mathjax](https://github.com/fastai/hugo-mathjax). The workflow in this project patches [Hugo](https://gohugo.io/) to add [Mathjax](https://www.mathjax.org/) support, then builds Mac, Ubuntu, and Windows versions of the software, creating a release which includes each of those builds as artifacts. It does the following:
+
+- On a Ubuntu runner:
+  - Find out what the latest release of Hugo is
+  - It we haven't yet built a patched version of this release, create a new release
+  - Output the release number for the next job to use
+- On Mac, Ubuntu, and Windows runners all running in parallel:
+  - Get the release number output by the previous step
+  - Download this release from the Hugo repo, and untar it
+  - Patch, build, and tar this release
+  - Add the tarred release as an artifact of the release created in the first job
+
+First, we'll create the workflow and script files:
+
+```python
+create_workflow('create', Event.schedule, contexts='needs', opersys='macos, ubuntu, windows', prebuild=True)
+```
+
+This has some pieces we haven't seen before, so let's take a look at them now.
+
+The `prebuild` bool tells `ghapi` to include a prebuild job (see `create_workflow` for the full workflow created). After you run the above, take a look at the YAML that was created, to see how it all works. We're going to need to modify the YAML, to add the [schedule](https://docs.github.com/actions/reference/events-that-trigger-workflows#schedule) we want to run it on, using a `cron:` line. You can see the final YAML file [here](https://github.com/fastai/hugo-mathjax/blob/master/.github/workflows/python.yml).
+
+The prebuild job calls a prebuild script using a Ubuntu runner. We'll create the prebuild script now.
+
+The script needs to get the current Hugo release tag:
+
+```python
+tag = GhApi().repos.get_latest_release('gohugoio', repo='hugo').name
+tag
+```
+
+**Outputs:**
+'v0.101.0'
+
+...and check whether we have released that patched version:
+
+```python
+api = GhApi(owner='fastai', repo='hugo-mathjax', token=github_token())
+exists = True
+try: api.repos.get_release_by_tag(tag)
+except HTTP404NotFoundError: exists = False
+exists
+```
+
+**Outputs:**
+False
+
+In the case that the release already exists, we'll want to just exit, otherwise we'll create a new release:
+
+```python
+rel = api.repos.create_release(tag, name=tag)
+```
+
+The `build` job will run in a separate runner, so we need to create an output telling it the tag of the release we've created. The `actions_output` function does that, but print a special format that GitHub Actions uses:
+
+```python
+actions_output('tag', tag)
+```
+
+**Outputs:**
+::set-output name=tag::v0.101.0
+
+
+You can see the completed prebuild script [here](https://github.com/fastai/hugo-mathjax/blob/master/.github/scripts/prebuild.py).
+
+Now we can move on to creating the `build` script. First, we can get the outputs of the `prebuild` job as a `dict` by using `context_needs`, which contains information from any jobs in the `needs` section (which `ghapi` will automatically set up for you if you enable `prebuild`):
+
+```python
+out = loads(nested_idx(context_needs, 'prebuild', 'outputs', 'out'))
+```
+
+To get the `tag` output of the job, we index into the `dict`:
+
+```python
+tag = nested_idx(out, 'step1', 'outputs', 'tag')
+tag
+```
+
+**Outputs:**
+'v0.79.0'
+
+We get the release details using the same approach as before, then download, untar, patch, and build it. We won't discuss those steps here since they're not specific to `ghapi`.
+
+Once the software is built, we need to know the name of the created file, which depends on the operating system we're running on. We can use the following approach to check:
+
+```python
+platform = dict(linux='linux', linux2='linux', win32='win', darwin='mac')[sys.platform]
+ext_nm = 'hugo.exe' if platform=='win' else 'hugo'
+ext_nm
+```
+
+**Outputs:**
+'hugo'
+
+Finally, we can upload our file as an artifact:
+
+```python
+api = GhApi(owner='fastai', repo='hugo-mathjax', token=github_token())
+rel = api.repos.get_release_by_tag(tag)
+api.upload_file(rel, fn)
+```
+
+You can see the complete script [here](https://github.com/fastai/hugo-mathjax/blob/master/.github/scripts/build.py).
+
+We've now successfully built a workflow that automatically patches, builds, and releases a mixed C/Go project, across multiple platforms, in parallel!
+
+---
+
+## Optional
+
+### Release notes
+
+*Source: CHANGELOG.md | URL: https://github.com/AnswerDotAI/ghapi/blob/main/CHANGELOG.md*
+
+# Release notes
+
+<!-- do not remove -->
+
+## 1.0.13
+
+### Bugs Squashed
+
+- Only decode non binary types ([#206](https://github.com/AnswerDotAI/ghapi/issues/206))
+
+
+## 1.0.12
+
+### New Features
+
+- Use Content-Type to determine response parsing ([#205](https://github.com/AnswerDotAI/ghapi/pull/205)), thanks to [@erikgaas](https://github.com/erikgaas)
+
+
+## 1.0.10
+
+### New Features
+
+- `GhApi.get_repo_contents` method ([#190](https://github.com/AnswerDotAI/ghapi/pull/190)), thanks to [@KeremTurgutlu](https://github.com/KeremTurgutlu)
+
+
+## 1.0.9
+
+### New Features
+
+- Update API ([#203](https://github.com/AnswerDotAI/ghapi/issues/203))
+- Add GraphQL support ([#202](https://github.com/AnswerDotAI/ghapi/pull/202)), thanks to [@erikgaas](https://github.com/erikgaas)
+- Support for Python 3.13 and 3.14 ([#200](https://github.com/AnswerDotAI/ghapi/pull/200)), thanks to [@hugovk](https://github.com/hugovk)
+- Add py.typed file so that typecheckers recognize this library as typed ([#194](https://github.com/AnswerDotAI/ghapi/pull/194)), thanks to [@jedesroches](https://github.com/jedesroches)
+
+
+## 1.0.8
+
+### Bugs Squashed
+
+- rm `GitPython` dep ([#199](https://github.com/AnswerDotAI/ghapi/pull/199)), thanks to [@KeremTurgutlu](https://github.com/KeremTurgutlu)
+
+
+
+## 1.0.7
+
+### New Features
+
+- Avoid quoting slash, thanks @soemiran ([#196](https://github.com/AnswerDotAI/ghapi/issues/196))
+- Create gist with imgs ([#195](https://github.com/AnswerDotAI/ghapi/pull/195)), thanks to [@KeremTurgutlu](https://github.com/KeremTurgutlu)
+
+
+## 1.0.6
+
+### New Features
+
+- Automatically decode response based on path ([#183](https://github.com/fastai/ghapi/pull/183)), thanks to [@radam9](https://github.com/radam9)
+- Expose timeout [#174](https://github.com/fastai/ghapi/pull/174)), thanks to [@HarikrishnanBalagopal](https://github.com/HarikrishnanBalagopal)
+
+### Bugs Squashed
+
+- Github now requires branch, author, and committer in file update calls ([#184](https://github.com/fastai/ghapi/issues/184))
+- Remove the check which removes `None` values ([#171](https://github.com/fastai/ghapi/pull/171)), thanks to [@shreve](https://github.com/shreve)
+
+
+## 1.0.3
+
+### New Features
+
+- add `authenticate` arg which allows unauthenticated `GhApi` clients even if `GITHUB_TOKEN` is set ([#150](https://github.com/fastai/ghapi/pull/150)), thanks to [@seeM](https://github.com/seeM)
+
+
+## 1.0.1
+
+### New Features
+
+- warn if no GitHub token found ([#145](https://github.com/fastai/ghapi/issues/145))
+- set `GITHUB_DEBUG=1` to print requests sent to GitHub
+
+
+## 1.0.0
+
+### New Features
+
+- add `delete_file` and `create_file` ([#143](https://github.com/fastai/ghapi/issues/143))
+- Add a "Documentation" link to the sidebar on PyPI ([#106](https://github.com/fastai/ghapi/pull/106)), thanks to [@nedbat](https://github.com/nedbat)
+- Add support for media types ([#102](https://github.com/fastai/ghapi/pull/102)), thanks to [@lfdebrux](https://github.com/lfdebrux)
+
+### Bugs Squashed
+
+- Fix links to GitHub docs ([#136](https://github.com/fastai/ghapi/pull/136)), thanks to [@hwine](https://github.com/hwine)
+
+
+## 0.1.21
+
+### Bugs Squashed
+
+- fix `create_gist`
+
+
+## 0.1.20
+
+### New Features
+
+- add `create_gist` ([#129](https://github.com/fastai/ghapi/issues/129))
+
+### Bugs Squashed
+
+- `HTTP Error 422: Unprocessable Entity` returned for `issues.add_labels` in version `0.1.17` ([#69](https://github.com/fastai/ghapi/issues/69))
+
+
+## 0.1.19
+
+### New Features
+
+- Remove need to URL-quote some parameters ([#54](https://github.com/fastai/ghapi/issues/54))
+
+
+## 0.1.18
+
+### Bugs Squashed
+
+- `HTTP Error 422: Unprocessable Entity` returned for `issues.add_labels` ([#69](https://github.com/fastai/ghapi/issues/69))
+
+
+## 0.1.17
+
+
+### Bugs Squashed
+
+- Fix ability to define scopes ([#53](https://github.com/fastai/ghapi/pull/53)), thanks to [@danpalmer](https://github.com/danpalmer)
+
+
+## 0.1.15
+
+### New Features
+
+- make `actions_group` a context manager ([#33](https://github.com/fastai/ghapi/issues/33))
+
+
+## 0.1.14
+
+### New Features
+
+- `text` property for `GhEvent` ([#23](https://github.com/fastai/ghapi/issues/23))
+
+### Bugs Squashed
+
+- broken links in index.html page ([#27](https://github.com/fastai/ghapi/issues/27))
+- Bug: `paged` does not pass `kwargs` to operation ([#24](https://github.com/fastai/ghapi/issues/24))
+
+
+## 0.1.13
+
+
+### Bugs Squashed
+
+- missing import in auth ([#21](https://github.com/fastai/ghapi/issues/21))
+
+
+## 0.1.11
+
+### Bugs Squashed
+
+- missing webbrowser import ([#20](https://github.com/fastai/ghapi/issues/20))
+
+
+## 0.1.10
+
+- Add `load_sample_events`, which loads a file of 1000 sample public events
+
+
+## 0.1.8
+
+### New Features
+
+- add `fetch_events` ([#19](https://github.com/fastai/ghapi/issues/19))
+
+
+## 0.1.7
+
+### New Features
+
+- parallel `pages` ([#18](https://github.com/fastai/ghapi/issues/18))
+- add `GhDeviceAuth` ([#15](https://github.com/fastai/ghapi/issues/15))
+- add `date2gh` ([#14](https://github.com/fastai/ghapi/issues/14))
+
+
+## 0.1.6
+
+### New Features
+
+- add `paged` ([#13](https://github.com/fastai/ghapi/issues/13))
+- add `gh_date` ([#12](https://github.com/fastai/ghapi/issues/12))
+
+
+## 0.1.1
+
+### New Features
+
+- add `list_tags` and `list_branches` ([#2](https://github.com/fastai/ghapi/issues/2))
+
+### Bugs Squashed
+
+- `GhApi` pickle recursion error ([#3](https://github.com/fastai/ghapi/issues/3))
+
+
+## 0.1.0
+
+- First release with full API coverage
+
+### How to contribute
+
+*Source: CONTRIBUTING.md | URL: https://github.com/AnswerDotAI/ghapi/blob/main/CONTRIBUTING.md*
+
+# How to contribute
+
+## How to get started
+
+Before anything else, please install the git hooks that run automatic scripts during each commit and merge to strip the notebooks of superfluous metadata (and avoid merge conflicts). After cloning the repository, run the following command inside it:
+```
+nbdev_install_git_hooks
+```
+
+## Did you find a bug?
+
+* Ensure the bug was not already reported by searching on GitHub under Issues.
+* If you're unable to find an open issue addressing the problem, open a new one. Be sure to include a title and clear description, as much relevant information as possible, and a code sample or an executable test case demonstrating the expected behavior that is not occurring.
+* Be sure to add the complete error messages.
+
+#### Did you write a patch that fixes a bug?
+
+* Open a new GitHub pull request with the patch.
+* Ensure that your PR includes a test that fails without your patch, and pass with it.
+* Ensure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
+
+## PR submission guidelines
+
+* Keep each PR focused. While it's more convenient, do not combine several unrelated fixes together. Create as many branches as needing to keep each PR focused.
+* Do not mix style changes/fixes with "functional" changes. It's very difficult to review such PRs and it most likely get rejected.
+* Do not add/remove vertical whitespace. Preserve the original style of the file you edit as much as you can.
+* Do not turn an already submitted PR into your development playground. If after you submitted PR, you discovered that more work is needed - close the PR, do the required work and then submit a new PR. Otherwise each of your commits requires attention from maintainers of the project.
+* If, however, you submitted a PR and received a request for changes, you should proceed with commits inside that PR, so that the maintainer can see the incremental fixes and won't need to review the whole PR again. In the exception case where you realize it'll take many many commits to complete the requests, then it's probably best to close the PR, do the work and then submit it again. Use common sense where you'd choose one way over another.
+
+## Do you want to contribute to the documentation?
+
+* Docs are automatically created from the notebooks in the nbs folder.
+
+---
+
+## Source Modules
+
+### ghapi._nbdev
+
+*Source: ghapi/_nbdev.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/_nbdev.py*
+
+- `custom_doc_links`
+
+### ghapi.actions
+
+*Source: ghapi/actions.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/actions.py*
+
+- `user_repo`
+- `create_workflow_files`
+- `fill_workflow_templates`
+- `env_contexts`
+- `create_workflow`
+- `gh_create_workflow`
+- `example_payload`
+- `github_token`
+- `actions_output`
+- `actions_debug`
+- `actions_warn`
+- `actions_error`
+- `actions_group`
+- `actions_mask`
+- `set_git_user`
+
+### ghapi.auth
+
+*Source: ghapi/auth.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/auth.py*
+
+- `scope_str`
+- `GhDeviceAuth`
+- `url_docs`
+- `open_browser`
+- `auth`
+- `wait`
+- `github_auth_device`
+
+### ghapi.build_lib
+
+*Source: ghapi/build_lib.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/build_lib.py*
+
+- `build_funcs`
+
+### ghapi.cli
+
+*Source: ghapi/cli.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/cli.py*
+
+- `ghapi`
+- `ghpath`
+- `ghraw`
+- `completion_ghapi`
+
+### ghapi.core
+
+*Source: ghapi/core.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/core.py*
+
+- `doc_url`
+- `print_summary`
+- `GhApi`
+- `full_docs`
+- `date2gh`
+- `gh2date`
+- `create_gist`
+- `delete_release`
+- `upload_file`
+- `create_release`
+- `list_tags`
+- `list_branches`
+- `create_branch_empty`
+- `delete_tag`
+- `delete_branch`
+- `get_branch`
+- `list_files`
+- `get_content`
+- `create_or_update_file`
+- `create_file`
+- `delete_file`
+- `update_contents`
+- `get_repo_files`
+- `get_file_content`
+- `get_repo_contents`
+- `enable_pages`
+
+### ghapi.graphql
+
+*Source: ghapi/graphql.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/graphql.py*
+
+- `GhGql`
+- `client`
+- `schema`
+- `list_queries`
+- `query_args`
+- `type_fields`
+- `list_queries`
+- `query_args`
+- `type_fields`
+- `gh_query`
+
+### ghapi.page
+
+*Source: ghapi/page.py | URL: https://github.com/AnswerDotAI/ghapi/blob/main/ghapi/page.py*
+
+- `paged`
+- `scan`
+- `parse_link_hdr`
+- `last_page`
+- `pages`

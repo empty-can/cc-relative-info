@@ -1,0 +1,611 @@
+# Claude Quickstarts
+
+> Anthropic 公式のクイックスタート集。Skill/Rule/Agent などの CC 拡張資産は含まず、エージェント・コンピューターユース・ブラウザ操作・カスタマーサポートなど複数の Claude API デモアプリを収録したサンプルリポジトリ。
+
+---
+
+## Agents
+
+### Agents
+
+*Source: agents/README.md | URL: https://github.com/anthropics/claude-quickstarts/blob/main/agents/README.md*
+
+# Agents
+
+A minimal educational implementation of LLM agents using the Claude API.
+
+> **Note:** This is NOT an SDK, but a reference implementation of key concepts
+
+## Overview & Core Components
+
+This repo demonstrates how to [build effective agents](https://www.anthropic.com/engineering/building-effective-agents) with the Claude API. It shows how sophisticated AI behaviors can emerge from a simple foundation: LLMs using tools in a loop. This implementation is not prescriptive - the core logic is <300 lines of code and deliberately lacks production features. Feel free to translate these patterns to your language and production stack ([Claude Code](https://docs.claude.com/en/docs/agents-and-tools/claude-code/overview) can help!)
+
+It contains three components:
+
+- `agent.py`: Manages Claude API interactions and tool execution
+- `tools/`: Tool implementations (both native and MCP tools)
+- `utils/`: Utilities for message history and MCP server connections
+
+## Usage
+
+```python
+from agents.agent import Agent
+from agents.tools.think import ThinkTool
+
+# Create an agent with both local tools and MCP server tools
+agent = Agent(
+    name="MyAgent",
+    system="You are a helpful assistant.",
+    tools=[ThinkTool()],  # Local tools
+    mcp_servers=[
+        {
+            "type": "stdio",
+            "command": "python",
+            "args": ["-m", "mcp_server"],
+        },
+    ]
+)
+
+# Run the agent
+response = agent.run("What should I consider when buying a new laptop?")
+```
+
+From this foundation, you can add domain-specific tools, optimize performance, or implement custom response handling. We remain deliberately unopinionated - this backbone simply gets you started with fundamentals.
+
+## Requirements
+
+- Python 3.8+
+- Claude API key (set as `ANTHROPIC_API_KEY` environment variable)
+- `anthropic` Python library
+- `mcp` Python library
+
+---
+
+## Source Modules
+
+### agents.agent
+
+*Source: agents/agent.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/agents/agent.py*
+
+- `ModelConfig`: Configuration settings for Claude model parameters.
+- `Agent`: Claude-powered agent with tool use capabilities.
+- `run_async`: Run agent with MCP tools asynchronously.
+- `run`: Run agent synchronously
+
+### agents.tools.base
+
+*Source: agents/tools/base.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/base.py*
+
+- `Tool`: Base class for all agent tools.
+- `to_dict`: Convert tool to Claude API format.
+- `execute`: Execute the tool with provided parameters.
+
+### agents.tools.calculator_mcp
+
+*Source: agents/tools/calculator_mcp.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/calculator_mcp.py*
+
+- `calculator`: Performs basic calculations with two numbers.
+
+### agents.tools.code_execution
+
+*Source: agents/tools/code_execution.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/code_execution.py*
+
+- `CodeExecutionServerTool`: Code execution server tool that uses Anthropic's server tool format.
+- `to_dict`: Convert to Anthropic server tool format.
+
+### agents.tools.file_tools
+
+*Source: agents/tools/file_tools.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/file_tools.py*
+
+- `FileReadTool`: Tool for reading files and listing directories.
+- `execute`: Execute a file read operation.
+- `FileWriteTool`: Tool for writing and editing files.
+- `execute`: Execute a file write operation.
+
+### agents.tools.mcp_tool
+
+*Source: agents/tools/mcp_tool.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/mcp_tool.py*
+
+- `MCPTool`
+- `execute`: Execute the MCP tool with the given input_schema.
+
+### agents.tools.think
+
+*Source: agents/tools/think.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/think.py*
+
+- `ThinkTool`: Tool for internal reasoning without executing external actions.
+- `execute`: Simply returns the thought back to the model.
+
+### agents.tools.web_search
+
+*Source: agents/tools/web_search.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/web_search.py*
+
+- `WebSearchServerTool`: Web search server tool that uses Anthropic's server tool format.
+- `to_dict`: Convert to Anthropic server tool format.
+
+### agents.utils.connections
+
+*Source: agents/utils/connections.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/agents/utils/connections.py*
+
+- `MCPConnection`: Base class for MCP server connections.
+- `list_tools`: Retrieve available tools from the MCP server.
+- `call_tool`: Call a tool on the MCP server with provided arguments.
+- `MCPConnectionStdio`: MCP connection using standard input/output.
+- `MCPConnectionSSE`: MCP connection using Server-Sent Events.
+- `create_mcp_connection`: Factory function to create the appropriate MCP connection.
+- `setup_mcp_connections`: Set up MCP server connections and create tool interfaces.
+
+### agents.utils.history_util
+
+*Source: agents/utils/history_util.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/agents/utils/history_util.py*
+
+- `MessageHistory`: Manages chat history with token tracking and context management.
+- `add_message`: Add a message to the history and track token usage.
+- `truncate`: Remove oldest messages when context window limit is exceeded.
+- `remove_message_pair`
+- `format_for_api`: Format messages for Claude API with optional caching.
+
+### agents.utils.tool_util
+
+*Source: agents/utils/tool_util.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/agents/utils/tool_util.py*
+
+- `execute_tools`: Execute multiple tools sequentially or in parallel.
+
+### autonomous-coding.agent
+
+*Source: autonomous-coding/agent.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/agent.py*
+
+- `run_agent_session`: Run a single agent session using Claude Agent SDK.
+- `run_autonomous_agent`: Run the autonomous agent loop.
+
+### autonomous-coding.autonomous_agent_demo
+
+*Source: autonomous-coding/autonomous_agent_demo.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/autonomous_agent_demo.py*
+
+- `parse_args`: Parse command line arguments.
+- `main`: Main entry point.
+
+### autonomous-coding.client
+
+*Source: autonomous-coding/client.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/client.py*
+
+- `create_client`: Create a Claude Agent SDK client with multi-layered security.
+
+### autonomous-coding.progress
+
+*Source: autonomous-coding/progress.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/progress.py*
+
+- `count_passing_tests`: Count passing and total tests in feature_list.json.
+- `print_session_header`: Print a formatted header for the session.
+- `print_progress_summary`: Print a summary of current progress.
+
+### autonomous-coding.prompts
+
+*Source: autonomous-coding/prompts.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/prompts.py*
+
+- `load_prompt`: Load a prompt template from the prompts directory.
+- `get_initializer_prompt`: Load the initializer prompt.
+- `get_coding_prompt`: Load the coding agent prompt.
+- `copy_spec_to_project`: Copy the app spec file into the project directory for the agent to read.
+
+### autonomous-coding.security
+
+*Source: autonomous-coding/security.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/security.py*
+
+- `split_command_segments`: Split a compound command into individual command segments.
+- `extract_commands`: Extract command names from a shell command string.
+- `validate_pkill_command`: Validate pkill commands - only allow killing dev-related processes.
+- `validate_chmod_command`: Validate chmod commands - only allow making files executable with +x.
+- `validate_init_script`: Validate init.sh script execution - only allow ./init.sh.
+- `get_command_for_validation`: Find the specific command segment that contains the given command.
+- `bash_security_hook`: Pre-tool-use hook that validates bash commands using an allowlist.
+
+### browser-use-demo.browser_use_demo.browser_tool_utils.browser_key_map
+
+*Source: browser-use-demo/browser_use_demo/browser_tool_utils/browser_key_map.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/browser_tool_utils/browser_key_map.py*
+
+- `KeyInfo`
+
+### browser-use-demo.browser_use_demo.loop
+
+*Source: browser-use-demo/browser_use_demo/loop.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/loop.py*
+
+- `APIProvider`
+- `sampling_loop`: Sampling loop for browser automation.
+
+### browser-use-demo.browser_use_demo.message_handler
+
+*Source: browser-use-demo/browser_use_demo/message_handler.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/message_handler.py*
+
+- `ProcessedResponse`: Container for processed API response data.
+- `ResponseProcessor`: Handles API response processing with proper message preservation.
+- `process_response`: Process an API response into a structured format.
+- `execute_tools`: Execute tools and collect results.
+- `MessageBuilder`: Builds properly structured messages for the API.
+- `add_assistant_message`: Add a complete assistant message with all content blocks.
+- `add_tool_results`: Add tool results as a user message.
+- `ensure_message_integrity`: Validate that messages maintain proper structure.
+- `extract_text_from_message`: Extract text content from a message.
+
+### browser-use-demo.browser_use_demo.message_renderer
+
+*Source: browser-use-demo/browser_use_demo/message_renderer.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/message_renderer.py*
+
+- `Sender`: Message sender types.
+- `MessageRenderer`: Handles rendering of messages in the Streamlit chat interface.
+- `render`: Render a message in the chat interface.
+- `render_conversation_history`: Render all messages in conversation history.
+
+### browser-use-demo.browser_use_demo.tools.base
+
+*Source: browser-use-demo/browser_use_demo/tools/base.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/tools/base.py*
+
+- `BaseAnthropicTool`: Abstract base class for Anthropic-defined tools.
+- `to_params`
+- `ToolResult`: Represents the result of a tool execution.
+- `combine_fields`
+- `replace`: Returns a new ToolResult with the given fields replaced.
+- `CLIResult`: A ToolResult that can be rendered as a CLI output.
+- `ToolFailure`: A ToolResult that represents a failure.
+- `ToolError`: Raised when a tool encounters an error.
+
+### browser-use-demo.browser_use_demo.tools.browser
+
+*Source: browser-use-demo/browser_use_demo/tools/browser.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/tools/browser.py*
+
+- `BrowserOptions`
+- `BrowserTool`: A browser automation tool using Playwright for web interaction.
+- `options`: Return browser display options.
+- `to_params`: Convert tool to API parameters using custom tool definition.
+- `cleanup`: Cleanup method to ensure browser is closed properly.
+
+### browser-use-demo.browser_use_demo.tools.collection
+
+*Source: browser-use-demo/browser_use_demo/tools/collection.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/tools/collection.py*
+
+- `ToolCollection`: Collection of tools for browser automation.
+- `to_params`: Convert all tools to API parameters.
+
+### browser-use-demo.browser_use_demo.tools.coordinate_scaling
+
+*Source: browser-use-demo/browser_use_demo/tools/coordinate_scaling.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/tools/coordinate_scaling.py*
+
+- `CoordinateScaler`: Handles coordinate scaling between Claude's vision and actual viewport.
+- `get_documented_size_for_aspect_ratio`: Get the documented size for the given viewport's aspect ratio.
+- `get_scale_factors`: Calculate scale factors for converting Claude coordinates to viewport coordinates.
+- `scale_coordinates`: Scale coordinates from Claude's vision to actual viewport.
+- `scale_coordinate_list`: Scale a coordinate pair list/tuple.
+
+### browser-use-demo.image.http_server
+
+*Source: browser-use-demo/image/http_server.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/image/http_server.py*
+
+- `HTTPServerV6`
+- `run_server`
+
+### computer-use-best-practices.computer_use.__main__
+
+*Source: computer-use-best-practices/computer_use/__main__.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/__main__.py*
+
+- `build_tools`
+- `build_system_prompt`
+- `main`
+
+### computer-use-best-practices.computer_use.formatters
+
+*Source: computer-use-best-practices/computer_use/formatters.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/formatters.py*
+
+- `StripOldestImages`: Keep only the most recent `keep` images. Simple but cache-hostile.
+- `StripImagesAtIntervals`: Cache-friendly image bounding.
+
+### computer-use-best-practices.computer_use.image
+
+*Source: computer-use-best-practices/computer_use/image.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/image.py*
+
+- `ScreenshotTooSmall`
+- `n_tokens_for_px`: ceil(px / px_per_token) using integer math.
+- `n_tokens_for_img`
+- `target_image_size`: Largest (w, h) preserving aspect ratio with long-edge <= max_edge_px and
+- `resize_and_encode`: Resize `img` to its target size (no-op if already within budget), encode as
+
+### computer-use-best-practices.computer_use.loop
+
+*Source: computer-use-best-practices/computer_use/loop.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/loop.py*
+
+- `sampling_loop`: Run the agent. Each user message gets up to ``max_iters`` model turns.
+
+### computer-use-best-practices.computer_use.preflight
+
+*Source: computer-use-best-practices/computer_use/preflight.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/preflight.py*
+
+- `screen_recording_granted`
+- `accessibility_granted`
+- `check_and_warn`
+
+### computer-use-best-practices.computer_use.tools.base
+
+*Source: computer-use-best-practices/computer_use/tools/base.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/base.py*
+
+- `Tool`
+- `to_param`
+- `execute`
+- `ToolCollection`: Maps tool name -> instance and dispatches calls.
+- `to_params`
+- `close`: Release any resources held by tools (e.g. the Playwright browser).
+- `run`
+
+### computer-use-best-practices.computer_use.tools.batch
+
+*Source: computer-use-best-practices/computer_use/tools/batch.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/batch.py*
+
+- `to_api_content`
+- `execute`
+- `ComputerBatchTool`
+- `BrowserBatchTool`
+
+### computer-use-best-practices.computer_use.tools.browser
+
+*Source: computer-use-best-practices/computer_use/tools/browser.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/browser.py*
+
+- `BrowserTool`
+- `execute`
+- `close`
+
+### computer-use-best-practices.computer_use.tools.editor
+
+*Source: computer-use-best-practices/computer_use/tools/editor.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/editor.py*
+
+- `EditorTool`
+- `execute`
+
+### computer-use-best-practices.computer_use.tools.open_app
+
+*Source: computer-use-best-practices/computer_use/tools/open_app.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/open_app.py*
+
+- `OpenApplicationTool`
+- `execute`
+
+### computer-use-best-practices.computer_use.tools.result
+
+*Source: computer-use-best-practices/computer_use/tools/result.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/result.py*
+
+- `image_block`
+- `document_block`
+- `ToolResult`
+- `is_error`
+- `to_api_content`: Render as a list of tool_result content blocks.
+
+### computer-use-best-practices.computer_use.tools.shell
+
+*Source: computer-use-best-practices/computer_use/tools/shell.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/shell.py*
+
+- `BashTool`
+- `execute`
+- `PythonTool`
+- `execute`
+
+### computer-use-best-practices.computer_use.trajectory
+
+*Source: computer-use-best-practices/computer_use/trajectory.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/trajectory.py*
+
+- `Trajectory`
+- `save_image`
+- `record`
+
+### computer-use-best-practices.constants
+
+*Source: computer-use-best-practices/constants.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/constants.py*
+
+- `Model`
+- `Config`
+- `load`: Build a Config from defaults -> toml -> CU_* env vars -> overrides.
+- `with_overrides`
+- `reload`: Rebuild ``cfg`` from the given sources. Note that modules which did
+
+### computer-use-best-practices.dev_ui.localization_demo.server
+
+*Source: computer-use-best-practices/dev_ui/localization_demo/server.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/dev_ui/localization_demo/server.py*
+
+- `repl`
+- `index`
+- `meta`
+- `localize`
+
+### computer-use-best-practices.dev_ui.tool_panel.server
+
+*Source: computer-use-best-practices/dev_ui/tool_panel/server.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/dev_ui/tool_panel/server.py*
+
+- `RunRequest`
+- `index`
+- `list_tools`
+- `preflight`
+- `run`
+
+### computer-use-demo.computer_use_demo.loop
+
+*Source: computer-use-demo/computer_use_demo/loop.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/loop.py*
+
+- `APIProvider`
+- `sampling_loop`: Agentic sampling loop for the assistant/tool interaction of computer use.
+
+### computer-use-demo.computer_use_demo.tools.base
+
+*Source: computer-use-demo/computer_use_demo/tools/base.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/base.py*
+
+- `BaseAnthropicTool`: Abstract base class for Anthropic-defined tools.
+- `to_params`
+- `ToolResult`: Represents the result of a tool execution.
+- `combine_fields`
+- `replace`: Returns a new ToolResult with the given fields replaced.
+- `CLIResult`: A ToolResult that can be rendered as a CLI output.
+- `ToolFailure`: A ToolResult that represents a failure.
+- `ToolError`: Raised when a tool encounters an error.
+
+### computer-use-demo.computer_use_demo.tools.bash
+
+*Source: computer-use-demo/computer_use_demo/tools/bash.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/bash.py*
+
+- `start`
+- `stop`: Terminate the bash shell.
+- `run`: Execute a command in the bash shell.
+- `BashTool20250124`: A tool that allows the agent to run bash commands.
+- `to_params`
+- `BashTool20241022`
+
+### computer-use-demo.computer_use_demo.tools.collection
+
+*Source: computer-use-demo/computer_use_demo/tools/collection.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/collection.py*
+
+- `ToolCollection`: A collection of anthropic-defined tools.
+- `to_params`
+- `run`
+
+### computer-use-demo.computer_use_demo.tools.computer
+
+*Source: computer-use-demo/computer_use_demo/tools/computer.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/computer.py*
+
+- `Resolution`
+- `ScalingSource`
+- `ComputerToolOptions`
+- `chunks`
+- `BaseComputerTool`: A tool that allows the agent to interact with the screen, keyboard, and mouse of the current computer.
+- `options`
+- `validate_and_get_coordinates`
+- `screenshot`: Take a screenshot of the current screen and return the base64 encoded image.
+- `shell`: Run a shell command and return the output, error, and optionally a screenshot.
+- `scale_coordinates`: Scale coordinates to a target maximum resolution.
+- `ComputerTool20241022`
+- `to_params`
+- `ComputerTool20250124`
+- `to_params`
+- `ComputerTool20251124`
+- `options`
+
+### computer-use-demo.computer_use_demo.tools.edit
+
+*Source: computer-use-demo/computer_use_demo/tools/edit.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/edit.py*
+
+- `EditTool20250728`: A filesystem editor tool that allows the agent to view, create, and edit files.
+- `to_params`
+- `validate_path`: Check that the path/command combination is valid.
+- `view`: Implement the view command
+- `str_replace`: Implement the str_replace command, which replaces old_str with new_str in the file content
+- `insert`: Implement the insert command, which inserts new_str at the specified line in the file content.
+- `read_file`: Read the content of a file from a given path; raise a ToolError if an error occurs.
+- `write_file`: Write the content of a file to a given path; raise a ToolError if an error occurs.
+
+### computer-use-demo.computer_use_demo.tools.groups
+
+*Source: computer-use-demo/computer_use_demo/tools/groups.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/groups.py*
+
+- `ToolGroup`
+
+### computer-use-demo.computer_use_demo.tools.run
+
+*Source: computer-use-demo/computer_use_demo/tools/run.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/run.py*
+
+- `maybe_truncate`: Truncate content and append a notice if content exceeds the specified length.
+- `run`: Run a shell command asynchronously with a timeout.
+
+### computer-use-demo.image.http_server
+
+*Source: computer-use-demo/image/http_server.py | URL: https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/image/http_server.py*
+
+- `HTTPServerV6`
+- `run_server`
+
+### customer-support-agent.app.lib.utils
+
+*Source: customer-support-agent/app/lib/utils.ts | URL: https://github.com/anthropics/claude-quickstarts/blob/main/customer-support-agent/app/lib/utils.ts*
+
+- `function cn`
+- `function retrieveContext`
+
+### customer-support-agent.lib.utils
+
+*Source: customer-support-agent/lib/utils.ts | URL: https://github.com/anthropics/claude-quickstarts/blob/main/customer-support-agent/lib/utils.ts*
+
+- `function cn`
+
+### financial-data-analyst.hooks.use-toast
+
+*Source: financial-data-analyst/hooks/use-toast.ts | URL: https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/hooks/use-toast.ts*
+
+- `function genId`
+- `function dispatch`
+- `function toast`
+- `function useToast`
+
+### financial-data-analyst.lib.utils
+
+*Source: financial-data-analyst/lib/utils.ts | URL: https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/lib/utils.ts*
+
+- `function cn`
+
+### customer-support-agent.app.layout
+
+*Source: customer-support-agent/app/layout.tsx | URL: https://github.com/anthropics/claude-quickstarts/blob/main/customer-support-agent/app/layout.tsx*
+
+- `function RootLayout`
+
+### customer-support-agent.app.page
+
+*Source: customer-support-agent/app/page.tsx | URL: https://github.com/anthropics/claude-quickstarts/blob/main/customer-support-agent/app/page.tsx*
+
+- `function Home`
+
+### customer-support-agent.components.theme-provider
+
+*Source: customer-support-agent/components/theme-provider.tsx | URL: https://github.com/anthropics/claude-quickstarts/blob/main/customer-support-agent/components/theme-provider.tsx*
+
+- `function ThemeProvider`
+
+### financial-data-analyst.app.finance.page
+
+*Source: financial-data-analyst/app/finance/page.tsx | URL: https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/app/finance/page.tsx*
+
+- `if`
+
+### financial-data-analyst.app.layout
+
+*Source: financial-data-analyst/app/layout.tsx | URL: https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/app/layout.tsx*
+
+- `function RootLayout`
+
+### financial-data-analyst.app.page
+
+*Source: financial-data-analyst/app/page.tsx | URL: https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/app/page.tsx*
+
+- `function Home`
+
+### financial-data-analyst.components.theme-provider
+
+*Source: financial-data-analyst/components/theme-provider.tsx | URL: https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/components/theme-provider.tsx*
+
+- `function ThemeProvider`
+
+### financial-data-analyst.components.ui.badge
+
+*Source: financial-data-analyst/components/ui/badge.tsx | URL: https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/components/ui/badge.tsx*
+
+- `function Badge`
+
+### financial-data-analyst.components.ui.chart
+
+*Source: financial-data-analyst/components/ui/chart.tsx | URL: https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/components/ui/chart.tsx*
+
+- `function useChart`
+- `cn`
+
+### browser-use-demo.browser_use_demo.browser_tool_utils.browser_dom_script
+
+*Source: browser-use-demo/browser_use_demo/browser_tool_utils/browser_dom_script.js | URL: https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/browser_tool_utils/browser_dom_script.js*
+
+- `function getRole`
+- `function getCleanName`
+- `function isVisible`
+- `function isInteractive`
+- `function isSemantic`
+- `function shouldIncludeElement`
+- `function isContainerElement`
+- `function processElement`

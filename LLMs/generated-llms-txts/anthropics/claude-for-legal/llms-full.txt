@@ -1,0 +1,731 @@
+# Claude for Legal
+
+> A Claude Code plugin marketplace providing 12 practice-area AI assistants for legal professionals — from commercial contracts to AI governance — each customizable to the user's practice profile, with built-in attorney oversight guardrails.
+
+---
+
+## Getting Started
+
+### [Quick Start](https://github.com/anthropics/claude-for-legal/blob/main/QUICKSTART.md)
+
+# Quick Start
+
+**60 seconds.** This gets you to using your plugins.
+
+## Install in Claude Cowork
+1. [Install Claude Desktop](https://claude.com/download)
+2. Get access to Claude Cowork
+3. Follow the instructions in the video below:
+
+https://github.com/user-attachments/assets/51394f0a-5277-4fe2-b81c-5c5e9ac876b5
+
+## Install in Claude Code
+
+1. **Open Claude Code** (in your terminal) or **Claude Cowork** (the desktop app). Not sure which you have? If you have a terminal window open with Claude in it, that's Claude Code.
+
+2. **Add the marketplace.** In Claude Code, type `/plugin marketplace add ` (with a space at the end), then **drag the unzipped `claude-for-legal` folder onto the terminal window** — it'll fill in the path. Then press Enter.
+
+   (Or type the full path: `/plugin marketplace add /Users/you/Desktop/claude-for-legal`)
+
+3. **Install your plugin.** Pick the one that matches your work from the table below, then:
+   ```
+   /plugin install privacy-legal@claude-for-legal
+   ```
+
+4. **Restart Claude Code.** Close and reopen. This step is not optional — the plugin isn't live until you restart.
+
+5. **Run setup.** Takes 2 minutes (quick start) or 10-15 minutes (full).
+   ```
+   /privacy-legal:cold-start-interview
+   ```
+
+6. **Connect a research tool.** Citations are flagged unverified without one. In Cowork: Settings -> Connectors -> add CourtListener. In Claude Code: the plugin already lists the research MCP in its config; you'll be prompted to authorize it the first time a skill needs it.
+
+## Install user-scoped, not project-scoped
+
+When you run `/plugin install`, you may be asked whether to install for this project only or for all projects (user scope). **Pick user scope.**
+
+It's counterintuitive: project scope feels safer. But project scope blocks the plugin from reading files outside the project folder — your outlines in Downloads, your contract in Documents, your client file in Dropbox. Most skills need to read your files. User scope doesn't give the plugin any extra access to your files — the plugin can only read files you explicitly point it at or that are in the current directory. It just means the plugin works from any folder instead of one.
+
+If you already installed project-scoped and want to switch: `/plugin uninstall <plugin>`, then `/plugin install <plugin>@claude-for-legal` from your home directory.
+
+## Which plugin is for me?
+
+| You are a... | Install... | First command |
+|---|---|---|
+| Privacy lawyer / DPO | `privacy-legal` | `/privacy-legal:use-case-triage` |
+| Commercial / contracts lawyer | `commercial-legal` | `/commercial-legal:review` |
+| Corporate / M&A lawyer | `corporate-legal` | `/corporate-legal:diligence-issue-extraction` |
+| Employment lawyer / HR counsel | `employment-legal` | `/employment-legal:wage-hour-qa` |
+| Product counsel | `product-legal` | `/product-legal:is-this-a-problem` |
+| IP lawyer / patent agent | `ip-legal` | `/ip-legal:clearance` |
+| Litigator (in-house or firm) | `litigation-legal` | `/litigation-legal:matter-intake` |
+| Regulatory / compliance counsel | `regulatory-legal` | `/regulatory-legal:reg-feed-watcher` |
+| AI governance lead | `ai-governance-legal` | `/ai-governance-legal:use-case-triage` |
+| Clinic supervisor (law school) | `legal-clinic` | `/legal-clinic:cold-start-interview` |
+| Law student | `law-student` | `/law-student:cold-start-interview` |
+| Legal ops / looking for skills | `legal-builder-hub` | `/legal-builder-hub:registry-browser` |
+
+## What you're installing
+
+Each plugin learns your playbook through a setup interview, writes it to a practice profile file (`~/.claude/plugins/config/claude-for-legal/<plugin>/CLAUDE.md`), and every skill reads from it. The profile is yours — edit it, re-run setup, or tell a skill to update it.
+
+**Every output is a draft for attorney review.** The plugins flag what they're unsure about, mark citations by source, and gate anything irreversible. A lawyer reviews, verifies, and takes responsibility. They make that review faster; they don't replace it.
+
+## What's in the box
+
+12 practice-area plugins, 5 managed-agent cookbooks, 16+ connectors. The full reference is in README.md.
+
+## Stuck?
+
+- **"Command not found"** after install -> you forgot the restart step. Restart Claude Code.
+- **"Run setup first"** -> run `/<plugin>:cold-start-interview` before any other command.
+- **Citations flagged `[verify]`** -> connect a research tool. Without one, every cite is from training data, not a current database.
+- **"I can't read [file]"** -> most often this means the plugin is project-scoped and the file is outside the project folder. See "Install user-scoped, not project-scoped" above — reinstall user-scoped or move the file into the project folder.
+- **The plugin doesn't do X** -> run `/legal-builder-hub:related-skills-surfacer` to find a better match, or check the plugin's README for "What this plugin does not do."
+
+---
+
+## Guide
+
+### [CLAUDE.md](https://github.com/anthropics/claude-for-legal/blob/main/CLAUDE.md)
+
+# CLAUDE.md
+
+Guidance for working on this repo. `claude-for-legal` is a Claude Code plugin
+marketplace — twelve first-party legal plugins, one vendor plugin, and five
+managed-agent cookbooks. Most work here is editing prompt content (skills,
+agents, hooks), plugin metadata, or cookbook config — not application code.
+
+## Layout
+
+```
+.claude-plugin/marketplace.json   # the marketplace manifest — one entry per plugin
+<plugin>/                         # 12 first-party plugins (commercial-legal, privacy-legal, ...)
+  .claude-plugin/plugin.json      # plugin manifest (name, version, description, author)
+  .mcp.json                       # MCP servers the plugin connects to
+  CLAUDE.md                       # practice-profile TEMPLATE (see "Plugin CLAUDE.md" below)
+  README.md                       # per-plugin docs
+  skills/<name>/SKILL.md          # one skill per directory
+  agents/<name>.md                # subagent definitions
+  hooks/hooks.json                # hook config (most plugins ship an empty stub)
+  .gitignore
+external_plugins/<vendor>/        # vendor-maintained plugins (CoCounsel)
+managed-agent-cookbooks/<name>/   # CMA agent.yaml + subagents/ + steering-examples.json
+scripts/                          # validate.py, lint-tool-scope.py, orchestrate.py,
+                                  # deploy-managed-agent.sh, test-cookbooks.sh
+references/                       # shared templates (company-profile, dashboard)
+```
+
+## Validation — run before opening a PR
+
+This repo follows the same conventions `anthropics/claude-plugins-official`
+enforces in CI. Run the equivalent checks locally:
+
+```bash
+# 1. Marketplace + per-plugin schema validation (source of truth)
+claude plugin validate .claude-plugin/marketplace.json
+for d in */; do [ -f "$d/.claude-plugin/plugin.json" ] && claude plugin validate "$d"; done
+claude plugin validate external_plugins/cocounsel-legal
+
+# 2. Cookbook tool-scope lint (orchestrators must not over-grant tools)
+python3 scripts/lint-tool-scope.py
+
+# 3. JSON/YAML sanity
+python3 -c "import json,glob; [json.load(open(f)) for f in glob.glob('**/*.json', recursive=True)]"
+```
+
+### Marketplace invariants (I1-I11)
+
+`claude-plugins-official` layers these on top of the schema check. They apply
+here too — the ones most likely to trip a contributor:
+
+- **I1** — `plugins[]` should be alpha-sorted by name (case-insensitive).
+  *Currently a known warning: the array is in a curated display order. If you
+  add a plugin, ask before re-sorting the whole array.*
+- **I2** — no duplicate plugin names.
+- **I3** — `description` 10-2000 chars, no leading/trailing whitespace.
+- **I8** — every vendored `source` (`"./<dir>"`) must point at a directory that
+  contains `.claude-plugin/plugin.json`.
+- **I9** — `source` paths/URLs must contain no shell metacharacters or `..`.
+- **I10** — no hidden Unicode (zero-width chars, bidi controls) in
+  `name`/`description`.
+- **I11** — `name` must match `^[a-z0-9][a-z0-9-]{1,63}$`.
+
+### Frontmatter requirements
+
+Every `agents/*.md` needs `name` and `description`. Every
+`skills/<name>/SKILL.md` needs `description`. Every `commands/*.md` needs
+`description`. Multi-line descriptions use `>` block scalars and that's fine —
+`claude plugin validate` parses them correctly.
+
+## Conventions
+
+### Keep `marketplace.json` in sync with `plugin.json`
+
+For first-party plugins, `marketplace.json`'s `name`, `description`, and
+`author` should match the plugin's own `.claude-plugin/plugin.json` field for
+field. If you change a plugin's description in one place, change it in the
+other.
+
+### Skill names in prose must be canonical
+
+When a `SKILL.md` (especially `customize` or `cold-start-interview`) tells the
+user "run `/foo`," `foo` must be the actual `skills/<foo>/` directory name.
+Short forms like `/triage` for `/use-case-triage` look right in prose but are
+dead commands — the user types them and nothing happens. Refs to Claude Code
+built-ins (`/mcp`, `/plugin`) and to other plugins (`/<other-plugin>:<skill>`)
+are fine.
+
+### Plugin CLAUDE.md is a template, not project context
+
+Each `<plugin>/CLAUDE.md` is a practice-profile template that the
+`cold-start-interview` skill copies to `~/.claude/plugins/config/claude-for-legal/<plugin>/CLAUDE.md`
+on the user's machine. It is *not* loaded as project context when the plugin is
+installed — `claude plugin validate` warns about this and the warning is
+expected. Don't "fix" it by moving the content into a skill.
+
+### `external_plugins/` is vendor-maintained
+
+Plugins under `external_plugins/` are built and maintained by the vendor
+(README.md has the policy). Don't change vendor-authored content without
+checking with them first; whitespace normalization and formatting are usually
+fine since the vendor lands changes via PR rather than mirroring a fork.
+
+### Formatting
+
+- 2-space indent in all JSON and `.mcp.json` files.
+- Final newline at end of every text file.
+- No trailing whitespace.
+- Markdown tables: pipe-aligned columns are nice but not required; just keep
+  the column count consistent.
+
+## Cookbooks
+
+Each `managed-agent-cookbooks/<name>/` has `agent.yaml` (the orchestrator),
+`subagents/*.yaml` (the leaves), `steering-examples.json`, and `README.md`. Two
+rules that `scripts/lint-tool-scope.py` enforces:
+
+1. The orchestrator gets local-only tools (`read`, `grep`, `glob`,
+   `agent_toolset`); MCP and write tools belong to specific subagent leaves.
+2. The README's security table and the `agent.yaml` comments must match what
+   the YAML actually grants. Don't claim a tool a subagent doesn't have.
+
+## Things to leave alone
+
+- Per-plugin `.gitignore` files differ slightly across plugins. Probably
+  intentional; ask before unifying.
+- `hooks/hooks.json` is missing in two plugins. Hooks are optional; the missing
+  files are not a bug.
+- `references/` lives only at repo root and is not shipped inside any plugin
+  directory. Several plugin `CLAUDE.md` templates reference it as if it were —
+  that's a known gap, not a thing to silently move.
+
+---
+
+### [Adding a Connector](https://github.com/anthropics/claude-for-legal/blob/main/CONNECTORS.md)
+
+# Adding a Connector
+
+The plugins are at their best when connected to authoritative sources. If you build or operate a legal data source, research tool, CLM, DMS, eDiscovery platform, or practice management system, we want your MCP connector in the suite.
+
+## What makes a good legal MCP connector
+
+- **Remote MCP server over HTTPS** with OAuth or API-key auth (streamable HTTP or SSE transport)
+- **Read-heavy tools** — search, fetch, list. Write tools (create, send, file) need an explicit confirmation prompt on the client side; say so in your tool descriptions.
+- **Provenance in results** — return the source, date retrieved, and a citation-ready identifier. The plugins tag every cite by source; your connector should make that possible.
+- **No instruction-like content in results** — the plugins treat retrieved content as data, not commands. If your tool results include metadata or system notes, mark them clearly so they don't look like embedded directives.
+- **Rate limits and errors that degrade gracefully** — the plugins have a fallback for when a connector isn't responding; a clean error is better than a timeout.
+
+## How to submit
+
+1. Publish your MCP server and document its tools, auth flow, and data coverage.
+2. Open a PR adding your server to the relevant plugin's `.mcp.json` with the URL, auth method, and a one-line description of what it gives Claude.
+3. Include a note on which practice areas / plugins it's most useful for.
+4. We'll test against the plugin workflows and merge. Connectors that pass the retrieval-quality and injection-resistance checks go in the default `.mcp.json`; others get documented in the plugin README for users to add themselves.
+
+## Current connectors
+
+Connectors shipped in the default `.mcp.json` of each plugin:
+
+| Connector | Plugins |
+|---|---|
+| **Slack** | all 12 |
+| **Google Drive** (`gdrive`) | all 12 |
+| **CourtListener** | legal-clinic, ip-legal, litigation-legal, law-student |
+| **Descrybe** | legal-clinic, ip-legal, law-student |
+| **Definely** | commercial-legal, corporate-legal |
+| **iManage** | commercial-legal, corporate-legal |
+| **Solve Intelligence** | corporate-legal, ip-legal |
+| **TopCounsel** | commercial-legal, corporate-legal, litigation-legal |
+| **Box** | corporate-legal |
+| **Ironclad** | commercial-legal |
+| **DocuSign / DocuSign CLM** | commercial-legal |
+| **Everlaw** | litigation-legal |
+| **Trellis** | litigation-legal |
+| **Aurora** | litigation-legal |
+| **Courtroom5** | legal-clinic |
+| **Lawve AI** | legal-builder-hub |
+| **Linear** | product-legal |
+| **Atlassian (Jira)** | product-legal |
+| **Asana** | product-legal |
+
+See the `.mcp.json` in each plugin directory for the authoritative list.
+
+## Wanted connectors
+
+These would make specific plugins significantly more useful. If you build or operate one, see "How to submit" above.
+
+- **IP management systems** (Anaqua, Clarivate IPfolio, AppColl, Patrix, Alt Legal, FoundationIP) — full docket sync for `ip-legal` portfolio tracking
+- **USPTO by customer number** — full portfolio status and deadlines, not just per-application lookup
+- **USPTO TSDR / Trademark Status** — trademark status and deadlines for `ip-legal` brand management
+- **Jira / Linear / Asana for OSS requests** — `ip-legal` OSS clearance can monitor and respond to incoming tickets
+- **Thomson Reuters** (CoCounsel, Practical Law, Westlaw) — research and drafting for every plugin
+- **SS&C Intralinks / Datasite** — VDR access for `corporate-legal` diligence
+- **Relativity / Everlaw beyond read** — eDiscovery workflow for `litigation-legal`
+- **State bar CLE trackers** — `law-student` bar prep
+- **Court e-filing systems** (PACER write, state e-filing) — with a hard irreversibility gate, obviously
+- **Global AI Regulation Tracker** — jurisdiction-tagged AI regulation tracking with structured API. Would be a primary-source-adjacent feed for `ai-governance-legal` and `regulatory-legal`.
+- **Regulatory primary sources** — a connector to official registers (eCFR, Federal Register, EUR-Lex, legislation.gov.uk, Federal Register of Legislation AU, Singapore Statutes Online) that bypasses the agent-blockers many legislative sites use.
+
+## Questions
+
+Open an issue on this repo. For partnership or integration questions, see the contact on each plugin's README.
+
+---
+
+### [AI Governance Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/ai-governance-legal/CLAUDE.md)
+
+*(Template practice profile for AI governance legal counsel. Covers regulatory footprint across EU AI Act, US EO 14110, and other AI governance frameworks. Configure via `/ai-governance-legal:cold-start-interview`.)*
+
+---
+
+### [Commercial Contracts Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/commercial-legal/CLAUDE.md)
+
+*(Template practice profile for commercial contracts counsel. Covers playbook positions, jurisdiction delta, standard fallbacks, and escalation chain. Configure via `/commercial-legal:cold-start-interview`.)*
+
+---
+
+### [Corporate Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/corporate-legal/CLAUDE.md)
+
+*(Template practice profile for corporate/M&A counsel. Covers diligence frameworks, entity management, and deal workflow. Configure via `/corporate-legal:cold-start-interview`.)*
+
+---
+
+### [Employment Law Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/employment-legal/CLAUDE.md)
+
+*(Template practice profile for employment law counsel. Covers wage-and-hour, leave, termination, and HR policy frameworks. Configure via `/employment-legal:cold-start-interview`.)*
+
+---
+
+### [IP Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/ip-legal/CLAUDE.md)
+
+*(Template practice profile for IP counsel. Covers patent, trademark, copyright, and OSS clearance workflows. Configure via `/ip-legal:cold-start-interview`.)*
+
+---
+
+### [Law Student Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/law-student/CLAUDE.md)
+
+*(Template practice profile for law students. Covers bar prep, research skills, and supervised practice workflows. Configure via `/law-student:cold-start-interview`.)*
+
+---
+
+### [Legal Builder Hub Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/legal-builder-hub/CLAUDE.md)
+
+# Legal Builder Hub Practice Profile
+
+*Written by cold-start on [DATE].*
+
+---
+
+## Who's using this
+
+**Role:** [PLACEHOLDER — Lawyer / legal professional | Non-lawyer with attorney access | Non-lawyer without attorney access]
+**Attorney contact:** [PLACEHOLDER — Name / team / outside firm / N/A]
+
+*This section is written by the hub's Part 0 so other legal plugins installed
+afterward can read the role from here instead of re-asking per plugin.*
+
+---
+
+## Available integrations
+
+| Integration | Status | Fallback if unavailable |
+|---|---|---|
+| Slack | [checked / unchecked] | New-skill and update notifications surface on next registry-browser or auto-updater run instead of proactively |
+
+---
+
+## Your practice profile
+
+**Practice type:** [PLACEHOLDER — in-house commercial, product counsel, law firm lit, etc.]
+**Industry:** [PLACEHOLDER]
+**Team size:** [PLACEHOLDER]
+**Tooling comfort:** [PLACEHOLDER — builder / tinkerer / just-make-it-work]
+
+---
+
+## Installed starter pack
+
+| Skill | Source | Installed | Why recommended |
+|---|---|---|---|
+| [PLACEHOLDER] | | | |
+
+---
+
+## Watched registries
+
+| Registry | URL | Last synced | Update preference |
+|---|---|---|---|
+| lpm-skills | https://github.com/legalopsconsulting/lpm-skills | [date] | notify |
+| [PLACEHOLDER] | | | |
+
+---
+
+## Update preferences
+
+**Update preference:** [PLACEHOLDER — notify / manual]
+**New skill notifications:** [PLACEHOLDER — all / matching practice profile / none]
+
+---
+
+### [Law School Clinic Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/legal-clinic/CLAUDE.md)
+
+# Law School Clinic Practice Profile
+
+*Written by the professor-facing cold-start interview. Students don't edit this —
+they run `/ramp`. If you see `[PLACEHOLDER]` below, run `/legal-clinic:cold-start-interview`.*
+
+---
+
+## Who's using this
+
+**Role:** [PLACEHOLDER — Supervising attorney (default, required to run setup) | Clinic student (routed to `/legal-clinic:ramp`) | Clinic staff]
+
+**Supervising attorney(s):** [PLACEHOLDER — name(s), bar admission jurisdiction(s), bar number(s)]
+**Student practice rule authority:** [PLACEHOLDER — e.g., "Cal. Rules of Court 9.42"]
+**Ethical preconditions confirmed:** [PLACEHOLDER — yes / no]
+
+---
+
+## Clinic profile
+
+**Clinic:** [PLACEHOLDER — name]
+**School:** [PLACEHOLDER]
+**Practice areas:** [PLACEHOLDER — immigration / housing / family / consumer / criminal defense / civil rights / other]
+**Supervising professors/attorneys:** [PLACEHOLDER — names]
+**Students this semester:** [PLACEHOLDER — count]
+**Typical active caseload:** [PLACEHOLDER]
+
+**Client population:** [PLACEHOLDER — who walks in, common situations]
+**Languages beyond English:** [PLACEHOLDER]
+**Common referral sources:** [PLACEHOLDER]
+
+---
+
+## Supervision style
+
+**Model:** [PLACEHOLDER — "formal review queue" | "configurable flags, informal review" | "lighter-touch"]
+
+---
+
+### [Litigation Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/litigation-legal/CLAUDE.md)
+
+# Litigation Practice Profile
+
+*Written by cold-start on [DATE].*
+
+---
+
+## Risk calibration
+
+**Posture:** [PLACEHOLDER — e.g., "Fight principled matters; settle nuisance claims quickly; avoid published opinions against us."]
+
+### Severity x likelihood matrix
+
+|                         | Low likelihood   | Medium likelihood | High likelihood |
+|-------------------------|------------------|-------------------|-----------------|
+| **High severity**       | Monitor          | Priority          | **Critical**    |
+| **Medium severity**     | Routine          | Priority          | Priority        |
+| **Low severity**        | Routine          | Routine           | Monitor         |
+
+### Settlement authority ladder
+
+| Amount | Approver |
+|---|---|
+| $0-[PLACEHOLDER] | Litigation counsel |
+| [PLACEHOLDER]-[PLACEHOLDER] | GC |
+| [PLACEHOLDER]-[PLACEHOLDER] | CFO + GC |
+| >[PLACEHOLDER] | Board / audit committee |
+
+---
+
+## Landscape
+
+**Dispute patterns:** [PLACEHOLDER — employment, contract, IP, product liability, regulatory, subpoenas]
+**Outside counsel bench:** [PLACEHOLDER — firm, lead partner, matter type, rate posture]
+**Frequent fora:** [PLACEHOLDER — e.g., Delaware Chancery, N.D. Cal., S.D.N.Y., AAA / JAMS arbitration]
+
+---
+
+## House style
+
+**Board / audit committee memo:** [PLACEHOLDER — bullet summary + risk table + ask + reserve status + next steps]
+**Reserve memo:** [PLACEHOLDER — facts, legal standard, probability assessment, estimable range, reserve recommendation]
+**Privilege marking:** [PLACEHOLDER — e.g., "Privileged & Confidential — Attorney-Client Communication / Attorney Work Product"]
+
+---
+
+### [Privacy Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/privacy-legal/CLAUDE.md)
+
+# Privacy Practice Profile
+
+*Written by the cold-start interview. Until then, this is a template — if you see
+`[PLACEHOLDER]`, run `/privacy-legal:cold-start-interview`.*
+
+---
+
+## Who we are
+
+[Company] is a [B2B SaaS / consumer app / etc.]. We are primarily a [controller / processor / both]
+with respect to [whose data]. Data lives in [regions]. Privacy team is [N] people.
+[DPO name or none]. Escalation goes to [name].
+
+**Regulatory footprint:** [PLACEHOLDER — GDPR / CCPA / HIPAA / etc., only what applies]
+
+---
+
+## DPA playbook
+
+### When we are the processor
+
+| Term | Our standard | Fallback | Never |
+|---|---|---|---|
+| Audit rights | [PLACEHOLDER] | | |
+| Breach notification | [PLACEHOLDER] | | |
+| Subprocessor changes | [PLACEHOLDER] | | |
+| Data location | [PLACEHOLDER] | | |
+| Deletion on termination | [PLACEHOLDER] | | |
+| Liability for data | [PLACEHOLDER] | | |
+
+---
+
+## DSAR process
+
+**Volume:** [PLACEHOLDER]
+**Handler:** [PLACEHOLDER]
+**Systems to check:** [PLACEHOLDER — list everywhere user data lives]
+**Identity verification:** [PLACEHOLDER]
+**Response SLA:** [PLACEHOLDER]
+
+---
+
+### [Product Legal Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/product-legal/CLAUDE.md)
+
+# Product Legal Practice Profile
+
+*Written by cold-start on [DATE]. If you see `[PLACEHOLDER]`, run `/product-legal:cold-start-interview`.*
+
+---
+
+## Who we are
+
+[Company] makes [product]. [Consumer/B2B/both]. Regulated by [none/list]. International: [regions].
+
+**Company stage:** [PLACEHOLDER — pre-seed / Series A-D / pre-IPO / public / PE-owned / other]
+**Risk appetite:** [PLACEHOLDER — conservative / middle / aggressive, plus any category-specific deviations]
+
+---
+
+## Launch review process
+
+**How launches reach legal:** [PLACEHOLDER — Jira/Linear/etc.]
+**Lead time:** [PLACEHOLDER]
+**Output format:** [PLACEHOLDER]
+**Sign-off:** [PLACEHOLDER — formal gate / advisory]
+
+---
+
+## Review framework
+
+1. [PLACEHOLDER — Contractual commitments]
+2. [PLACEHOLDER — Privacy]
+3. [PLACEHOLDER — Security]
+4. [PLACEHOLDER — IP]
+5. [PLACEHOLDER — Third-party]
+6. [PLACEHOLDER — Regulatory]
+7. [PLACEHOLDER — Marketing]
+8. [PLACEHOLDER — AI governance]
+
+---
+
+### [Company Profile](https://github.com/anthropics/claude-for-legal/blob/main/references/company-profile-template.md)
+
+# Company Profile
+
+*Shared by all Claude for Legal plugins. The first plugin you set up writes this; the rest read it.
+Edit directly or re-run any plugin's `/cold-start-interview` to update.*
+
+**Practice setting:** [Solo/small firm | Midsize/large firm | In-house | Government/legal aid/clinic]
+**Name:** [Company or firm name]
+**Industry:** [What the company does / the firm's primary practice areas]
+**What we sell / deliver:** [Products, services, who to — or "N/A, law firm"]
+**Size:** [Employee count / lawyers / relevant headcount]
+
+## Geographic and regulatory footprint
+
+**Jurisdictions we operate in:** [e.g., US (CA, NY, TX), UK, EU (DE, FR), AU, SG]
+**Primary jurisdiction:** [Where the bulk of work happens]
+**Regulators we're subject to:** [SEC, FTC, ICO, EDPB, ASIC, OAIC, etc. — only what applies]
+**Open regulatory matters:** [or none]
+
+## Risk posture
+
+**Overall risk appetite:** [Conservative / middle / aggressive]
+**What keeps us up at night:** [The thing that would be a very bad day]
+**The question leadership always asks:** [or not known yet]
+
+## Key people
+
+**GC / Head of Legal:** [Name]
+**Escalation chain:** [Name -> Name -> Name, or "set per plugin"]
+
+---
+
+*Per-plugin practice profiles (playbooks, review frameworks, house style, matter workspaces) live alongside this file in each plugin's folder. This file holds the facts that are true regardless of which plugin you're using.*
+
+---
+
+### [Dashboard Template](https://github.com/anthropics/claude-for-legal/blob/main/references/dashboard-template.md)
+
+# Dashboard Template
+
+*Referenced by the Dashboard offer guardrail. Keep dashboards simple and consistent — the value is speed of comprehension, not visual polish.*
+
+## Structure (top to bottom)
+
+1. **Title and metadata.** What this is, when it was generated, what it covers. One line.
+2. **Summary stats.** The counts that matter, color-coded. "40 findings: 3 blocking, 8 high, 15 medium, 14 low — 6 due this week." This is the most valuable line. Make it scannable.
+3. **The reviewer note.** Same one-block format as any output. Sources, scope, flags, before-relying. Dashboards don't skip the safety metadata.
+4. **Chart(s).** One or two max. Risk distribution (bar), category breakdown (pie or stacked bar), or timeline (Gantt-lite or sorted table). Never more than two.
+5. **The table.** Sortable, filterable, color-coded by severity/status.
+6. **The decision tree.** Same options as the text output. "What next?"
+
+## Rendering by surface
+
+- **Cowork / Claude Desktop:** HTML artifact. Self-contained, single file, inline CSS. No external dependencies, no CDN, no npm.
+- **Claude Code:** Write the HTML file to the plugin's outputs folder and tell the user to open it. Also produce a markdown version with Unicode block charts.
+- **Excel (optional):** For tabular data the user will take into a meeting or share with a non-technical stakeholder.
+- **Escape untrusted input (apply every dashboard, every time).** Every value from outside this session must be HTML-escaped. In the inline JS sorter/filter, set cell text via `textContent`, never `innerHTML`. Scheme-check any URL before emitting it into `href`/`src`.
+
+## Keep it boring
+
+- **Color palette:** Red / orange / yellow / green for severity. Gray for neutral. Blue for status. Nothing else.
+- **No animations, no frameworks, no external fonts.**
+- **No clever layouts.** Summary, reviewer note, chart, table, decision tree. Top to bottom.
+
+---
+
+### [Regulatory Practice Profile](https://github.com/anthropics/claude-for-legal/blob/main/regulatory-legal/CLAUDE.md)
+
+# Regulatory Practice Profile
+
+*Written by cold-start on [DATE]. If `[PLACEHOLDER]`, run `/regulatory-legal:cold-start-interview`.*
+
+---
+
+## Regulators we watch
+
+| Regulator | Jurisdiction | Why we watch | Feed source |
+|---|---|---|---|
+| [PLACEHOLDER] | | | |
+
+---
+
+## Policy library
+
+**Location:** [PLACEHOLDER — Drive folder, SharePoint, Confluence]
+
+---
+
+## Materiality threshold
+
+**Always material (act immediately):**
+- [PLACEHOLDER — e.g., "New obligation with a deadline", "Enforcement action in our sector"]
+
+**Review-worthy (assess and decide):**
+- [PLACEHOLDER — e.g., "Proposed rule", "Guidance document", "Enforcement action against a competitor"]
+
+**FYI (note, no action):**
+- [PLACEHOLDER — e.g., "Speech by a commissioner", "Academic commentary"]
+
+---
+
+## Gap response process
+
+**Who triages regulatory changes:** [PLACEHOLDER]
+**Who owns policy updates:** [PLACEHOLDER]
+**How gaps get tracked:** [PLACEHOLDER — ticket system, spreadsheet, etc.]
+**Escalation for material gaps:** [PLACEHOLDER]
+
+---
+
+## Optional
+
+### [Contributing to Claude for Legal](https://github.com/anthropics/claude-for-legal/blob/main/CONTRIBUTING.md)
+
+# Contributing to Claude for Legal
+
+Notes for anyone writing or editing a plugin in this repo. Keep this short — the
+design principles that matter most for the quality of the output, not a style
+guide.
+
+## Before your first PR
+
+Sign the CLA. The first time you open a pull request, the CLA Assistant bot will
+comment with a link to the CLA and ask you to confirm. Reply with
+`I have read the CLA Document and I hereby sign the CLA` and the check will pass.
+You only need to do this once.
+
+## Design principle: SKILL.md encodes the right behavior; CLAUDE.md guardrails are the net
+
+Every plugin in this repo ships with two layers of instruction:
+
+1. **`<plugin>/skills/<skill>/SKILL.md`** — what this specific skill does, step by
+   step. The narrow, task-specific scaffold.
+2. **`<plugin>/CLAUDE.md`** — the shared guardrails and the practice profile.
+   "Scaffolding, not blinders," source-tag discipline, "verify user-stated legal
+   facts," premise verification, destination check, cross-skill severity floor,
+   pre-flight citation banner. The wide, plugin-level safety net.
+
+**If a skill's correct output depends on a CLAUDE.md guardrail catching a
+mistake the SKILL.md would have made, that's a design smell.** The SKILL.md
+should tell the model what to do directly; the guardrails should catch what the
+SKILL.md missed.
+
+**Rule of thumb: if a QA test passes only because a guardrail fired, add the
+behavior to the SKILL.md directly.** The guardrail stays (belt and suspenders),
+but the skill now carries the knowledge it needs on its own.
+
+## A few concrete things that follow
+
+- **Put the doctrine in the skill.** If a skill's mode covers patents, cover
+  design patents. If it covers overtime, cover the regular-rate formula. Not a
+  pointer to "and also think about" — the actual checklist.
+- **Attach provenance tags to numbers, not to paragraphs.**
+- **Make the decline pathway a scaffold, not an escape hatch.** If the right
+  answer to some category of question is "I decline to compute," bake that into
+  the skill as a hard gate.
+- **Write the gate header so the gate is default-on.** If there is an
+  exemption, phrase the heading as the gate and narrow the exemption in a
+  sub-bullet, not the other way around.
+
+## Workflow notes
+
+- **Read the plugin's `CLAUDE.md` before editing any skill in that plugin.**
+- **Bump the plugin version on a material change.** Patch bumps for behavior
+  additions; minor bumps for new skills or new required inputs.
+- **Run the validators.** `scripts/validate.py` and `scripts/lint-tool-scope.py`
+  check the structural invariants the plugin loader depends on.
+- **Do not remove the shared guardrails from CLAUDE.md.** The net stays. The
+  goal is a skill that doesn't need the net, not a plugin without one.

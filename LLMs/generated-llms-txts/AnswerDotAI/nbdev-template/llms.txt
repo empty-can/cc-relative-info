@@ -1,0 +1,8 @@
+# Nbdev Template
+
+> nbdev-template は、Jupyter Notebook を起点にドキュメント・テスト・パッケージを一括生成する nbdev プロジェクトの公式スターターテンプレートです。新規ライブラリ作者が即座に開発を始められるように最小構成のノートブックと設定ファイルを提供します。
+
+## Guide
+
+- [core](https://github.com/AnswerDotAI/nbdev-template/blob/master/00_core.ipynb): Fill in a module description here
+- [{{repo}}](https://github.com/AnswerDotAI/nbdev-template/blob/master/index.ipynb): {{description}}

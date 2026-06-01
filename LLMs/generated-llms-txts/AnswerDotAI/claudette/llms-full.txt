@@ -1,0 +1,4473 @@
+# claudette
+
+> AnswerDotAI が開発した Python ライブラリ。Anthropic Claude API を薄くラップし、ツールループ・非同期・テキストエディタ等の高度な機能を開発者が手軽に利用できるインターフェースとして提供する。
+
+---
+
+## Guide
+
+### Claudette's source
+
+*Source: 00_core.ipynb | URL: https://github.com/AnswerDotAI/claudette/blob/main/00_core.ipynb*
+
+```python
+#| default_exp core
+```
+
+# Claudette's source
+
+This is the 'literate' source code for Claudette. You can view the fully rendered version of the notebook [here](https://claudette.answer.ai/core.html), or you can clone the git repo and run the [interactive notebook](https://github.com/AnswerDotAI/claudette/blob/main/00_core.ipynb) in Jupyter. The notebook is converted the [Python module claudette/core.py](https://github.com/AnswerDotAI/claudette/blob/main/claudette/core.py) using [nbdev](https://nbdev.fast.ai/). The goal of this source code is to both create the Python module, and also to teach the reader *how* it is created, without assuming much existing knowledge about Claude's API.
+
+Most of the time you'll see that we write some source code *first*, and then a description or discussion of it *afterwards*.
+
+## Setup
+
+```python
+import os
+# os.environ['ANTHROPIC_LOG'] = 'debug'
+```
+
+To print every HTTP request and response in full, uncomment the above line. This functionality is provided by Anthropic's SDK.
+
+```python
+#| export
+import inspect, typing, json
+from collections import abc
+from dataclasses import dataclass
+from typing import get_type_hints, Any, Callable
+from functools import wraps
+
+from anthropic import Anthropic, AnthropicBedrock, AnthropicVertex
+from anthropic.types import (Usage, TextBlock, ServerToolUseBlock,
+                             WebSearchToolResultBlock, Message, ToolUseBlock,
+                             ThinkingBlock, ServerToolUsage)
+from anthropic.resources import messages
+
+import toolslm
+from toolslm.funccall import *
+
+from fastcore.meta import delegates
+from fastcore.utils import *
+from fastcore.xtras import save_iter
+from msglm import mk_msg_anthropic as mk_msg, mk_msgs_anthropic as mk_msgs
+```
+
+```python
+#| hide
+from nbdev import show_doc
+```
+
+```python
+from anthropic.types import Model
+from claudette.text_editor import *
+from typing import get_args
+from datetime import datetime
+from pprint import pprint
+from IPython.display import Image
+from cachy import enable_cachy
+
+import warnings
+```
+
+```python
+enable_cachy()
+```
+
+```python
+warnings.filterwarnings("ignore", message="Pydantic serializer warnings")
+```
+
+```python
+#| export
+_all_ = ['mk_msg', 'mk_msgs']
+```
+
+```python
+#| export
+empty = inspect.Parameter.empty
+```
+
+:::{.callout-tip}
+
+If you're reading the rendered version of this notebook, you'll see an "Exported source" collapsible widget below. If you're reading the source notebook directly, you'll see `#| exports` at the top of the cell. These show that this piece of code will be exported into the python module that this notebook creates. No other code will be included -- any other code in this notebook is just for demonstration, documentation, and testing.
+
+You can toggle expanding/collapsing the source code of all exported sections by using the `</> Code` menu in the top right of the rendered notebook page.
+
+:::
+
+```python
+#| exports
+
+model_types = {
+    # Anthropic
+    'claude-opus-4-6': 'opus',
+    'claude-sonnet-4-6': 'sonnet',
+    'claude-haiku-4-5': 'haiku',
+    'claude-opus-4-5': 'opus-4-5',
+    'claude-sonnet-4-5': 'sonnet-4-5',
+    'claude-opus-4-1-20250805': 'opus-4-1',
+    'claude-opus-4-20250514': 'opus-4',
+    'claude-3-opus-20240229': 'opus-3',
+    'claude-sonnet-4-20250514': 'sonnet-4',
+    'claude-3-7-sonnet-20250219': 'sonnet-3-7',
+    'claude-3-5-sonnet-20241022': 'sonnet-3-5',
+    'claude-3-haiku-20240307': 'haiku-3',
+    'claude-3-5-haiku-20241022': 'haiku-3-5',
+    # AWS
+    'anthropic.claude-opus-4-1-20250805-v1:0': 'opus',
+    'anthropic.claude-3-5-sonnet-20241022-v2:0': 'sonnet',
+    'anthropic.claude-3-opus-20240229-v1:0': 'opus-3',
+    'anthropic.claude-3-sonnet-20240229-v1:0': 'sonnet',
+    'anthropic.claude-3-haiku-20240307-v1:0': 'haiku',
+    # Google
+    'claude-opus-4-1@20250805': 'opus',
+    'claude-3-5-sonnet-v2@20241022': 'sonnet',
+    'claude-3-opus@20240229': 'opus-3',
+    'claude-3-sonnet@20240229': 'sonnet',
+    'claude-3-haiku@20240307': 'haiku',
+}
+
+all_models = list(model_types)
+```
+
+```python
+#| hide
+# Full list of models via the anthropic SDK for reference. Not all models are surfaced by Claudette.
+Model
+```
+
+**Outputs:**
+typing.Union[typing.Literal['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-opus-4-5-20251101', 'claude-opus-4-5', 'claude-3-7-sonnet-latest', 'claude-3-7-sonnet-20250219', 'claude-3-5-haiku-latest',  … (truncated)
+
+```python
+#| export
+models = all_models[:10]
+```
+
+```python
+models
+```
+
+**Outputs:**
+['claude-opus-4-6',
+ 'claude-sonnet-4-6',
+ 'claude-haiku-4-5',
+ 'claude-opus-4-5',
+ 'claude-sonnet-4-5',
+ 'claude-opus-4-1-20250805',
+ 'claude-opus-4-20250514',
+ 'claude-3-opus-20240229',
+ 'claude-son … (truncated)
+
+```python
+#| export
+models_aws = [
+    'anthropic.claude-opus-4-1-20250805-v1:0',
+    'anthropic.claude-sonnet-4-20250514-v1:0',
+    'claude-3-5-haiku-20241022',
+    'claude-3-7-sonnet-20250219',
+    'anthropic.claude-3-opus-20240229-v1:0',
+    'anthropic.claude-3-5-sonnet-20241022-v2:0'
+]
+```
+
+```python
+#| export
+models_goog = [
+    'claude-opus-4-1@20250805',
+    'anthropic.claude-3-sonnet-20240229-v1:0',
+    'anthropic.claude-3-haiku-20240307-v1:0',
+    'claude-3-opus@20240229',
+    'claude-3-5-sonnet-v2@20241022',
+    'claude-3-sonnet@20240229',
+    'claude-3-haiku@20240307'
+]
+```
+
+```python
+#| exports
+text_only_models = ('claude-3-5-haiku-20241022',)
+```
+
+```python
+#| exports
+has_streaming_models = set(all_models)
+has_system_prompt_models = set(all_models)
+has_temperature_models = set(all_models)
+has_extended_thinking_models = {
+    'claude-opus-4-6', 'claude-sonnet-4-6',
+    'claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5',
+    'claude-opus-4-1-20250805', 'claude-opus-4-20250514', 'claude-sonnet-4-20250514', 'claude-3-7-sonnet-20250219'
+}
+```
+
+```python
+has_extended_thinking_models
+```
+
+**Outputs:**
+{'claude-3-7-sonnet-20250219',
+ 'claude-haiku-4-5',
+ 'claude-opus-4-1-20250805',
+ 'claude-opus-4-20250514',
+ 'claude-opus-4-5',
+ 'claude-opus-4-6',
+ 'claude-sonnet-4-20250514',
+ 'claude-sonnet-4-5',
+  … (truncated)
+
+```python
+#| exports
+def can_stream(m): return m in has_streaming_models
+def can_set_system_prompt(m): return m in has_system_prompt_models
+def can_set_temperature(m): return m in has_temperature_models
+def can_use_extended_thinking(m): return m in has_extended_thinking_models
+```
+
+We include these functions to provide a uniform library interface with cosette since openai models such as o1 do not have many of these capabilities.
+
+```python
+assert can_stream('claude-3-5-sonnet-20241022') and can_set_system_prompt('claude-3-5-sonnet-20241022') and can_set_temperature('claude-3-5-sonnet-20241022')
+```
+
+These are the current versions and [prices](https://www.anthropic.com/pricing#anthropic-api) of Anthropic's models at the time of writing.
+
+```python
+model = models[1]
+model
+```
+
+**Outputs:**
+'claude-sonnet-4-6'
+
+## Antropic SDK
+
+```python
+cli = Anthropic()
+```
+
+This is what Anthropic's SDK provides for interacting with Python. To use it, pass it a list of *messages*, with *content* and a *role*. The roles should alternate between *user* and *assistant*.
+
+:::{.callout-tip}
+
+After the code below you'll see an indented section with an orange vertical line on the left. This is used to show the *result* of running the code above. Because the code is running in a Jupyter Notebook, we don't have to use `print` to display results, we can just type the expression directly, as we do with `r` here.
+
+:::
+
+```python
+m = {'role': 'user', 'content': "I'm Jeremy"}
+r = cli.messages.create(messages=[m], model=model, max_tokens=100)
+r
+```
+
+**Outputs:**
+Message(id='msg_01Q3123HGtAxWnUraLL65H24', container=None, content=[TextBlock(citations=None, text='Hi Jeremy! Nice to meet you. How can I help you today?', type='text')], model='claude-sonnet-4-6', r … (truncated)
+
+### Formatting output
+
+That output is pretty long and hard to read, so let's clean it up. We'll start by pulling out the `Content` part of the message.
+To do that, we're going to write our first function which will be included to the `claudette/core.py` module.
+
+:::{.callout-tip}
+
+This is the first exported public function or class we're creating (the previous export was of a variable). In the rendered version of the notebook for these you'll see 4 things, in this order (unless the symbol starts with a single `_`, which indicates it's *private*):
+
+- The signature (with the symbol name as a heading, with a horizontal rule above)
+- A table of paramater docs (if provided)
+- The doc string (in italics).
+- The source code (in a collapsible "Exported source" block)
+
+After that, we generally provide a bit more detail on what we've created, and why, along with a sample usage.
+
+:::
+
+```python
+#| exports
+def _type(x):
+    try: return x.type
+    except AttributeError: return x.get('type')
+
+def find_block(r:abc.Mapping, # The message to look in
+               blk_type:type|str=TextBlock  # The type of block to find
+              ):
+    "Find the first block of type `blk_type` in `r.content`."
+    f = (lambda x:_type(x)==blk_type) if isinstance(blk_type,str) else (lambda x:isinstance(x,blk_type))
+    return first(o for o in r.content if f(o))
+```
+
+This makes it easier to grab the needed parts of Claude's responses, which can include multiple pieces of content. By default, we look for the first text block. That will generally have the content we want to display.
+
+```python
+find_block(r)
+```
+
+**Outputs:**
+TextBlock(citations=None, text='Hi Jeremy! Nice to meet you. How can I help you today?', type='text')
+
+```python
+def contents(r):
+    "Helper to get the contents from Claude response `r`."
+    blk = find_block(r)
+    if not blk and r.content: blk = r.content[0]
+    if hasattr(blk,'text'): return blk.text.strip()
+    elif hasattr(blk,'content'): return blk.content.strip()
+    elif hasattr(blk,'source'): return f'*Media Type - {blk.type}*'
+    return str(blk)
+```
+
+For display purposes, we often just want to show the text itself.
+
+```python
+contents(r)
+```
+
+**Outputs:**
+'Hi Jeremy! Nice to meet you. How can I help you today?'
+
+```python
+#| exports
+@patch
+def _repr_markdown_(self:(Message)):
+    det = '\n- '.join(f'{k}: `{v}`' for k,v in self.model_dump().items())
+    cts = re.sub(r'\$', '&#36;', contents(self))  # escape `$` for jupyter latex
+    return f"""{cts}
+
+<details>
+
+- {det}
+
+</details>"""
+```
+
+Jupyter looks for a `_repr_markdown_` method in displayed objects; we add this in order to display just the content text, and collapse full details into a hideable section. Note that `patch` is from [fastcore](https://fastcore.fast.ai/), and is used to add (or replace) functionality in an existing class. We pass the class(es) that we want to patch as type annotations to `self`. In this case, `_repr_markdown_` is being added to Anthropic's `Message` class, so when we display the message now we just see the contents, and the details are hidden away in a collapsible details block.
+
+```python
+r
+```
+
+**Outputs:**
+Message(id='msg_01Q3123HGtAxWnUraLL65H24', container=None, content=[TextBlock(citations=None, text='Hi Jeremy! Nice to meet you. How can I help you today?', type='text')], model='claude-sonnet-4-6', r … (truncated)
+
+One key part of the response is the `usage` key, which tells us how many tokens we used by returning a `Usage` object.
+
+We'll add some helpers to make things a bit cleaner for creating and formatting these objects.
+
+```python
+r.usage
+```
+
+**Outputs:**
+In: 10; Out: 18; Cache create: 0; Cache read: 0; Total Tokens: 28; Search: 0
+
+```python
+#| exports
+def server_tool_usage(web_search_requests=0, web_fetch_requests=0):
+    'Little helper to create a server tool usage object'
+    return ServerToolUsage(web_search_requests=web_search_requests, web_fetch_requests=web_fetch_requests)
+```
+
+```python
+server_tool_usage(3,2)
+```
+
+**Outputs:**
+ServerToolUsage(web_fetch_requests=2, web_search_requests=3)
+
+```python
+#| exports
+def usage(inp=0, # input tokens
+          out=0,  # Output tokens
+          cache_create=0, # Cache creation tokens
+          cache_read=0, # Cache read tokens
+          server_tool_use=server_tool_usage() # server tool use
+         ):
+    'Slightly more concise version of `Usage`.'
+    return Usage(input_tokens=inp, output_tokens=out, cache_creation_input_tokens=cache_create,
+                 cache_read_input_tokens=cache_read, server_tool_use=server_tool_use)
+```
+
+The constructor provided by Anthropic is rather verbose, so we clean it up a bit, using a lowercase version of the name.
+
+```python
+usage(5)
+```
+
+**Outputs:**
+In: 5; Out: 0; Cache create: 0; Cache read: 0; Total Tokens: 5; Search: 0
+
+```python
+#| exports
+def _dgetattr(o,s,d): 
+    "Like getattr, but returns the default if the result is None"
+    return getattr(o,s,d) or d
+
+@patch(as_prop=True)
+def total(self:Usage): return self.input_tokens+self.output_tokens+_dgetattr(self, "cache_creation_input_tokens",0)+_dgetattr(self, "cache_read_input_tokens",0)
+```
+
+Adding a `total` property to `Usage` makes it easier to see how many tokens we've used up altogether.
+
+```python
+usage(5,1).total
+```
+
+**Outputs:**
+6
+
+```python
+#| exports
+@patch
+def __repr__(self:Usage):
+    io_toks = f'In: {self.input_tokens}; Out: {self.output_tokens}'
+    cache_toks = f'Cache create: {_dgetattr(self, "cache_creation_input_tokens",0)}; Cache read: {_dgetattr(self, "cache_read_input_tokens",0)}'
+    server_tool_use = _dgetattr(self, "server_tool_use",server_tool_usage())
+    server_tool_use_str = f'Search: {server_tool_use.web_search_requests}; Fetch: {server_tool_use.web_fetch_requests}'
+    total_tok = f'Total Tokens: {self.total}'
+    return f'{io_toks}; {cache_toks}; {total_tok}; {server_tool_use_str}'
+```
+
+In python, patching `__repr__` lets us change how an object is displayed. (More generally, methods starting and ending in `__` in Python are called `dunder` methods, and have some `magic` behavior -- such as, in this case, changing how an object is displayed.) We won't be directly displaying ServerToolUsage's, so we can handle its display behavior in the same Usage `__repr__`
+
+```python
+usage(5)
+```
+
+**Outputs:**
+In: 5; Out: 0; Cache create: 0; Cache read: 0; Total Tokens: 5; Search: 0; Fetch: 0
+
+```python
+#| exports
+@patch
+def __add__(self:ServerToolUsage, b):
+    "Add together each of the server tool use counts"
+    return ServerToolUsage(web_search_requests=self.web_search_requests+b.web_search_requests,
+        web_fetch_requests=self.web_fetch_requests+b.web_fetch_requests)
+```
+
+And, patching `__add__` lets `+` work on a `ServerToolUsage` as well as a `Usage` object.
+
+```python
+server_tool_usage(1) + server_tool_usage(2,3)
+```
+
+**Outputs:**
+ServerToolUsage(web_fetch_requests=3, web_search_requests=3)
+
+```python
+#| exports
+@patch
+def __add__(self:Usage, b):
+    "Add together each of `input_tokens` and `output_tokens`"
+    return usage(self.input_tokens+b.input_tokens, self.output_tokens+b.output_tokens,
+                 _dgetattr(self,'cache_creation_input_tokens',0)+_dgetattr(b,'cache_creation_input_tokens',0),
+                 _dgetattr(self,'cache_read_input_tokens',0)+_dgetattr(b,'cache_read_input_tokens',0),
+                 _dgetattr(self,'server_tool_use',server_tool_usage())+_dgetattr(b,'server_tool_use',server_tool_usage()))
+```
+
+```python
+r.usage+r.usage + usage(server_tool_use=server_tool_usage(1))
+```
+
+**Outputs:**
+In: 20; Out: 36; Cache create: 0; Cache read: 0; Total Tokens: 56; Search: 1; Fetch: 0
+
+### Creating messages
+
+Creating correctly formatted `dict`s from scratch every time isn't very handy, so we'll import a couple of helper functions from the `msglm` library.
+
+Let's use `mk_msg` to recreate our msg `{'role': 'user', 'content': "I'm Jeremy"}` from earlier.
+
+```python
+prompt = "I'm Jeremy"
+m = mk_msg(prompt)
+r = cli.messages.create(messages=[m], model=model, max_tokens=100)
+r
+```
+
+**Outputs:**
+Message(id='msg_01Q3123HGtAxWnUraLL65H24', container=None, content=[TextBlock(citations=None, text='Hi Jeremy! Nice to meet you. How can I help you today?', type='text')], model='claude-sonnet-4-6', r … (truncated)
+
+We can pass more than just text messages to Claude. As we'll see later we can also pass images, SDK objects, etc. To handle these different data types we need to pass the type along with our content to Claude. 
+
+Here"s an example of a multimodal message containing text and images. 
+
+```json
+{
+    "role": "user", 
+    "content": [
+        {"type":"text", "text":"What is in the image?"},
+        {
+            "type":"image", 
+            "source": {
+                "type":"base64", "media_type":"media_type", "data": "data"
+            }
+        }
+    ]
+}
+```
+
+`mk_msg` infers the type automatically and creates the appropriate data structure. 
+
+LLMs, don't actually have state, but instead dialogs are created by passing back all previous prompts and responses every time. With Claude, they always alternate *user* and *assistant*. We'll use `mk_msgs` from `msglm` to make it easier to build up these dialog lists.
+
+```python
+msgs = mk_msgs([prompt, r, "I forgot my name. Can you remind me please?"]) 
+msgs
+```
+
+**Outputs:**
+[{'role': 'user', 'content': "I'm Jeremy"},
+ {'role': 'assistant',
+  'content': [TextBlock(citations=None, text='Hi Jeremy! Nice to meet you. How can I help you today?', type='text')]},
+ {'role': 'use … (truncated)
+
+```python
+cli.messages.create(messages=msgs, model=model, max_tokens=200)
+```
+
+**Outputs:**
+Message(id='msg_01QTvdUwQAyKRQT3H73STdU3', container=None, content=[TextBlock(citations=None, text='Your name is Jeremy! You told me that at the start of our conversation. 😊', type='text')], model='cl … (truncated)
+
+## Client
+
+```python
+#| exports
+class Client:
+    def __init__(self, model, cli=None, log=False, cache=False):
+        "Basic Anthropic messages client."
+        self.model,self.use = model,usage()
+        self.text_only = model in text_only_models
+        self.log = [] if log else None
+        self.c = (cli or Anthropic(default_headers={'anthropic-beta': 'prompt-caching-2024-07-31'}))
+        self.cache = cache
+```
+
+We'll create a simple `Client` for `Anthropic` which tracks usage stores the model to use. We don't add any methods right away -- instead we'll use `patch` for that so we can add and document them incrementally.
+
+```python
+c = Client(model)
+c.use
+```
+
+**Outputs:**
+In: 0; Out: 0; Cache create: 0; Cache read: 0; Total Tokens: 0; Search: 0; Fetch: 0
+
+```python
+#| exports
+@patch
+def _r(self:Client, r:Message, prefill=''):
+    "Store the result of the message and accrue total usage."
+    if prefill:
+        blk = find_block(r)
+        if blk: blk.text = prefill + (blk.text or '')
+    self.result = r
+    self.use += r.usage
+    self.stop_reason = r.stop_reason
+    self.stop_sequence = r.stop_sequence
+    return r
+```
+
+We use a `_` prefix on private methods, but we document them here in the interests of literate source code.
+
+`_r` will be used each time we get a new result, to track usage and also to keep the result available for later.
+
+```python
+c._r(r)
+c.use
+```
+
+**Outputs:**
+In: 10; Out: 18; Cache create: 0; Cache read: 0; Total Tokens: 28; Search: 0; Fetch: 0
+
+Whereas OpenAI's models use a `stream` parameter for streaming, Anthropic's use a separate method. We implement Anthropic's approach in a private method, and then use a `stream` parameter in `__call__` for consistency:
+
+```python
+#| exports
+@patch
+def _log(self:Client, final, prefill, msgs, **kwargs):
+    self._r(final, prefill)
+    if self.log is not None: self.log.append({
+        "msgs": msgs, **kwargs,
+        "result": self.result, "use": self.use, "stop_reason": self.stop_reason, "stop_sequence": self.stop_sequence
+    })
+    return self.result
+```
+
+Once streaming is complete, we need to store the final message and call any completion callback that's needed.
+
+```python
+#| exports
+@save_iter
+def _stream(o, cm, prefill, cb):
+    with cm as s:
+        yield prefill
+        yield from s.text_stream
+        o.value = s.get_final_message()
+        cb(o.value)
+```
+
+```python
+#| export
+def get_types(msgs):
+    types = []
+    for m in msgs:
+        content = m.get('content', [])
+        if isinstance(content, list): types.extend(getattr(c, 'type', None) or c['type'] for c in content)
+        else: types.append('text')
+    return types
+```
+
+```python
+get_types(msgs)
+```
+
+**Outputs:**
+['text', 'text', 'text']
+
+```python
+#| export
+def mk_tool_choice(choose:Union[str,bool,None])->dict:
+    "Create a `tool_choice` dict that's 'auto' if `choose` is `None`, 'any' if it is True, or 'tool' otherwise"
+    return {"type": "tool", "name": choose} if isinstance(choose,str) else {'type':'any'} if choose else {'type':'auto'}
+```
+
+```python
+print(mk_tool_choice('sums'))
+print(mk_tool_choice(True))
+print(mk_tool_choice(None))
+```
+
+**Outputs:**
+{'type': 'tool', 'name': 'sums'}
+{'type': 'any'}
+{'type': 'auto'}
+
+
+Claude can be forced to use a particular tool, or select from a specific list of tools, or decide for itself when to use a tool. If you want to force a tool (or force choosing from a list), include a `tool_choice` param with a dict from `mk_tool_choice`.
+
+Claude supports adding an extra `assistant` message at the end, which contains the *prefill* -- i.e. the text we want Claude to assume the response starts with. However Claude doesn't actually repeat that in the response, so for convenience we add it.
+
+```python
+#| exports
+@patch
+def _precall(self:Client, msgs, prefill, sp, temp, maxtok, maxthinktok, stream,
+             stop, tools, tool_choice, kwargs):
+    if tools: kwargs['tools'] = [get_schema(o) if callable(o) else o for o in listify(tools)]
+    if tool_choice: kwargs['tool_choice'] = mk_tool_choice(tool_choice)
+    if maxthinktok: 
+        kwargs['thinking'] = {'type':'enabled', 'budget_tokens':maxthinktok} 
+        temp,prefill = 1,''
+    pref = [prefill.strip()] if prefill else []
+    if not isinstance(msgs,list): msgs = [msgs]
+    if stop is not None:
+        if not isinstance(stop, (list)): stop = [stop]
+        kwargs["stop_sequences"] = stop
+    msgs = mk_msgs(msgs+pref, cache=self.cache, cache_last_ckpt_only=self.cache)
+    assert not ('image' in get_types(msgs) and self.text_only), f"Images not supported by: {self.model}"
+    kwargs |= dict(max_tokens=maxtok, system=sp, temperature=temp)
+    return msgs, kwargs
+```
+
+```python
+#| exports
+@patch
+@delegates(messages.Messages.create)
+def __call__(self:Client,
+             msgs:list, # List of messages in the dialog
+             sp='', # The system prompt
+             temp=0, # Temperature
+             maxtok=4096, # Maximum tokens
+             maxthinktok=0, # Maximum thinking tokens
+             prefill='', # Optional prefill to pass to Claude as start of its response
+             stream:bool=False, # Stream response?
+             stop=None, # Stop sequence
+             tools:Optional[list]=None, # List of tools to make available to Claude
+             tool_choice:Optional[dict]=None, # Optionally force use of some tool
+             cb=None, # Callback to pass result to when complete
+             **kwargs):
+    "Make a call to Claude."
+    msgs,kwargs = self._precall(msgs, prefill, sp, temp, maxtok, maxthinktok, stream,
+                                stop, tools, tool_choice, kwargs)
+    m = self.c.messages
+    f = m.stream if stream else m.create
+    res = f(model=self.model, messages=msgs, **kwargs)
+    def _cb(v):
+        self._log(v, prefill=prefill, msgs=msgs, **kwargs)
+        if cb: cb(v)
+    if stream: return _stream(res, prefill, _cb)
+    try: return res
+    finally: _cb(res)
+```
+
+Defining `__call__` let's us use an object like a function (i.e it's *callable*). We use it as a small wrapper over `messages.create`.
+
+```python
+c = Client(model, log=True)
+c.use
+```
+
+**Outputs:**
+In: 0; Out: 0; Cache create: 0; Cache read: 0; Total Tokens: 0; Search: 0; Fetch: 0
+
+```python
+c('Hi')
+```
+
+**Outputs:**
+Message(id='msg_01NSbD7ZmQJKeY16gJ6apjAH', container=None, content=[TextBlock(citations=None, text='Hi there! How are you doing? Is there something I can help you with today? 😊', type='text')], model= … (truncated)
+
+Usage details are automatically updated after each call:
+
+```python
+c.use
+```
+
+**Outputs:**
+In: 8; Out: 24; Cache create: 0; Cache read: 0; Total Tokens: 32; Search: 0; Fetch: 0
+
+A log of all messages is kept if `log=True` is passed:
+
+```python
+pprint(c.log)
+```
+
+**Outputs:**
+[{'max_tokens': 4096,
+  'msgs': [{'content': 'Hi', 'role': 'user'}],
+  'result': Message(id='msg_01NSbD7ZmQJKeY16gJ6apjAH', container=None, content=[TextBlock(citations=None, text='Hi there! How are y … (truncated)
+
+```python
+c.use
+```
+
+**Outputs:**
+In: 8; Out: 24; Cache create: 0; Cache read: 0; Total Tokens: 32; Search: 0; Fetch: 0
+
+We can pass `stream=True` to stream the response back incrementally:
+
+```python
+r = c('Hi', stream=True)
+for o in r: print(o, end='')
+```
+
+**Outputs:**
+Hi there! How are you doing? Is there something I can help you with today? 😊
+
+```python
+c.use
+```
+
+**Outputs:**
+In: 16; Out: 48; Cache create: 0; Cache read: 0; Total Tokens: 64; Search: 0; Fetch: 0
+
+The full final message after completion of streaming is in the `value` attr of the response:
+
+```python
+r.value
+```
+
+**Outputs:**
+ParsedMessage(id='msg_01Nu7hy5Yi1KdQXg48jpFVCS', container=None, content=[ParsedTextBlock(citations=None, text='Hi there! How are you doing? Is there something I can help you with today? 😊', type='tex … (truncated)
+
+Pass a stop sequence if you want claude to stop generating text when it encounters it.
+
+```python
+c("Count from 1 to 10", stop="5")
+```
+
+**Outputs:**
+Message(id='msg_01UNUPpjNHteRG8DTrSUw4Hm', container=None, content=[TextBlock(citations=None, text='Here are the numbers from 1 to 10:\n\n1, 2, 3, 4, ', type='text')], model='claude-sonnet-4-6', role= … (truncated)
+
+This also works with streaming, and you can pass more than one stop sequence:
+
+```python
+for o in c("Count from 1 to 10", stop=["3", "yellow"], stream=True): print(o, end='')
+print()
+print(c.stop_reason, c.stop_sequence)
+```
+
+**Outputs:**
+Here is counting from 1 to 10:
+
+1, 2, 
+stop_sequence 3
+
+
+We've shown the token usage but we really care about is pricing. Let's extract the latest [pricing](https://www.anthropic.com/pricing#anthropic-api) from Anthropic into a `pricing` dict.
+
+```python
+#| export
+pricing = {  # model type: $ / million tokens (input, output, cache write, cache read)
+    'opus': (5, 25, 6.25, 0.5),
+    'sonnet': (3, 15, 3.75, 0.3),
+    'haiku': (1, 5, 1.25, 0.1),
+    'haiku-3': (0.25, 1.25, 0.3, 0.03),
+    'haiku-3-5': (1, 3, 1.25, 0.1),
+}
+```
+
+```python
+#| exports
+def get_pricing(m, u):
+    return pricing[m][:3] if u.prompt_token_count < 128_000 else pricing[m][3:]
+```
+
+Similarly, let's get the pricing for the latest [server tools]():
+
+```python
+#| export
+server_tool_pricing = {
+    'web_search_requests': 10, # $10 per 1,000
+}
+```
+
+We'll patch `Usage` to enable it compute the cost given pricing.
+
+```python
+#| exports
+@patch
+def cost(self:Usage, costs:tuple) -> float:
+    cache_w, cache_r = _dgetattr(self, "cache_creation_input_tokens",0), _dgetattr(self, "cache_read_input_tokens",0)
+    tok_cost = sum([self.input_tokens * costs[0] +  self.output_tokens * costs[1] +  cache_w * costs[2] + cache_r * costs[3]]) / 1e6
+    server_tool_use = _dgetattr(self, "server_tool_use",server_tool_usage())
+    server_tool_cost = server_tool_use.web_search_requests * server_tool_pricing['web_search_requests'] / 1e3
+    return tok_cost + server_tool_cost
+```
+
+```python
+#| exports
+@patch(as_prop=True)
+def cost(self: Client) -> float: return self.use.cost(pricing[model_types[self.model]])
+```
+
+```python
+#| exports
+def get_costs(c):
+    costs = pricing[model_types[c.model]]
+    
+    inp_cost = c.use.input_tokens * costs[0] / 1e6
+    out_cost = c.use.output_tokens * costs[1] / 1e6
+
+    cache_w = c.use.cache_creation_input_tokens   
+    cache_r = c.use.cache_read_input_tokens
+    cache_cost = (cache_w * costs[2] + cache_r * costs[3]) / 1e6
+
+    server_tool_use = c.use.server_tool_use
+    server_tool_cost = server_tool_use.web_search_requests * server_tool_pricing['web_search_requests'] / 1e3
+    return inp_cost, out_cost, cache_cost, cache_w + cache_r, server_tool_cost
+```
+
+The markdown repr of the client itself will show the latest result, along with the usage so far.
+
+```python
+#| exports
+@patch
+def _repr_markdown_(self:Client):
+    if not hasattr(self,'result'): return 'No results yet'
+    msg = contents(self.result)
+    inp_cost, out_cost, cache_cost, cached_toks, server_tool_cost = get_costs(self)
+    return f"""{msg}
+
+| Metric | Count | Cost (USD) |
+|--------|------:|-----:|
+| Input tokens | {self.use.input_tokens:,} | {inp_cost:.6f} |
+| Output tokens | {self.use.output_tokens:,} | {out_cost:.6f} |
+| Cache tokens | {cached_toks:,} | {cache_cost:.6f} |
+| Server tool use | {self.use.server_tool_use.web_search_requests:,} | {server_tool_cost:.6f} |
+| **Total** | **{self.use.total:,}** | **${self.cost:.6f}** |"""
+```
+
+```python
+c
+```
+
+**Outputs:**
+<__main__.Client>
+
+Pass a list of alternating user/assistant messages to give Claude a "dialog".
+
+```python
+c(["My name is Jeremy", "Hi Jeremy!", "Can you remind me what my name is?"])
+```
+
+**Outputs:**
+Message(id='msg_01UF9i1HRnHDXaMHvNdWJJwf', container=None, content=[TextBlock(citations=None, text='Your name is Jeremy! You told me that at the start of our conversation.', type='text')], model='clau … (truncated)
+
+## Tool use
+
+Let's now look more at tool use (aka *function calling*).
+
+For testing, we need a function that Claude can call; we'll write a simple function that adds numbers together, and will tell us when it's being called:
+
+```python
+@dataclass
+class MySum: val:int
+
+def sums(
+    a:int,  # First thing to sum
+    b:int=1 # Second thing to sum
+) -> int: # The sum of the inputs
+    "Adds a + b."
+    print(f"Finding the sum of {a} and {b}")
+    return MySum(a + b)
+```
+
+```python
+a,b = 604542,6458932
+pr = f"What is {a}+{b}?"
+sp = "Always use tools when calculations are required."
+```
+
+Claudette can autogenerate a schema thanks to the `toolslm` library. We'll force the use of the tool using the function we created earlier.
+
+```python
+tools=[get_schema(sums)]
+choice = mk_tool_choice('sums')
+```
+
+We'll start a dialog with Claude now. We'll store the messages of our dialog in `msgs`. The first message will be our prompt `pr`, and we'll pass our `tools` schema.
+
+```python
+msgs = mk_msgs(pr)
+r = c(msgs, sp=sp, tools=tools, tool_choice=choice)
+r
+```
+
+**Outputs:**
+Message(id='msg_01KK6wvRhJM93T4ZMo5XtYqZ', container=None, content=[ToolUseBlock(id='toolu_01Rk1eL2Zkx92c4c3FJJAjFu', caller=DirectCaller(type='direct'), input={'a': 604542, 'b': 6458932}, name='sums' … (truncated)
+
+When Claude decides that it should use a tool, it passes back a `ToolUseBlock` with the name of the tool to call, and the params to use.
+
+We don't want to allow it to call just any possible function (that would be a security disaster!) so we create a *namespace* -- that is, a dictionary of allowable function names to call.
+
+```python
+ns = mk_ns(sums)
+ns
+```
+
+**Outputs:**
+{'sums': <function __main__.sums(a: int, b: int = 1) -> int>}
+
+`ToolResult` is used for two special cases:
+
+1) When tool calls are RPCs with claudette running on an application server and code execution happening elsewhere, wrapping with a `result_type` field is used as a type descriptor for the claudette client. 
+
+2) Different types are handled in message history with specific format, so `mk_funcres` branches the Anthropic representation (see depending on the `result_type`.
+
+Currently images are the only supported tool result type - see https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/implement-tool-use#example-of-tool-result-with-images for the format implemented in `mk_funcres`.
+
+```python
+#| export
+class ToolResult(BasicRepr):
+    def __init__(self, result_type: str, data): store_attr()
+    def __str__(self): return str(self.data)
+```
+
+```python
+#| export
+def _img_content(b64data):
+    return [{"type": "image",
+             "source":{"type": "base64", "media_type": "image/png", "data": b64data}},
+            {"type": "text", "text": "Captured screenshot."}]
+
+def mk_funcres(fc, ns):
+    "Given tool use block 'fc', get tool result, and create a tool_result response."
+    try: res = call_func(fc.name, fc.input, ns=ns, raise_on_err=False) 
+    except KeyError as e: return {"type": "tool_result", "tool_use_id": fc.id, "content": f"Error - tool not defined in the tool_schemas: {fc.name}"}
+    if isinstance(res, ToolResult) and res.result_type=="image/png": res = _img_content(res.data) # list
+    else: res = str(res.data) if isinstance(res, ToolResult) else str(res)
+    return {"type": "tool_result", "tool_use_id": fc.id, "content": res}
+```
+
+We can now use the function requested by Claude. We look it up in `ns`, and pass in the provided parameters.
+
+```python
+fcs = [o for o in r.content if isinstance(o,ToolUseBlock)]
+fcs
+```
+
+**Outputs:**
+[ToolUseBlock(id='toolu_01Rk1eL2Zkx92c4c3FJJAjFu', caller=DirectCaller(type='direct'), input={'a': 604542, 'b': 6458932}, name='sums', type='tool_use')]
+
+```python
+res = [mk_funcres(fc, ns=ns) for fc in fcs]
+res
+```
+
+**Outputs:**
+Finding the sum of 604542 and 6458932
+
+[{'type': 'tool_result',
+  'tool_use_id': 'toolu_01Rk1eL2Zkx92c4c3FJJAjFu',
+  'content': 'MySum(val=7063474)'}]
+
+```python
+res = [mk_funcres(fc, ns={}) for fc in fcs]
+res
+```
+
+**Outputs:**
+[{'type': 'tool_result',
+  'tool_use_id': 'toolu_01Rk1eL2Zkx92c4c3FJJAjFu',
+  'content': 'Error - tool not defined in the tool_schemas: sums'}]
+
+### Limit tool access
+
+```python
+@dataclass
+class MyProd: val:int
+
+def mults(a:int,b:int):
+    "Multiplies two integers"
+    return MyProd(a*b)
+```
+
+```python
+tools = [get_schema(sums), get_schema(mults)]
+choice = mk_tool_choice('sums')
+```
+
+```python
+tools
+```
+
+**Outputs:**
+[{'name': 'sums',
+  'description': 'Adds a + b.\n\nReturns:\n- The sum of the inputs (type: integer)',
+  'input_schema': {'type': 'object',
+   'properties': {'a': {'type': 'integer',
+     'description … (truncated)
+
+```python
+#| exports
+def allowed_tools(specs: Optional[list[Union[str,abc.Callable]]], choice: Optional[Union[dict,str]]=None):
+    if not isinstance(choice, dict): choice=mk_tool_choice(choice)
+    if choice['type'] == 'tool': return {choice['name']}
+    if choice['type'] == 'none': return set()
+    return {v['name'] if isinstance(v, dict) else v.__name__ for v in specs or []}
+```
+
+```python
+allowed_tools(tools, choice)
+```
+
+**Outputs:**
+{'sums'}
+
+```python
+allowed_tools([sums, mults], 'mults')
+```
+
+**Outputs:**
+{'mults'}
+
+```python
+allowed_tools(tools, None)
+```
+
+**Outputs:**
+{'mults', 'sums'}
+
+```python
+allowed_tools(tools, 'sums')
+```
+
+**Outputs:**
+{'sums'}
+
+```python
+allowed_tools(tools, True)
+```
+
+**Outputs:**
+{'mults', 'sums'}
+
+```python
+#| exports
+def limit_ns(
+    ns:Optional[abc.Mapping]=None, # Namespace to search for tools
+    specs:Optional[list[Union[str,abc.Callable]]]=None, # List of the tools that are allowed for llm to call
+    choice:Optional[Union[dict,str]]=None # Tool choice as defined by Anthropic API
+    ):
+    "Filter namespace `ns` to only include tools allowed by `specs` and `choice`"
+    if ns is None: ns=globals()
+    if not isinstance(ns, abc.Mapping): ns = mk_ns(ns)
+    ns = {k:ns[k] for k in allowed_tools(specs, choice) if k in ns}
+    return ns
+```
+
+```python
+#| exports
+def mk_toolres(
+    r:abc.Mapping, # Tool use request response from Claude
+    ns:Optional[abc.Mapping]=None, # Namespace to search for tools
+    ):
+    "Create a `tool_result` message from response `r`."
+    cts = getattr(r, 'content', [])
+    res = [mk_msg(r.model_dump(exclude_none=True), role='assistant')]
+    if ns is None: ns=globals()
+    tcs = [mk_funcres(o, ns) for o in cts if isinstance(o,ToolUseBlock)]
+    if tcs: res.append(mk_msg(tcs))
+    return res
+```
+
+```python
+foo = []
+foo.append({})
+foo.append({})
+foo
+```
+
+**Outputs:**
+[{}, {}]
+
+In order to tell Claude the result of the tool call, we pass back the tool use assistant request and the `tool_result` response.
+
+```python
+tr = mk_toolres(r, ns=ns)
+tr
+```
+
+**Outputs:**
+Finding the sum of 604542 and 6458932
+
+[{'role': 'assistant',
+  'content': [{'id': 'toolu_01Rk1eL2Zkx92c4c3FJJAjFu',
+    'caller': {'type': 'direct'},
+    'input': {'a': 604542, 'b': 6458932},
+    'name': 'sums',
+    'type': 'tool_use'}]}, … (truncated)
+
+```python
+msgs
+```
+
+**Outputs:**
+[{'role': 'user', 'content': 'What is 604542+6458932?'}]
+
+We add this to our dialog, and now Claude has all the information it needs to answer our question.
+
+```python
+msgs += tr
+contents(c(msgs, sp=sp, tools=tools))
+```
+
+**Outputs:**
+'The sum of 604,542 + 6,458,932 = **7,063,474**.'
+
+```python
+contents(msgs[-1])
+```
+
+**Outputs:**
+'MySum(val=7063474)'
+
+```python
+msgs
+```
+
+**Outputs:**
+[{'role': 'user', 'content': 'What is 604542+6458932?'},
+ {'role': 'assistant',
+  'content': [{'id': 'toolu_01Rk1eL2Zkx92c4c3FJJAjFu',
+    'caller': {'type': 'direct'},
+    'input': {'a': 604542, 'b': … (truncated)
+
+The tools calls are limited to what is present in tool_spec.
+
+```python
+tr = mk_toolres(r, ns=limit_ns(None, tools, 'mults'))
+tr
+```
+
+**Outputs:**
+[{'role': 'assistant',
+  'content': [{'id': 'toolu_01Rk1eL2Zkx92c4c3FJJAjFu',
+    'caller': {'type': 'direct'},
+    'input': {'a': 604542, 'b': 6458932},
+    'name': 'sums',
+    'type': 'tool_use'}]}, … (truncated)
+
+### Text editing
+
+Anthropic also has a special tool type specific to text editing.
+
+```python
+tools = [text_editor_conf['sonnet']]
+tools
+```
+
+**Outputs:**
+[{'type': 'text_editor_20250728', 'name': 'str_replace_based_edit_tool'}]
+
+```python
+pr = 'Could you please very briefly explain my _quarto.yml file?'
+msgs = [mk_msg(pr)]
+r = c(msgs, sp=sp, tools=tools)
+find_block(r, ToolUseBlock)
+```
+
+**Outputs:**
+ToolUseBlock(id='toolu_01VuDPR85jDHdSrnCmK52WgL', caller=DirectCaller(type='direct'), input={'command': 'view', 'path': '/_quarto.yml'}, name='str_replace_based_edit_tool', type='tool_use')
+
+We've gone ahead and create a reference implementation that you can directly use from our `text_editor` module. Or use as reference for creating your own. 
+
+```python
+ns = mk_ns(str_replace_based_edit_tool)
+tr = mk_toolres(r, ns=ns)
+msgs += tr
+print(contents(c(msgs, sp=sp, tools=tools))[:128])
+```
+
+**Outputs:**
+It seems the file wasn't found at the root path. Could you provide the exact location of your `_quarto.yml` file so I can take a
+
+
+## Structured data
+
+```python
+a,b = 604542,6458932
+pr = f"What is {a}+{b}?"
+sp = "Always use your tools for calculations."
+```
+
+```python
+for tools in [sums, [get_schema(sums)]]:
+    r = c(pr, tools=tools, tool_choice='sums')
+    print(r)
+```
+
+**Outputs:**
+Message(id='msg_01LD3r7hwAkYtWg4XW6A1UaB', container=None, content=[ToolUseBlock(id='toolu_014XCGyV6twGuQxkv8dWGbSc', caller=DirectCaller(type='direct'), input={'a': 604542, 'b': 6458932}, name='sums' … (truncated)
+
+```python
+ns = mk_ns(sums)
+tr = mk_toolres(r, ns=ns)
+```
+
+**Outputs:**
+Finding the sum of 604542 and 6458932
+
+
+```python
+#| exports
+@patch
+@delegates(Client.__call__)
+def structured(self:Client,
+               msgs:list, # List of messages in the dialog
+               tools:list[abc.Callable]=None, # List of tools to make available to Claude
+               ns:Optional[abc.Mapping]=None, # Namespace to search for tools
+               **kwargs):
+    "Return the value of all tool calls (generally used for structured outputs)"
+    tools = listify(tools)
+    res = self(msgs, tools=tools, tool_choice=tools, **kwargs)
+    if ns is None: ns=mk_ns(*tools)
+    cts = getattr(res, 'content', [])
+    tcs = [call_func(o.name, o.input, ns=ns) for o in cts if isinstance(o,ToolUseBlock)]
+    return tcs
+```
+
+Anthropic's API does not support response formats directly, so instead we provide a `structured` method to use tool calling to achieve the same result. The result of the tool is not passed back to Claude in this case, but instead is returned directly to the user. 
+
+```python
+c.structured(pr, tools=[sums])
+```
+
+**Outputs:**
+Finding the sum of 604542 and 6458932
+
+[MySum(val=7063474)]
+
+```python
+c
+```
+
+**Outputs:**
+<__main__.Client>
+
+## Custom Types with Tools Use
+
+We need to add tool support for custom types too. Let's test out custom types using a minimal example.
+
+```python
+class Book(BasicRepr):
+    def __init__(self, title: str, pages: int): store_attr()
+    def __repr__(self):
+        return f"Book Title : {self.title}\nNumber of Pages : {self.pages}"
+```
+
+```python
+Book("War and Peace", 950)
+```
+
+**Outputs:**
+Book Title : War and Peace
+Number of Pages : 950
+
+```python
+def find_page(book: Book, # The book to find the halfway point of
+              percent: int, # Percent of a book to read to, e.g. halfway == 50, 
+) -> int:
+    "The page number corresponding to `percent` completion of a book"
+    return round(book.pages * (percent / 100.0))
+```
+
+```python
+get_schema(find_page)
+```
+
+**Outputs:**
+{'name': 'find_page',
+ 'description': 'The page number corresponding to `percent` completion of a book\n\nReturns:\n- type: integer',
+ 'input_schema': {'type': 'object',
+  'properties': {'book': {'typ … (truncated)
+
+```python
+choice = mk_tool_choice('find_page')
+choice
+```
+
+**Outputs:**
+{'type': 'tool', 'name': 'find_page'}
+
+Claudette will pack objects as dict, so we'll transform tool functions with user-defined types into tool functions that accept a dict in lieu of the user-defined type.
+
+First let's convert a single argument:
+
+```python
+#| export
+def _is_builtin(tp: type):
+    "Returns True for built in primitive types or containers"
+    return (tp in (str, int, float, bool, complex) or tp is None
+        or getattr(tp, '__origin__', None) is not None)  # Pass through all container types
+
+def _convert(val: Dict, # dictionary argument being passed in
+            tp: type): # type of the tool function input
+    "Convert converts a single argument"
+    if val is None or _is_builtin(tp) or not isinstance(val, dict): return val
+    return tp(**val)
+```
+
+`_is_builtin` decides whether to pass an argument through as-is. Let's check the argument conversion:
+
+```python
+(_is_builtin(int), _is_builtin(Book), _is_builtin(List))
+```
+
+**Outputs:**
+(True, False, True)
+
+```python
+(_convert(555, int),
+ _convert({"title": "War and Peace", "pages": 923}, Book),
+ _convert([1, 2, 3, 4], List))
+```
+
+**Outputs:**
+(555,
+ Book Title : War and Peace
+ Number of Pages : 923,
+ [1, 2, 3, 4])
+
+To apply `tool()` to a function is to return a new function where the user-defined types are replaced with dictionary inputs.
+
+```python
+#| export
+def tool(func):
+    if isinstance(func, dict): return func # it's a schema, so don't change
+    hints = get_type_hints(func)
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        new_args = [_convert(arg, hints[p]) for p,arg in zip(inspect.signature(func).parameters, args)]
+        new_kwargs = {k: _convert(v, hints[k]) if k in hints else v for k,v in kwargs.items()}
+        return func(*new_args, **new_kwargs)
+    return wrapper
+```
+
+A function is transformed into a function with dict arguments substituted for user-defined types. Built-in types such as `percent` here are left untouched.
+
+```python
+find_page(book=Book("War and Peace", 950), percent=50)
+```
+
+**Outputs:**
+475
+
+```python
+tool(find_page)({"title": "War and Peace", "pages": 950}, percent=50)
+```
+
+**Outputs:**
+475
+
+By passing tools wrapped by `tool()`, user-defined types now work completes without failing in tool calls.
+
+```python
+pr = "How many pages do I have to read to get halfway through my 950 page copy of War and Peace"
+tools = tool(find_page)
+tools
+```
+
+**Outputs:**
+<function __main__.find_page(book: __main__.Book, percent: int) -> int>
+
+```python
+r = c(pr, tools=[tools])
+find_block(r, ToolUseBlock)
+```
+
+**Outputs:**
+ToolUseBlock(id='toolu_01DpqxJGneGatm3JyYr3aNie', caller=DirectCaller(type='direct'), input={'book': {'title': 'War and Peace', 'pages': 950}, 'percent': 50}, name='find_page', type='tool_use')
+
+```python
+tr = mk_toolres(r, ns=[tools])
+tr
+```
+
+**Outputs:**
+[{'role': 'assistant',
+  'content': [{'text': 'Let me find the halfway point of your book right away!',
+    'type': 'text'},
+   {'id': 'toolu_01DpqxJGneGatm3JyYr3aNie',
+    'caller': {'type': 'direct' … (truncated)
+
+```python
+msgs = [pr]+tr
+contents(c(msgs, sp=sp, tools=[tools]))
+```
+
+**Outputs:**
+"You'll need to read **475 pages** to get halfway through your 950-page copy of *War and Peace*. You've got quite the reading adventure ahead of you — happy reading! 📖"
+
+## Chat
+
+Rather than manually adding the responses to a dialog, we'll create a simple `Chat` class to do that for us, each time we make a request. We'll also store the system prompt and tools here, to avoid passing them every time.
+
+```python
+#| export
+class Chat:
+    def __init__(self,
+                 model:Optional[str]=None, # Model to use (leave empty if passing `cli`)
+                 cli:Optional[Client]=None, # Client to use (leave empty if passing `model`)
+                 sp='', # Optional system prompt
+                 tools:Optional[list]=None, # List of tools to make available to Claude
+                 temp=0, # Temperature
+                 cont_pr:Optional[str]=None, # User prompt to continue an assistant response
+                 cache: bool = False,  # Use Claude cache?
+                 hist: list = None,  # Initialize history
+                 ns:Optional[abc.Mapping]=None # Namespace to search for tools
+                ):
+        "Anthropic chat client."
+        assert model or cli
+        assert cont_pr != "", "cont_pr may not be an empty string"
+        self.c = (cli or Client(model, cache=cache))
+        if hist is None: hist=[]
+        if tools: tools = [tool(t) for t in listify(tools)]
+        if ns is None: ns=tools
+        self.h,self.sp,self.tools,self.cont_pr,self.temp,self.cache,self.ns = hist,sp,tools,cont_pr,temp,cache,ns
+
+    @property
+    def use(self): return self.c.use
+```
+
+The class stores the `Client` that will provide the responses in `c`, and a history of messages in `h`.
+
+```python
+sp = "Never mention what tools you use."
+chat = Chat(model, sp=sp)
+chat.c.use, chat.h
+```
+
+**Outputs:**
+(In: 0; Out: 0; Cache create: 0; Cache read: 0; Total Tokens: 0; Search: 0; Fetch: 0,
+ [])
+
+```python
+chat.c.use.cost(pricing[model_types[chat.c.model]])
+```
+
+**Outputs:**
+0.0
+
+This is clunky. Let's add `cost` as a property for the `Chat` class. It will pass in the appropriate prices for the current model to the usage cost calculator.
+
+```python
+#| exports
+@patch(as_prop=True)
+def cost(self: Chat) -> float: return self.c.cost
+```
+
+```python
+chat.cost
+```
+
+**Outputs:**
+0.0
+
+```python
+#| exports
+@patch
+def _post_pr(self:Chat, pr, prev_role):
+    if pr is None and prev_role == 'assistant':
+        if self.cont_pr is None:
+            raise ValueError("Prompt must be given after completion, or use `self.cont_pr`.")
+        pr = self.cont_pr # No user prompt, keep the chain
+    if pr: self.h.append(mk_msg(pr, cache=self.cache))
+```
+
+```python
+#| exports
+@patch
+def _append_pr(self:Chat, pr=None):
+    prev_role = nested_idx(self.h, -1, 'role') if self.h else 'assistant' # First message should be 'user'
+    if pr and prev_role == 'user': self() # already user request pending
+    self._post_pr(pr, prev_role)
+```
+
+```python
+#| exports
+@patch
+def __call__(self:Chat,
+             pr=None,  # Prompt / message
+             temp=None, # Temperature
+             maxtok=4096, # Maximum tokens
+             maxthinktok=0, # Maximum thinking tokens
+             stream=False, # Stream response?
+             prefill='', # Optional prefill to pass to Claude as start of its response
+             tool_choice:Optional[dict]=None, # Optionally force use of some tool
+             **kw):
+    if temp is None: temp=self.temp
+    self._append_pr(pr)
+    def _cb(v):
+        self.last = mk_toolres(v, ns=limit_ns(self.ns, self.tools, tool_choice))
+        self.h += self.last
+    return self.c(self.h, stream=stream, prefill=prefill, sp=self.sp, temp=temp, maxtok=maxtok, maxthinktok=maxthinktok,
+                 tools=self.tools, tool_choice=tool_choice, cb=_cb, **kw)
+```
+
+The `__call__` method just passes the request along to the `Client`, but rather than just passing in this one prompt, it appends it to the history and passes it all along. As a result, we now have state!
+
+```python
+chat = Chat(model, sp=sp)
+```
+
+```python
+chat("I'm Jeremy")
+chat("What's my name?")
+```
+
+**Outputs:**
+Message(id='msg_01P1dvBtCrRx33Z6FSzcoaYT', container=None, content=[TextBlock(citations=None, text='Your name is Jeremy! You told me that at the start of our conversation.', type='text')], model='clau … (truncated)
+
+```python
+chat.use, chat.cost
+```
+
+**Outputs:**
+(In: 62; Out: 37; Cache create: 0; Cache read: 0; Total Tokens: 99; Search: 0; Fetch: 0,
+ 0.000741)
+
+By default messages must be in user, assistant, user format. If this isn't followed (aka calling `chat()` without a user message) it will error out:
+
+```python
+try: chat()
+except ValueError as e: print("Error:", e)
+```
+
+**Outputs:**
+Error: Prompt must be given after completion, or use `self.cont_pr`.
+
+
+Setting `cont_pr` allows a "default prompt" to be specified when a prompt isn't specified. Usually used to prompt the model to continue.
+
+```python
+chat.cont_pr = "Tell me a little more..."
+chat()
+```
+
+**Outputs:**
+Message(id='msg_014GNbvuJySM2FNydyTvHnZ6', container=None, content=[TextBlock(citations=None, text="That's actually all I know about you! You just told me your name is Jeremy, but beyond that, I don't … (truncated)
+
+We can also use streaming:
+
+```python
+chat = Chat(model, sp=sp)
+for o in chat("I'm Jeremy", stream=True): print(o, end='')
+```
+
+**Outputs:**
+Hi Jeremy! Nice to meet you. How can I help you today?
+
+You can provide a history of messages to initialise `Chat` with:
+
+```python
+chat = Chat(model, sp=sp, hist=["Can you guess my name?", "Hmmm I really don't know. Is it 'Merlin G. Penfolds'?"])
+chat('Wow how did you know?')
+```
+
+**Outputs:**
+Message(id='msg_01RmtMSvQpWsDNdTgZdRpKXb', container=None, content=[TextBlock(citations=None, text="I have to be honest with you - I didn't actually know! That was just a random guess, and it was quit … (truncated)
+
+### Chat tool use
+
+We automagically get streamlined tool use as well:
+
+```python
+pr = f"What is {a}+{b}?"
+pr
+```
+
+**Outputs:**
+'What is 604542+6458932?'
+
+```python
+chat = Chat(model, sp=sp, tools=[sums])
+r = chat(pr)
+r
+```
+
+**Outputs:**
+Finding the sum of 604542 and 6458932
+
+Message(id='msg_01J64NLNAmMicFA6nhmuT6pM', container=None, content=[TextBlock(citations=None, text='Let me calculate that for you!', type='text'), ToolUseBlock(id='toolu_017rP1c4tyoBaMyDT2pjRMcH', cal … (truncated)
+
+Now we need to send this result to Claude—calling the object with no parameters tells it to return the tool result to Claude:
+
+```python
+chat()
+```
+
+**Outputs:**
+Message(id='msg_013HLnrJxLLM165PKGnnHBmJ', container=None, content=[TextBlock(citations=None, text='The result of **604,542 + 6,458,932 = 7,063,474**!', type='text')], model='claude-sonnet-4-6', role= … (truncated)
+
+It should be correct, because it actually used our Python function to do the addition. Let's check:
+
+```python
+a+b
+```
+
+**Outputs:**
+7063474
+
+Let's try the same thing with streaming:
+
+```python
+chat = Chat(model, sp=sp, tools=[sums])
+r = chat(pr, stream=True)
+for o in r: print(o, end='')
+```
+
+**Outputs:**
+Let me calculate that for you!Finding the sum of 604542 and 6458932
+
+
+The full message, including tool call details, are in `value`:
+
+```python
+r.value
+```
+
+**Outputs:**
+ParsedMessage(id='msg_01CthQaWS7F2MTeQjHPtKwVS', container=None, content=[ParsedTextBlock(citations=None, text='Let me calculate that for you!', type='text', parsed_output=None), ToolUseBlock(id='tool … (truncated)
+
+```python
+r = chat(stream=True)
+for o in r: print(o, end='')
+```
+
+**Outputs:**
+The result of **604,542 + 6,458,932 = 7,063,474**!
+
+```python
+r.value
+```
+
+**Outputs:**
+ParsedMessage(id='msg_01KDCwZXa6fbqy9WLXwYq9gY', container=None, content=[ParsedTextBlock(citations=None, text='The result of **604,542 + 6,458,932 = 7,063,474**!', type='text', parsed_output=None)],  … (truncated)
+
+The history shows both the tool_use and tool_result messages:
+
+```python
+chat.h
+```
+
+**Outputs:**
+[{'role': 'user', 'content': 'What is 604542+6458932?'},
+ {'role': 'assistant',
+  'content': [{'text': 'Let me calculate that for you!', 'type': 'text'},
+   {'id': 'toolu_01E9JqVMwnUSrEGwfYsegP63',
+   … (truncated)
+
+The `Chat` class automatically validates tool calls against the provided `tools` list. If the model attempts to call a tool that isn't in the allowed set (whether due to hallucination or a mismatch between `tools` and `ns`), the tool call will fail with an error message rather than executing arbitrary code.
+
+This provides an important safety mechanism - even if the model invents a function name or tries to call a tool that shouldn't be available, `Chat` ensures only explicitly allowed tools can be executed.
+
+```python
+def _force_sums(*args, cb=None, **kwargs): 
+    def cb_(r): 
+        for block in r.content:
+            if isinstance(block, ToolUseBlock): block.name = f'sums' # Forces tool name to 'sums'
+        return cb(r) if cb else r
+    return Client(model)(*args, cb=cb_, **kwargs)
+```
+
+```python
+chat = Chat(cli=_force_sums, sp=sp, tools=[mults]) # Only 'mults' is allowed
+chat.ns = [mults, sums] # Both function exist in namespace
+r = chat("Calc 604542 * 33392837120239382")
+r
+```
+
+**Outputs:**
+Message(id='msg_01MGBGG5gTd6y1NbvS3fu5SU', container=None, content=[TextBlock(citations=None, text="I need to multiply these two large numbers. Let me break this down into smaller multiplications and  … (truncated)
+
+```python
+chat.h
+```
+
+**Outputs:**
+[{'role': 'user', 'content': 'Calc 604542 * 33392837120239382'},
+ {'role': 'assistant',
+  'content': [{'text': "I need to multiply these two large numbers. Let me break this down into smaller multipli … (truncated)
+
+Let's test a function with user defined types.
+
+```python
+chat = Chat(model, sp=sp, tools=[find_page])
+r = chat("How many pages is three quarters of the way through my 80 page edition of Tao Te Ching?")
+r
+```
+
+**Outputs:**
+Message(id='msg_01Uzs8htuGbvrC1Nq1skRD8t', container=None, content=[ToolUseBlock(id='toolu_01G77V2RMBcxVDKqsCYmZ9Au', caller=DirectCaller(type='direct'), input={'book': {'title': 'Tao Te Ching', 'page … (truncated)
+
+```python
+chat()
+```
+
+**Outputs:**
+Message(id='msg_017zd57Uf73R262oY6F1T9ia', container=None, content=[TextBlock(citations=None, text='Three quarters of the way through your 80-page edition of the Tao Te Ching is **page 60**!', type='t … (truncated)
+
+```python
+#| exports
+@patch
+def _repr_markdown_(self:Chat):
+    if not hasattr(self.c, 'result'): return 'No results yet'
+    last_msg = contents(self.c.result)
+    
+    def fmt_msg(m):
+        t = contents(m)
+        if isinstance(t, dict): return t['content']
+        return t
+        
+    history = '\n\n'.join(f"**{m['role']}**: {fmt_msg(m)}" 
+                         for m in self.h)
+    det = self.c._repr_markdown_().split('\n\n')[-1]
+    if history: history = f"""
+<details>
+<summary>► History</summary>
+
+{history}
+
+</details>
+"""
+
+    return f"""{last_msg}
+{history}
+{det}"""
+```
+
+```python
+chat
+```
+
+**Outputs:**
+<__main__.Chat>
+
+```python
+chat = Chat(model, tools=[text_editor_conf['sonnet']], ns=mk_ns(str_replace_based_edit_tool))
+```
+
+When not providing tools directly as Python functions (like `sum`), you **must** create and pass a namespace dictionary (mapping the tool name string to the function object) using the `ns` parameter to methods like `mk_toolres` or `toolloop`. `toolslm` cannot automatically generate the namespace in this case. For schema-based tools (i.e., Python functions), `claudette` handles namespace creation automatically.
+
+```python
+r = chat('Please explain very concisely what my _quarto.yml does. It is in the current path. Use your tools')
+find_block(r, ToolUseBlock)
+```
+
+**Outputs:**
+ToolUseBlock(id='toolu_01SGFXBDAd9ykwQ8fnpVApWu', caller=DirectCaller(type='direct'), input={'command': 'view', 'path': '/_quarto.yml'}, name='str_replace_based_edit_tool', type='tool_use')
+
+```python
+chat()
+```
+
+**Outputs:**
+Message(id='msg_01LED9Xieob4miFXjXouNTue', container=None, content=[ToolUseBlock(id='toolu_01VJcCojtvzkaSjENnFACwn5', caller=DirectCaller(type='direct'), input={'command': 'view', 'path': '.'}, name=' … (truncated)
+
+## Images
+
+Claude can handle image data as well. As everyone knows, when testing image APIs you have to use a cute puppy.
+
+```python
+# Image is Cute_dog.jpg from Wikimedia
+fn = Path('samples/puppy.jpg')
+Image(filename=fn, width=200)
+```
+
+**Outputs:**
+Image(b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xe2\x0cTICC_PROFILE\x00\x01\x01\x00\x00\x0cDUCCM\x02@\x00\x00mntrRGB XYZ \x07\xd3\x00\x04\x00\x04\x00\x00\x00\x00\x00\x … (truncated)
+
+```python
+img = fn.read_bytes()
+```
+
+Claude expects an image message to have the following structure
+
+```js
+{
+    'role': 'user', 
+    'content': [
+        {'type':'text', 'text':'What is in the image?'},
+        {
+            'type':'image', 
+            'source': {
+                'type':'base64', 'media_type':'media_type', 'data': 'data'
+            }
+        }
+    ]
+}
+```
+`msglm` automatically detects if a message is an image, encodes it, and generates the data structure above.
+All we need to do is a create a list containing our image and a query and then pass it to `mk_msg`.
+
+Let's try it out...
+
+```python
+q = "In brief, what color flowers are in this image?"
+msg = mk_msg([img, q])
+```
+
+```python
+c([msg])
+```
+
+**Outputs:**
+Message(id='msg_01DUds87tAj47fozgFfbEPrQ', container=None, content=[TextBlock(citations=None, text='The flowers in the image are **purple/lavender** (blue-purple). They appear to be **asters**.', type … (truncated)
+
+You don't need to call `mk_msg` on each individual message before passing them to the `Chat` class. Instead you can pass your messages in a list and the `Chat` class will automatically call `mk_msgs` in the background. 
+
+```python
+c(["How are you?", r])
+```
+
+For messages that contain multiple content types (like an image with a question), you'll need to enclose the message contents in a list as shown below:
+
+```python
+c(["How are you?", r, [img, q]])
+```
+
+```python
+c = Chat(model)
+c([img, q])
+```
+
+**Outputs:**
+Message(id='msg_01DUds87tAj47fozgFfbEPrQ', container=None, content=[TextBlock(citations=None, text='The flowers in the image are **purple/lavender** (blue-purple). They appear to be **asters**.', type … (truncated)
+
+```python
+contents(c.h[0])
+```
+
+**Outputs:**
+'*Media Type - image*'
+
+```python
+c
+```
+
+**Outputs:**
+<__main__.Chat>
+
+:::{.callout-note}
+
+Unfortunately, not all Claude models support images 😞. This [table](https://docs.anthropic.com/en/docs/about-claude/models#model-comparison-table) summarizes the capabilities of each Claude model and the different modalities they support.
+
+:::
+
+## Caching
+
+Claude supports context caching by adding a `cache_control` header to the message content.
+
+```js
+{
+    "role": "user",
+    "content": [
+        {
+            "type": "text", 
+            "text": "Please cache my message", 
+            "cache_control": {"type": "ephemeral"}
+        }
+    ]
+}
+```
+
+To cache a message, we simply set `cache=True` when calling `mk_msg`.
+
+```python
+mk_msg(['hi', 'there'], cache=True)
+```
+
+**Outputs:**
+{'role': 'user',
+ 'content': [{'type': 'text', 'text': 'hi'},
+  {'type': 'text', 'text': 'there', 'cache_control': {'type': 'ephemeral'}}]}
+
+Claude also now supports smart cache look-ups, so it's very simple to keep an entire conversation in cache by constantly telling it to update the cache with the latest message. To do this, we just need to set `cache=True` when creating a `Chat`.
+
+```python
+chat = Chat(model, sp=sp, cache=True)
+```
+
+Caching has a minimum token limit of 1024 tokens for Sonnet and Opus, and 2048 for Haiku. If your conversation is below this limit, it will not be cached.
+
+```python
+chat("Hi, I'm Jeremy.")
+```
+
+**Outputs:**
+Message(id='msg_01WQUgAZDsjnFgUd4tzxLJHN', container=None, content=[TextBlock(citations=None, text='Hi Jeremy! Nice to meet you. How are you doing today? Is there something I can help you with?', type … (truncated)
+
+```python
+chat.use
+```
+
+**Outputs:**
+In: 21; Out: 26; Cache create: 0; Cache read: 0; Total Tokens: 47; Search: 0; Fetch: 0
+
+Note the usage: no cache is created, nor used. Now, let's send a long enough message to trigger caching.
+
+```python
+chat("""Lorem ipsum dolor sit amet""" * 150)
+```
+
+**Outputs:**
+Message(id='msg_0164VgWyvwHC2HAGrzFJUbDB', container=None, content=[TextBlock(citations=None, text='It looks like you\'ve sent a large block of repeated "Lorem ipsum dolor sit amet" placeholder text.  … (truncated)
+
+```python
+chat.use
+```
+
+**Outputs:**
+In: 1119; Out: 85; Cache create: 0; Cache read: 0; Total Tokens: 1204; Search: 0; Fetch: 0
+
+The context is now long enough for cache to be used. All the conversation history has now been written to the temporary cache. Any subsequent message will read from it rather than re-processing the entire conversation history.
+
+```python
+chat("Oh thank you! Sorry, my lorem ipsum generator got out of control!")
+```
+
+**Outputs:**
+Message(id='msg_01FeLGZ2T49tUHaWKaQAJAhn', container=None, content=[TextBlock(citations=None, text='Ha, no worries at all, Jeremy! Those lorem ipsum generators can definitely get a little wild sometim … (truncated)
+
+```python
+chat.use
+```
+
+**Outputs:**
+In: 2294; Out: 133; Cache create: 0; Cache read: 0; Total Tokens: 2427; Search: 0; Fetch: 0
+
+## Extended Thinking
+
+Claude >=3.7 have enhanced reasoning capabilities for complex tasks. See [docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking) for more info.
+
+We can enable extended thinking by passing a `thinking` param with the following structure.
+
+```js
+thinking={ "type": "enabled", "budget_tokens": 16000 }
+```
+
+When extended thinking is enabled a thinking block is included in the response as shown below.
+
+```js
+{
+  "content": [
+    {
+      "type": "thinking",
+      "thinking": "To approach this, let's think about...",
+      "signature": "Imtakcjsu38219c0.eyJoYXNoIjoiYWJjM0NTY3fQ...."
+    },
+    {
+      "type": "text",
+      "text": "Yes, there are infinitely many prime numbers such that..."
+    }
+  ]
+}
+```
+
+*Note: When thinking is [enabled](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking#important-considerations-when-using-extended-thinking) `prefill` must be empty and the `temp` must be 1.*
+
+```python
+#| export
+def think_md(txt, thk):
+    return f"""
+{txt}
+
+<details>
+<summary>Thinking</summary>
+{thk}
+</details>
+"""
+```
+
+```python
+def contents(r, show_thk=True):
+    "Helper to get the contents from Claude response `r`."
+    blk = find_block(r)
+    if show_thk:
+        tk_blk = find_block(r, blk_type=ThinkingBlock)
+        if tk_blk: return think_md(blk.text.strip(), tk_blk.thinking.strip())
+    if not blk and r.content: blk = r.content[0]
+    if hasattr(blk,'text'): return blk.text.strip()
+    elif hasattr(blk,'content'): return blk.content.strip()
+    elif hasattr(blk,'source'): return f'*Media Type - {blk.type}*'
+    return str(blk)
+```
+
+Let's call the model without extended thinking enabled. 
+
+```python
+chat = Chat(model)
+```
+
+```python
+chat("Write a sentence about Python!")
+```
+
+**Outputs:**
+Message(id='msg_0133ueaeXR2KvELPiPDnpFAC', container=None, content=[TextBlock(citations=None, text="Here's a sentence about Python:\n\n**Python is a versatile, beginner-friendly programming language k … (truncated)
+
+Now, let's call the model with extended thinking enabled.
+
+```python
+chat("Write a sentence about Python!", maxthinktok=1024)
+```
+
+**Outputs:**
+Message(id='msg_01Vuqd8xUwuB2tTnmcexcfFp', container=None, content=[ThinkingBlock(signature='Ev0BCkYICxgCKkAmUcWkc6z1j9s2pIRVL/EIaNbJYCaXR1stNeEAhQoCylzrssuUy2ZTq4vGWUl7WbH2AbV30H8aRazSNGwgnQp+Egzq7Gm … (truncated)
+
+## Server Tools and Web Search
+
+The `str_replace` special tool type is a client side tool, i.e., one where we provide the implementation. However, Anthropic also supports server side tools. The current one available is their search tool, which you can find the documentation for [here](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/web-search-tool). When provided as a tool to claude, claude can decide to search the web in order to answer or solve the task at hand.
+
+```python
+#| export
+def search_conf(max_uses:int=None, allowed_domains:list=None, blocked_domains:list=None, user_location:dict=None):
+    'Little helper to create a search tool config'
+    conf = {'type': 'web_search_20250305', 'name': 'web_search'}
+    if max_uses: conf['max_uses'] = max_uses
+    if allowed_domains: conf['allowed_domains'] = allowed_domains
+    if blocked_domains: conf['blocked_domains'] = blocked_domains
+    if user_location: conf['user_location'] = user_location
+    return conf
+```
+
+Similar to client side tools, you provide to the `tools` argument in the anthropic api a non-schema dictionary with the tool's name, type, and any additional metadata specific to that tool. Here's a function to make that process easier for the web search tool.
+
+```python
+search_conf()
+```
+
+**Outputs:**
+{'type': 'web_search_20250305', 'name': 'web_search'}
+
+The web search tool returns a list of `TextBlock`s comprised of response text from the model, `ServerToolUseBlock` and server tool results block such as `WebSearchToolResultBlock`. Some of these `TextBlock`s will contain citations with references to the results of the web search tool. Here is what all this looks like:
+
+```js
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "I'll check the current weather in...",
+    },
+    {
+      "type": "server_tool_use",
+      "name": "web_search",
+      "input": {"query": "San Diego weather forecast today May 12 2025"},
+      "id":"srvtoolu_014t7fS449voTHRCVzi5jQGC"
+    },
+    {
+      "type": "web_search_tool_result",
+      "tool_use_id": "srvtoolu_014t7fS449voTHRCVzi5jQGC",
+      "content": [
+        "type": "web_search_result",
+        "title": "Heat Advisory issued May 9...",
+        "url": "https://kesq.com/weather/...",
+        ...
+      ]
+    }
+    {
+      "type": "text",
+      "citations": [
+        {
+            "cited_text": 'The average temperature during this month...',
+            "title": "Weather San Diego in May 2025:...",
+            "url": "https://en.climate-data.org/...",
+            "encrypted_index": "EpMBCioIAxgCIiQ4ODk4YTF..."
+        }
+      ],
+      "text": "The average temperature in San Diego during May is..."
+    },
+    ...
+  ]
+}
+```
+
+ Let's update our `contents` function to handle these cases. For handling citations, we will use the excellent reference syntax in markdown to make clickable citation links.
+
+```python
+#| export
+def find_blocks(r, blk_type=TextBlock, type='text'):
+    "Helper to find all blocks of type `blk_type` in response `r`."
+    def f(b): return (b.get('type')=='text') if isinstance(b, dict) else (isinstance(b, TextBlock))
+    return [b for b in getattr(r, "content", []) if f(b)]
+```
+
+```python
+#| export
+def blks2cited_txt(txt_blks):
+    "Helper to get the contents from a list of `TextBlock`s, with citations."
+    text_sections, citations = [], []
+    for blk in txt_blks:
+        if isinstance(blk, dict): blk = AttrDict(blk)
+        section = blk.text
+        if getattr(blk, 'citations', None):
+            markers = []
+            for cit in blk.citations:
+                citations.append(cit)
+                markers.append(f"[^{len(citations)}]")
+            section = f"{section} " + " ".join(markers)
+        text_sections.append(section)
+    body = "".join(text_sections)
+    def _cite(i, cit):
+        esc = cit.cited_text.replace('"', r'\"')
+        src = getattr(cit, 'url', None) or cit.document_title
+        return f'[^{i+1}]: {src}\n\t"{esc}"'
+    if citations:
+        refs = '\n\n'.join(L.enumerate(citations).starmap(_cite))
+        body = f"{body}\n\n{refs}" if body else refs
+    return body
+```
+
+```python
+#| export
+def contents(r, show_thk=True):
+    "Helper to get the contents from Claude response `r`."
+    blks = find_blocks(r, blk_type=TextBlock)
+    content = None
+    if blks: content = blks2cited_txt(blks)
+    if show_thk:
+        tk_blk = find_block(r, blk_type=ThinkingBlock)
+        if tk_blk: return think_md(content, tk_blk.thinking.strip())
+    if not content:
+        blk = find_block(r)
+        if not blk and getattr(r, "content", None): blk = r.content
+        if hasattr(blk, "text"): content = blk.text.strip()
+        elif hasattr(blk, "content"): content = blk.content.strip()
+        elif hasattr(blk, "source"): content = f"*Media Type - {blk.type}*"
+        else: content = str(blk)
+    return content
+```
+
+```python
+chat = Chat(model, sp='Be concise in your responses.', tools=[search_conf()], cache=True)
+pr = 'What is the weather in San Diego?'
+r = chat(pr)
+r
+```
+
+**Outputs:**
+Message(id='msg_01CiY6bqkVHro5CXX1jVNjMG', container=None, content=[ServerToolUseBlock(id='srvtoolu_01EmFt11mrox1xAAjpz8f5QF', caller=DirectCaller(type='direct'), input={'query': 'weather in San Diego … (truncated)
+
+We can cite custom documents too.
+
+```python
+from msglm import mk_ant_doc
+```
+
+```python
+doc = mk_ant_doc("The capital of France is Paris. It has a population of about 2.2 million.", title="France Facts")
+chat = Chat(model=models[1])
+r = chat([doc, "What is the capital of France and what is its population?"])
+r
+```
+
+**Outputs:**
+Message(id='msg_01JrDTZVtNzSi1MyjPvPF2xS', container=None, content=[TextBlock(citations=[CitationCharLocation(cited_text='The capital of France is Paris. ', document_index=0, document_title='France Fa … (truncated)
+
+## Third party providers
+
+NB: The 3rd party model list is currently out of date--PRs to fix that would be welcome!
+
+### Amazon Bedrock
+
+These are Amazon's current Claude models:
+
+```python
+models_aws
+```
+
+**Outputs:**
+['anthropic.claude-opus-4-1-20250805-v1:0',
+ 'anthropic.claude-sonnet-4-20250514-v1:0',
+ 'claude-3-5-haiku-20241022',
+ 'claude-3-7-sonnet-20250219',
+ 'anthropic.claude-3-opus-20240229-v1:0',
+ 'anthrop … (truncated)
+
+Provided `boto3` is installed, we otherwise don't need any extra code to support Amazon Bedrock -- we just have to set up the approach client:
+
+```python
+#| eval: false
+ab = AnthropicBedrock(
+    aws_access_key=os.environ['AWS_ACCESS_KEY'],
+    aws_secret_key=os.environ['AWS_SECRET_KEY'],
+)
+client = Client(models_aws[0], ab)
+
+chat = Chat(cli=client)
+chat("I'm Jeremy")
+```
+
+### Google Vertex
+
+```python
+models_goog
+```
+
+**Outputs:**
+['claude-opus-4-1@20250805',
+ 'anthropic.claude-3-sonnet-20240229-v1:0',
+ 'anthropic.claude-3-haiku-20240307-v1:0',
+ 'claude-3-opus@20240229',
+ 'claude-3-5-sonnet-v2@20241022',
+ 'claude-3-sonnet@20240 … (truncated)
+
+```python
+from anthropic import AnthropicVertex
+import google.auth
+```
+
+```python
+#| eval: false
+project_id = google.auth.default()[1]
+region = "us-east5"
+gv = AnthropicVertex(project_id=project_id, region=region)
+client = Client(models_goog[-1], gv)
+
+chat = Chat(cli=client)
+chat("I'm Jeremy")
+```
+
+## Export -
+
+```python
+#| hide
+#| eval: false
+from nbdev.doclinks import nbdev_export
+nbdev_export()
+```
+
+### Tool loop
+
+*Source: 01_toolloop.ipynb | URL: https://github.com/AnswerDotAI/claudette/blob/main/01_toolloop.ipynb*
+
+```python
+#| default_exp toolloop
+```
+
+# Tool loop
+
+```python
+import os
+# os.environ['ANTHROPIC_LOG'] = 'debug'
+```
+
+```python
+#| export
+from claudette.core import *
+from fastcore.utils import *
+from fastcore.meta import delegates
+from fastcore.xtras import save_iter
+from functools import wraps
+
+from anthropic.types import TextBlock, Message, ToolUseBlock
+```
+
+```python
+from IPython.display import display, Markdown, clear_output
+from pprint import pprint
+from cachy import enable_cachy
+```
+
+```python
+enable_cachy()
+```
+
+```python
+model = models[1]
+model
+```
+
+**Outputs:**
+'claude-sonnet-4-5'
+
+## Problem setup
+
+Anthropic provides an [interesting example](https://github.com/anthropics/anthropic-cookbook/blob/main/tool_use/customer_service_agent.ipynb) of using tools to mock up a hypothetical ordering system. We're going to take it a step further, and show how we can dramatically simplify the process, whilst completing more complex tasks.
+
+We'll start by defining the same mock customer/order data as in Anthropic's example, plus create a entity relationship between customers and orders:
+
+```python
+def _get_orders_customers():
+    orders = {
+        "O1": dict(id="O1", product="Widget A", quantity=2, price=19.99, status="Shipped"),
+        "O2": dict(id="O2", product="Gadget B", quantity=1, price=49.99, status="Processing"),
+        "O3": dict(id="O3", product="Gadget B", quantity=2, price=49.99, status="Shipped")}
+
+    customers = {
+        "C1": dict(name="John Doe", email="john@example.com", phone="123-456-7890",
+                   orders=[orders['O1'], orders['O2']]),
+        "C2": dict(name="Jane Smith", email="jane@example.com", phone="987-654-3210",
+                   orders=[orders['O3']])
+    }
+    return orders, customers
+```
+
+```python
+orders, customers = _get_orders_customers()
+```
+
+We can now define the same functions from the original example -- but note that we don't need to manually create the large JSON schema, since Claudette handles all that for us automatically from the functions directly. We'll add some extra functionality to update order details when cancelling too.
+
+```python
+def get_customer_info(
+    customer_id:str # ID of the customer
+): # Customer's name, email, phone number, and list of orders
+    "Retrieves a customer's information and their orders based on the customer ID"
+    print(f'- Retrieving customer {customer_id}')
+    return customers.get(customer_id, "Customer not found")
+
+def get_order_details(
+    order_id:str # ID of the order
+): # Order's ID, product name, quantity, price, and order status
+    "Retrieves the details of a specific order based on the order ID"
+    print(f'- Retrieving order {order_id}')
+    return orders.get(order_id, "Order not found")
+
+def cancel_order(
+    order_id:str # ID of the order to cancel
+)->bool: # True if the cancellation is successful
+    "Cancels an order based on the provided order ID"
+    print(f'- Cancelling order {order_id}')
+    if order_id not in orders: return False
+    orders[order_id]['status'] = 'Cancelled'
+    return True
+```
+
+We're now ready to start our chat.
+
+## Manual tool use
+
+```python
+tools = [get_customer_info, get_order_details, cancel_order]
+```
+
+```python
+chat = Chat(model, tools=tools)
+```
+
+We'll start with the same request as Anthropic showed:
+
+```python
+r = chat('Can you tell me the email address for customer C1?')
+print(r.stop_reason)
+r.content
+```
+
+**Outputs:**
+- Retrieving customer C1
+tool_use
+
+[ToolUseBlock(id='toolu_01LJ2mkQDqRdToAFHbCosv26', input={'customer_id': 'C1'}, name='get_customer_info', type='tool_use')]
+
+Claude asks us to use a tool. Claudette handles that automatically by just calling it again:
+
+```python
+r = chat()
+contents(r)
+```
+
+**Outputs:**
+'The email address for customer C1 (John Doe) is **john@example.com**.'
+
+Let's consider a more complex case than in the original example -- what happens if a customer wants to cancel all of their orders?
+
+```python
+chat = Chat(model, tools=tools)
+r = chat('Please cancel all orders for customer C1 for me.')
+print(r.stop_reason)
+r.content
+```
+
+**Outputs:**
+- Retrieving customer C1
+tool_use
+
+[TextBlock(citations=None, text="I'll help you cancel all orders for customer C1. First, let me retrieve the customer's information to see what orders they have.", type='text'),
+ ToolUseBlock(id='tool … (truncated)
+
+## Tool loop
+
+This is the start of a multi-stage tool use process. Doing it manually step by step is inconvenient, so let's write a function to handle this for us:
+
+```python
+#| exports
+_final_prompt = "You have no more tool uses. Please summarize your findings. If you did not complete your goal please tell the user what further work needs to be done so they can choose how best to proceed."
+```
+
+```python
+#| exports
+@patch
+@delegates(Chat.__call__)
+def toolloop(self:Chat,
+             pr, # Prompt to pass to Claude
+             max_steps=10, # Maximum number of tool requests to loop through
+             cont_func:callable=noop, # Function that stops loop if returns False
+             final_prompt=_final_prompt, # Prompt to add if last message is a tool call
+             **kwargs):
+    "Add prompt `pr` to dialog and get a response from Claude, automatically following up with `tool_use` messages"
+    @save_iter
+    def _f(o):
+        init_n = len(self.h)
+        r = self(pr, **kwargs)
+        yield r
+        if len(self.last)>1: yield self.last[1]
+        for i in range(max_steps-1):
+            if self.c.stop_reason!='tool_use': break
+            r = self(final_prompt if i==max_steps-2 else None, **kwargs)
+            yield r
+            if len(self.last)>1: yield self.last[1]
+            if not cont_func(*self.h[-3:]): break
+        o.value = self.h[init_n+1:]
+    return _f()
+```
+
+`toolloop` returns an iterable of assistant messages:
+
+```python
+chat = Chat(model, tools=tools)
+pr = 'Can you tell me the email address for customer C1?'
+r = chat.toolloop(pr)
+for o in r: display(o)
+```
+
+**Outputs:**
+- Retrieving customer C1
+
+Message(id='msg_01F1ruk8y7TsTrhpWTkBc67e', content=[ToolUseBlock(id='toolu_01LJ2mkQDqRdToAFHbCosv26', input={'customer_id': 'C1'}, name='get_customer_info', type='tool_use')], model='claude-sonnet-4-5 … (truncated)
+{'role': 'user',
+ 'content': [{'type': 'tool_result',
+   'tool_use_id': 'toolu_01LJ2mkQDqRdToAFHbCosv26',
+   'content': "{'name': 'John Doe', 'email': 'john@example.com', 'phone': '123-456-7890', 'ord … (truncated)
+Message(id='msg_019Z6rMioA6RExGgXKGnusiM', content=[TextBlock(citations=None, text='The email address for customer C1 (John Doe) is **john@example.com**.', type='text')], model='claude-sonnet-4-5-2025 … (truncated)
+
+The full set of tool loop messages is stored in the `value` attr:
+
+```python
+pprint(r.value, width=120)
+```
+
+**Outputs:**
+[{'content': [{'id': 'toolu_01LJ2mkQDqRdToAFHbCosv26',
+               'input': {'customer_id': 'C1'},
+               'name': 'get_customer_info',
+               'type': 'tool_use'}],
+  'role': 'assist … (truncated)
+
+Let's see if it can handle the multi-stage process now:
+
+```python
+orders, customers = _get_orders_customers()
+```
+
+```python
+chat = Chat(model, tools=tools)
+r = chat.toolloop('Please cancel all orders for customer C1 for me.')
+for o in r: display(o)
+```
+
+**Outputs:**
+- Retrieving customer C1
+
+Message(id='msg_01XdX15ZJuePtveCDsM41WMm', content=[TextBlock(citations=None, text="I'll help you cancel all orders for customer C1. First, let me retrieve the customer's information to see what order … (truncated)
+{'role': 'user',
+ 'content': [{'type': 'tool_result',
+   'tool_use_id': 'toolu_01G48VxPvsqRmUfRNWbz5JAf',
+   'content': "{'name': 'John Doe', 'email': 'john@example.com', 'phone': '123-456-7890', 'ord … (truncated)
+- Cancelling order O1
+- Cancelling order O2
+
+Message(id='msg_01CWangwZyHeqyk5m8MeSwP4', content=[TextBlock(citations=None, text='Now I can see that customer C1 (John Doe) has 2 orders:\n- Order O1: Widget A (Status: Shipped)\n- Order O2: Gadget  … (truncated)
+{'role': 'user',
+ 'content': [{'type': 'tool_result',
+   'tool_use_id': 'toolu_01Lm2DE8sU5kBASiTXDa77zP',
+   'content': 'True'},
+  {'type': 'tool_result',
+   'tool_use_id': 'toolu_01CQ7U8kyyvWRE8kTGfx … (truncated)
+Message(id='msg_0133SZjYiBzUkej4NSzChNWh', content=[TextBlock(citations=None, text="Perfect! I've successfully cancelled all orders for customer C1 (John Doe):\n- ✓ Order O1 (Widget A) - Cancelled\n-  … (truncated)
+
+OK Claude thinks the orders were cancelled -- let's check one:
+
+```python
+for o in chat.toolloop('What is the status of order O2?'): display(o)
+```
+
+**Outputs:**
+- Retrieving order O2
+
+Message(id='msg_016cS3SURc48upqKf4hBLPMX', content=[TextBlock(citations=None, text='Let me check the current status of order O2 for you.', type='text'), ToolUseBlock(id='toolu_01Kzj8EBHHxbTAnrohSNt7vk … (truncated)
+{'role': 'user',
+ 'content': [{'type': 'tool_result',
+   'tool_use_id': 'toolu_01Kzj8EBHHxbTAnrohSNt7vk',
+   'content': "{'id': 'O2', 'product': 'Gadget B', 'quantity': 1, 'price': 49.99, 'status': 'C … (truncated)
+Message(id='msg_01NLEeZkoDPTVyps2dJoYC4x', content=[TextBlock(citations=None, text='Order O2 is now showing a status of **Cancelled**. This confirms that the cancellation we performed earlier was succ … (truncated)
+
+If we run out of tool loops lets see what happens:
+
+```python
+def mydiv(a:float, b:float):
+    "Divide two numbers"
+    return a / b
+```
+
+```python
+chat = Chat(model, tools=[mydiv])
+r = chat.toolloop('Please calculate this sequence using your tools: 43/23454; 652/previous result; 6843/previous result; 321/previous result', max_steps=2)
+for o in r: display(o)
+```
+
+**Outputs:**
+Message(id='msg_012jpk6qp7u58WMkKv5VWwsv', content=[TextBlock(citations=None, text="I'll calculate this sequence step by step, using the result from each division as the divisor for the next operation … (truncated)
+{'role': 'user',
+ 'content': [{'type': 'tool_result',
+   'tool_use_id': 'toolu_01TcqArsz5skzgeZSHACNpFL',
+   'content': '0.001833375969983798'}]}
+Message(id='msg_01GNzpAuTG1LtRm8z8rjnXV4', content=[TextBlock(citations=None, text="I was able to complete 2 out of 4 steps in the sequence before running out of tool uses. Here's what was calculated: … (truncated)
+
+```python
+chat = Chat(model, tools=mydiv)
+r = chat.toolloop('Try dividing 1 by 0 and see what the error result is')
+for o in r: display(o)
+```
+
+**Outputs:**
+Message(id='msg_01Y8hq6xRjtB3jpnKUjcShHH', content=[TextBlock(citations=None, text="I'll try dividing 1 by 0 to see what happens:", type='text'), ToolUseBlock(id='toolu_016iCAFGa523mQc3JKCiWQRH', inpu … (truncated)
+{'role': 'user',
+ 'content': [{'type': 'tool_result',
+   'tool_use_id': 'toolu_016iCAFGa523mQc3JKCiWQRH',
+   'content': 'Traceback (most recent call last):\n  File "/Users/jhoward/aai-ws/toolslm/tools … (truncated)
+Message(id='msg_01RcdGpMqujYsp2zEh13aKvf', content=[TextBlock(citations=None, text='As expected, dividing by zero produces a **ZeroDivisionError** with the message "division by zero". This is Python\' … (truncated)
+
+## Streaming
+
+```python
+orders, customers = _get_orders_customers()
+```
+
+```python
+chat = Chat(model, tools=tools)
+r = chat.toolloop('Please cancel all orders for customer C1 for me.', stream=True)
+for o in r:
+    if isinstance(o, (dict,Message,list)): print(o)
+    else: 
+        for x in o: print(x, end='')
+        display(o.value)
+```
+
+**Outputs:**
+I'll help you cancel all orders for customer C1. First, let me retrieve the customer's information to see what orders they have.- Retrieving customer C1
+
+Message(id='msg_01Qz5tYWK1jA8kete3Ub2dNt', content=[TextBlock(citations=None, text="I'll help you cancel all orders for customer C1. First, let me retrieve the customer's information to see what order … (truncated)
+{'role': 'user', 'content': [{'type': 'tool_result', 'tool_use_id': 'toolu_019nveAUbHYAQ11nprLdWAQR', 'content': "{'name': 'John Doe', 'email': 'john@example.com', 'phone': '123-456-7890', 'orders': [ … (truncated)
+Now I can see that customer C1 (John Doe) has 2 orders:
+- Order O1: Widget A (Status: Shipped)
+- Order O2: Gadget B (Status: Processing)
+
+Let me cancel both orders for you.- Cancelling order O1
+- Canc … (truncated)
+Message(id='msg_01MhvyKhRtSdsCmTfbSuWwE7', content=[TextBlock(citations=None, text='Now I can see that customer C1 (John Doe) has 2 orders:\n- Order O1: Widget A (Status: Shipped)\n- Order O2: Gadget  … (truncated)
+{'role': 'user', 'content': [{'type': 'tool_result', 'tool_use_id': 'toolu_01DheUnWexZKYKSi211SgGLM', 'content': 'True'}, {'type': 'tool_result', 'tool_use_id': 'toolu_01HhVbewBrXzyGSfeWMeTEEt', 'cont … (truncated)
+Perfect! I've successfully cancelled all orders for customer C1 (John Doe):
+- ✓ Order O1 (Widget A) - Cancelled
+- ✓ Order O2 (Gadget B) - Cancelled
+
+Both orders have been cancelled successfully.
+Message(id='msg_01NgJQktChmU3RrU4xUpXTKq', content=[TextBlock(citations=None, text="Perfect! I've successfully cancelled all orders for customer C1 (John Doe):\n- ✓ Order O1 (Widget A) - Cancelled\n-  … (truncated)
+
+## Async tool loop
+
+```python
+#| export
+from claudette.asink import AsyncChat
+```
+
+```python
+#| exports
+@patch
+@delegates(AsyncChat.__call__)
+def toolloop(
+    self: AsyncChat,
+    pr, # Prompt to pass to Claude
+    max_steps=10, # Maximum number of tool requests to loop through
+    cont_func: callable = noop, # Function that stops loop if returns False
+    final_prompt = _final_prompt, # Prompt to add if last message is a tool call
+    **kwargs
+):
+    "Add prompt `pr` to dialog and get a response from Claude, automatically following up with `tool_use` messages"
+    @save_iter
+    async def _f(o):
+        init_n = len(self.h)
+        r = await self(pr, **kwargs)
+        yield r
+        if len(self.last)>1: yield self.last[1]
+        for i in range(max_steps-1):
+            if self.c.stop_reason != 'tool_use': break
+            r = await self(final_prompt if i==max_steps-2 else None, **kwargs)
+            yield r
+            if len(self.last)>1: yield self.last[1]
+            if not cont_func(*self.h[-3:]): break
+        o.value = self.h[init_n+1:]
+    return _f()
+```
+
+```python
+orders, customers = _get_orders_customers()
+```
+
+```python
+tools = [get_customer_info, get_order_details, cancel_order]
+chat = AsyncChat(model, tools=tools)
+r = chat.toolloop('Can you tell me the email address for customer C1?')
+async for o in r: print(o)
+```
+
+**Outputs:**
+- Retrieving customer C1
+Message(id='msg_01F1ruk8y7TsTrhpWTkBc67e', content=[ToolUseBlock(id='toolu_01LJ2mkQDqRdToAFHbCosv26', input={'customer_id': 'C1'}, name='get_customer_info', type='tool_use')], … (truncated)
+
+```python
+pprint(r.value)
+```
+
+**Outputs:**
+[{'content': [{'id': 'toolu_01LJ2mkQDqRdToAFHbCosv26',
+               'input': {'customer_id': 'C1'},
+               'name': 'get_customer_info',
+               'type': 'tool_use'}],
+  'role': 'assist … (truncated)
+
+## Code interpreter
+
+Here is an example of using `toolloop` to implement a simple code interpreter with additional tools.
+
+```python
+from toolslm.shell import get_shell
+from fastcore.meta import delegates
+import traceback
+```
+
+```python
+@delegates()
+class CodeChat(Chat):
+    imps = 'os, warnings, time, json, re, math, collections, itertools, functools, dateutil, datetime, string, types, copy, pprint, enum, numbers, decimal, fractions, random, operator, typing, dataclasses'
+    def __init__(self, model: Optional[str] = None, ask:bool=True, **kwargs):
+        super().__init__(model=model, **kwargs)
+        self.ask = ask
+        self.tools.append(self.run_cell)
+        self.shell = get_shell()
+        self.shell.run_cell('import '+self.imps)
+```
+
+We have one additional parameter to creating a `CodeChat` beyond what we pass to `Chat`, which is `ask` -- if that's `True`, we'll prompt the user before running code.
+
+```python
+@patch
+def run_cell(
+    self:CodeChat,
+    code:str,   # Code to execute in persistent IPython session
+)->str:
+    """Asks user for permission, and if provided, executes python `code` using persistent IPython session.
+    Returns: Result of expression on last line (if exists); '#DECLINED#' if user declines request to execute"""
+    confirm = f'Press Enter to execute, or enter "n" to skip?\n```\n{code}\n```\n'
+    if self.ask and input(confirm): return '#DECLINED#'
+    try: res = self.shell.run_cell(code)
+    except Exception as e: return traceback.format_exc()
+    return res.stdout if res.result is None else res.result
+```
+
+We just pass along requests to run code to the shell's implementation. Claude often prints results instead of just using the last expression, so we capture stdout in those cases.
+
+```python
+sp = f'''You are a knowledgable assistant. Do not use tools unless needed.
+Don't do complex calculations yourself -- use code for them.
+The following modules are pre-imported for `run_cell` automatically:
+
+{CodeChat.imps}
+
+Never mention what tools you are using. Note that `run_cell` interpreter state is *persistent* across calls.
+
+If a tool returns `#DECLINED#` report to the user that the attempt was declined and no further progress can be made.
+In that case, do *not* attempt to run any further code -- stop execution *IMMEDIATELY* and tell the user it was declined.
+
+When using a tool, *ALWAYS* before every use of every tool, tell the user what you will be doing and why.'''
+```
+
+```python
+def get_user()->str:
+    "Get the username of the user running this session"
+    print("Looking up username")
+    return 'Jeremy'
+```
+
+In order to test out multi-stage tool use, we create a mock function that Claude can call to get the current username.
+
+```python
+model = models[1]
+chat = CodeChat(model, tools=[get_user], sp=sp, ask=True, temp=0.3)
+```
+
+Providing a callable to toolloop's `trace_func` lets us print out information during the loop:
+
+`toolloop`'s `cont_func` callable let's us provide a function which, if it returns `False`, stops the loop:
+
+```python
+def _cont_decline(call, resp, asst): return resp['content'][0].get('content') != '#DECLINED#'
+```
+
+Now we can try our code interpreter. We start by asking for a function to be created, which we'll use in the next prompt to test that the interpreter is persistent.
+
+```python
+pr = '''Create a 1-line function `checksum` for a string `s`,
+that multiplies together the ascii values of each character in `s` using `reduce`.'''
+for o in chat.toolloop(pr, cont_func=_cont_decline): display(o)
+```
+
+**Outputs:**
+Message(id='msg_01NfL3YNWTZ2Chst88nr3iPu', content=[TextBlock(citations=None, text="I'll create a 1-line `checksum` function that uses `reduce` to multiply the ASCII values of each character in a stri … (truncated)
+{'role': 'user',
+ 'content': [{'type': 'tool_result',
+   'tool_use_id': 'toolu_01GgTqM917BzHJ4MjpwZFwTF',
+   'content': '941094\n13599570816\n65\n'}]}
+Message(id='msg_01L1Et5ywM28AckqGct1Ce4A', content=[TextBlock(citations=None, text='Perfect! I\'ve created the `checksum` function as a one-liner that:\n- Uses `functools.reduce` with `operator.mul` t … (truncated)
+
+By asking for a calculation to be done on the username, we force it to use multiple steps:
+
+```python
+pr = 'Use it to get the checksum of the username of this session.'
+for o in chat.toolloop(pr): display(o)
+```
+
+**Outputs:**
+Looking up username
+
+Message(id='msg_01HrZAji8SwDbRhbb79cUZHo', content=[TextBlock(citations=None, text="I'll get the username of this session and then calculate its checksum.", type='text'), ToolUseBlock(id='toolu_01MzJH … (truncated)
+{'role': 'user',
+ 'content': [{'type': 'tool_result',
+   'tool_use_id': 'toolu_01MzJHgGgQdJ5Pc9e5s35ddF',
+   'content': 'Jeremy'}]}
+Message(id='msg_01Fdq1ViEfUg6kzGPrYeeVa6', content=[TextBlock(citations=None, text='Now I\'ll calculate the checksum for "Jeremy":', type='text'), ToolUseBlock(id='toolu_016XwiSjzxo2sgJTiZw2gFH8', inp … (truncated)
+{'role': 'user',
+ 'content': [{'type': 'tool_result',
+   'tool_use_id': 'toolu_016XwiSjzxo2sgJTiZw2gFH8',
+   'content': 'Username: Jeremy\nChecksum: 1134987783204\n'}]}
+Message(id='msg_01CfuVuK1hbYq6o61cv7ddp8', content=[TextBlock(citations=None, text='The checksum of the username "Jeremy" is **1,134,987,783,204**.\n\nThis is calculated by multiplying the ASCII value … (truncated)
+
+## Export -
+
+```python
+#| hide
+#| eval: false
+from nbdev.doclinks import nbdev_export
+nbdev_export()
+```
+
+### The async version
+
+*Source: 02_async.ipynb | URL: https://github.com/AnswerDotAI/claudette/blob/main/02_async.ipynb*
+
+```python
+#| default_exp asink
+```
+
+# The async version
+
+## Setup
+
+```python
+#| export
+import inspect, typing, mimetypes, base64, json
+from collections import abc
+
+from anthropic import AsyncAnthropic
+from anthropic.types import ToolUseBlock
+from toolslm.funccall import get_schema, mk_ns, call_func, call_func_async
+from fastcore.meta import delegates
+from fastcore.utils import *
+from claudette.core import *
+from msglm import mk_msg_anthropic as mk_msg, mk_msgs_anthropic as mk_msgs
+```
+
+```python
+from cachy import enable_cachy
+```
+
+```python
+enable_cachy()
+```
+
+```python
+#| hide
+from nbdev import show_doc
+```
+
+```python
+from IPython.display import display,Image
+```
+
+## Async SDK
+
+```python
+model = models[1]
+cli = AsyncAnthropic()
+```
+
+```python
+prompt = "I'm Jeremy"
+m = mk_msg(prompt)
+r = await cli.messages.create(messages=[m], model=model, max_tokens=100)
+r
+```
+
+**Outputs:**
+Message(id='msg_01Q3123HGtAxWnUraLL65H24', container=None, content=[TextBlock(citations=None, text='Hi Jeremy! Nice to meet you. How can I help you today?', type='text')], model='claude-sonnet-4-6', r … (truncated)
+
+```python
+msgs = mk_msgs([prompt, r, "I forgot my name. Can you remind me please?"]) 
+msgs
+```
+
+**Outputs:**
+[{'role': 'user', 'content': "I'm Jeremy"},
+ {'role': 'assistant',
+  'content': [TextBlock(citations=None, text='Hi Jeremy! Nice to meet you. How can I help you today?', type='text')]},
+ {'role': 'use … (truncated)
+
+```python
+await cli.messages.create(messages=msgs, model=model, max_tokens=200)
+```
+
+**Outputs:**
+Message(id='msg_01QTvdUwQAyKRQT3H73STdU3', container=None, content=[TextBlock(citations=None, text='Your name is Jeremy! You told me that at the start of our conversation. 😊', type='text')], model='cl … (truncated)
+
+```python
+#| exports
+class AsyncClient(Client):
+    def __init__(self, model, cli=None, log=False, cache=False):
+        "Async Anthropic messages client."
+        super().__init__(model,cli,log,cache)
+        if not cli: self.c = AsyncAnthropic(default_headers={'anthropic-beta': 'prompt-caching-2024-07-31'})
+```
+
+```python
+c = AsyncClient(model)
+```
+
+```python
+c._r(r)
+c.use
+```
+
+**Outputs:**
+In: 10; Out: 18; Cache create: 0; Cache read: 0; Total Tokens: 28; Search: 0; Fetch: 0
+
+```python
+#| exports
+@asave_iter
+async def _astream(o, cm, prefill, cb):
+    async with cm as s:
+        yield prefill
+        async for x in s.text_stream: yield x
+        o.value = await s.get_final_message()
+        await cb(o.value)
+```
+
+```python
+#| exports
+@patch
+@delegates(Client)
+async def __call__(self:AsyncClient,
+             msgs:list, # List of messages in the dialog
+             sp='', # The system prompt
+             temp=0, # Temperature
+             maxtok=4096, # Maximum tokens
+             maxthinktok=0, # Maximum thinking tokens
+             prefill='', # Optional prefill to pass to Claude as start of its response
+             stream:bool=False, # Stream response?
+             stop=None, # Stop sequence
+             tools:Optional[list]=None, # List of tools to make available to Claude
+             tool_choice:Optional[dict]=None, # Optionally force use of some tool
+             cb=None, # Callback to pass result to when complete
+             **kwargs):
+    "Make an async call to Claude."
+    msgs,kwargs = self._precall(msgs, prefill, sp, temp, maxtok, maxthinktok, stream,
+                                stop, tools, tool_choice, kwargs)
+    m = self.c.messages
+    f = m.stream if stream else m.create
+    res = f(model=self.model, messages=msgs, **kwargs)
+    async def _cb(v):
+        self._log(v, prefill=prefill, msgs=msgs, **kwargs)
+        if cb: await cb(v)
+    if stream: return _astream(res, prefill, _cb)
+    res = await res
+    try: return res
+    finally: await _cb(res)
+```
+
+```python
+c = AsyncClient(model, log=True)
+c.use
+```
+
+**Outputs:**
+In: 0; Out: 0; Cache create: 0; Cache read: 0; Total Tokens: 0; Search: 0; Fetch: 0
+
+```python
+c.model = models[1]
+await c('Hi')
+```
+
+**Outputs:**
+Message(id='msg_01NSbD7ZmQJKeY16gJ6apjAH', container=None, content=[TextBlock(citations=None, text='Hi there! How are you doing? Is there something I can help you with today? 😊', type='text')], model= … (truncated)
+
+```python
+c.use
+```
+
+**Outputs:**
+In: 8; Out: 24; Cache create: 0; Cache read: 0; Total Tokens: 32; Search: 0; Fetch: 0
+
+```python
+def sums(
+    a:int,  # First thing to sum
+    b:int=1 # Second thing to sum
+) -> int: # The sum of the inputs
+    "Adds a + b."
+    print(f"Finding the sum of {a} and {b}")
+    return a + b
+```
+
+```python
+a,b = 604542,6458932
+pr = f"What is {a}+{b}?"
+sp = "You are a summing expert."
+```
+
+```python
+tools=[sums]
+choice = mk_tool_choice('sums')
+choice
+```
+
+**Outputs:**
+{'type': 'tool', 'name': 'sums'}
+
+```python
+msgs = mk_msgs(pr)
+r = await c(msgs, sp=sp, tools=tools, tool_choice=choice)
+r
+```
+
+**Outputs:**
+Message(id='msg_013mLdHfZhRGsihW3NxusZWB', container=None, content=[ToolUseBlock(id='toolu_016CNnqECCx2AcanFfQAR6Dz', caller=DirectCaller(type='direct'), input={'a': 604542, 'b': 6458932}, name='sums' … (truncated)
+
+```python
+#| export
+async def mk_funcres_async(fc, ns):
+    "Given tool use block `fc`, get tool result, and create a tool_result response."
+    try: res = await call_func_async(fc.name, fc.input, ns=ns, raise_on_err=False)
+    except KeyError: res = f"Error - tool not defined in the tool_schemas: {fc.name}"
+    return dict(type="tool_result", tool_use_id=fc.id, content=str(res))
+```
+
+```python
+#| export
+async def mk_toolres_async(
+    r:abc.Mapping, # Tool use request response from Claude
+    ns:Optional[abc.Mapping]=None # Namespace to search for tools
+    ):
+    "Create a `tool_result` message from response `r`."
+    cts = getattr(r, 'content', [])
+    res = [mk_msg(r.model_dump(exclude_none=True), role='assistant')]
+    if ns is None: ns=globals()
+    tcs = [await mk_funcres_async(o, ns) for o in cts if isinstance(o,ToolUseBlock)]
+    if tcs: res.append(mk_msg(tcs))
+    return res
+```
+
+```python
+tr = await mk_toolres_async(r, ns=globals())
+tr
+```
+
+**Outputs:**
+Finding the sum of 604542 and 6458932
+
+[{'role': 'assistant',
+  'content': [{'id': 'toolu_016CNnqECCx2AcanFfQAR6Dz',
+    'caller': {'type': 'direct'},
+    'input': {'a': 604542, 'b': 6458932},
+    'name': 'sums',
+    'type': 'tool_use'}]}, … (truncated)
+
+```python
+msgs += tr
+r = contents(await c(msgs, sp=sp, tools=sums))
+r
+```
+
+**Outputs:**
+'The result of **604,542 + 6,458,932 = 7,063,474**!'
+
+## Structured Output
+
+```python
+#| export
+@patch
+@delegates(Client.__call__)
+async def structured(self:AsyncClient,
+               msgs:list, # List of messages in the dialog
+               tools:Optional[list]=None, # List of tools to make available to Claude
+               ns:Optional[abc.Mapping]=None, # Namespace to search for tools
+               **kwargs):
+    "Return the value of all tool calls (generally used for structured outputs)"
+    tools = listify(tools)
+    if ns is None: ns=mk_ns(*tools)
+    res = await self(msgs, tools=tools, tool_choice=tools,**kwargs)
+    cts = getattr(res, 'content', [])
+    tcs = [await call_func_async(o.name, o.input, ns=ns) for o in cts if isinstance(o,ToolUseBlock)]
+    return tcs
+```
+
+```python
+await c.structured(pr, sums)
+```
+
+**Outputs:**
+Finding the sum of 604542 and 6458932
+
+[7063474]
+
+```python
+c
+```
+
+**Outputs:**
+<__main__.AsyncClient>
+
+## AsyncChat
+
+```python
+#| exports
+@delegates()
+class AsyncChat(Chat):
+    def __init__(self,
+                 model:Optional[str]=None, # Model to use (leave empty if passing `cli`)
+                 cli:Optional[Client]=None, # Client to use (leave empty if passing `model`)
+                 **kwargs):
+        "Anthropic async chat client."
+        super().__init__(model, cli, **kwargs)
+        if not cli: self.c = AsyncClient(model)
+```
+
+```python
+sp = "Always use tools if available, and calculations are requested."
+chat = AsyncChat(model, sp=sp)
+chat.c.use, chat.h
+```
+
+**Outputs:**
+(In: 0; Out: 0; Cache create: 0; Cache read: 0; Total Tokens: 0; Search: 0; Fetch: 0,
+ [])
+
+```python
+#| exports
+@patch
+async def _append_pr(self:AsyncChat, pr=None):
+    prev_role = nested_idx(self.h, -1, 'role') if self.h else 'assistant' # First message should be 'user' if no history
+    if pr and prev_role == 'user': await self()
+    self._post_pr(pr, prev_role)
+```
+
+```python
+#| exports
+@patch
+async def __call__(self:AsyncChat,
+                   pr=None,  # Prompt / message
+                   temp=None, # Temperature
+                   maxtok=4096, # Maximum tokens
+                   maxthinktok=0, # Maximum thinking tokens
+                   stream=False, # Stream response?
+                   prefill='', # Optional prefill to pass to Claude as start of its response
+                   tool_choice:Optional[Union[str,bool,dict]]=None, # Optionally force use of some tool
+                   **kw):
+    if temp is None: temp=self.temp
+    await self._append_pr(pr)
+    async def _cb(v):
+        self.last = await mk_toolres_async(v, ns=limit_ns(self.ns, self.tools, tool_choice))
+        self.h += self.last
+    return await self.c(self.h, stream=stream, prefill=prefill, sp=self.sp, temp=temp, maxtok=maxtok, maxthinktok=maxthinktok, tools=self.tools, tool_choice=tool_choice, cb=_cb, **kw)
+```
+
+```python
+await chat("I'm Jeremy")
+await chat("What's my name?")
+```
+
+**Outputs:**
+Message(id='msg_01VyEoh1pWoHVEKzCh5SeRWP', container=None, content=[TextBlock(citations=None, text='Your name is Jeremy! You told me at the start of our conversation. 😊', type='text')], model='claude- … (truncated)
+
+```python
+chat = AsyncChat(model, sp=sp)
+r = await chat("I'm Jeremy", stream=True)
+async for o in r: print(o, end='')
+r.value
+```
+
+**Outputs:**
+Hi Jeremy! Nice to meet you. How can I help you today?
+ParsedMessage(id='msg_01JbxS96JDjpS6GtjdyjbHKa', container=None, content=[ParsedTextBlock(citations=None, text='Hi Jeremy! Nice to meet you. How can I help you today?', type='text', parsed_output=None … (truncated)
+
+```python
+pr = f"What is {a}+{b}?"
+chat = AsyncChat(model, sp=sp, tools=[sums])
+r = await chat(pr)
+r
+```
+
+**Outputs:**
+Finding the sum of 604542 and 6458932
+
+Message(id='msg_01AjLTTKCzEr2PgYoqcQrpPy', container=None, content=[TextBlock(citations=None, text="I'll calculate the sum of 604542 and 6458932 right away!", type='text'), ToolUseBlock(id='toolu_01Kh … (truncated)
+
+```python
+await chat()
+```
+
+**Outputs:**
+Message(id='msg_01MzE8hrFtWfJ8fT3PsZ8s9b', container=None, content=[TextBlock(citations=None, text='The sum of **604,542 + 6,458,932 = 7,063,474**!', type='text')], model='claude-sonnet-4-6', role='as … (truncated)
+
+AsyncChat handles missing tools gracefully. When a tool is called but not found in the namespace, it returns an error message rather than crashing.
+
+In this test, we intentionally empty the namespace (`chat.ns={}`) to simulate what would happen if Claude hallucinated a tool or if a tool was missing. The `limit_ns` function (used in the `_cb` callback) would normally filter out hallucinated tools, but here we're testing the fallback behavior when tools aren't available.
+
+```python
+pr = f"What is {a}+{b}?"
+chat = AsyncChat(model, sp=sp, tools=[sums])
+chat.ns={}
+r = await chat(pr)
+r
+```
+
+**Outputs:**
+Message(id='msg_01AjLTTKCzEr2PgYoqcQrpPy', container=None, content=[TextBlock(citations=None, text="I'll calculate the sum of 604542 and 6458932 right away!", type='text'), ToolUseBlock(id='toolu_01Kh … (truncated)
+
+```python
+chat.h
+```
+
+**Outputs:**
+[{'role': 'user', 'content': 'What is 604542+6458932?'},
+ {'role': 'assistant',
+  'content': [{'text': "I'll calculate the sum of 604542 and 6458932 right away!",
+    'type': 'text'},
+   {'id': 'toolu … (truncated)
+
+```python
+fn = Path('samples/puppy.jpg')
+img = fn.read_bytes()
+Image(img)
+```
+
+**Outputs:**
+Image(b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xe2\x0cTICC_PROFILE\x00\x01\x01\x00\x00\x0cDUCCM\x02@\x00\x00mntrRGB XYZ \x07\xd3\x00\x04\x00\x04\x00\x00\x00\x00\x00\x … (truncated)
+
+```python
+q = "In brief, what color flowers are in this image?"
+msg = mk_msg([img, q])
+await c([msg])
+```
+
+**Outputs:**
+Message(id='msg_01DUds87tAj47fozgFfbEPrQ', container=None, content=[TextBlock(citations=None, text='The flowers in the image are **purple/lavender** (blue-purple). They appear to be **asters**.', type … (truncated)
+
+Add `cache=True` to automatically add to Claude's KV cache.
+
+```python
+chat = AsyncChat(model, sp=sp, cache=True)
+await chat("Lorem ipsum dolor sit amet" * 150)
+```
+
+**Outputs:**
+Message(id='msg_01VhxH3pUWt1Z6ERyWFEpLvY', container=None, content=[TextBlock(citations=None, text='It looks like you\'ve sent a large block of repeated **"Lorem ipsum dolor sit amet"** placeholder te … (truncated)
+
+```python
+chat.use
+```
+
+**Outputs:**
+In: 1067; Out: 103; Cache create: 0; Cache read: 0; Total Tokens: 1170; Search: 0; Fetch: 0
+
+In this followup call, nearly all the tokens are cached, so the only the new additional tokens are charged at the full rate.
+
+```python
+await chat("Whoops, sorry about that!")
+```
+
+**Outputs:**
+Message(id='msg_013Z7HrwVhkDCPEhnj3yNHor', container=None, content=[TextBlock(citations=None, text='No worries at all! 😄 It happens! \n\nSo, what can I help you with today?', type='text')], model='cla … (truncated)
+
+```python
+chat.use
+```
+
+**Outputs:**
+In: 2248; Out: 131; Cache create: 0; Cache read: 0; Total Tokens: 2379; Search: 0; Fetch: 0
+
+## Extended Thinking
+
+Let's call the model without extended thinking enabled. 
+
+```python
+chat = AsyncChat(model)
+await chat("Write a sentence about Python!")
+```
+
+**Outputs:**
+Message(id='msg_0133ueaeXR2KvELPiPDnpFAC', container=None, content=[TextBlock(citations=None, text="Here's a sentence about Python:\n\n**Python is a versatile, beginner-friendly programming language k … (truncated)
+
+Now, let's call the model with extended thinking enabled.
+
+```python
+r = await chat("Write a sentence about Python!", maxthinktok=1024)
+r
+```
+
+**Outputs:**
+Message(id='msg_01Vuqd8xUwuB2tTnmcexcfFp', container=None, content=[ThinkingBlock(signature='Ev0BCkYICxgCKkAmUcWkc6z1j9s2pIRVL/EIaNbJYCaXR1stNeEAhQoCylzrssuUy2ZTq4vGWUl7WbH2AbV30H8aRazSNGwgnQp+Egzq7Gm … (truncated)
+
+```python
+r.content
+```
+
+**Outputs:**
+[ThinkingBlock(signature='Ev0BCkYICxgCKkAmUcWkc6z1j9s2pIRVL/EIaNbJYCaXR1stNeEAhQoCylzrssuUy2ZTq4vGWUl7WbH2AbV30H8aRazSNGwgnQp+Egzq7GmzjPUY/hkdH1oaDKbN8/A53z7nu/TenyIwIAhQomWRMzdCY7ueYlSChv7bcBIpnPT6Pf … (truncated)
+
+## Export -
+
+```python
+#| hide
+#| eval: false
+from nbdev.doclinks import nbdev_export
+nbdev_export()
+```
+
+### Text Editor
+
+*Source: 03_text_editor.ipynb | URL: https://github.com/AnswerDotAI/claudette/blob/main/03_text_editor.ipynb*
+
+```python
+#| default_exp text_editor
+```
+
+# Text Editor
+
+Implements functions for Anthropic's Text Editor Tool API, allowing Claude to view and edit files.
+
+See the [Anthropic Text Editor Tool documentation](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/text-editor-tool) for details on the API commands (`view`, `create`, `insert`, `str_replace`, `undo_edit`) and usage. The `str_replace_editor` function acts as the required dispatcher.
+
+```python
+#| export
+from pathlib import Path
+```
+
+```python
+#| hide
+from claudette.core import *
+from toolslm.funccall import *
+```
+
+```python
+from cachy import enable_cachy
+```
+
+```python
+enable_cachy()
+```
+
+```python
+if Path('test.txt').exists(): Path('test.txt').unlink()
+```
+
+```python
+#| exports
+def view(path:str, view_range:tuple[int,int]=None, nums:bool=False):
+    'View directory or file contents with optional line range and numbers'
+    try:
+        p = Path(path).expanduser().resolve()
+        if not p.exists(): return f'Error: File not found: {p}'
+        if p.is_dir():
+            res = [str(f) for f in p.glob('**/*') 
+                   if not any(part.startswith('.') for part in f.relative_to(p).parts)]
+            return f'Directory contents of {p}:\n' + '\n'.join(res)
+        
+        lines = p.read_text().splitlines()
+        s,e = 1,len(lines)
+        if view_range:
+            s,e = view_range
+            if not (1 <= s <= len(lines)): return f'Error: Invalid start line {s}'
+            if e != -1 and not (s <= e <= len(lines)): return f'Error: Invalid end line {e}'
+            lines = lines[s-1:None if e==-1 else e]
+            
+        return '\n'.join([f'{i+s-1:6d} │ {l}' for i,l in enumerate(lines,1)] if nums else lines)
+    except Exception as e: return f'Error viewing file: {str(e)}'
+```
+
+```python
+print(view('_quarto.yml', (1,10), nums=True))
+```
+
+**Outputs:**
+     1 │ project:
+     2 │   type: website
+     3 │   resources: 
+     4 │     - "*.txt"
+     5 │   preview:
+     6 │     port: 3000
+     7 │     browser: false
+     8 │ 
+     9 │ format:
+    10 │   h … (truncated)
+
+```python
+#| exports
+def create(path: str, file_text: str, overwrite:bool=False) -> str:
+    'Creates a new file with the given content at the specified path'
+    try:
+        p = Path(path)
+        if p.exists():
+            if not overwrite: return f'Error: File already exists: {p}'
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(file_text)
+        return f'Created file {p} containing:\n{file_text}'
+    except Exception as e: return f'Error creating file: {str(e)}'
+```
+
+```python
+print(create('test.txt', 'Hello, world!'))
+print(view('test.txt', nums=True))
+```
+
+**Outputs:**
+Created file test.txt containing:
+Hello, world!
+     1 │ Hello, world!
+
+
+```python
+#| exports
+def insert(path: str, insert_line: int, new_str: str) -> str:
+    'Insert new_str at specified line number'
+    try:
+        p = Path(path)
+        if not p.exists(): return f'Error: File not found: {p}'
+            
+        content = p.read_text().splitlines()
+        if not (0 <= insert_line <= len(content)): return f'Error: Invalid line number {insert_line}'
+            
+        content.insert(insert_line, new_str)
+        new_content = '\n'.join(content)
+        p.write_text(new_content)
+        return f'Inserted text at line {insert_line} in {p}.\nNew contents:\n{new_content}'
+    except Exception as e: return f'Error inserting text: {str(e)}'
+```
+
+```python
+insert('test.txt', 0, 'Let\'s add a new line')
+print(view('test.txt', nums=True))
+```
+
+**Outputs:**
+     1 │ Let's add a new line
+     2 │ Hello, world!
+
+
+```python
+#| exports
+def str_replace(path: str, old_str: str, new_str: str) -> str:
+    'Replace first occurrence of old_str with new_str in file'
+    try:
+        p = Path(path)
+        if not p.exists(): return f'Error: File not found: {p}'
+            
+        content = p.read_text()
+        count = content.count(old_str)
+        
+        if count == 0: return 'Error: Text not found in file'
+        if count > 1: return f'Error: Multiple matches found ({count})'
+            
+        new_content = content.replace(old_str, new_str, 1)
+        p.write_text(new_content)
+        return f'Replaced text in {p}.\nNew contents:\n{new_content}'
+    except Exception as e: return f'Error replacing text: {str(e)}'
+```
+
+```python
+str_replace('test.txt', 'new line', '')
+print(view('test.txt', nums=True))
+```
+
+**Outputs:**
+     1 │ Let's add a 
+     2 │ Hello, world!
+
+
+```python
+#| exports
+def str_replace_editor(**kwargs: dict[str, str]) -> str:
+    'Dispatcher for Anthropic Text Editor tool commands: view, str_replace, create, insert, undo_edit.'
+    cmd = kwargs.pop('command', '')
+    if cmd == 'view': return view(**kwargs)
+    elif cmd == 'str_replace': return str_replace(**kwargs) 
+    elif cmd == 'create': return create(**kwargs)
+    elif cmd == 'insert': return insert(**kwargs)
+    elif cmd == 'undo_edit': return 'Undo edit is not supported yet.'
+    else: return f'Unknown command: {cmd}'
+
+def str_replace_based_edit_tool(**kwargs: dict[str, str]) -> str:
+    'Dispatcher for Anthropic Text Editor tool commands: view, str_replace, create, insert.'
+    return str_replace_editor(**kwargs)
+```
+
+```python
+#| export
+text_editor_conf = {
+    'sonnet': {"type": "text_editor_20250728", "name": "str_replace_based_edit_tool"},
+    'sonnet-4': {"type": "text_editor_20250429", "name": "str_replace_based_edit_tool"},
+    'sonnet-3-7': {'type': 'text_editor_20250124', 'name': 'str_replace_editor'},
+    'sonnet-3-5': {'type': 'text_editor_20241022', 'name': 'str_replace_editor'}
+}
+```
+
+```python
+model = models[1]
+```
+
+```python
+c = Chat(model, tools=[text_editor_conf['sonnet']], ns=mk_ns(str_replace_based_edit_tool))
+# c.toolloop('Please explain what my _quarto.yml does. Use your tools')
+```
+
+### claudette
+
+*Source: index.ipynb | URL: https://github.com/AnswerDotAI/claudette/blob/main/index.ipynb*
+
+# claudette
+
+> Claudette is Claude's friend
+
+```python
+#| hide
+
+from nbdev import show_doc
+from fastcore.utils import *
+from IPython.display import Image,display
+from cachy import enable_cachy
+```
+
+```python
+#| hide
+enable_cachy()
+```
+
+> **NB**: If you are reading this in GitHub's readme, we recommend you instead read the much more nicely formatted [documentation format](https://claudette.answer.ai/) of this tutorial.
+
+*Claudette* is a wrapper for Anthropic's [Python SDK](https://github.com/anthropics/anthropic-sdk-python).
+
+The SDK works well, but it is quite low level -- it leaves the developer to do a lot of stuff manually. That's a lot of extra work and boilerplate! Claudette automates pretty much everything that can be automated, whilst providing full control. Amongst the features provided:
+
+- A `Chat` class that creates stateful dialogs
+- Support for *prefill*, which tells Claude what to use as the first few words of its response
+- Convenient image support
+- Simple and convenient support for Claude's new Tool Use API.
+
+You'll need to set the `ANTHROPIC_API_KEY` environment variable to the key provided to you by Anthropic in order to use this library.
+
+Note that this library is the first ever "literate nbdev" project. That means that the actual source code for the library is a rendered Jupyter Notebook which includes callout notes and tips, HTML tables and images, detailed explanations, and teaches *how* and *why* the code is written the way it is. Even if you've never used the Anthropic Python SDK or Claude API before, you should be able to read the source code. Click [Claudette's Source](https://claudette.answer.ai/core.html) to read it, or clone the git repo and execute the notebook yourself to see every step of the creation process in action. The tutorial below includes links to API details which will take you to relevant parts of the source. The reason this project is a new kind of literal program is because we take seriously Knuth's call to action, that we have a "*moral commitment*" to never write an "*illiterate program*" -- and so we have a commitment to making literate programming an easy and pleasant experience. (For more on this, see [this talk](https://www.youtube.com/watch?v=rX1yGxJijsI) from Hamel Husain.)
+
+> "*Let us change our traditional attitude to the construction of programs: Instead of imagining that our main task is to instruct a **computer** what to do, let us concentrate rather on explaining to **human beings** what we want a computer to do.*" Donald E. Knuth, [Literate Programming](https://www.cs.tufts.edu/~nr/cs257/archive/literate-programming/01-knuth-lp.pdf) (1984)
+
+## Install
+
+```sh
+pip install claudette
+```
+
+## Getting started
+
+Anthropic's Python SDK will automatically be installed with Claudette, if you don't already have it.
+
+```python
+import os
+# os.environ['ANTHROPIC_LOG'] = 'debug'
+```
+
+To print every HTTP request and response in full, uncomment the above line.
+
+```python
+from claudette import *
+```
+
+Claudette only exports the symbols that are needed to use the library, so you can use `import *` to import them. Alternatively, just use:
+
+```python
+import claudette
+```
+
+...and then add the prefix `claudette.` to any usages of the module.
+
+Claudette provides `models`, which is a list of models currently available from the SDK.
+
+```python
+models
+```
+
+**Outputs:**
+['claude-opus-4-6',
+ 'claude-sonnet-4-6',
+ 'claude-haiku-4-5',
+ 'claude-opus-4-5',
+ 'claude-sonnet-4-5',
+ 'claude-opus-4-1-20250805',
+ 'claude-opus-4-20250514',
+ 'claude-3-opus-20240229',
+ 'claude-son … (truncated)
+
+For these examples, we'll use the latest Sonnet, since it's awesome!
+
+```python
+model = models[1]
+model
+```
+
+**Outputs:**
+'claude-sonnet-4-6'
+
+## Chat
+
+The main interface to Claudette is the `Chat` class, which provides a stateful interface to Claude:
+
+```python
+chat = Chat(model, sp="""You are a helpful and concise assistant.""")
+chat("I'm Jeremy")
+```
+
+**Outputs:**
+Message(id='msg_013Rva2xWKUGj5uWmMT2FgpD', container=None, content=[TextBlock(citations=None, text='Hi Jeremy! Nice to meet you. How can I help you today?', type='text')], model='claude-sonnet-4-6', r … (truncated)
+
+```python
+r = chat("What's my name?")
+r
+```
+
+**Outputs:**
+Message(id='msg_01Ga3WLVuuSimKWFaay51Mfn', container=None, content=[TextBlock(citations=None, text='Your name is Jeremy! You told me at the start of our conversation.', type='text')], model='claude-so … (truncated)
+
+```python
+r = chat("What's my name?")
+r
+```
+
+**Outputs:**
+Message(id='msg_01VDXgMU8PdjD4oeuR2Xo6KJ', container=None, content=[TextBlock(citations=None, text='Your name is Jeremy! You mentioned it at the beginning of our chat.', type='text')], model='claude-s … (truncated)
+
+As you see above, displaying the results of a call in a notebook shows just the message contents, with the other details hidden behind a collapsible section. Alternatively you can `print` the details:
+
+```python
+print(r)
+```
+
+**Outputs:**
+Message(id='msg_01VDXgMU8PdjD4oeuR2Xo6KJ', container=None, content=[TextBlock(citations=None, text='Your name is Jeremy! You mentioned it at the beginning of our chat.', type='text')], model='claude-s … (truncated)
+
+You can add `stream=True` to stream the results as soon as they arrive (although you will only see the gradual generation if you execute the notebook yourself, of course!)
+
+### Async
+
+Alternatively, you can use `AsyncChat` (or `AsyncClient`) for the async versions, e.g:
+
+```python
+chat = AsyncChat(model)
+await chat("I'm Jeremy")
+```
+
+**Outputs:**
+Message(id='msg_01M4N4EGidKKDQ4KzLhWmfxb', container=None, content=[TextBlock(citations=None, text='Hi Jeremy! Nice to meet you. How can I help you today?', type='text')], model='claude-sonnet-4-6', r … (truncated)
+
+Remember to use `async for` when streaming in this case:
+
+```python
+async for o in await chat("Concisely, what is the meaning of life?", stream=True):
+    print(o, end='')
+```
+
+**Outputs:**
+A classic question! Here are a few perspectives:
+
+- **Philosophical**: To seek happiness, virtue, or purpose (Aristotle, Stoics)
+- **Religious**: To serve/know God or achieve enlightenment
+- **Existen … (truncated)
+
+## Prompt caching
+
+Claude supports [prompt caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching), which can significantly reduce token usage costs when working with large contexts or repetitive elements. When you use `mk_msg(msg, cache=True)`, Claudette adds the necessary cache control headers to make that message cacheable.
+
+Prompt caching works by marking segments of your prompt for efficient reuse. When a cached segment is encountered again, Claude reads it from the cache rather than processing the full content, resulting in a 90% reduction in token costs for those segments.
+
+Some key points about prompt caching:
+- Cache writes cost 25% more than normal input tokens
+- Cache reads cost 90% less than normal input tokens
+- Minimum cacheable length is model-dependent (1024-2048 tokens)
+- Cached segments must be completely identical to be reused
+- Works well for system prompts, tool definitions, and large context blocks
+
+For instance, here we use caching when asking about Claudette's readme file:
+
+```python
+chat = Chat(model, sp="""You are a helpful and concise assistant.""")
+```
+
+```python
+nbtxt = Path('README.txt').read_text()
+msg = f'''<README>
+{nbtxt}
+</README>
+In brief, what is the purpose of this project based on the readme?'''
+r = chat(mk_msg(msg, cache=True))
+r
+```
+
+**Outputs:**
+Message(id='msg_01Eeco89ejrtQCnoU1DY8XWJ', container=None, content=[TextBlock(citations=None, text="Claudette is a high-level Python wrapper around Anthropic's Claude API SDK that simplifies common ta … (truncated)
+
+The response records the a cache has been created using these input tokens:
+
+```python
+print(r.usage)
+```
+
+**Outputs:**
+Usage(cache_creation=CacheCreation(ephemeral_1h_input_tokens=0, ephemeral_5m_input_tokens=9289), cache_creation_input_tokens=9289, cache_read_input_tokens=0, inference_geo='global', input_tokens=3, ou … (truncated)
+
+We can now ask a followup question in this chat:
+
+```python
+r = chat('How does it make tool use more ergonomic?')
+r
+```
+
+**Outputs:**
+Message(id='msg_017w4Fhy4g2Th8nwskbwnfRi', container=None, content=[TextBlock(citations=None, text='Based on the README, Claudette makes tool use more ergonomic in several ways:\n\n1. **Docments-based … (truncated)
+
+We can see that this only used ~200 regular input tokens -- the 7000+ context tokens have been read from cache.
+
+```python
+print(r.usage)
+```
+
+**Outputs:**
+Usage(cache_creation=CacheCreation(ephemeral_1h_input_tokens=0, ephemeral_5m_input_tokens=0), cache_creation_input_tokens=0, cache_read_input_tokens=9289, inference_geo='global', input_tokens=198, out … (truncated)
+
+```python
+chat.use
+```
+
+**Outputs:**
+In: 201; Out: 527; Cache create: 9289; Cache read: 9289; Total Tokens: 19306; Search: 0; Fetch: 0
+
+## Tool use
+
+[Tool use](https://docs.anthropic.com/claude/docs/tool-use) lets Claude use external tools.
+
+We use [docments](https://fastcore.fast.ai/docments.html) to make defining Python functions as ergonomic as possible. Each parameter (and the return value) should have a type, and a docments comment with the description of what it is. As an example we'll write a simple function that adds numbers together, and will tell us when it's being called:
+
+```python
+def sums(
+    a:int,  # First thing to sum
+    b:int=1 # Second thing to sum
+) -> int: # The sum of the inputs
+    "Adds a + b."
+    print(f"Finding the sum of {a} and {b}")
+    return a + b
+```
+
+Sometimes Claude will try to add stuff up "in its head", so we'll use a system prompt to ask it not to.
+
+```python
+sp = "Always use tools if math ops are needed."
+```
+
+We'll get Claude to add up some long numbers:
+
+```python
+a,b = 604542,6458932
+pr = f"What is {a}+{b}?"
+pr
+```
+
+**Outputs:**
+'What is 604542+6458932?'
+
+To use tools, pass a list of them to `Chat`:
+
+```python
+chat = Chat(model, sp=sp, tools=[sums])
+```
+
+To force Claude to always answer using a tool, set `tool_choice` to that function name. When Claude needs to use a tool, it doesn't return the answer, but instead returns a `tool_use` message, which means we have to call the named tool with the provided parameters.
+
+```python
+r = chat(pr, tool_choice='sums')
+r
+```
+
+**Outputs:**
+Finding the sum of 604542 and 6458932
+
+Message(id='msg_01XymeBh9aPp5HJJjm6zwxja', container=None, content=[ToolUseBlock(id='toolu_01Me4y668vh5CbRCYDm9GTmd', caller=DirectCaller(type='direct'), input={'a': 604542, 'b': 6458932}, name='sums' … (truncated)
+
+Claudette handles all that for us -- we just call it again, and it all happens automatically:
+
+```python
+chat()
+```
+
+**Outputs:**
+Message(id='msg_01WAdAsXseRvPmEAyg63bpCk', container=None, content=[TextBlock(citations=None, text='The sum of 604,542 + 6,458,932 is **7,063,474**!', type='text')], model='claude-sonnet-4-6', role='a … (truncated)
+
+You can see how many tokens have been used at any time by checking the `use` property. Note that (as of May 2024) tool use in Claude uses a *lot* of tokens, since it automatically adds a large system prompt.
+
+```python
+chat.use
+```
+
+**Outputs:**
+In: 1442; Out: 81; Cache create: 0; Cache read: 0; Total Tokens: 1523; Search: 0; Fetch: 0
+
+We can do everything needed to use tools in a single step, by using `Chat.toolloop`. This can even call multiple tools as needed solve a problem. For example, let's define a tool to handle multiplication:
+
+```python
+def mults(
+    a:int,  # First thing to multiply
+    b:int=1 # Second thing to multiply
+) -> int: # The product of the inputs
+    "Multiplies a * b."
+    print(f"Finding the product of {a} and {b}")
+    return a * b
+```
+
+Now with a single call we can calculate `(a+b)*2` -- by passing `show_trace` we can see each response from Claude in the process:
+
+```python
+chat = Chat(model, sp=sp, tools=[sums,mults])
+pr = f'Calculate ({a}+{b})*2'
+pr
+```
+
+**Outputs:**
+'Calculate (604542+6458932)*2'
+
+```python
+for o in chat.toolloop(pr): display(o)
+```
+
+**Outputs:**
+Finding the sum of 604542 and 6458932
+
+Message(id='msg_016D9YoZZnhn6FBwuTaA2xtV', container=None, content=[TextBlock(citations=None, text='I need to calculate (604542 + 6458932) * 2. Let me start by computing the sum first.', type='text'), … (truncated)
+{'role': 'user',
+ 'content': [{'type': 'tool_result',
+   'tool_use_id': 'toolu_01S4a9Qz4eVGvp8YsYuPGWty',
+   'content': '7063474'}]}
+Finding the product of 7063474 and 2
+
+Message(id='msg_01PHLZzu8mX7dSaRhBQcAgJi', container=None, content=[TextBlock(citations=None, text='Now let me multiply the result by 2.', type='text'), ToolUseBlock(id='toolu_01Bvt9ZmBX7YpStiTBzceemY … (truncated)
+{'role': 'user',
+ 'content': [{'type': 'tool_result',
+   'tool_use_id': 'toolu_01Bvt9ZmBX7YpStiTBzceemY',
+   'content': '14126948'}]}
+Message(id='msg_01LWmJoTjBJsKgnroMXPSxD9', container=None, content=[TextBlock(citations=None, text="Here's the breakdown of the calculation:\n\n1. **604542 + 6458932 = 7,063,474**\n2. **7,063,474 × 2  … (truncated)
+
+## Structured data
+
+If you just want the immediate result from a single tool, use `Client.structured`.
+
+```python
+cli = Client(model)
+```
+
+```python
+def sums(
+    a:int,  # First thing to sum
+    b:int=1 # Second thing to sum
+) -> int: # The sum of the inputs
+    "Adds a + b."
+    print(f"Finding the sum of {a} and {b}")
+    return a + b
+```
+
+```python
+cli.structured("What is 604542+6458932", sums)
+```
+
+**Outputs:**
+Finding the sum of 604542 and 6458932
+
+[7063474]
+
+This is particularly useful for getting back structured information, e.g:
+
+```python
+class President:
+    "Information about a president of the United States"
+    def __init__(self, 
+                first:str, # first name
+                last:str, # last name
+                spouse:str, # name of spouse
+                years_in_office:str, # format: "{start_year}-{end_year}"
+                birthplace:str, # name of city
+                birth_year:int # year of birth, `0` if unknown
+        ):
+        assert re.match(r'\d{4}-\d{4}', years_in_office), "Invalid format: `years_in_office`"
+        store_attr()
+
+    __repr__ = basic_repr('first, last, spouse, years_in_office, birthplace, birth_year')
+```
+
+```python
+cli.structured("Provide key information about the 3rd President of the United States", President)
+```
+
+**Outputs:**
+[President(first='Thomas', last='Jefferson', spouse='Martha Jefferson', years_in_office='1801-1809', birthplace='Shadwell', birth_year=1743)]
+
+## Images
+
+Claude can handle image data as well. As everyone knows, when testing image APIs you have to use a cute puppy.
+
+```python
+fn = Path('samples/puppy.jpg')
+Image(filename=fn, width=200)
+```
+
+**Outputs:**
+Image(b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xe2\x0cTICC_PROFILE\x00\x01\x01\x00\x00\x0cDUCCM\x02@\x00\x00mntrRGB XYZ \x07\xd3\x00\x04\x00\x04\x00\x00\x00\x00\x00\x … (truncated)
+
+We create a `Chat` object as before:
+
+```python
+chat = Chat(model)
+```
+
+Claudette expects images as a list of bytes, so we read in the file:
+
+```python
+img = fn.read_bytes()
+```
+
+Prompts to Claudette can be lists, containing text, images, or both, eg:
+
+```python
+chat([img, "In brief, what color flowers are in this image?"])
+```
+
+**Outputs:**
+Message(id='msg_01DUds87tAj47fozgFfbEPrQ', container=None, content=[TextBlock(citations=None, text='The flowers in the image are **purple/lavender** (blue-purple). They appear to be **asters**.', type … (truncated)
+
+The image is included as input tokens.
+
+```python
+chat.use
+```
+
+**Outputs:**
+In: 110; Out: 28; Cache create: 0; Cache read: 0; Total Tokens: 138; Search: 0; Fetch: 0
+
+Alternatively, Claudette supports creating a multi-stage chat with separate image and text prompts. For instance, you can pass just the image as the initial prompt (in which case Claude will make some general comments about what it sees), and then follow up with questions in additional prompts:
+
+```python
+chat = Chat(model)
+chat(img)
+```
+
+**Outputs:**
+Message(id='msg_01AnF9pQ6LZd4hPyVvFridhD', container=None, content=[TextBlock(citations=None, text='# Adorable Cavalier King Charles Spaniel Puppy 🐾\n\nWhat a precious photo! This appears to be a **Ca … (truncated)
+
+```python
+chat('What direction is the puppy facing?')
+```
+
+**Outputs:**
+Message(id='msg_012tHpJy12tRC6hB4THWfhiZ', container=None, content=[TextBlock(citations=None, text='## Direction the Puppy is Facing\n\nThe puppy is facing **toward the camera** (forward), looking dir … (truncated)
+
+```python
+chat('What color is it?')
+```
+
+**Outputs:**
+Message(id='msg_01W6p3tEiJxPPE3yXqQ3RHMD', container=None, content=[TextBlock(citations=None, text='## The Puppy\'s Colors 🎨\n\nThe puppy has a **two-toned coat** known as the **"Blenheim"** pattern:\ … (truncated)
+
+Note that the image is passed in again for every input in the dialog, so that number of input tokens increases quickly with this kind of chat. (For large images, using prompt caching might be a good idea.)
+
+```python
+chat.use
+```
+
+**Outputs:**
+In: 843; Out: 462; Cache create: 0; Cache read: 0; Total Tokens: 1305; Search: 0; Fetch: 0
+
+## Extended Thinking
+
+Claude >=3.7 Sonnet and Opus have enhanced reasoning capabilities through [extended thinking](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking). This feature allows Claude to think through complex problems step-by-step, making its reasoning process transparent and its final answers more reliable.
+
+To enable extended thinking, simply specify the number of thinking tokens using the `maxthinktok` parameter when making a call to Chat. The thinking process will appear in a collapsible section in the response.
+
+Some important notes about extended thinking:
+
+- Only available with select models
+- Automatically sets `temperature=1` when enabled (required for thinking to work)
+- Cannot be used with `prefill` (these features are incompatible)
+- Thinking is presented in a separate collapsible block in the response
+- The thinking tokens count toward your usage but help with complex reasoning
+
+To access models that support extended thinking, you can use `has_extended_thinking_models`.
+
+```python
+has_extended_thinking_models
+```
+
+**Outputs:**
+{'claude-3-7-sonnet-20250219',
+ 'claude-haiku-4-5',
+ 'claude-opus-4-1-20250805',
+ 'claude-opus-4-20250514',
+ 'claude-opus-4-5',
+ 'claude-opus-4-6',
+ 'claude-sonnet-4-20250514',
+ 'claude-sonnet-4-5',
+  … (truncated)
+
+```python
+chat = Chat(model)
+```
+
+```python
+chat('Write a sentence about Python!', maxthinktok=1024)
+```
+
+**Outputs:**
+Message(id='msg_01JskDndrbaWnSQgv6qCdAqS', container=None, content=[ThinkingBlock(signature='Eo8CCkYICxgCKkCBEKnKVDpDoGHOpgbeicO3HN7C5IAEV4gKKcy5K5P1sK0OSwqddH86GNSttMnCuRVR/8xQ+PB2IDnIwEQnJu1JEgzaa51 … (truncated)
+
+## Web Search and Server Tools
+
+Claude supports server-side tools that run on Anthropic's infrastructure. The flagship example is the web search tool, which allows Claude to search the web for up-to-date information to answer questions.
+
+Unlike client-side tools (where you provide functionality), server-side tools are managed by Anthropic. Claudette makes these easy to use with helper functions like `search_conf()`.
+
+```python
+chat = Chat(model, sp='Be concise in your responses.', tools=[search_conf()])
+pr = 'What is the current weather in San Diego?'
+r = chat(pr)
+r
+```
+
+**Outputs:**
+Message(id='msg_0138hW3upJaBxnQfvox4M2wj', container=None, content=[ServerToolUseBlock(id='srvtoolu_014w2tib6HtQ1d761AGDBfq1', caller=DirectCaller(type='direct'), input={'query': 'current weather San  … (truncated)
+
+The `search_conf()` function creates the necessary configuration for the web search tool. You can customize it with several parameters:
+
+```python
+search_conf(
+    max_uses=None,               # Maximum number of searches Claude can perform
+    allowed_domains=None,        # List of domains to search within (e.g., ['wikipedia.org'])
+    blocked_domains=None,        # List of domains to exclude (e.g., ['twitter.com'])
+    user_location=None           # Location context for search
+)
+```
+
+When Claude uses the web search tool, the response includes citations linking to the source information. Claudette automatically formats these citations and provides them as footnotes in the response.
+
+Web search usage is tracked separately from normal token usage in the `usage` statistics:
+
+```python
+chat.use
+```
+
+**Outputs:**
+In: 9209; Out: 310; Cache create: 0; Cache read: 0; Total Tokens: 9519; Search: 1; Fetch: 0
+
+Web search requests have their own pricing. As of May 2024, web searches cost $10 per 1,000 requests.
+
+## Text Editor Tool
+
+Claudette provides support for Anthropic's special Text Editor Tool, which allows Claude to view and modify files directly. Unlike regular function-calling tools, the text editor tool uses a predefined schema built into Claude's model.
+
+Important notes about the text editor tool:
+
+- It's schema-less - you provide a configuration but not a schema
+- It uses type identifiers like "text_editor_20250124" specific to Claude models
+- You must implement a dispatcher function (in Claudette, it's `str_replace_based_edit_tool`)
+- Different commands route through this single dispatcher function
+
+The text editor tool allows Claude to:
+
+- View file or directory contents
+- Create new files
+- Insert text at specific line numbers
+- Replace text within files
+
+```python
+# Create a chat with the text editor tool
+chat = Chat(model, sp='Be concise in your responses.',
+            tools=[text_editor_conf['sonnet']], ns=mk_ns(str_replace_based_edit_tool))
+
+# Now Claude can explore files
+for o in chat.toolloop('Please explain concisely what my _quarto.yml does. Use your tools, and explain before each usage what you are doing.'):
+    if not isinstance(o,dict): display(o)
+```
+
+## Other model providers
+
+You can also use 3rd party providers of Anthropic models, as shown here.
+
+### Amazon Bedrock
+
+These are the models available through Bedrock:
+
+```python
+models_aws
+```
+
+**Outputs:**
+['anthropic.claude-opus-4-1-20250805-v1:0',
+ 'anthropic.claude-sonnet-4-20250514-v1:0',
+ 'claude-3-5-haiku-20241022',
+ 'claude-3-7-sonnet-20250219',
+ 'anthropic.claude-3-opus-20240229-v1:0',
+ 'anthrop … (truncated)
+
+To use them, call `AnthropicBedrock` with your access details, and pass that to `Client`:
+
+```python
+from anthropic import AnthropicBedrock
+
+ab = AnthropicBedrock(
+    aws_access_key=os.environ['AWS_ACCESS_KEY'],
+    aws_secret_key=os.environ['AWS_SECRET_KEY'],
+)
+client = Client(models_aws[-1], ab)
+
+chat = Chat(cli=client)
+chat("I'm Jeremy")
+```
+
+### Google Vertex
+
+These are the models available through Vertex:
+
+```python
+models_goog
+```
+
+**Outputs:**
+['claude-opus-4-1@20250805',
+ 'anthropic.claude-3-sonnet-20240229-v1:0',
+ 'anthropic.claude-3-haiku-20240307-v1:0',
+ 'claude-3-opus@20240229',
+ 'claude-3-5-sonnet-v2@20241022',
+ 'claude-3-sonnet@20240 … (truncated)
+
+To use them, call `AnthropicVertex` with your access details, and pass that to `Client`:
+
+```python
+from anthropic import AnthropicVertex
+import google.auth
+
+project_id = google.auth.default()[1]
+gv = AnthropicVertex(project_id=project_id, region="us-east5")
+client = Client(models_goog[-1], gv)
+
+chat = Chat(cli=client)
+chat("I'm Jeremy")
+```
+
+## Extensions
+
+- [Pydantic Structured Ouput](https://github.com/tom-pollak/claudette-pydantic)
+
+---
+
+## Optional
+
+### Release notes
+
+*Source: CHANGELOG.md | URL: https://github.com/AnswerDotAI/claudette/blob/main/CHANGELOG.md*
+
+# Release notes
+
+<!-- do not remove -->
+
+## 0.3.14
+
+### New Features
+
+- Add Claude 4.6 models, `web_fetch` support ([#109](https://github.com/AnswerDotAI/claudette/issues/109))
+
+
+## 0.3.13
+
+### Bugs Squashed
+
+- Use `r.model_dump(exclude_none=True)` ([#104](https://github.com/AnswerDotAI/claudette/issues/104))
+
+
+## 0.3.12
+
+### Bugs Squashed
+
+- Fix `blks2cited_txt` crash for document-based citations ([#101](https://github.com/AnswerDotAI/claudette/pull/101)), thanks to [@erikgaas](https://github.com/erikgaas)
+
+
+## 0.3.11
+
+### New Features
+
+- Validate tool names returned by model against allowed tools ([#103](https://github.com/AnswerDotAI/claudette/pull/103)), thanks to [@PiotrCzapla](https://github.com/PiotrCzapla)
+
+
+## 0.3.10
+
+### Bugs Squashed
+
+- `find_blocks` does not handle dicts ([#96](https://github.com/AnswerDotAI/claudette/issues/96))
+
+
+## 0.3.7
+
+### New Features
+
+- Add Haiku and Sonnet 4.5 ([#95](https://github.com/AnswerDotAI/claudette/issues/95))
+
+
+## 0.3.6
+
+### New Features
+
+- Support opus 4.1 ([#93](https://github.com/AnswerDotAI/claudette/issues/93))
+
+
+## 0.3.5
+
+### New Features
+
+- Support async functions in async toolloop ([#92](https://github.com/AnswerDotAI/claudette/issues/92))
+
+
+## 0.3.4
+
+### Bugs Squashed
+
+- Escape Quotes in markdown footnotes ([#90](https://github.com/AnswerDotAI/claudette/pull/90)), thanks to [@ncoop57](https://github.com/ncoop57)
+
+
+## 0.3.2
+
+### New Features
+
+- Suport for tool functions returning `ToolResult` image values ([#88](https://github.com/AnswerDotAI/claudette/pull/88)), thanks to [@austinvhuang](https://github.com/austinvhuang)
+
+
+## 0.3.1
+
+### New Features
+
+- Use msglm 0.0.9 ([#87](https://github.com/AnswerDotAI/claudette/issues/87))
+
+
+## 0.3.0
+
+### Breaking Changes
+
+- Remove `obj` support ([#85](https://github.com/AnswerDotAI/claudette/issues/85))
+
+
+## 0.2.2
+
+### New Features
+
+- Make full messages available after streaming ([#84](https://github.com/AnswerDotAI/claudette/issues/84))
+
+
+## 0.2.0
+
+### Breaking Changes
+
+- `toolloop` now returns an iterator of every message, including each tool request and result
+
+### New Features
+
+- Add tool call results to toolloop result ([#83](https://github.com/AnswerDotAI/claudette/issues/83))
+- `show_thk` param for `contents` ([#82](https://github.com/AnswerDotAI/claudette/issues/82))
+
+
+## 0.1.11
+
+### New Features
+
+- Use updated text editor tool ([#80](https://github.com/AnswerDotAI/claudette/issues/80))
+- Skip hidden directories in `view()`
+
+
+## 0.1.10
+
+### New Features
+
+- Support Claude 4 ([#79](https://github.com/AnswerDotAI/claudette/issues/79))
+
+
+## 0.1.9
+
+### New Features
+
+- Tool loop now continues when function calls return an error ([#78](https://github.com/AnswerDotAI/claudette/pull/78)), thanks to [@erikgaas](https://github.com/erikgaas)
+- feat: add text editor tool implementation ([#71](https://github.com/AnswerDotAI/claudette/pull/71)), thanks to [@ncoop57](https://github.com/ncoop57)
+
+
+## 0.1.8
+
+### New Features
+
+- Add exhausted tool loop warning ([#75](https://github.com/AnswerDotAI/claudette/issues/75))
+- Text editor tool implementation ([#71](https://github.com/AnswerDotAI/claudette/pull/71)), thanks to [@ncoop57](https://github.com/ncoop57)
+- Async tool loop ([#70](https://github.com/AnswerDotAI/claudette/issues/70))
+- Pre-serialized funcs in tool calling ([#67](https://github.com/AnswerDotAI/claudette/pull/67)), thanks to [@erikgaas](https://github.com/erikgaas)
+- Extended Thinking ([#66](https://github.com/AnswerDotAI/claudette/issues/66))
+
+
+## 0.1.7
+
+### Bugs Squashed
+
+- Bump required `msglm` version
+
+
+## 0.1.6
+
+### Bugs Squashed
+
+- Bump required `anthropic` version
+
+
+## 0.1.5
+
+### New Features
+
+- add extended thinking ([#65](https://github.com/AnswerDotAI/claudette/pull/65)), thanks to [@comhar](https://github.com/comhar)
+- Make Sonnet 3.7 the default sonnet model ([#63](https://github.com/AnswerDotAI/claudette/issues/63))
+- Add model capabilities attributes `has_streaming_models`, `has_temperature_models`, and `has_system_prompt_models` ([#57](https://github.com/AnswerDotAI/claudette/pull/57)), thanks to [@austinvhuang](https://github.com/austinvhuang)
+
+### Bugs Squashed
+
+- fix bedrock usage reporting ([#60](https://github.com/AnswerDotAI/claudette/pull/60)), thanks to [@hamelsmu](https://github.com/hamelsmu)
+
+
+## 0.1.3
+
+### New Features
+
+- add caching to async client too ([#55](https://github.com/AnswerDotAI/claudette/pull/55)), thanks to [@bclavie](https://github.com/bclavie)
+
+
+## 0.1.2
+
+### New Features
+
+- Add continuously-updated cache support to Chat and Client ([#54](https://github.com/AnswerDotAI/claudette/pull/54)), thanks to [@bclavie](https://github.com/bclavie)
+- Enhance AsyncChat with improved tool support and message handling ([#52](https://github.com/AnswerDotAI/claudette/pull/52)), thanks to [@ncoop57](https://github.com/ncoop57)
+- Add support for user defined types in tool calling functions ([#51](https://github.com/AnswerDotAI/claudette/pull/51)), thanks to [@austinvhuang](https://github.com/austinvhuang)
+- Add detailed cost breakdown and improve content handling ([#49](https://github.com/AnswerDotAI/claudette/pull/49)), thanks to [@ncoop57](https://github.com/ncoop57)
+
+
+## 0.1.1
+
+### New Features
+
+- add structured to async ([#48](https://github.com/AnswerDotAI/claudette/pull/48)), thanks to [@hamelsmu](https://github.com/hamelsmu)
+- add `msglm` ([#46](https://github.com/AnswerDotAI/claudette/pull/46)), thanks to [@comhar](https://github.com/comhar)
+- Add support for new Claude 3.5 Haiku model ([#44](https://github.com/AnswerDotAI/claudette/pull/44)), thanks to [@ncoop57](https://github.com/ncoop57)
+- trace history instead of chat response in toolloop ([#39](https://github.com/AnswerDotAI/claudette/pull/39)), thanks to [@comhar](https://github.com/comhar)
+
+
+## 0.1.0
+
+### Breaking Changes
+
+- `tool_choice` is no longer a `Chat` instance variable; instead it is a parameter to `Chat.__call__`
+
+### New Features
+
+- Add `temp` param to `Chat` ([#38](https://github.com/AnswerDotAI/claudette/issues/38))
+
+### Bugs Squashed
+
+- `pr` included but not used ([#37](https://github.com/AnswerDotAI/claudette/issues/37))
+- fix tool use bug ([#35](https://github.com/AnswerDotAI/claudette/pull/35)), thanks to [@comhar](https://github.com/comhar)
+
+
+## 0.0.10
+
+### New Features
+
+- Add `Client.structured` ([#32](https://github.com/AnswerDotAI/claudette/issues/32))
+- Use `dict2obj` ([#30](https://github.com/AnswerDotAI/claudette/issues/30))
+- Store tool call result without stringifying ([#29](https://github.com/AnswerDotAI/claudette/issues/29))
+
+
+## 0.0.9
+
+### New Features
+
+- Async support ([#21](https://github.com/AnswerDotAI/claudette/issues/21))
+
+
+## 0.0.7
+
+### New Features
+
+- Prompt caching ([#20](https://github.com/AnswerDotAI/claudette/issues/20))
+- add markdown to doc output ([#19](https://github.com/AnswerDotAI/claudette/issues/19))
+- Support vscode details tags ([#18](https://github.com/AnswerDotAI/claudette/issues/18))
+- Add a `cont_pr` param to Chat as a "default" prompt [#15](https://github.com/AnswerDotAI/claudette/pull/15)), thanks to [@tom-pollak](https://github.com/tom-pollak)
+
+### Bugs Squashed
+
+- Explicit `tool_choice` causes chat() to call tool twice. ([#11](https://github.com/AnswerDotAI/claudette/issues/11))
+
+
+## 0.0.6
+
+### New Features
+
+- Default chat prompt & function calling refactor ([#15](https://github.com/AnswerDotAI/claudette/pull/15)), thanks to [@tom-pollak](https://github.com/tom-pollak)
+
+
+## 0.0.5
+
+### New Features
+
+- Better support for stop sequences ([#12](https://github.com/AnswerDotAI/claudette/pull/12)), thanks to [@xl0](https://github.com/xl0)
+
+
+## 0.0.3
+
+### New Features
+
+- Amazon Bedrock and Google Vertex support ([#7](https://github.com/AnswerDotAI/claudette/issues/7))
+
+### Bug Fixes
+
+- Update model paths for non-beta tool use ([#2](https://github.com/AnswerDotAI/claudette/pull/2)), thanks to [@sarahpannn](https://github.com/sarahpannn)
+
+
+## 0.0.1
+
+- Initial release
+
+---
+
+## Source Modules
+
+### claudette.asink
+
+*Source: claudette/asink.py | URL: https://github.com/AnswerDotAI/claudette/blob/main/claudette/asink.py*
+
+- `AsyncClient`
+- `mk_funcres_async`
+- `mk_toolres_async`
+- `structured`
+- `AsyncChat`
+
+### claudette.core
+
+*Source: claudette/core.py | URL: https://github.com/AnswerDotAI/claudette/blob/main/claudette/core.py*
+
+- `can_stream`
+- `can_set_system_prompt`
+- `can_set_temperature`
+- `can_use_extended_thinking`
+- `find_block`
+- `server_tool_usage`
+- `usage`
+- `total`
+- `Client`
+- `get_types`
+- `mk_tool_choice`
+- `get_pricing`
+- `cost`
+- `cost`
+- `get_costs`
+- `ToolResult`
+- `mk_funcres`
+- `allowed_tools`
+- `limit_ns`
+- `mk_toolres`
+- `structured`
+- `tool`
+- `wrapper`
+- `Chat`
+- `use`
+- `cost`
+- `fmt_msg`
+- `think_md`
+- `search_conf`
+- `find_blocks`
+- `f`
+- `blks2cited_txt`
+- `contents`
+
+### claudette.toolloop
+
+*Source: claudette/toolloop.py | URL: https://github.com/AnswerDotAI/claudette/blob/main/claudette/toolloop.py*
+
+- `toolloop`
+- `toolloop`

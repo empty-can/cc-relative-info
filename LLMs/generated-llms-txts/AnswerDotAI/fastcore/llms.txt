@@ -1,0 +1,52 @@
+# Welcome to fastcore
+
+> fast.ai チームが Python 開発者向けに提供する、コレクション操作・メタプログラミング・並列処理・CLIスクリプト化などの実用ユーティリティを集約したライブラリ。`import *` を安全に使えるよう設計されており、fastai エコシステム全体の基盤として機能する。
+
+## Guide
+
+- [Contributor Covenant Code of Conduct](https://github.com/AnswerDotAI/fastcore/blob/main/CODE_OF_CONDUCT.md): In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to make participation in our project and our community a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+- [A tour of fastcore](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/000_tour.ipynb): Here's a (somewhat) quick tour of a few higlights from fastcore.
+- [Test](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/00_test.ipynb): Helper functions to quickly write tests in notebooks
+- [Basic functionality](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/01_basics.ipynb): Basic functionality used in the fastai library
+- [Foundation](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/02_foundation.ipynb): The L class and helpers for it
+- [Utility functions](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/03_xtras.ipynb): Utility functions used in the fastai library
+- [Parallel](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/03a_parallel.ipynb): Threading and multiprocessing functions
+- [Network functionality](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/03b_net.ipynb): Network, HTTP, and URL functions
+- [Docments](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/04_docments.ipynb): Document parameters using comments.
+- [Meta](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/05_meta.ipynb): Metaclasses
+- [Script - CLI](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/06_script.ipynb): A fast way to turn your python function into a script.
+- [XDG](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/07_xdg.ipynb): XDG Base Directory Specification helpers.
+- [Style](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/08_style.ipynb): Fast styling for friendly CLIs.
+- [XML](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/09_xml.ipynb): Concise generation of XML.
+- [Create delegated pyi](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/10_py2pyi.ipynb): Outputs: 1
+- [External modules](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/11_external.ipynb): fastcore includes functionality from some modules from other projects that have been copied here, in cases where the original is no longer maintained, or where the original includes dependencies that we'd rather avoid.
+- [LLM tools](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/12_tools.ipynb): Helpful tools for running cli commands and reading, modifying, and creating files in python. This is used primarily for AI's in tool loops for automating tasks involving the filesystem.
+- [nbio](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/13_nbio.ipynb): Reading and writing Jupyter notebooks
+- [ Parallel Win](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/_parallel_win.ipynb)
+- [Welcome to fastcore](https://github.com/AnswerDotAI/fastcore/blob/main/nbs/index.ipynb): Python goodies to make your coding faster, easier, and more maintainable
+- [Minimal](https://github.com/AnswerDotAI/fastcore/blob/main/tests/minimal.ipynb)
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/fastcore/blob/main/CHANGELOG.md): - Set co_qualname in patch (#821) - Convert camelCase tag names to kebab-case in xml.__getattr__ (#820)
+- [How to contribute](https://github.com/AnswerDotAI/fastcore/blob/main/CONTRIBUTING.md): Clone the fastcore repository.
+
+## Source Modules
+
+- [fastcore.ansi](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/ansi.py)
+- [fastcore.basics](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/basics.py)
+- [fastcore.docments](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/docments.py)
+- [fastcore.docscrape](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/docscrape.py): A line-based string reader.
+- [fastcore.foundation](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/foundation.py)
+- [fastcore.imghdr](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/imghdr.py): JPEG data with JFIF or Exif markers; and raw JPEG including COM segments
+- [fastcore.imports](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/imports.py)
+- [fastcore.meta](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/meta.py)
+- [fastcore.net](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/net.py)
+- [fastcore.parallel](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/parallel.py)
+- [fastcore.py2pyi](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/py2pyi.py)
+- [fastcore.script](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/script.py)
+- [fastcore.shutil](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/shutil.py)
+- [fastcore.style](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/style.py)
+- [fastcore.test](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/test.py)
+- [fastcore.xdg](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/xdg.py)
+- [fastcore.xml](https://github.com/AnswerDotAI/fastcore/blob/main/fastcore/xml.py)

@@ -1,0 +1,115 @@
+# Nbdev Template
+
+> nbdev-template は、Jupyter Notebook を起点にドキュメント・テスト・パッケージを一括生成する nbdev プロジェクトの公式スターターテンプレートです。新規ライブラリ作者が即座に開発を始められるように最小構成のノートブックと設定ファイルを提供します。
+
+---
+
+## Guide
+
+### core
+
+*Source: 00_core.ipynb | URL: https://github.com/AnswerDotAI/nbdev-template/blob/master/00_core.ipynb*
+
+# core
+
+> Fill in a module description here
+
+```python
+#| default_exp core
+```
+
+```python
+#| hide
+from nbdev.showdoc import *
+```
+
+```python
+#| export
+def foo(): pass
+```
+
+```python
+#| hide
+import nbdev; nbdev.nbdev_export()
+```
+
+### {{repo}}
+
+*Source: index.ipynb | URL: https://github.com/AnswerDotAI/nbdev-template/blob/master/index.ipynb*
+
+```python
+#| hide
+from {{lib_path}}.core import *
+```
+
+# {{repo}}
+
+> {{description}}
+
+This file will become your README and also the index of your documentation.
+
+## Developer Guide
+
+If you are new to using `nbdev` here are some useful pointers to get you started.
+
+### Install {{lib_path}} in Development mode
+
+```sh
+# make sure {{lib_path}} package is installed in development mode
+$ pip install -e .
+
+# make changes under nbs/ directory
+# ...
+
+# compile to have changes apply to {{lib_path}}
+$ nbdev_prepare
+```
+
+## Usage
+
+### Installation
+
+Install latest from the GitHub [repository][repo]:
+
+```sh
+$ pip install git+https://github.com/{{user}}/{{lib_name}}.git
+```
+
+or from [conda][conda]
+
+```sh
+$ conda install -c {{user}} {{lib_path}}
+```
+
+or from [pypi][pypi]
+
+
+```sh
+$ pip install {{lib_path}}
+```
+
+
+[repo]: {{git_url}}
+[docs]: https://{{user}}.github.io/{{lib_name}}/
+[pypi]: https://pypi.org/project/{{lib_name}}/
+[conda]: https://anaconda.org/{{user}}/{{lib_name}}
+
+### Documentation
+
+Documentation can be found hosted on this GitHub [repository][repo]'s [pages][docs]. Additionally you can find package manager specific guidelines on [conda][conda] and [pypi][pypi] respectively.
+
+[repo]: {{git_url}}
+[docs]: https://{{user}}.github.io/{{lib_name}}/
+[pypi]: https://pypi.org/project/{{lib_name}}/
+[conda]: https://anaconda.org/{{user}}/{{lib_name}}
+
+## How to use
+
+Fill me in please! Don't forget code examples:
+
+```python
+1+1
+```
+
+**Outputs:**
+2

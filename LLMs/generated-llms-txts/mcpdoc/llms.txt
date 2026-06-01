@@ -1,0 +1,3 @@
+# MCP LLMS-TXT Documentation Server
+
+> An open-source MCP server that exposes user-defined llms.txt files to AI assistants via a fetch_docs tool, giving developers full visibility and control over documentation retrieval.

@@ -1,0 +1,359 @@
+# Claude Platform CLI
+
+> Anthropic Platform の全 API エンドポイントを CLI から操作できる公式コマンドラインツール（Go 製）。メッセージ送受信・ファイル管理・メモリストア・モデル一覧・バッチ処理・環境管理など、プラットフォームの機能を `ant` コマンドで網羅的に利用できる。
+
+---
+
+## Source Modules
+
+### cmd.ant.main
+
+*Source: cmd/ant/main.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/cmd/ant/main.go*
+
+- `func main`
+- `func prepareForAutocomplete`
+
+### internal.apiform.encoder
+
+*Source: internal/apiform/encoder.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/internal/apiform/encoder.go*
+
+- `func Marshal`
+- `func MarshalWithSettings`
+- `func escapeQuotes`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+
+### internal.apiquery.encoder
+
+*Source: internal/apiquery/encoder.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/internal/apiquery/encoder.go*
+
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+
+### internal.apiquery.query
+
+*Source: internal/apiquery/query.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/internal/apiquery/query.go*
+
+- `func MarshalWithSettings`
+- `func Marshal`
+
+### internal.autocomplete.autocomplete
+
+*Source: internal/autocomplete/autocomplete.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/internal/autocomplete/autocomplete.go*
+
+- `func OutputCompletionScript`
+- `func NewShellCompletion`
+- `func isFlag`
+- `func findFlag`
+- `func findChild`
+- `func GetCompletions`
+- `func getAllPossibleCompletions`
+- `func ExecuteShellCompletion`
+- `func rebuildColonSeparatedArgs`
+- `func`
+- `func`
+
+### internal.binaryparam.binary_param
+
+*Source: internal/binaryparam/binary_param.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/internal/binaryparam/binary_param.go*
+
+- `func FileOrStdin`
+
+### internal.debugmiddleware.debug_middleware
+
+*Source: internal/debugmiddleware/debug_middleware.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/internal/debugmiddleware/debug_middleware.go*
+
+- `func NewRequestLogger`
+- `func cloneBody`
+- `func`
+- `func`
+
+### internal.jsonview.staticdisplay
+
+*Source: internal/jsonview/staticdisplay.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/internal/jsonview/staticdisplay.go*
+
+- `func formatJSON`
+- `func formatResult`
+- `func isSingleLine`
+- `func formatJSONArray`
+- `func formatJSONObject`
+- `func getIndent`
+- `func RenderJSON`
+
+### internal.mocktest.mocktest
+
+*Source: internal/mocktest/mocktest.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/internal/mocktest/mocktest.go*
+
+- `func init`
+- `func blockNetworkExceptMockServer`
+- `func restoreNetwork`
+- `func TestRunMockTestWithFlags`
+- `func TestRunMockTestWithPipeAndFlags`
+- `func TestFile`
+- `func`
+
+### internal.requestflag.innerflag
+
+*Source: internal/requestflag/innerflag.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/internal/requestflag/innerflag.go*
+
+- `func WithInnerFlags`
+- `func CheckInnerFlags`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+- `func`
+
+### pkg.cmd.betaagentversion
+
+*Source: pkg/cmd/betaagentversion.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betaagentversion.go*
+
+- `func handleBetaAgentsVersionsList`
+
+### pkg.cmd.betaenvironment
+
+*Source: pkg/cmd/betaenvironment.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betaenvironment.go*
+
+- `func handleBetaEnvironmentsCreate`
+- `func handleBetaEnvironmentsRetrieve`
+- `func handleBetaEnvironmentsUpdate`
+- `func handleBetaEnvironmentsList`
+- `func handleBetaEnvironmentsDelete`
+- `func handleBetaEnvironmentsArchive`
+
+### pkg.cmd.betaenvironmentwork
+
+*Source: pkg/cmd/betaenvironmentwork.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betaenvironmentwork.go*
+
+- `func handleBetaEnvironmentsWorkRetrieve`
+- `func handleBetaEnvironmentsWorkUpdate`
+- `func handleBetaEnvironmentsWorkList`
+- `func handleBetaEnvironmentsWorkAck`
+- `func handleBetaEnvironmentsWorkHeartbeat`
+- `func handleBetaEnvironmentsWorkPoll`
+- `func handleBetaEnvironmentsWorkStats`
+- `func handleBetaEnvironmentsWorkStop`
+
+### pkg.cmd.betafile
+
+*Source: pkg/cmd/betafile.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betafile.go*
+
+- `func handleBetaFilesList`
+- `func handleBetaFilesDelete`
+- `func handleBetaFilesDownload`
+- `func handleBetaFilesRetrieveMetadata`
+- `func handleBetaFilesUpload`
+
+### pkg.cmd.betamemorystorememory
+
+*Source: pkg/cmd/betamemorystorememory.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betamemorystorememory.go*
+
+- `func handleBetaMemoryStoresMemoriesCreate`
+- `func handleBetaMemoryStoresMemoriesRetrieve`
+- `func handleBetaMemoryStoresMemoriesUpdate`
+- `func handleBetaMemoryStoresMemoriesList`
+- `func handleBetaMemoryStoresMemoriesDelete`
+
+### pkg.cmd.betamemorystorememoryversion
+
+*Source: pkg/cmd/betamemorystorememoryversion.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betamemorystorememoryversion.go*
+
+- `func handleBetaMemoryStoresMemoryVersionsRetrieve`
+- `func handleBetaMemoryStoresMemoryVersionsList`
+- `func handleBetaMemoryStoresMemoryVersionsRedact`
+
+### pkg.cmd.betamessagebatch
+
+*Source: pkg/cmd/betamessagebatch.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betamessagebatch.go*
+
+- `func handleBetaMessagesBatchesCreate`
+- `func handleBetaMessagesBatchesRetrieve`
+- `func handleBetaMessagesBatchesList`
+- `func handleBetaMessagesBatchesDelete`
+- `func handleBetaMessagesBatchesCancel`
+- `func handleBetaMessagesBatchesResults`
+
+### pkg.cmd.betamodel
+
+*Source: pkg/cmd/betamodel.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betamodel.go*
+
+- `func handleBetaModelsRetrieve`
+- `func handleBetaModelsList`
+
+### pkg.cmd.betasession
+
+*Source: pkg/cmd/betasession.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betasession.go*
+
+- `func handleBetaSessionsCreate`
+- `func handleBetaSessionsRetrieve`
+- `func handleBetaSessionsUpdate`
+- `func handleBetaSessionsList`
+- `func handleBetaSessionsDelete`
+- `func handleBetaSessionsArchive`
+
+### pkg.cmd.betasessionevent
+
+*Source: pkg/cmd/betasessionevent.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betasessionevent.go*
+
+- `func handleBetaSessionsEventsList`
+- `func handleBetaSessionsEventsSend`
+- `func handleBetaSessionsEventsStream`
+
+### pkg.cmd.betasessionresource
+
+*Source: pkg/cmd/betasessionresource.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betasessionresource.go*
+
+- `func handleBetaSessionsResourcesRetrieve`
+- `func handleBetaSessionsResourcesUpdate`
+- `func handleBetaSessionsResourcesList`
+- `func handleBetaSessionsResourcesDelete`
+- `func handleBetaSessionsResourcesAdd`
+
+### pkg.cmd.betasessionthread
+
+*Source: pkg/cmd/betasessionthread.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betasessionthread.go*
+
+- `func handleBetaSessionsThreadsRetrieve`
+- `func handleBetaSessionsThreadsList`
+- `func handleBetaSessionsThreadsArchive`
+
+### pkg.cmd.betasessionthreadevent
+
+*Source: pkg/cmd/betasessionthreadevent.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betasessionthreadevent.go*
+
+- `func handleBetaSessionsThreadsEventsList`
+- `func handleBetaSessionsThreadsEventsStream`
+
+### pkg.cmd.betaskill
+
+*Source: pkg/cmd/betaskill.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betaskill.go*
+
+- `func handleBetaSkillsCreate`
+- `func handleBetaSkillsRetrieve`
+- `func handleBetaSkillsList`
+- `func handleBetaSkillsDelete`
+
+### pkg.cmd.betaskillversion
+
+*Source: pkg/cmd/betaskillversion.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betaskillversion.go*
+
+- `func handleBetaSkillsVersionsCreate`
+- `func handleBetaSkillsVersionsRetrieve`
+- `func handleBetaSkillsVersionsList`
+- `func handleBetaSkillsVersionsDelete`
+- `func handleBetaSkillsVersionsDownload`
+
+### pkg.cmd.betauserprofile
+
+*Source: pkg/cmd/betauserprofile.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betauserprofile.go*
+
+- `func handleBetaUserProfilesCreate`
+- `func handleBetaUserProfilesRetrieve`
+- `func handleBetaUserProfilesUpdate`
+- `func handleBetaUserProfilesList`
+- `func handleBetaUserProfilesCreateEnrollmentURL`
+
+### pkg.cmd.betavault
+
+*Source: pkg/cmd/betavault.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betavault.go*
+
+- `func handleBetaVaultsCreate`
+- `func handleBetaVaultsRetrieve`
+- `func handleBetaVaultsUpdate`
+- `func handleBetaVaultsList`
+- `func handleBetaVaultsDelete`
+- `func handleBetaVaultsArchive`
+
+### pkg.cmd.betavaultcredential
+
+*Source: pkg/cmd/betavaultcredential.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/betavaultcredential.go*
+
+- `func handleBetaVaultsCredentialsCreate`
+- `func handleBetaVaultsCredentialsRetrieve`
+- `func handleBetaVaultsCredentialsUpdate`
+- `func handleBetaVaultsCredentialsList`
+- `func handleBetaVaultsCredentialsDelete`
+- `func handleBetaVaultsCredentialsArchive`
+- `func handleBetaVaultsCredentialsMCPOAuthValidate`
+
+### pkg.cmd.cmd
+
+*Source: pkg/cmd/cmd.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/cmd.go*
+
+- `func init`
+- `func generateManpages`
+
+### pkg.cmd.cmdutil_unix
+
+*Source: pkg/cmd/cmdutil_unix.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/cmdutil_unix.go*
+
+- `func isPipedDataAvailableOSSpecific`
+- `func streamOutputOSSpecific`
+- `func openSocketPairPager`
+
+### pkg.cmd.cmdutil_windows
+
+*Source: pkg/cmd/cmdutil_windows.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/cmdutil_windows.go*
+
+- `func isPipedDataAvailableOSSpecific`
+- `func streamOutputOSSpecific`
+
+### pkg.cmd.completion
+
+*Source: pkg/cmd/completion.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/completion.go*
+
+- `func handleCompletionsCreate`
+
+### pkg.cmd.extras
+
+*Source: pkg/cmd/extras.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/extras.go*
+
+- `func init`
+
+### pkg.cmd.messagebatch
+
+*Source: pkg/cmd/messagebatch.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/messagebatch.go*
+
+- `func handleMessagesBatchesCreate`
+- `func handleMessagesBatchesRetrieve`
+- `func handleMessagesBatchesList`
+- `func handleMessagesBatchesDelete`
+- `func handleMessagesBatchesCancel`
+- `func handleMessagesBatchesResults`
+
+### pkg.cmd.model
+
+*Source: pkg/cmd/model.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/model.go*
+
+- `func handleModelsRetrieve`
+- `func handleModelsList`
+
+### pkg.cmd.suggest
+
+*Source: pkg/cmd/suggest.go | URL: https://github.com/anthropics/anthropic-cli/blob/main/pkg/cmd/suggest.go*
+
+- `func jaroDistance`
+- `func jaroWinkler`
+- `func suggestCommand`
+- `func init`

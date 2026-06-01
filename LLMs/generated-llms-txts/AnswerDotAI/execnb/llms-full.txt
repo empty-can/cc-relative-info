@@ -1,0 +1,1512 @@
+# execnb
+
+> Jupyter ノートブックをサーバーなしで高速実行したい開発者・CI/CD 環境向けに、IPython の CaptureShell をベースとした軽量な実行エンジンを提供するライブラリ。
+
+---
+
+## Guide
+
+### shell
+
+*Source: nbs/00_shell.ipynb | URL: https://github.com/AnswerDotAI/execnb/blob/main/nbs/00_shell.ipynb*
+
+```python
+#| hide
+#| default_exp shell
+```
+
+# shell
+
+> A shell for running notebook code without a notebook server
+
+```python
+#| export
+
+from fastcore.utils import *
+from fastcore.script import call_parse
+from fastcore.ansi import ansi2html, strip_ansi
+
+import multiprocessing,types,traceback,signal
+try:
+    if sys.platform == 'darwin': multiprocessing.set_start_method("fork")
+except RuntimeError: pass # if re-running cell
+
+from IPython.core.interactiveshell import InteractiveShell, ExecutionInfo, ExecutionResult
+from IPython.core.displayhook import DisplayHook
+from IPython.utils.capture import capture_output
+from IPython.core.completer import IPCompleter,provisionalcompleter,Completer
+from IPython.core.hooks import CommandChainDispatcher
+from IPython.core.completerlib import module_completer
+from IPython.utils.strdispatch import StrDispatch
+from IPython.display import display as disp, HTML
+
+from base64 import b64encode
+from html import escape
+
+from fastcore.nbio import *
+from fastcore.nbio import _dict2obj
+
+```
+
+```python
+from fastcore.test import *
+from base64 import b64decode
+from io import BytesIO
+from PIL import Image
+```
+
+## CaptureShell -
+
+```python
+#| export
+class _CustDisplayHook(DisplayHook):
+    def write_output_prompt(self): pass
+    def write_format_data(self, data, md_dict): pass
+    def log_output(self, format_dict): pass
+
+@patch
+def __repr__(self: ExecutionInfo): return f'cell: {self.raw_cell}; id: {self.cell_id}'
+
+@patch
+def __repr__(self: ExecutionResult): return f'result: {self.result}; err: {self.error_in_exec}; info: <{self.info}>'
+```
+
+```python
+#| export
+class CaptureShell(InteractiveShell):
+    displayhook_class = _CustDisplayHook
+
+    def __init__(self, path:str|Path=None, mpl_format='retina', history=False, timeout:Optional[int]=None):
+        super().__init__()
+        self.history_manager.enabled = history
+        self.timeout = timeout
+        self.result,self.exc = None,None
+        if path: self.set_path(path)
+        self.display_formatter.active = True
+        if not IN_NOTEBOOK: InteractiveShell._instance = self
+        if mpl_format:
+            try: from matplotlib_inline.backend_inline import set_matplotlib_formats
+            except ImportError: set_matplotlib_formats = None
+            if set_matplotlib_formats:
+                self.enable_matplotlib("inline")
+                self._run("from matplotlib_inline.backend_inline import set_matplotlib_formats")
+                self._run(f"set_matplotlib_formats('{mpl_format}')")
+
+    def _run(self, raw_cell, store_history=False, silent=False, shell_futures=True, cell_id=None,
+                 stdout=True, stderr=True, display=True, verbose=False):
+        # TODO what if there's a comment?
+        semic = raw_cell.rstrip().endswith(';')
+        with capture_output(display=display, stdout=stdout and not verbose, stderr=stderr and not verbose) as c:
+            result = super().run_cell(raw_cell, store_history, silent, shell_futures=shell_futures, cell_id=cell_id)
+        return AttrDict(result=result, stdout='' if semic else c.stdout, stderr=c.stderr,
+                        display_objects=c.outputs, 
+                        exception=result.error_in_exec or result.error_before_exec, quiet=semic)
+
+    def set_path(self, path):
+        "Add `path` to python path, or `path.parent` if it's a file"
+        path = Path(path)
+        if path.is_file(): path = path.parent
+        self._run(f"import sys; sys.path.insert(0, '{path.as_posix()}')")
+
+    def enable_gui(self, gui=None): pass
+```
+
+```python
+#| export
+@patch
+def run_cell(self:CaptureShell, raw_cell, store_history=False, silent=False, shell_futures=True, cell_id=None,
+             stdout=True, stderr=True, display=True, timeout=None, verbose=False):
+    if not timeout: timeout = self.timeout
+    if timeout:
+        def handler(*args): raise TimeoutError()
+        signal.signal(signal.SIGALRM, handler)
+        signal.alarm(timeout)
+    try: return self._run(raw_cell, store_history, silent, shell_futures, cell_id=cell_id,
+                          stdout=stdout, stderr=stderr, display=display, verbose=verbose)
+    finally:
+        if timeout: signal.alarm(0)
+```
+
+```python
+s = CaptureShell(mpl_format='retina')
+```
+
+```python
+s.run_cell('a=1');
+```
+
+**Outputs:**
+{'result': result: None; err: None; info: <cell: a=1; id: None>,
+ 'stdout': '',
+ 'stderr': '',
+ 'display_objects': [],
+ 'exception': None,
+ 'quiet': False}
+
+```python
+o = s.run_cell('print(a)')
+o
+```
+
+**Outputs:**
+{'result': result: None; err: None; info: <cell: print(a); id: None>,
+ 'stdout': '1\n',
+ 'stderr': '',
+ 'display_objects': [],
+ 'exception': None,
+ 'quiet': False}
+
+```python
+o = s.run_cell('from warnings import warn; warn("1")')
+o
+```
+
+**Outputs:**
+{'result': result: None; err: None; info: <cell: from warnings import warn; warn("1"); id: None>,
+ 'stdout': '',
+ 'stderr': '<ipython-input-1-a51443ae013a>:1: UserWarning: 1\n  from warnings import wa … (truncated)
+
+```python
+o = s.run_cell('1')
+o
+```
+
+**Outputs:**
+{'result': result: 1; err: None; info: <cell: 1; id: None>,
+ 'stdout': '',
+ 'stderr': '',
+ 'display_objects': [],
+ 'exception': None,
+ 'quiet': False}
+
+```python
+o = s.run_cell('from IPython.display import Markdown,display; print(0); display(Markdown("*2*")); Markdown("*1*")')
+o
+```
+
+**Outputs:**
+{'result': result: <IPython.core.display.Markdown object>; err: None; info: <cell: from IPython.display import Markdown,display; print(0); display(Markdown("*2*")); Markdown("*1*"); id: None>,
+ 'stdou … (truncated)
+
+```python
+o.result.result
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+```python
+o.display_objects[0]
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+```python
+o = s.run_cell('1;')
+o
+```
+
+**Outputs:**
+{'result': result: 1; err: None; info: <cell: 1;; id: None>,
+ 'stdout': '',
+ 'stderr': '',
+ 'display_objects': [],
+ 'exception': None,
+ 'quiet': True}
+
+```python
+o = s.run_cell('import matplotlib.pyplot as plt; plt.plot([1,2,3])')
+o
+```
+
+**Outputs:**
+{'result': result: [<matplotlib.lines.Line2D object>]; err: None; info: <cell: import matplotlib.pyplot as plt; plt.plot([1,2,3]); id: None>,
+ 'stdout': '',
+ 'stderr': '',
+ 'display_objects': [<IPytho … (truncated)
+
+```python
+o.result.result[0]
+```
+
+**Outputs:**
+<matplotlib.lines.Line2D>
+
+```python
+o.display_objects[0]
+```
+
+**Outputs:**
+<Figure size 640x480 with 1 Axes>
+
+```python
+o = s.run_cell('''
+import pandas as pd
+pd.DataFrame({'A': [1, 2], 'B': [3, 4]})''')
+o
+```
+
+**Outputs:**
+{'result': result:    A  B
+ 0  1  3
+ 1  2  4; err: None; info: <cell: 
+ import pandas as pd
+ pd.DataFrame({'A': [1, 2], 'B': [3, 4]}); id: None>,
+ 'stdout': '',
+ 'stderr': '',
+ 'display_objects': [],
+ … (truncated)
+
+```python
+o.result.result
+```
+
+**Outputs:**
+   A  B
+0  1  3
+1  2  4
+
+```python
+o = s.run_cell('1/0')
+o
+```
+
+**Outputs:**
+{'result': result: None; err: division by zero; info: <cell: 1/0; id: None>,
+ 'stdout': '\x1b[31m---------------------------------------------------------------------------\x1b[39m\n\x1b[31mZeroDivisi … (truncated)
+
+Testing errors caught after exec:
+
+```python
+o = s.run_cell('import time; time.sleep(2)', timeout=1)
+test_eq(type(o['exception']), TimeoutError)
+```
+
+Testing errors caught before exec:
+
+```python
+o = s.run_cell('print(', timeout=1)
+test_eq(isinstance(o['exception'], SyntaxError), True)
+o = s.run_cell("def foo():\npass")
+test_eq(isinstance(o['exception'], IndentationError), True)
+o = s.run_cell("if True:\n\tpass\n        pass")
+test_eq(isinstance(o['exception'], TabError), True)
+
+```
+
+### Cells / run
+
+```python
+#| export
+def format_exc(e):
+    "Format exception `e` as a string list"
+    return traceback.format_exception(type(e), e, e.__traceback__)
+```
+
+```python
+#| export
+class NbResult(list): pass
+```
+
+```python
+#| export
+def _out_stream(text, name): return dict(name=name, output_type='stream', text=text.splitlines(True))
+def _out_exc(e):
+    ename = type(e).__name__
+    tb = traceback.extract_tb(e.__traceback__)#.format()
+    return dict(ename=str(ename), evalue=str(e), output_type='error', traceback=format_exc(e))
+
+def _format_mimedata(k, v):
+    "Format mime-type keyed data consistently with Jupyter"
+    if k.startswith('text/'): return v.splitlines(True)
+    if k.startswith('image/') and isinstance(v, bytes):
+        v = b64encode(v).decode()
+        return v+'\n' if not v.endswith('\n') else v
+    return v
+
+def _mk_out(data, meta, output_type='display_data'):
+    fd = {k:_format_mimedata(k,v) for k,v in data.items()}
+    return dict(data=fd, metadata=meta, output_type=output_type)
+
+def _out_nb(o, fmt):
+    res = NbResult()
+    if o.stdout: res.append(_out_stream(o.stdout, 'stdout'))
+    if o.stderr: res.append(_out_stream(o.stderr, 'stderr'))
+    if o.exception: res.append(_out_exc(o.exception))
+    res.result = o.result.result
+    for x in o.display_objects: res.append(_mk_out(x.data, x.metadata))
+    if res.result is not None and not o.quiet:
+        res.append(_mk_out(*fmt.format(res.result), 'execute_result'))
+    if 'execution_count' not in o: o['execution_count']=None
+    for p in res:
+        if p["output_type"]=="execute_result": p['execution_count'] = o['execution_count']
+    return res
+```
+
+```python
+#| export
+@patch
+def run(self:CaptureShell,
+        code:str, # Python/IPython code to run
+        stdout=True, # Capture stdout and save as output?
+        stderr=True, # Capture stderr and save as output?
+        timeout:Optional[int]=None, # Shell command will time out after {timeout} seconds
+        verbose:bool=False): # Show stdout/stderr during execution
+    "Run `code`, returning a list of all outputs in Jupyter notebook format"
+    res = self.run_cell(code, stdout=stdout, stderr=stderr, timeout=timeout, verbose=verbose)
+    self.result = res.result.result
+    self.exc = res.exception
+    return _out_nb(res, self.display_formatter)
+```
+
+```python
+s = CaptureShell()
+```
+
+```python
+s.run("print(1)")
+```
+
+**Outputs:**
+[{'name': 'stdout', 'output_type': 'stream', 'text': ['1\n']}]
+
+Code can include magics and `!` shell commands:
+
+```python
+o = s.run("%time 1+1")
+o
+```
+
+**Outputs:**
+[{'name': 'stdout',
+  'output_type': 'stream',
+  'text': ['CPU times: user 1 us, sys: 1 us, total: 2 us\n',
+   'Wall time: 4.05 us\n']},
+ {'data': {'text/plain': ['2']},
+  'metadata': {},
+  'output_ty … (truncated)
+
+The result of the last successful execution is stored in `result`:
+
+```python
+s.result
+```
+
+**Outputs:**
+2
+
+A trailing `;` stops the result from being captured:
+
+```python
+s.run("1+2;")
+```
+
+**Outputs:**
+[]
+
+```python
+o = s.run("1/0")
+o
+```
+
+**Outputs:**
+[{'name': 'stdout',
+  'output_type': 'stream',
+  'text': ['\x1b[31m---------------------------------------------------------------------------\x1b[39m\n',
+   '\x1b[31mZeroDivisionError\x1b[39m         … (truncated)
+
+This is how IPython formats exceptions internally:
+
+```python
+from IPython.core.ultratb import VerboseTB
+```
+
+```python
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    formatter = VerboseTB(color_scheme='Linux')
+```
+
+```python
+try: f()
+except Exception as e:
+    ex = e
+    print(formatter.text(type(e), e, e.__traceback__))
+```
+
+**Outputs:**
+[91m---------------------------------------------------------------------------[39m
+[91mNameError[39m                                 Traceback (most recent call last)
+[96mCell[39m[96m [39m[3 … (truncated)
+
+```python
+s.run("import time; time.sleep(0.1); print('no timeout')", timeout=1)
+```
+
+**Outputs:**
+[{'name': 'stdout', 'output_type': 'stream', 'text': ['no timeout\n']}]
+
+```python
+o = s.run("import time; time.sleep(1.1)", timeout=1)
+o[0]['text'][:2]
+```
+
+**Outputs:**
+['\x1b[31m---------------------------------------------------------------------------\x1b[39m\n',
+ '\x1b[31mTimeoutError\x1b[39m                              Traceback (most recent call last)\n']
+
+```python
+o1 = s.run('from IPython.display import Markdown,display; print(0); print(1); display(Markdown("*2*")); Markdown("*1*")')
+o1
+```
+
+**Outputs:**
+[{'name': 'stdout', 'output_type': 'stream', 'text': ['0\n', '1\n']},
+ {'data': {'text/plain': ['<IPython.core.display.Markdown object>'],
+   'text/markdown': ['*2*']},
+  'metadata': {},
+  'output_typ … (truncated)
+
+```python
+#| export
+@patch
+async def run_async(self:CaptureShell,
+        code: str,  # Python/IPython code to run
+        stdout=True,  # Capture stdout and save as output?
+        stderr=True,  # Capture stderr and save as output?
+        timeout:Optional[int]=None, # Shell command will time out after {timeout} seconds
+        verbose:bool=False): # Show stdout/stderr during execution
+    return self.run(code, stdout=stdout, stderr=stderr, timeout=timeout, verbose=verbose)
+```
+
+```python
+await s.run_async("1+1")
+```
+
+**Outputs:**
+[{'data': {'text/plain': ['2']},
+  'metadata': {},
+  'output_type': 'execute_result',
+  'execution_count': None}]
+
+```python
+#| export
+def _pre(s, xtra=''): return f"<pre {xtra}><code>{escape(s)}</code></pre>"
+def _strip(s): return strip_ansi(escape(s))
+
+def render_outputs(outputs, ansi_renderer=_strip, include_imgs=True, pygments=False, md_tfm=noop, html_tfm=noop):
+    try:
+        from mistletoe import markdown, HTMLRenderer
+        from mistletoe.contrib.pygments_renderer import PygmentsRenderer
+    except ImportError: return print('mistletoe not found -- please install it for execnb.shell.render_output')
+    renderer = PygmentsRenderer if pygments else HTMLRenderer
+    
+    def render_output(out):
+        otype = out['output_type']
+        if otype == 'stream':
+            txt = ansi_renderer(''.join(out["text"]))
+            xtra = '' if out['name']=='stdout' else "class='stderr'"
+            is_err = '<span class' in txt
+            return f"<pre {xtra}><code class='{'nohighlight hljs' if is_err else ''}'>{txt}</code></pre>"
+        elif otype in ('display_data','execute_result'):
+            data = out['data']
+            _g = lambda t: ''.join(data[t]) if t in data else None
+            if d := _g('text/html'): return html_tfm(d)
+            if d := _g('application/javascript'): return f'<script>{d}</script>'
+            if d := _g('text/markdown'): return md_tfm(markdown(d, renderer=renderer))
+            if d := _g('text/latex'): return f'<div class="math">${d}$</div>'
+            if include_imgs:
+                if d := _g('image/jpeg'): return f'<img src="data:image/jpeg;base64,{d}"/>'
+                if d := _g('image/png'): return f'<img src="data:image/png;base64,{d}"/>'
+                if d := _g('image/svg+xml'): return d
+            if d := _g('text/plain'): return _pre(d)
+            
+        return ''
+
+    return '\n'.join(map(render_output, outputs))
+```
+
+```python
+HTML(render_outputs(o))
+```
+
+**Outputs:**
+<IPython.core.display.HTML object>
+
+We can use `ansi2html` to convert from ANSI to HTML for color rendering.  You need some [css styles](https://github.com/fastai/fastcore/blob/master/examples/ansi.css) for the colors to render properly.  Jupyter already has these built in so it's not neccessary here, but if you plan on using this in another web app you will need to ensure that css styling is included.
+
+```python
+HTML(render_outputs(o, ansi2html))
+```
+
+**Outputs:**
+<IPython.core.display.HTML object>
+
+Images and matplotlib figures are captured:
+
+```python
+res = s.run('''import matplotlib.pyplot as plt
+plt.figure(figsize=(2,1))
+plt.plot([1,2,4]);''')
+
+HTML(render_outputs(res))
+```
+
+**Outputs:**
+<IPython.core.display.HTML object>
+
+If an exception is raised then the exception type, object, and stacktrace are stored in `exc`:
+
+```python
+o = s.run('raise Exception("Oops")')
+o
+```
+
+**Outputs:**
+[{'name': 'stdout',
+  'output_type': 'stream',
+  'text': ['\x1b[31m---------------------------------------------------------------------------\x1b[39m\n',
+   '\x1b[31mException\x1b[39m                 … (truncated)
+
+```python
+s.exc
+```
+
+**Outputs:**
+Exception('Oops')
+
+```python
+#| export
+@patch
+def cell(self:CaptureShell, cell, stdout=True, stderr=True, verbose=False):
+    "Run `cell`, skipping if not code, and store outputs back in cell"
+    if cell.cell_type!='code': return
+    self._cell_idx = cell.idx_ + 1
+    outs = self.run(cell.source, verbose=verbose)
+    if outs: cell.outputs = _dict2obj(outs)
+```
+
+```python
+clean = Path('../tests/clean.ipynb')
+nb = read_nb(clean)
+c = nb.cells[1]
+c
+```
+
+**Outputs:**
+{'cell_type': 'code',
+ 'execution_count': None,
+ 'id': 'b123d6d0',
+ 'metadata': {},
+ 'outputs': [],
+ 'source': 'print(1)\n2',
+ 'idx_': 1}
+
+```python
+s.cell(c)
+c.outputs
+```
+
+**Outputs:**
+[{'name': 'stdout', 'output_type': 'stream', 'text': ['1\n']},
+ {'data': {'text/plain': ['2']},
+  'metadata': {},
+  'output_type': 'execute_result',
+  'execution_count': None}]
+
+```python
+#| export
+def find_output(outp, # Output from `run`
+                ot='execute_result' # Output_type to find
+               ):
+    "Find first output of type `ot` in `CaptureShell.run` output"
+    return first(o for o in outp if o['output_type']==ot)
+```
+
+```python
+find_output(c.outputs)['data']
+```
+
+**Outputs:**
+{'text/plain': ['2']}
+
+```python
+find_output(c.outputs, 'stream')['text']
+```
+
+**Outputs:**
+['1\n']
+
+```python
+#| export
+def out_exec(outp):
+    "Get data from execution result in `outp`."
+    out = find_output(outp)
+    if out: return '\n'.join(first(out['data'].values()))
+```
+
+```python
+out_exec(c.outputs)
+```
+
+**Outputs:**
+'2'
+
+```python
+#| export
+def out_stream(outp):
+    "Get text from stream in `outp`."
+    out = find_output(outp, 'stream')
+    if out: return ('\n'.join(out['text'])).strip()
+```
+
+```python
+out_stream(c.outputs)
+```
+
+**Outputs:**
+'1'
+
+```python
+#| export
+def out_error(outp):
+    "Get traceback from error in `outp`."
+    out = find_output(outp, 'error')
+    if out: return '\n'.join(out['traceback'])
+```
+
+### NBs -
+
+```python
+#| export
+def _false(o): return False
+
+@patch
+def run_all(self:CaptureShell,
+            nb, # A notebook read with `nbclient` or `read_nb`
+            exc_stop:bool=False, # Stop on exceptions?
+            preproc:callable=_false, # Called before each cell is executed
+            postproc:callable=_false, # Called after each cell is executed
+            inject_code:str|None=None, # Code to inject into a cell
+            inject_idx:int=0, # Cell to replace with `inject_code`
+            verbose:bool=False # Show stdout/stderr during execution
+           ):
+    "Run all cells in `nb`, stopping at first exception if `exc_stop`"
+    if inject_code is not None: nb.cells[inject_idx].source = inject_code
+    for cell in nb.cells:
+        if not preproc(cell):
+            self.cell(cell, verbose=verbose)
+            postproc(cell)
+        if self.exc and exc_stop: raise self.exc from None
+```
+
+```python
+nb.cells[2].outputs
+```
+
+**Outputs:**
+[]
+
+```python
+s.run_all(nb)
+nb.cells[2].outputs
+```
+
+**Outputs:**
+[{'data': {'text/plain': ['<IPython.core.display.Markdown object>'],
+   'text/markdown': ["This is *bold*. Here's a [link](https://www.fast.ai)."]},
+  'metadata': {},
+  'output_type': 'execute_result' … (truncated)
+
+With `exc_stop=False` (the default), execution continues after exceptions, and exception details are stored into the appropriate cell's output:
+
+```python
+nb.cells[-1].source
+```
+
+**Outputs:**
+'raise Exception("Oopsie!")'
+
+```python
+nb.cells[-1].outputs
+```
+
+**Outputs:**
+[{'name': 'stdout',
+  'output_type': 'stream',
+  'text': ['\x1b[31m---------------------------------------------------------------------------\x1b[39m\n',
+   '\x1b[31mException\x1b[39m                 … (truncated)
+
+With `exc_stop=True`, exceptions in a cell are raised and no further processing occurs:
+
+```python
+try: s.run_all(nb, exc_stop=True)
+except Exception as e: print(f"got exception: {e}")
+```
+
+**Outputs:**
+got exception: Oopsie!
+
+
+We can pass a function to `preproc` to have it run on every cell. It can modify the cell as needed. If the function returns `True`, then that cell will not be executed. For instance, to skip the cell which raises an exception:
+
+```python
+nb = read_nb(clean)
+s.run_all(nb, preproc=lambda c: 'raise' in c.source)
+```
+
+This cell will contain no output, since it was skipped.
+
+```python
+nb.cells[-1].outputs
+```
+
+**Outputs:**
+[]
+
+```python
+nb.cells[1].outputs
+```
+
+**Outputs:**
+[{'name': 'stdout', 'output_type': 'stream', 'text': ['1\n']},
+ {'data': {'text/plain': ['2']},
+  'metadata': {},
+  'output_type': 'execute_result',
+  'execution_count': None}]
+
+You can also pass a function to `postproc` to modify a cell after it is executed.
+
+```python
+#| export
+@patch
+def execute(self:CaptureShell,
+            src:str|Path, # Notebook path to read from
+            dest:str|None=None, # Notebook path to write to
+            exc_stop:bool=False, # Stop on exceptions?
+            preproc:callable=_false, # Called before each cell is executed
+            postproc:callable=_false, # Called after each cell is executed
+            inject_code:str|None=None, # Code to inject into a cell
+            inject_path:str|Path|None=None, # Path to file containing code to inject into a cell
+            inject_idx:int=0, # Cell to replace with `inject_code`
+            verbose:bool=False # Show stdout/stderr during execution
+):
+    "Execute notebook from `src` and save with outputs to `dest"
+    nb = read_nb(src)
+    self._fname = src
+    self.set_path(Path(src).parent.resolve())
+    if inject_path is not None: inject_code = Path(inject_path).read_text()
+    self.run_all(nb, exc_stop=exc_stop, preproc=preproc, postproc=postproc,
+                 inject_code=inject_code, inject_idx=inject_idx, verbose=verbose)
+    if dest: write_nb(nb, dest)
+```
+
+This is a shortcut for the combination of `read_nb`, `CaptureShell.run_all`, and `write_nb`.
+
+```python
+s = CaptureShell()
+try:
+    s.execute(clean, 'tmp.ipynb')
+    print(read_nb('tmp.ipynb').cells[1].outputs)
+finally: Path('tmp.ipynb').unlink()
+```
+
+**Outputs:**
+[{'name': 'stdout', 'output_type': 'stream', 'text': ['1\n']}, {'data': {'text/plain': ['2']}, 'execution_count': None, 'metadata': {}, 'output_type': 'execute_result'}]
+
+
+```python
+p = Path.home()/'git'/'fastcore'/'nbs'
+n = p/'03a_parallel.ipynb'
+```
+
+```python
+#| export
+@patch
+def prettytb(self:CaptureShell, 
+             fname:str|Path=None): # filename to print alongside the traceback
+    "Show a pretty traceback for notebooks, optionally printing `fname`."
+    fname = fname if fname else self._fname
+    _fence = '='*75
+    cell_intro_str = f"While Executing Cell #{self._cell_idx}:" if self._cell_idx else "While Executing:"
+    cell_str = f"\n{cell_intro_str}\n{''.join(format_exc(self.exc))}"
+    fname_str = f' in {fname}' if fname else ''
+    return f"{type(self.exc).__name__}{fname_str}:\n{_fence}\n{cell_str}\n"
+```
+
+If an error occurs while running a notebook, you can retrieve a pretty version of the error with the `prettytb` method: 
+
+```python
+s = CaptureShell()
+try:
+    s.execute('../tests/error.ipynb', exc_stop=True)
+except:
+    print(s.prettytb())
+```
+
+**Outputs:**
+AssertionError in ../tests/error.ipynb:
+===========================================================================
+
+While Executing Cell #2:
+Traceback (most recent call last):
+  File "/tmp/ipykernel_ … (truncated)
+
+### Tests -
+
+```python
+#| hide
+# Trailing `;` stops data from being captured
+res = CaptureShell().run('1+1;')
+test_eq(res, [])
+
+# Newlines, whitespace, and comments after `;` are ignored
+# TODO: fix test
+# res = CaptureShell().run('1+1;\n  #commented_func()')
+test_eq(res, [])
+```
+
+```python
+#| hide
+# `mpl_format=None` skips inline matplotlib setup but still runs normal code.
+res = CaptureShell(mpl_format=None).run('1+1')
+test_eq(res[0]['data']['text/plain'], ['2'])
+```
+
+```python
+#| hide
+# Streams are split on and keep newlines
+res = CaptureShell().run(r"print('a\nb'); print('c\n\n'); print('d')")
+test_eq(res[0]['text'], ['a\n', 'b\n', 'c\n', '\n', '\n', 'd\n'])
+```
+
+```python
+#| hide
+# Text mime data are split on and keep newlines
+res = CaptureShell().run(r"from IPython.display import Markdown; display(Markdown('a\nb'))")
+test_eq(res[0]['data']['text/markdown'], ['a\n', 'b'])
+```
+
+```python
+#| hide
+# Binary image mime data are base64-encoded and end in a single `\n`
+
+def _pil2b64(im): return b64encode(im._repr_png_()).decode()+'\n'
+im = Image.new('RGB', (3,3), 'red')
+imb64 = _pil2b64(im)
+
+res = CaptureShell().run("from PIL import Image; Image.new('RGB', (3,3), 'red')")
+test_eq(res[0]['data']['image/png'], imb64)
+```
+
+```python
+#| hide
+# `display_data` flushes stdout and stderr - in that order
+res = CaptureShell().run("import sys; sys.stderr.write('Error!'); print(1); display(1)")
+test_eq(res, [{'name': 'stdout', 'output_type': 'stream', 'text': ['1\n']},
+              {'name': 'stderr', 'output_type': 'stream', 'text': ['Error!']},
+              {'data': {'text/plain': ['1']}, 'metadata': {}, 'output_type': 'display_data'}])
+```
+
+```python
+#| hide
+# Consecutive writes to stdout are grouped
+res = CaptureShell().run('print(1); print(2); print(3)')
+test_eq(res, [{'name': 'stdout', 'output_type': 'stream', 'text': ['1\n', '2\n', '3\n']}])
+```
+
+```python
+#| hide
+# Consecutive writes to stdout are grouped despite an intermediate write to stderr, which is captured after
+res = CaptureShell().run("import sys; print(1); print(2); sys.stderr.write('Error!'); print(3)")
+test_eq(res, [{'name': 'stdout', 'output_type': 'stream', 'text': ['1\n', '2\n', '3\n']},
+              {'name': 'stderr', 'output_type': 'stream', 'text': ['Error!']}])
+```
+
+```python
+#| hide
+# `execute_result` is always last
+res = CaptureShell().run("import sys; sys.stderr.write('Error!'); print(1); display(1); 1")
+test_eq(res, [{'name': 'stdout', 'output_type': 'stream', 'text': ['1\n']},
+              {'name': 'stderr', 'output_type': 'stream', 'text': ['Error!']},
+              {'data': {'text/plain': ['1']}, 'metadata': {}, 'output_type': 'display_data'},
+              {'data': {'text/plain': ['1']}, 'metadata': {}, 'output_type': 'execute_result', 'execution_count': None}])
+```
+
+## Params -
+
+If you pass `inject_code` to `CaptureShell.execute` or `CaptureShell.run_all`, the source of `nb.cells[inject_idx]` will be replaced with `inject_code`. By default, the first cell is replaced. For instance consider this notebook:
+
+```python
+nb = read_nb('../tests/params.ipynb')
+for c in nb.cells: print('- ',c.source)
+```
+
+**Outputs:**
+-  a=1
+-  print(a)
+
+
+We can replace the first cell with `a=2` by passing that as `inject_code`, and the notebook will run with that change:
+
+```python
+nb = read_nb('../tests/params.ipynb')
+s.run_all(nb, inject_code="a=2")
+list(nb.cells)
+```
+
+**Outputs:**
+[{'cell_type': 'code',
+  'execution_count': None,
+  'id': 'a63ce885',
+  'metadata': {},
+  'outputs': [],
+  'source': 'a=2',
+  'idx_': 0},
+ {'cell_type': 'code',
+  'execution_count': None,
+  'id': 'ea5 … (truncated)
+
+This can be used with `CaptureShell.execute` to parameterise runs of models in notebooks. Place any defaults for configuration code needed in the first cell, and then when running `execute` pass in new parameters as needed in `inject_code`. To replace only some of the defaults, leave an empty cell as the second cell, and inject code using `inject_idx=1` to replace the empty second cell with code that overrides some of the defaults set in the first cell. When using `execute` you can pass `inject_path` instead of `inject_code` to read the injected code from a file.
+
+## cli -
+
+```python
+#| export
+@call_parse
+def exec_nb(
+    src:str, # Notebook path to read from
+    dest:str='', # Notebook path to write to
+    exc_stop:bool=False, # Stop on exceptions?
+    inject_code:str=None, # Code to inject into a cell
+    inject_path:str=None, # Path to file containing code to inject into a cell
+    inject_idx:int=0, # Cell to replace with `inject_code`
+    verbose:bool=False # Show stdout/stderr during execution
+):
+    "Execute notebook from `src` and save with outputs to `dest`"
+    CaptureShell().execute(src, dest, exc_stop=exc_stop, inject_code=inject_code,
+                           inject_path=inject_path, inject_idx=inject_idx, verbose=verbose)
+```
+
+This is the command-line version of `CaptureShell.execute`. Run `exec_nb -h` from the command line to see how to pass arguments. If you don't pass `dest` then the output notebook won't be saved; this is mainly useful for running tests.
+
+## Completions -
+
+```python
+#| export
+class SmartCompleter(IPCompleter):
+    def __init__(self, shell, namespace=None, jedi=False):
+        if namespace is None: namespace = shell.user_ns
+        super().__init__(shell, namespace)
+        self.use_jedi = jedi
+        sdisp = StrDispatch()
+        self.custom_completers = sdisp
+        import_disp = CommandChainDispatcher()
+        import_disp.add(types.MethodType(module_completer, shell))
+        sdisp.add_s('import', import_disp)
+        sdisp.add_s('from', import_disp)
+
+    def __call__(self, c):
+        if not c: return []
+        with provisionalcompleter():
+            res = [o.text.rpartition('.')[-1] for o in self.completions(c, len(c)) if o.type!='magic']
+        if res and res[0][-1]=='=': res = [o for o in res if o[-1]=='=']
+        return res
+```
+
+```python
+cc = SmartCompleter(get_ipython())
+
+def test_set(a,b): return test_eq(set(a), set(b))
+
+class _f:
+    def __init__(self): self.bar,self.baz,self.room = 0,0,0
+
+foo = _f()
+
+assert set(cc("b")).issuperset(['bool', 'bytes'])
+test_set(cc("foo.b"), ['bar', 'baz'])
+test_set(cc("x=1; x = foo.b"), ['bar', 'baz'])
+test_set(cc("ab"), ['abs'])
+test_set(cc("b = ab"), ['abs'])
+test_set(cc(""), [])
+test_set(cc("foo."), ['bar', 'baz', 'room'])
+test_set(cc("nonexistent.b"), [])
+test_set(cc("foo.nonexistent.b"), [])
+assert set(cc("import ab")).issuperset(['abc'])
+test_set(cc("from abc import AB"), ['ABC', 'ABCMeta'])
+```
+
+```python
+s = CaptureShell()
+cc = SmartCompleter(s)
+s.run('''def captures(pat, s, n, **kw):
+    return 1''')
+cc('captures(')
+```
+
+**Outputs:**
+['n=', 'pat=', 's=']
+
+```python
+#| export
+@patch
+def complete(self:CaptureShell, c):
+    if not hasattr(self, '_completer'): self._completer = SmartCompleter(self)
+    return self._completer(c)
+```
+
+```python
+s = CaptureShell()
+s.run('a=1')
+s.complete('a.b')
+```
+
+**Outputs:**
+['bit_count', 'bit_length']
+
+```python
+s.run('import re')
+s.complete('re.compile(')
+```
+
+**Outputs:**
+['flags=', 'pattern=']
+
+## export -
+
+```python
+#| hide
+import nbdev; nbdev.nbdev_export()
+```
+
+### execnb
+
+*Source: nbs/index.ipynb | URL: https://github.com/AnswerDotAI/execnb/blob/main/nbs/index.ipynb*
+
+[![CI](https://github.com/fastai/execnb/actions/workflows/test.yaml/badge.svg)](https://github.com/fastai/execnb/actions/workflows/test.yaml) [![Deploy to GitHub Pages](https://github.com/fastai/execnb/actions/workflows/deploy.yaml/badge.svg)](https://github.com/fastai/execnb/actions/workflows/deploy.yaml)
+
+# execnb
+
+> Execute a jupyter notebook, fast, without needing jupyter
+
+## Install
+
+Either:
+
+    pip install execnb
+
+or if you use conda:
+
+    conda install -c fastai execnb
+
+(You can replace `conda` with `mamba` in the line above if you have mamba installed.)
+
+## How to use
+
+Use `CaptureShell` to run Jupyter code and capture notebook outputs, without running a Jupyter server (or even having it installed):
+
+```python
+from execnb.shell import *
+from fastcore.utils import *
+from fastcore.nbio import *
+```
+
+```python
+s = CaptureShell()
+s.run('1+1')
+```
+
+**Outputs:**
+[{'data': {'text/plain': ['2']},
+  'metadata': {},
+  'output_type': 'execute_result',
+  'execution_count': None}]
+
+To execute a notebook and save it with outputs filled in, use `CaptureShell.execute`:
+
+```python
+try:
+    s.execute('../tests/clean.ipynb', 'tmp.ipynb')
+    print(read_nb('tmp.ipynb').cells[1].outputs)
+finally: Path('tmp.ipynb').unlink()
+```
+
+**Outputs:**
+[{'name': 'stdout', 'output_type': 'stream', 'text': ['1\n']}, {'data': {'text/plain': ['2']}, 'execution_count': None, 'metadata': {}, 'output_type': 'execute_result'}]
+
+
+You can also execute notebooks from the command line with `exec_nb`:
+
+```python
+!exec_nb --help
+```
+
+**Outputs:**
+usage: exec_nb [-h] [--dest DEST] [--exc_stop] [--inject_code INJECT_CODE]
+               [--inject_path INJECT_PATH] [--inject_idx INJECT_IDX] [--verbose]
+               src
+
+Execute notebook fro … (truncated)
+
+### Clean
+
+*Source: tests/clean.ipynb | URL: https://github.com/AnswerDotAI/execnb/blob/main/tests/clean.ipynb*
+
+```python
+import matplotlib.pyplot as plt
+plt.figure(figsize=(1,1))
+plt.plot([1,2])
+```
+
+```python
+print(1)
+2
+```
+
+```python
+from IPython.display import Markdown
+Markdown("This is *bold*. Here's a [link](https://www.fast.ai).")
+```
+
+```python
+raise Exception("Oopsie!")
+```
+
+### Error
+
+*Source: tests/error.ipynb | URL: https://github.com/AnswerDotAI/execnb/blob/main/tests/error.ipynb*
+
+```python
+from err import foo
+```
+
+```python
+# some comments
+print('hello')
+foo()
+```
+
+### Minimal
+
+*Source: tests/minimal.ipynb | URL: https://github.com/AnswerDotAI/execnb/blob/main/tests/minimal.ipynb*
+
+## A minimal notebook
+
+```python
+# Do some arithmetic
+1+1
+```
+
+**Outputs:**
+2
+
+### Params
+
+*Source: tests/params.ipynb | URL: https://github.com/AnswerDotAI/execnb/blob/main/tests/params.ipynb*
+
+```python
+a=1
+```
+
+```python
+print(a)
+```
+
+**Outputs:**
+1
+
+### Ran
+
+*Source: tests/ran.ipynb | URL: https://github.com/AnswerDotAI/execnb/blob/main/tests/ran.ipynb*
+
+```python
+import matplotlib.pyplot as plt
+plt.figure(figsize=(1,1))
+plt.plot([1,2])
+```
+
+**Outputs:**
+[<matplotlib.lines.Line2D at 0x7f6fb2793940>]
+<Figure size 72x72 with 1 Axes>
+
+```python
+print(1)
+2
+```
+
+**Outputs:**
+1
+
+2
+
+```python
+from IPython.display import Markdown
+Markdown("This is *bold*. Here's a [link](https://www.fast.ai).")
+```
+
+**Outputs:**
+<IPython.core.display.Markdown object>
+
+```python
+raise Exception("Oopsie!")
+```
+
+---
+
+## Optional
+
+### Release notes
+
+*Source: CHANGELOG.md | URL: https://github.com/AnswerDotAI/execnb/blob/main/CHANGELOG.md*
+
+# Release notes
+
+<!-- do not remove -->
+
+## 0.2.2
+
+### New Features
+
+- Add `mpl_format=None` param option that skips inline matplotlib setup ([#82](https://github.com/AnswerDotAI/execnb/issues/82))
+
+
+## 0.2.1
+
+### New Features
+
+- Move nbio to fastcore ([#81](https://github.com/AnswerDotAI/execnb/issues/81))
+
+
+## 0.2.0
+
+### Breaking changes
+
+- Move nbio to fastcore ([#81](https://github.com/AnswerDotAI/execnb/issues/81))
+
+
+## 0.1.18
+
+### Bugs Squashed
+
+- id not extracted from cell meta ([#80](https://github.com/AnswerDotAI/execnb/issues/80))
+
+
+## 0.1.17
+
+### New Features
+
+- Add cell id in nbio ([#79](https://github.com/AnswerDotAI/execnb/issues/79))
+
+
+## 0.1.16
+
+### Bugs Squashed
+
+- Catch errors before exec ([#77](https://github.com/AnswerDotAI/execnb/issues/77))
+
+
+## 0.1.15
+
+### New Features
+
+- Add --verbose flag to `exec_nb` for real-time output ([#75](https://github.com/AnswerDotAI/execnb/pull/75)), thanks to [@radekosmulski](https://github.com/radekosmulski)
+
+
+## 0.1.14
+
+### New Features
+
+- Support for graphviz and other svg rendering in outputs ([#73](https://github.com/AnswerDotAI/execnb/pull/73)), thanks to [@curtis-allan](https://github.com/curtis-allan)
+
+
+## 0.1.12
+
+### New Features
+
+- Allow render outputs to take in functions that can modify HTML prior to being returned ([#72](https://github.com/AnswerDotAI/execnb/pull/72)), thanks to [@Isaac-Flath](https://github.com/Isaac-Flath)
+- Use fastcore `strip_ansi` instead of ipython text ([#71](https://github.com/AnswerDotAI/execnb/pull/71)), thanks to [@erikgaas](https://github.com/erikgaas)
+
+
+## 0.1.11
+
+### New Features
+
+- Limit to param names in completions if available ([#67](https://github.com/AnswerDotAI/execnb/issues/67))
+
+
+## 0.1.10
+
+### Bugs Squashed
+
+- `execution_count` and traceback formatted incorrectly ([#66](https://github.com/AnswerDotAI/execnb/issues/66))
+
+
+## 0.1.9
+
+### New Features
+
+- add `shell.run_async` ([#63](https://github.com/AnswerDotAI/execnb/pull/63)), thanks to [@comhar](https://github.com/comhar)
+- Use pygments for md output rendering ([#62](https://github.com/AnswerDotAI/execnb/issues/62))
+- Add optional image rendering control to `render_outputs` ([#61](https://github.com/AnswerDotAI/execnb/pull/61)), thanks to [@ncoop57](https://github.com/ncoop57)
+- Add option to use ansi2html renderer ([#57](https://github.com/AnswerDotAI/execnb/pull/57)), thanks to [@Isaac-Flath](https://github.com/Isaac-Flath)
+
+### Bugs Squashed
+
+- Missing execution count in run cells ([#65](https://github.com/AnswerDotAI/execnb/issues/65))
+- Fix matplotlib rendering in `render_outputs` ([#64](https://github.com/AnswerDotAI/execnb/pull/64)), thanks to [@johnowhitaker](https://github.com/johnowhitaker)
+
+
+## 0.1.8
+
+### New Features
+
+- Add support for timeouts in CaptureShell ([#60](https://github.com/fastai/execnb/issues/60))
+- Add `render_outputs` ([#55](https://github.com/fastai/execnb/issues/55))
+- Add SmartCompleter ([#54](https://github.com/fastai/execnb/issues/54))
+- Major refactor of CaptureShell ([#53](https://github.com/fastai/execnb/issues/53))
+- add markdown to doc output ([#52](https://github.com/fastai/execnb/issues/52))
+
+### Bugs Squashed
+
+- Use `callable` instead of `Callable` ([#59](https://github.com/fastai/execnb/issues/59))
+
+
+## 0.1.6
+
+- New functions for extracting outputs
+
+
+## 0.1.5
+
+### New Features
+
+- Add `DummyHistory` ([#38](https://github.com/fastai/execnb/issues/38))
+
+### Bugs Squashed
+
+- `CaptureShell.enable_matplotlib` does not follow its parent's interface ([#42](https://github.com/fastai/execnb/issues/42))
+- Specify encoding when reading file in `write_nb` ([#41](https://github.com/fastai/execnb/pull/41)), thanks to [@RalfG](https://github.com/RalfG)
+
+
+## 0.1.4
+
+
+### Bugs Squashed
+
+- `CaptureShell.shell` sets `cell.outputs` to ordinary dicts instead of `AttrDict`s ([#39](https://github.com/fastai/execnb/pull/39)), thanks to [@seeM](https://github.com/seeM)
+
+
+## 0.1.3
+
+### New Features
+
+- Add `DummyHistory` ([#38](https://github.com/fastai/execnb/issues/38))
+
+### Bugs Squashed
+
+- `nbdev_test` fails due to unescaped backslash in windows path ([#37](https://github.com/fastai/execnb/issues/37))
+
+
+## 0.1.2
+
+### New Features
+
+- Only write file if changed in `write_nb` ([#35](https://github.com/fastai/execnb/issues/35))
+- faster startup with `MPLBACKEND` environment variable to lazily set matplotlib backend ([#33](https://github.com/fastai/execnb/pull/33)), thanks to [@seeM](https://github.com/seeM)
+
+
+## 0.1.1
+
+### New Features
+
+- Support `ipywidgets` ([#24](https://github.com/fastai/execnb/issues/24))
+
+### Bugs Squashed
+
+- Seaborn is not compatible with execnb ([#27](https://github.com/fastai/execnb/issues/27))
+
+
+## 0.1.0
+
+### New Features
+
+- Remove usage of fastcore.xtras and fastcore.foundation to reduce chance of macOS fork issue ([#26](https://github.com/fastai/execnb/issues/26))
+
+
+## 0.0.10
+
+### New Features
+
+- add `mk_cell` ([#25](https://github.com/fastai/execnb/issues/25))
+- Add new nb function ([#23](https://github.com/fastai/execnb/pull/23)), thanks to [@dleen](https://github.com/dleen)
+- Parameterize Notebooks ([#19](https://github.com/fastai/execnb/issues/19))
+  - (This was completed earlier but not marked done in gh issues)
+
+
+## 0.0.9
+
+### New Features
+
+- use fork mode on mac ([#22](https://github.com/fastai/execnb/issues/22))
+
+
+## 0.0.8
+
+- Use nbdev2
+
+
+## 0.0.6
+
+### Bugs Squashed
+
+- do not fail if matplotlib is not installed when running  `%matplotlib inline` ([#6](https://github.com/fastai/execnb/pull/6)), thanks to [@hamelsmu](https://github.com/hamelsmu)
+
+
+## 0.0.3
+
+- Add notebook dir to python path
+
+
+## 0.0.2
+
+- Compat with nbdev test runner
+
+
+## 0.0.1
+
+- Initial release
+
+---
+
+## Source Modules
+
+### execnb.shell
+
+*Source: execnb/shell.py | URL: https://github.com/AnswerDotAI/execnb/blob/main/execnb/shell.py*
+
+- `write_output_prompt`
+- `write_format_data`
+- `log_output`
+- `CaptureShell`
+- `set_path`
+- `enable_gui`
+- `run_cell`
+- `format_exc`
+- `NbResult`
+- `run`
+- `run_async`
+- `render_outputs`
+- `render_output`
+- `cell`
+- `find_output`
+- `out_exec`
+- `out_stream`
+- `out_error`
+- `run_all`
+- `execute`
+- `prettytb`
+- `exec_nb`
+- `SmartCompleter`
+- `complete`

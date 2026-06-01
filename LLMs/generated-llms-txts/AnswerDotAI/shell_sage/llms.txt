@@ -1,0 +1,21 @@
+# ShellSage
+
+> シェルコマンドとシステム管理を学びたいユーザー向けに、LLM を活用したコマンドライン教育アシスタント ssage を CLI で提供するツール。
+
+## Guide
+
+- [Core](https://github.com/AnswerDotAI/shell_sage/blob/main/nbs/00_core.ipynb): Jupyter does work with rich.live.Live, this fixes it.
+- [Configuration](https://github.com/AnswerDotAI/shell_sage/blob/main/nbs/01_config.ipynb): Outputs: Path('/Users/keremturgutlu/.config/shell_sage/shell_sage.conf')
+- [ShellSage](https://github.com/AnswerDotAI/shell_sage/blob/main/nbs/index.ipynb): ShellSage saves sysadmins' sanity by solving shell script snafus super swiftly
+
+## Optional
+
+- [Release Notes](https://github.com/AnswerDotAI/shell_sage/blob/main/CHANGELOG.md): - Fix: Print tool use details before permission check (#81), thanks to @ncoop57 - Use os.environ.get instead of subprocess to retrieve SHELL variable …
+- [How to contribute](https://github.com/AnswerDotAI/shell_sage/blob/main/CONTRIBUTING.md): Make sure you have read the doc on code style first.
+
+## Source Modules
+
+- [ipython.00-init](https://github.com/AnswerDotAI/shell_sage/blob/main/ipython/00-init.py)
+- [ipython.01-prompt](https://github.com/AnswerDotAI/shell_sage/blob/main/ipython/01-prompt.py)
+- [shell_sage.config](https://github.com/AnswerDotAI/shell_sage/blob/main/shell_sage/config.py)
+- [shell_sage.core](https://github.com/AnswerDotAI/shell_sage/blob/main/shell_sage/core.py)

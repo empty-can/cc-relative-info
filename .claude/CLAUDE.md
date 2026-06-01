@@ -44,6 +44,7 @@
 | `request-new-skill` | `/request-new-skill <概要>` | 新規 Skill 作成依頼書を `.claude/workspace/skill-request/<kebab-case>/` に配置 |
 | `review-skill-request` | `/review-skill-request [フォルダ名]` | 記入済み依頼書をレビューし、`skill-cc-response.md` に確認事項・指摘・提案・既存 Skill 調査結果を書き込む |
 | `generate-llms-txt` | `/generate-llms-txt [--target <path_or_url>] [--base-url <url>] [--output <dir>] [--extract-sigs]` | ローカルリポジトリまたは GitHub URL から `llms.txt` / `llms-full.txt` を自動生成。ドキュメント抽出（Type A）＋ソースシグネチャ抽出（Type C）に対応。blockquote・description は LLM が自動生成 |
+| `update-official-doc-summary` | `/update-official-doc-summary [--from <commit>]`（`disable-model-invocation: true`） | Claude Code 公式ドキュメント（`llms.txt` / `llms-full.txt`）の更新差分を人間向け changelog / リリースノート風 Markdown として生成。詳細版（LLM 生成）+ ライト版（`derive_light.py` で機械抽出、ハイライト/新規追加/大幅更新の見出しを詳細版アンカーへ自動リンク化）の 2 ファイル方式。出力先 `LLMs/official-doc-update-summary/claude-code-docs/`、旧版は `archives/<YYYY-MM-DD>/` へ退避 |
 
 **Skill 追加は二段階フロー**: `/request-new-skill` → ユーザーが `skill-request-form.md` 記入 → `/review-skill-request` → 確認事項クリアで実装着手。
 

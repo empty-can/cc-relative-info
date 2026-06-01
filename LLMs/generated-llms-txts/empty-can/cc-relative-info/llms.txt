@@ -1,0 +1,26 @@
+# Cc Relative Info
+
+> Claude Code の運用設定資産（Skill・Rule・Agent）を集約し、LLM 補助開発ワークフローを効率化するリポジトリ。`llms.txt` 収集・生成の仕組みも整備中。
+
+## Skills
+
+- [5-whys-analysis](https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/5-whys/SKILL.md): 問題の根本原因を体系的に特定する。「根本原因を調べて」「なぜなぜ分析」「なぜ起きたか」「原因を深掘りして」「再発防止策を考えて」「症状ではなく原因から解決したい」「find the root cause」「why did this happen」といった言葉が出たら適用する。
+- [check-model](https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/check-model/SKILL.md): 現セッションのモデルが、現在進行中または着手予定の作業内容に対して適切かを評価し、不適合なら推奨モデルへの切替を提案する。「適切なモデルか確認」「モデル妥当性」「Opus が必要か」「Sonnet で十分か」「Haiku に任せていいか」「check model fit」「model appropriateness」といった言葉が出たら適用する。
+- [commit-and-pr](https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/commit-and-pr/SKILL.md): 現在のステージ済み・未ステージ変更を適切なメッセージでコミットし、プッシュして Pull Request を作成する。変更が完成して共有可能な状態になったら使用する。
+- [generate-llms-txt](https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/generate-llms-txt/SKILL.md): リポジトリから llms.txt と llms-full.txt を自動生成する。ローカルパスまたは GitHub URL を対象にできる。--target-list でファイルから複数ターゲットを並列処理することも可能。
+- [orchestrate](https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/orchestrate/SKILL.md): 複雑なタスクで複数の専門エージェントを協調させる。並列調査・段階的レビュー・複数領域の実装など、単独では非効率な作業に適用する。
+- [pre-compact](https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/pre-compact/SKILL.md): /compact 実行前の事前準備を実施する。メモリ最新化・未コミット変更確認・保留タスク整理を行い、次セッション再開時に最低限の文脈が復元できる状態を保証する
+- [read-prompt-file](https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/read-prompt-file/SKILL.md): 活動フォルダ配下の .claude/work/prompt.txt を読み込みコンテキストに追加する
+- [request-new-skill](https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/request-new-skill/SKILL.md): 新しいSkillの作成依頼を開始する。作業用フォルダを作成し、依頼書テンプレートをコピーする。
+- [review-skill-request](https://github.com/empty-can/cc-relative-info/blob/main/.claude/skills/review-skill-request/SKILL.md): 記入済みのSkill作成依頼書をレビューし、質問・指摘・提案・既存Skill調査結果をskill-cc-response.mdに書き込む。
+
+## Rules
+
+- [Agent 実行時の permission 事前準備運用ルール（F02-001 派生・横断スコープ）](https://github.com/empty-can/cc-relative-info/blob/main/.claude/rules/agent-permission-runtime.md): sub-agent / background Agent を起動する作業に関わるファイル（agent 定義・作業計画書・SKILL.md 等）を読み書きする際に自動ロードされる path-scoped rule。F02-001（background Agent の Write 権限設定漏れ）§5.2…
+- [コーディング規約](https://github.com/empty-can/cc-relative-info/blob/main/.claude/rules/coding-standards.md): このルールはコードファイルを編集する際にのみロードされる（path-scoped）。 プロジェクト固有の規約があれば、このファイルを編集するか、各言語ごとのルールファイルを rules/ に追加してください。
+- [クロスレビュー実施時の運用ルール（v3.0α）](https://github.com/empty-can/cc-relative-info/blob/main/.claude/rules/cross-review-runtime.md): レビュー報告書（/レビュー//.md）を読み書きする際、またはクロスレビューテンプレート（.claude/templates/cross-review/.md）を編集する際に自動ロードされる詳細運用ルール。
+- [Skill 作成ガイドライン兼セルフレビュー観点](https://github.com/empty-can/cc-relative-info/blob/main/.claude/rules/skill-creation-guide.md): 新規 Skill の作成時、および既存 Skill の編集時に自動ロードされる path-scoped rule。Skill の責務分離・記述原則・セルフレビュー観点を集約する。
+
+## Agents
+
+- [code-reviewer](https://github.com/empty-can/cc-relative-info/blob/main/.claude/agents/code-reviewer.md): コード変更を品質・セキュリティ・保守性・テストの観点でレビューする。大きな変更を完了した後に主体的に使用する。コードレビューを明示的に依頼された場合にも使用する。

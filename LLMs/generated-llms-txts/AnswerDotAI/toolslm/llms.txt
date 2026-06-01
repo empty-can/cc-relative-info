@@ -1,0 +1,24 @@
+# toolslm
+
+> LLM のツール利用・関数呼び出し・XML 変換・シェル操作を簡潔に扱えるユーティリティ群を、Python 開発者向けに提供するライブラリ。
+
+## Guide
+
+- [xml source](https://github.com/AnswerDotAI/toolslm/blob/main/00_xml.ipynb): JSON doesn't map as nicely to XML as the data structure used in fastcore.xml, but for simple XML trees it can be convenient -- for example:
+- [funccall source](https://github.com/AnswerDotAI/toolslm/blob/main/01_funccall.ipynb): Many LLMs do function calling (aka tool use) by taking advantage of JSON schema.
+- [shell source](https://github.com/AnswerDotAI/toolslm/blob/main/02_shell.ipynb): get_shell is like python, except it also maintains a stateful interpreter, rather than just running a single line of code.
+- [Download helpers](https://github.com/AnswerDotAI/toolslm/blob/main/03_download.ipynb): Outputs: ' How I created a book chapter from video transcripts with SolveIt \n\n'
+- [Markdown Hierarchy Parser](https://github.com/AnswerDotAI/toolslm/blob/main/04_md_hier.ipynb): Parse markdown documents into hierarchical dictionaries for easy navigation and access
+- [inspecttools](https://github.com/AnswerDotAI/toolslm/blob/main/05_inspecttools.ipynb): LLM tools for inspecting the symbol table and importing modules
+- [toolslm](https://github.com/AnswerDotAI/toolslm/blob/main/index.ipynb): Tools to make language models a bit easier to use
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/toolslm/blob/main/CHANGELOG.md): - Default unspecialised list/set schemas to string items for LLM compatibility (#87)
+
+## Source Modules
+
+- [toolslm.download](https://github.com/AnswerDotAI/toolslm/blob/main/toolslm/download.py)
+- [toolslm.funccall](https://github.com/AnswerDotAI/toolslm/blob/main/toolslm/funccall.py)
+- [toolslm.inspecttools](https://github.com/AnswerDotAI/toolslm/blob/main/toolslm/inspecttools.py): Import a module into the caller's global namespace so it's available for `symsrc`, `symval`, `symdir`, etc.
+- [toolslm.shell](https://github.com/AnswerDotAI/toolslm/blob/main/toolslm/shell.py)

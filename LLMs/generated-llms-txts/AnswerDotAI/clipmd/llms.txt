@@ -1,0 +1,12 @@
+# Clipboard to Markdown (Chrome Extension)
+
+> ClipMD is a Chrome extension that lets developers and power users instantly copy any webpage element as Markdown or a screenshot by pressing a keyboard shortcut, eliminating manual copy-paste formatting work.
+
+## Guide
+
+- [CLAUDE.md](https://github.com/AnswerDotAI/clipmd/blob/main/CLAUDE.md): This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Source Modules
+
+- [scripts.build](https://github.com/AnswerDotAI/clipmd/blob/main/scripts/build.py)
+- [turndown](https://github.com/AnswerDotAI/clipmd/blob/main/turndown.js)

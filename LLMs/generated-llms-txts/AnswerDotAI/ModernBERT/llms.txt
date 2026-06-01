@@ -1,0 +1,66 @@
+# Welcome!
+
+> ModernBERT は AnswerDotAI が提供する次世代エンコーダ専用モデルで、FlashAttention と 8192 トークン長文脈対応により、テキスト分類・NER・検索など従来の BERT 用途を高速かつ高精度に実現します。
+
+## Guide
+
+- [How to Run Evaluations](https://github.com/AnswerDotAI/ModernBERT/blob/main/RunEvals.md): This document explains how to run fine-tuning evaluations for pre-trained models using the scripts run_evals.py and generate_eval_config.py.
+- [Getting Started with ModernBERT & GLUE](https://github.com/AnswerDotAI/ModernBERT/blob/main/examples/finetune_modernbert_on_glue.ipynb): Created by: Wayde Gilliam
+
+## Source Modules
+
+- [benchmark](https://github.com/AnswerDotAI/ModernBERT/blob/main/benchmark.py)
+- [convert_to_hf](https://github.com/AnswerDotAI/ModernBERT/blob/main/convert_to_hf.py): Convert a ModernBERT Composer checkpoint to HuggingFace pretrained format.
+- [download_artifacts_from_wandb](https://github.com/AnswerDotAI/ModernBERT/blob/main/download_artifacts_from_wandb.py)
+- [efficiency.multiprocess_bench](https://github.com/AnswerDotAI/ModernBERT/blob/main/efficiency/multiprocess_bench.py): Worker that:
+- [eval](https://github.com/AnswerDotAI/ModernBERT/blob/main/eval.py): Parses out information from a path/string that looks like.
+- [examples.train_pylate](https://github.com/AnswerDotAI/ModernBERT/blob/main/examples/train_pylate.py)
+- [examples.train_st](https://github.com/AnswerDotAI/ModernBERT/blob/main/examples/train_st.py)
+- [examples.train_st_gooaq](https://github.com/AnswerDotAI/ModernBERT/blob/main/examples/train_st_gooaq.py)
+- [generate_eval_config](https://github.com/AnswerDotAI/ModernBERT/blob/main/generate_eval_config.py)
+- [glue](https://github.com/AnswerDotAI/ModernBERT/blob/main/glue.py): Parses out information from a path/string that looks like.
+- [main](https://github.com/AnswerDotAI/ModernBERT/blob/main/main.py)
+- [run_evals](https://github.com/AnswerDotAI/ModernBERT/blob/main/run_evals.py): Get memory usage for a specific GPU.
+- [sequence_classification](https://github.com/AnswerDotAI/ModernBERT/blob/main/sequence_classification.py): Create a dataloader for classification.
+- [src.algorithms.rope_schedule](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/algorithms/rope_schedule.py)
+- [src.bert_layers.activation](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/activation.py)
+- [src.bert_layers.attention](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/attention.py): Performs multi-headed self attention on a batch of unpadded sequences.
+- [src.bert_layers.configuration_bert](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/configuration_bert.py)
+- [src.bert_layers.embeddings](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/embeddings.py): Construct the embeddings for words, ignoring position.
+- [src.bert_layers.initialization](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/initialization.py): Initialize weights of a linear or embedding module.
+- [src.bert_layers.layers](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/layers.py): Composes the Mosaic BERT attention and FFN blocks into a single layer.
+- [src.bert_layers.loss](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/loss.py)
+- [src.bert_layers.mlp](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/mlp.py): Applies the FFN at the end of each Mosaic BERT layer.
+- [src.bert_layers.model](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/model.py): Overall BERT model.
+- [src.bert_layers.normalization](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/normalization.py): Llama2 RMSNorm implementation
+- [src.bert_layers.options](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/options.py)
+- [src.bert_layers.padding](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/padding.py): Remove padding from input sequences.
+- [src.bert_layers.rotary](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/rotary.py): Arguments:
+- [src.bert_padding](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_padding.py): Get just the values of `input` which are at `indices`.
+- [src.callbacks.dataloader_speed](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/callbacks/dataloader_speed.py): Measure how long it takes to return a batch from the dataloader.
+- [src.callbacks.log_grad_norm](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/callbacks/log_grad_norm.py): Logs the precomputed L1 and L2 gradient norms from StableAdamW
+- [src.callbacks.packing_efficiency](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/callbacks/packing_efficiency.py): Records the packing efficiency for each batch.
+- [src.callbacks.scheduled_gc](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/callbacks/scheduled_gc.py): Garbage collect Torch (CUDA) memory.
+- [src.colbert_beir.index_and_score](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/colbert_beir/index_and_score.py)
+- [src.colbert_beir.train](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/colbert_beir/train.py)
+- [src.convert_dataset](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/convert_dataset.py): Parse commandline arguments.
+- [src.data.get_counts_from_hf](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/get_counts_from_hf.py)
+- [src.data.hf_to_mds](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/hf_to_mds.py)
+- [src.data.mds_conversion](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/mds_conversion.py): If shard does not have decompressed data,
+- [src.data.relative_prop_to_instance_prop](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/relative_prop_to_instance_prop.py)
+- [src.data.sample_dataset_from_config](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/sample_dataset_from_config.py)
+- [src.data.source_stats](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/source_stats.py)
+- [src.evals.data](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/data.py)
+- [src.evals.finetuning_jobs](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/finetuning_jobs.py): Cleans up memory usage left by trainer.
+- [src.evals.glue_jobs](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/glue_jobs.py): MNLI.
+- [src.evals.misc_jobs](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/misc_jobs.py): SWAG.
+- [src.evals.superglue_jobs](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/superglue_jobs.py): BoolQ.
+- [src.flex_bert](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/flex_bert.py): Torchmetric that computes cross entropy on language modeling outputs using flash_attn's Cross Entropy.
+- [src.hf_bert](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/hf_bert.py): BERT model based on |:hugging_face:| Transformers.
+- [src.mosaic_bert](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/mosaic_bert.py): Mosaic BERT masked language model based on |:hugging_face:| Transformers.
+- [src.optimizer](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/optimizer.py): StableAdamW optimizer. An AdamW-Adafactor hybrid with learning rate update clipping.
+- [src.scheduler](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/scheduler.py): Args:
+- [src.sequence_packer](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/sequence_packer.py): Prepare masked tokens inputs/labels for masked language modeling: 80% MASK, 10% random, 10% original.
+- [src.text_data](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/text_data.py): Generic text dataset using MosaicML's StreamingDataset.
+- [src.utils](https://github.com/AnswerDotAI/ModernBERT/blob/main/src/utils.py): This method is identical to `logger.warning()`, but will emit the warning with the same message only once
+- [wandb_log_live_eval](https://github.com/AnswerDotAI/ModernBERT/blob/main/wandb_log_live_eval.py)

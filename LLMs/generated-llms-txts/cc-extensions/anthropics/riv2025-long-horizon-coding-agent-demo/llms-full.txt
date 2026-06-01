@@ -1,0 +1,405 @@
+# Long-Horizon Coding Agent Demo
+
+> AWS re:Invent 2025 向けに公開されたデモリポジトリ。GitHub Issue を受け取り AWS Bedrock AgentCore 上の Claude Agent がフルスタックアプリを自律的にビルド・デプロイするエンドツーエンドパイプラインの参照実装。
+
+---
+
+## Source Modules
+
+### src.config
+
+*Source: src/config.py | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/src/config.py*
+
+- `get_default_template_vars`: Get default template variables.
+
+### frontend-scaffold-template.src.api.client
+
+*Source: frontend-scaffold-template/src/api/client.ts | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/api/client.ts*
+
+- `function request`
+- `constructor`
+
+### frontend-scaffold-template.src.hooks.use-mobile
+
+*Source: frontend-scaffold-template/src/hooks/use-mobile.ts | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/hooks/use-mobile.ts*
+
+- `function useIsMobile`
+
+### frontend-scaffold-template.src.App
+
+*Source: frontend-scaffold-template/src/App.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/App.tsx*
+
+- `function App`
+
+### frontend-scaffold-template.src.components.ui.accordion
+
+*Source: frontend-scaffold-template/src/components/ui/accordion.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/accordion.tsx*
+
+- `function Accordion`
+- `function AccordionItem`
+- `function AccordionTrigger`
+
+### frontend-scaffold-template.src.components.ui.alert-dialog
+
+*Source: frontend-scaffold-template/src/components/ui/alert-dialog.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/alert-dialog.tsx*
+
+- `function AlertDialog`
+- `function AlertDialogDescription`
+- `cn`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.alert
+
+*Source: frontend-scaffold-template/src/components/ui/alert.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/alert.tsx*
+
+- `function Alert`
+- `cn`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.aspect-ratio
+
+*Source: frontend-scaffold-template/src/components/ui/aspect-ratio.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/aspect-ratio.tsx*
+
+- `function AspectRatio`
+
+### frontend-scaffold-template.src.components.ui.avatar
+
+*Source: frontend-scaffold-template/src/components/ui/avatar.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/avatar.tsx*
+
+- `function Avatar`
+- `function AvatarImage`
+- `function AvatarFallback`
+
+### frontend-scaffold-template.src.components.ui.badge
+
+*Source: frontend-scaffold-template/src/components/ui/badge.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/badge.tsx*
+
+- `function Badge`
+
+### frontend-scaffold-template.src.components.ui.breadcrumb
+
+*Source: frontend-scaffold-template/src/components/ui/breadcrumb.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/breadcrumb.tsx*
+
+- `function Breadcrumb`
+- `function BreadcrumbLink`
+- `function BreadcrumbPage`
+- `function BreadcrumbSeparator`
+- `function BreadcrumbEllipsis`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.button
+
+*Source: frontend-scaffold-template/src/components/ui/button.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/button.tsx*
+
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.calendar
+
+*Source: frontend-scaffold-template/src/components/ui/calendar.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/calendar.tsx*
+
+- `function Calendar`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.card
+
+*Source: frontend-scaffold-template/src/components/ui/card.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/card.tsx*
+
+- `function CardDescription`
+- `function CardFooter`
+- `cn`
+- `cn`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.carousel
+
+*Source: frontend-scaffold-template/src/components/ui/carousel.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/carousel.tsx*
+
+- `function useCarousel`
+- `function Carousel`
+- `function CarouselNext`
+- `cn`
+- `cn`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.chart
+
+*Source: frontend-scaffold-template/src/components/ui/chart.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/chart.tsx*
+
+- `function useChart`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.checkbox
+
+*Source: frontend-scaffold-template/src/components/ui/checkbox.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/checkbox.tsx*
+
+- `function Checkbox`
+
+### frontend-scaffold-template.src.components.ui.collapsible
+
+*Source: frontend-scaffold-template/src/components/ui/collapsible.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/collapsible.tsx*
+
+- `function Collapsible`
+
+### frontend-scaffold-template.src.components.ui.command
+
+*Source: frontend-scaffold-template/src/components/ui/command.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/command.tsx*
+
+- `function CommandGroup`
+- `function CommandItem`
+- `cn`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.context-menu
+
+*Source: frontend-scaffold-template/src/components/ui/context-menu.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/context-menu.tsx*
+
+- `function ContextMenu`
+- `function ContextMenuRadioItem`
+- `function ContextMenuLabel`
+- `cn`
+- `cn`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.dialog
+
+*Source: frontend-scaffold-template/src/components/ui/dialog.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/dialog.tsx*
+
+- `function Dialog`
+- `function DialogTrigger`
+- `function DialogPortal`
+- `function DialogClose`
+- `function DialogOverlay`
+- `cn`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.drawer
+
+*Source: frontend-scaffold-template/src/components/ui/drawer.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/drawer.tsx*
+
+- `function Drawer`
+- `function DrawerTrigger`
+- `function DrawerPortal`
+- `function DrawerClose`
+- `function DrawerOverlay`
+- `function DrawerTitle`
+- `function DrawerDescription`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.dropdown-menu
+
+*Source: frontend-scaffold-template/src/components/ui/dropdown-menu.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/dropdown-menu.tsx*
+
+- `function DropdownMenu`
+- `function DropdownMenuSubContent`
+- `cn`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.form
+
+*Source: frontend-scaffold-template/src/components/ui/form.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/form.tsx*
+
+- `function FormControl`
+- `function FormDescription`
+- `function FormMessage`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.hover-card
+
+*Source: frontend-scaffold-template/src/components/ui/hover-card.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/hover-card.tsx*
+
+- `function HoverCard`
+
+### frontend-scaffold-template.src.components.ui.input-otp
+
+*Source: frontend-scaffold-template/src/components/ui/input-otp.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/input-otp.tsx*
+
+- `function InputOTP`
+- `function InputOTPGroup`
+- `cn`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.input
+
+*Source: frontend-scaffold-template/src/components/ui/input.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/input.tsx*
+
+- `function Input`
+
+### frontend-scaffold-template.src.components.ui.label
+
+*Source: frontend-scaffold-template/src/components/ui/label.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/label.tsx*
+
+- `function Label`
+
+### frontend-scaffold-template.src.components.ui.menubar
+
+*Source: frontend-scaffold-template/src/components/ui/menubar.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/menubar.tsx*
+
+- `function Menubar`
+- `function MenubarMenu`
+- `function MenubarGroup`
+- `function MenubarPortal`
+- `function MenubarRadioItem`
+- `function MenubarLabel`
+- `function MenubarSubContent`
+- `cn`
+- `cn`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.navigation-menu
+
+*Source: frontend-scaffold-template/src/components/ui/navigation-menu.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/navigation-menu.tsx*
+
+- `function NavigationMenuTrigger`
+- `function NavigationMenuContent`
+- `function NavigationMenuViewport`
+- `cn`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.pagination
+
+*Source: frontend-scaffold-template/src/components/ui/pagination.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/pagination.tsx*
+
+- `function Pagination`
+- `function PaginationContent`
+- `function PaginationItem`
+- `function PaginationNext`
+- `function PaginationEllipsis`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.popover
+
+*Source: frontend-scaffold-template/src/components/ui/popover.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/popover.tsx*
+
+- `function Popover`
+- `function PopoverTrigger`
+
+### frontend-scaffold-template.src.components.ui.radio-group
+
+*Source: frontend-scaffold-template/src/components/ui/radio-group.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/radio-group.tsx*
+
+- `function RadioGroup`
+- `function RadioGroupItem`
+
+### frontend-scaffold-template.src.components.ui.resizable
+
+*Source: frontend-scaffold-template/src/components/ui/resizable.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/resizable.tsx*
+
+- `function ResizablePanelGroup`
+- `function ResizablePanel`
+
+### frontend-scaffold-template.src.components.ui.scroll-area
+
+*Source: frontend-scaffold-template/src/components/ui/scroll-area.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/scroll-area.tsx*
+
+- `function ScrollArea`
+- `function ScrollBar`
+
+### frontend-scaffold-template.src.components.ui.select
+
+*Source: frontend-scaffold-template/src/components/ui/select.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/select.tsx*
+
+- `function Select`
+- `function SelectGroup`
+- `function SelectValue`
+- `function SelectTrigger`
+- `function SelectLabel`
+- `function SelectItem`
+- `function SelectSeparator`
+- `function SelectScrollUpButton`
+- `function SelectScrollDownButton`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.separator
+
+*Source: frontend-scaffold-template/src/components/ui/separator.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/separator.tsx*
+
+- `function Separator`
+
+### frontend-scaffold-template.src.components.ui.sheet
+
+*Source: frontend-scaffold-template/src/components/ui/sheet.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/sheet.tsx*
+
+- `function Sheet`
+- `function SheetTrigger`
+- `function SheetClose`
+- `function SheetPortal`
+- `function SheetOverlay`
+- `function SheetHeader`
+- `function SheetFooter`
+- `function SheetTitle`
+- `function SheetDescription`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.sidebar
+
+*Source: frontend-scaffold-template/src/components/ui/sidebar.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/sidebar.tsx*
+
+- `function useSidebar`
+- `function SidebarMenu`
+- `function SidebarMenuItem`
+- `function SidebarMenuButton`
+- `cn`
+- `cn`
+- `cn`
+- `cn`
+- `cn`
+- `cn`
+- `cn`
+- `cn`
+- `cn`
+- `cn`
+- `cn`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.skeleton
+
+*Source: frontend-scaffold-template/src/components/ui/skeleton.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/skeleton.tsx*
+
+- `function Skeleton`
+
+### frontend-scaffold-template.src.components.ui.slider
+
+*Source: frontend-scaffold-template/src/components/ui/slider.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/slider.tsx*
+
+- `function Slider`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.table
+
+*Source: frontend-scaffold-template/src/components/ui/table.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/table.tsx*
+
+- `function Table`
+- `function TableHeader`
+- `function TableBody`
+- `cn`
+- `cn`
+- `cn`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.tabs
+
+*Source: frontend-scaffold-template/src/components/ui/tabs.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/tabs.tsx*
+
+- `function Tabs`
+- `function TabsList`
+- `function TabsTrigger`
+
+### frontend-scaffold-template.src.components.ui.textarea
+
+*Source: frontend-scaffold-template/src/components/ui/textarea.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/textarea.tsx*
+
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.toggle-group
+
+*Source: frontend-scaffold-template/src/components/ui/toggle-group.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/toggle-group.tsx*
+
+- `function ToggleGroup`
+- `function ToggleGroupItem`
+- `cn`
+
+### frontend-scaffold-template.src.components.ui.tooltip
+
+*Source: frontend-scaffold-template/src/components/ui/tooltip.tsx | URL: https://github.com/anthropics/riv2025-long-horizon-coding-agent-demo/blob/main/frontend-scaffold-template/src/components/ui/tooltip.tsx*
+
+- `function TooltipContent`

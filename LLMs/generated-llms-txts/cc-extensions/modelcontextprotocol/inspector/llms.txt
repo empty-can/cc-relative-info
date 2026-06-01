@@ -1,0 +1,37 @@
+# MCP Inspector
+
+> MCP Inspector は Model Context Protocol サーバの開発・デバッグ・動作確認を行うためのビジュアル検査ツール。CLI・Web クライアント・プロキシサーバの 3 層構成で、MCP サーバに接続してツール・リソース・プロンプトを対話的に呼び出し、レスポンスをリアルタイムに確認できる。Claude Code 拡張（MCP サーバ）を開発する際の動作検証インフラとして活用できる。
+
+## Optional
+
+- [Version Management Scripts](https://github.com/modelcontextprotocol/inspector/blob/main/scripts/README.md): This directory contains scripts for managing version consistency across the monorepo.
+
+## Source Modules
+
+- [cli.src.cli](https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/cli.ts)
+- [cli.src.client.connection](https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/client/connection.ts)
+- [cli.src.client.prompts](https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/client/prompts.ts)
+- [cli.src.client.resources](https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/client/resources.ts)
+- [cli.src.client.tools](https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/client/tools.ts)
+- [cli.src.error-handler](https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/error-handler.ts)
+- [cli.src.transport](https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/transport.ts)
+- [cli.src.utils.awaitable-log](https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/utils/awaitable-log.ts)
+- [client.src.lib.auth](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/auth.ts)
+- [client.src.lib.connectionAuthErrors](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/connectionAuthErrors.ts)
+- [client.src.lib.hooks.useCompletionState](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/hooks/useCompletionState.ts)
+- [client.src.lib.hooks.useConnection](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/hooks/useConnection.ts)
+- [client.src.lib.hooks.useCopy](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/hooks/useCopy.ts)
+- [client.src.lib.hooks.useDraggablePane](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/hooks/useDraggablePane.ts)
+- [client.src.lib.hooks.useToast](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/hooks/useToast.ts)
+- [client.src.lib.oauth-state-machine](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/oauth-state-machine.ts)
+- [client.src.lib.proxyFetch](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/proxyFetch.ts)
+- [client.src.lib.utils](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/utils.ts)
+- [client.src.utils.escapeUnicode](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/utils/escapeUnicode.ts)
+- [client.src.utils.jsonUtils](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/utils/jsonUtils.ts)
+- [client.src.utils.schemaUtils](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/utils/schemaUtils.ts)
+- [client.src.utils.urlValidation](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/utils/urlValidation.ts)
+- [client.src.App](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/App.tsx)
+- [client.src.components.AppsTab](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/components/AppsTab.tsx)
+- [client.src.components.ui.combobox](https://github.com/modelcontextprotocol/inspector/blob/main/client/src/components/ui/combobox.tsx)
+- [cli.scripts.make-executable](https://github.com/modelcontextprotocol/inspector/blob/main/cli/scripts/make-executable.js)
+- [client.bin.start](https://github.com/modelcontextprotocol/inspector/blob/main/client/bin/start.js)

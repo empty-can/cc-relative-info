@@ -1,0 +1,41 @@
+# MonsterUI
+
+> FastHTML 向け Python UI フレームワーク。データサイエンティストや ML エンジニアが最小限のコードで洗練された Web アプリを構築できるよう、Tailwind ベースのコンポーネント群と Markdown・コードハイライト・LaTeX サポートを提供する。
+
+## Guide
+
+- [MonsterUI](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/getting_started/GettingStarted.md): MonsterUI is a UI framework for FastHTML for building beautiful web interfaces with minimal code.
+- [MonterUI Page Layout Guide](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/guides/Layout.ipynb): This guide will discuss 3 tools for laying out your app pages, Grid, Flexbox, and Columns.
+- [Padding & Margin & Spacing, Oh my! (MonsterUI Spacing Guide)](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/guides/Spacing.ipynb): This guide will cover some essentials about how to properly space apps and what the differences are between:
+- [Foundation](https://github.com/AnswerDotAI/MonsterUI/blob/main/nbs/00_foundation.ipynb): Data Structures and Utilties
+- [01 Core](https://github.com/AnswerDotAI/MonsterUI/blob/main/nbs/01_core.ipynb)
+- [02 Franken](https://github.com/AnswerDotAI/MonsterUI/blob/main/nbs/02_franken.ipynb)
+- [Loading](https://github.com/AnswerDotAI/MonsterUI/blob/main/nbs/03_daisy.ipynb): Note: We use NotStr(f"<script>{js}</script>") instead of Script(js) to prevent the js from being escaped.
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/MonsterUI/blob/main/CHANGELOG.md): - Update deps
+- [CONTRIBUTING](https://github.com/AnswerDotAI/MonsterUI/blob/main/CONTRIBUTING.md): This is an nbdev library.
+
+## Source Modules
+
+- [docs.cf_addns](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/cf_addns.py)
+- [docs.examples.auth](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/auth.py)
+- [docs.examples.cards](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/cards.py)
+- [docs.examples.dashboard](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/dashboard.py)
+- [docs.examples.forms](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/forms.py)
+- [docs.examples.mail](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/mail.py)
+- [docs.examples.playground](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/playground.py)
+- [docs.examples.scrollspy](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/scrollspy.py)
+- [docs.examples.tasks](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/examples/tasks.py)
+- [docs.getting_started.app_product_gallery](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/getting_started/app_product_gallery.py)
+- [docs.getting_started.StylingRulesOfThumb](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/getting_started/StylingRulesOfThumb.py)
+- [docs.htmxindicator](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/htmxindicator.py)
+- [docs.main](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/main.py)
+- [docs.utils](https://github.com/AnswerDotAI/MonsterUI/blob/main/docs/utils.py)
+- [monsterui.core](https://github.com/AnswerDotAI/MonsterUI/blob/main/monsterui/core.py)
+- [monsterui.daisy](https://github.com/AnswerDotAI/MonsterUI/blob/main/monsterui/daisy.py)
+- [monsterui.foundations](https://github.com/AnswerDotAI/MonsterUI/blob/main/monsterui/foundations.py)
+- [monsterui.franken](https://github.com/AnswerDotAI/MonsterUI/blob/main/monsterui/franken.py): Creates a styled Accordion container using accordion component.
+- [testnavbar](https://github.com/AnswerDotAI/MonsterUI/blob/main/testnavbar.py)
+- [monsterui.icon.iife](https://github.com/AnswerDotAI/MonsterUI/blob/main/monsterui/icon.iife.js)

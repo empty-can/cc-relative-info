@@ -1,0 +1,21 @@
+# execnb
+
+> Jupyter ノートブックをサーバーなしで高速実行したい開発者・CI/CD 環境向けに、IPython の CaptureShell をベースとした軽量な実行エンジンを提供するライブラリ。
+
+## Guide
+
+- [shell](https://github.com/AnswerDotAI/execnb/blob/main/nbs/00_shell.ipynb): A shell for running notebook code without a notebook server
+- [execnb](https://github.com/AnswerDotAI/execnb/blob/main/nbs/index.ipynb): Execute a jupyter notebook, fast, without needing jupyter
+- [Clean](https://github.com/AnswerDotAI/execnb/blob/main/tests/clean.ipynb)
+- [Error](https://github.com/AnswerDotAI/execnb/blob/main/tests/error.ipynb)
+- [Minimal](https://github.com/AnswerDotAI/execnb/blob/main/tests/minimal.ipynb)
+- [Params](https://github.com/AnswerDotAI/execnb/blob/main/tests/params.ipynb)
+- [Ran](https://github.com/AnswerDotAI/execnb/blob/main/tests/ran.ipynb)
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/execnb/blob/main/CHANGELOG.md): - Add mpl_format=None param option that skips inline matplotlib setup (#82)
+
+## Source Modules
+
+- [execnb.shell](https://github.com/AnswerDotAI/execnb/blob/main/execnb/shell.py)

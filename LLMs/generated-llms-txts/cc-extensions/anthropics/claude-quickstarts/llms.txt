@@ -1,0 +1,75 @@
+# Claude Quickstarts
+
+> Anthropic 公式のクイックスタート集。Skill/Rule/Agent などの CC 拡張資産は含まず、エージェント・コンピューターユース・ブラウザ操作・カスタマーサポートなど複数の Claude API デモアプリを収録したサンプルリポジトリ。
+
+## Agents
+
+- [Agents](https://github.com/anthropics/claude-quickstarts/blob/main/agents/README.md): A minimal educational implementation of LLM agents using the Claude API.
+
+## Source Modules
+
+- [agents.agent](https://github.com/anthropics/claude-quickstarts/blob/main/agents/agent.py): Configuration settings for Claude model parameters.
+- [agents.tools.base](https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/base.py): Base class for all agent tools.
+- [agents.tools.calculator_mcp](https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/calculator_mcp.py): Performs basic calculations with two numbers.
+- [agents.tools.code_execution](https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/code_execution.py): Code execution server tool that uses Anthropic's server tool format.
+- [agents.tools.file_tools](https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/file_tools.py): Tool for reading files and listing directories.
+- [agents.tools.mcp_tool](https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/mcp_tool.py): Execute the MCP tool with the given input_schema.
+- [agents.tools.think](https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/think.py): Tool for internal reasoning without executing external actions.
+- [agents.tools.web_search](https://github.com/anthropics/claude-quickstarts/blob/main/agents/tools/web_search.py): Web search server tool that uses Anthropic's server tool format.
+- [agents.utils.connections](https://github.com/anthropics/claude-quickstarts/blob/main/agents/utils/connections.py): Base class for MCP server connections.
+- [agents.utils.history_util](https://github.com/anthropics/claude-quickstarts/blob/main/agents/utils/history_util.py): Manages chat history with token tracking and context management.
+- [agents.utils.tool_util](https://github.com/anthropics/claude-quickstarts/blob/main/agents/utils/tool_util.py): Execute multiple tools sequentially or in parallel.
+- [autonomous-coding.agent](https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/agent.py): Run a single agent session using Claude Agent SDK.
+- [autonomous-coding.autonomous_agent_demo](https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/autonomous_agent_demo.py): Parse command line arguments.
+- [autonomous-coding.client](https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/client.py): Create a Claude Agent SDK client with multi-layered security.
+- [autonomous-coding.progress](https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/progress.py): Count passing and total tests in feature_list.json.
+- [autonomous-coding.prompts](https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/prompts.py): Load a prompt template from the prompts directory.
+- [autonomous-coding.security](https://github.com/anthropics/claude-quickstarts/blob/main/autonomous-coding/security.py): Split a compound command into individual command segments.
+- [browser-use-demo.browser_use_demo.browser_tool_utils.browser_key_map](https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/browser_tool_utils/browser_key_map.py)
+- [browser-use-demo.browser_use_demo.loop](https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/loop.py): Sampling loop for browser automation.
+- [browser-use-demo.browser_use_demo.message_handler](https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/message_handler.py): Container for processed API response data.
+- [browser-use-demo.browser_use_demo.message_renderer](https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/message_renderer.py): Message sender types.
+- [browser-use-demo.browser_use_demo.tools.base](https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/tools/base.py): Abstract base class for Anthropic-defined tools.
+- [browser-use-demo.browser_use_demo.tools.browser](https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/tools/browser.py): A browser automation tool using Playwright for web interaction.
+- [browser-use-demo.browser_use_demo.tools.collection](https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/tools/collection.py): Collection of tools for browser automation.
+- [browser-use-demo.browser_use_demo.tools.coordinate_scaling](https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/tools/coordinate_scaling.py): Handles coordinate scaling between Claude's vision and actual viewport.
+- [browser-use-demo.image.http_server](https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/image/http_server.py)
+- [computer-use-best-practices.computer_use.__main__](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/__main__.py)
+- [computer-use-best-practices.computer_use.formatters](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/formatters.py): Keep only the most recent `keep` images. Simple but cache-hostile.
+- [computer-use-best-practices.computer_use.image](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/image.py): ceil(px / px_per_token) using integer math.
+- [computer-use-best-practices.computer_use.loop](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/loop.py): Run the agent. Each user message gets up to ``max_iters`` model turns.
+- [computer-use-best-practices.computer_use.preflight](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/preflight.py)
+- [computer-use-best-practices.computer_use.tools.base](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/base.py): Maps tool name -> instance and dispatches calls.
+- [computer-use-best-practices.computer_use.tools.batch](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/batch.py)
+- [computer-use-best-practices.computer_use.tools.browser](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/browser.py)
+- [computer-use-best-practices.computer_use.tools.editor](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/editor.py)
+- [computer-use-best-practices.computer_use.tools.open_app](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/open_app.py)
+- [computer-use-best-practices.computer_use.tools.result](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/result.py): Render as a list of tool_result content blocks.
+- [computer-use-best-practices.computer_use.tools.shell](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/tools/shell.py)
+- [computer-use-best-practices.computer_use.trajectory](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/computer_use/trajectory.py)
+- [computer-use-best-practices.constants](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/constants.py): Build a Config from defaults -> toml -> CU_* env vars -> overrides.
+- [computer-use-best-practices.dev_ui.localization_demo.server](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/dev_ui/localization_demo/server.py)
+- [computer-use-best-practices.dev_ui.tool_panel.server](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-best-practices/dev_ui/tool_panel/server.py)
+- [computer-use-demo.computer_use_demo.loop](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/loop.py): Agentic sampling loop for the assistant/tool interaction of computer use.
+- [computer-use-demo.computer_use_demo.tools.base](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/base.py): Abstract base class for Anthropic-defined tools.
+- [computer-use-demo.computer_use_demo.tools.bash](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/bash.py): Terminate the bash shell.
+- [computer-use-demo.computer_use_demo.tools.collection](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/collection.py): A collection of anthropic-defined tools.
+- [computer-use-demo.computer_use_demo.tools.computer](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/computer.py): A tool that allows the agent to interact with the screen, keyboard, and mouse of the current computer.
+- [computer-use-demo.computer_use_demo.tools.edit](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/edit.py): A filesystem editor tool that allows the agent to view, create, and edit files.
+- [computer-use-demo.computer_use_demo.tools.groups](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/groups.py)
+- [computer-use-demo.computer_use_demo.tools.run](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/computer_use_demo/tools/run.py): Truncate content and append a notice if content exceeds the specified length.
+- [computer-use-demo.image.http_server](https://github.com/anthropics/claude-quickstarts/blob/main/computer-use-demo/image/http_server.py)
+- [customer-support-agent.app.lib.utils](https://github.com/anthropics/claude-quickstarts/blob/main/customer-support-agent/app/lib/utils.ts)
+- [customer-support-agent.lib.utils](https://github.com/anthropics/claude-quickstarts/blob/main/customer-support-agent/lib/utils.ts)
+- [financial-data-analyst.hooks.use-toast](https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/hooks/use-toast.ts)
+- [financial-data-analyst.lib.utils](https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/lib/utils.ts)
+- [customer-support-agent.app.layout](https://github.com/anthropics/claude-quickstarts/blob/main/customer-support-agent/app/layout.tsx)
+- [customer-support-agent.app.page](https://github.com/anthropics/claude-quickstarts/blob/main/customer-support-agent/app/page.tsx)
+- [customer-support-agent.components.theme-provider](https://github.com/anthropics/claude-quickstarts/blob/main/customer-support-agent/components/theme-provider.tsx)
+- [financial-data-analyst.app.finance.page](https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/app/finance/page.tsx)
+- [financial-data-analyst.app.layout](https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/app/layout.tsx)
+- [financial-data-analyst.app.page](https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/app/page.tsx)
+- [financial-data-analyst.components.theme-provider](https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/components/theme-provider.tsx)
+- [financial-data-analyst.components.ui.badge](https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/components/ui/badge.tsx)
+- [financial-data-analyst.components.ui.chart](https://github.com/anthropics/claude-quickstarts/blob/main/financial-data-analyst/components/ui/chart.tsx)
+- [browser-use-demo.browser_use_demo.browser_tool_utils.browser_dom_script](https://github.com/anthropics/claude-quickstarts/blob/main/browser-use-demo/browser_use_demo/browser_tool_utils/browser_dom_script.js)

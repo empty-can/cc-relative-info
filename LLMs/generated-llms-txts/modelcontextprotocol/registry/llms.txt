@@ -1,0 +1,47 @@
+# MCP Registry
+
+> MCP サーバーのメタデータを一元管理する公式レジストリ。開発者がサーバーを公開・発見できるよう REST API と標準仕様 server.json を提供し、MCP クライアントや集約サービスが同一のカノニカルデータを参照できる仕組みを実現する。
+
+## Guide
+
+- [CLAUDE.md](https://github.com/modelcontextprotocol/registry/blob/main/CLAUDE.md): _Guidance for Claude Code (claude.ai/code) when working in this repository.
+- [Complete Documentation](https://github.com/modelcontextprotocol/registry/blob/main/complete.md): This file contains all documentation from the docs/ directory compiled into a single markdown file.
+- [Admin Operations](https://github.com/modelcontextprotocol/registry/blob/main/docs/administration/admin-operations.md): This is a brief guide for admins and moderators managing content on the registry.
+- [Registry Maintainer Onboarding](https://github.com/modelcontextprotocol/registry/blob/main/docs/administration/maintainer-onboarding.md): This guide covers onboarding new maintainers to the MCP Registry project.
+- [Community Projects](https://github.com/modelcontextprotocol/registry/blob/main/docs/community-projects.md): The following is a list of notable community-driven projects in the ecosystem related to the MCP Registry.
+- [Adding a new package registry](https://github.com/modelcontextprotocol/registry/blob/main/docs/contributing/add-package-registry.md): The MCP Registry project is a metaregistry, meaning that it hosts metadata for MCP servers but does not host the code for the servers directly.
+- [Release Guide](https://github.com/modelcontextprotocol/registry/blob/main/docs/contributing/releasing.md): 1.
+- [MCP Registry Design Principles](https://github.com/modelcontextprotocol/registry/blob/main/docs/design/design-principles.md): These are the core constraints that guide the design of the MCP Registry.
+- [Ecosystem Vision](https://github.com/modelcontextprotocol/registry/blob/main/docs/design/ecosystem-vision.md): How the MCP Registry fits into the broader ecosystem and our vision for the future.
+- [Enhanced Server Validation Design](https://github.com/modelcontextprotocol/registry/blob/main/docs/design/proposed-enhanced-validation.md): NOTE: This document describes a proposed direction for improving validation of server.json data in the Official Registry.
+- [MCP Registry Roadmap](https://github.com/modelcontextprotocol/registry/blob/main/docs/design/roadmap.md): This is a high-level roadmap for the MCP Registry.
+- [MCP Registry Technical Architecture](https://github.com/modelcontextprotocol/registry/blob/main/docs/design/tech-architecture.md): This document describes the technical architecture of the MCP Registry, including system components, deployment strategies, and data flows.
+- [Registry API Changelog](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/api/CHANGELOG.md): Changes to the REST API endpoints and responses.
+- [Registry Extensions Specification](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/api/extensions.md): A standardized way for registries to provide experimental or community-driven features without committing them to the core API specification.
+- [Registry Authorization](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/api/registry-authorization.md): MCP registries wishing to implement authentication SHOULD follow the MCP Authorization Specification.
+- [Publisher CLI Commands Reference](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/cli/commands.md): Complete command reference for the mcp-publisher CLI tool.
+- [Server JSON Schema Changelog](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/server-json/CHANGELOG.md): Changes to the server.json schema and format.
+- [Contributing to server.json Schema](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/server-json/CONTRIBUTING.md): This document describes the process for making and releasing changes to the server.json schema.
+- [server.json Format Specification](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/server-json/generic-server-json.md): A server.json file is a standardized way to describe MCP servers for registry publishing, client discovery, and package management.
+- [Official Registry Server.json Requirements](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/server-json/official-registry-requirements.md): This document describes the additional requirements and validation rules that apply when publishing to the official MCP Registry at registry.modelcontextprotocol.io.
+- [The MCP Registry](https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/about.md): The MCP Registry is the official centralized metadata repository for publicly accessible MCP servers, backed by major trusted contributors to the MCP ecosystem such as Anthropic, GitHub, PulseMCP, and Microsoft.
+- [How to Authenticate When Publishing to the Official MCP Registry](https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/authentication.md): You must authenticate before publishing to the official MCP Registry.
+- [Frequently Asked Questions](https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/faq.md): - "MCP Registry API" — An API that implements the OpenAPI spec defined by the MCP Registry.
+- [How to Automate Publishing with GitHub Actions](https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/github-actions.md): In your server project directory, create a .github/workflows/publish-mcp.yml file.
+- [The MCP Registry Moderation Policy](https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/moderation-policy.md): TL;DR: The MCP Registry is quite permissive!
+- [MCP Registry Supported Package Types](https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/package-types.md): The MCP Registry supports several different package types, and each package type has its own verification method.
+- [Quickstart: Publish an MCP Server to the MCP Registry](https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/quickstart.md): This tutorial will show you how to publish an MCP server written in TypeScript to the MCP Registry using the official mcp-publisher CLI tool.
+- [MCP Registry Aggregators](https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/registry-aggregators.md): Aggregators are downstream consumers of the MCP Registry that provide additional value.
+- [Publishing Remote Servers](https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/remote-servers.md): The MCP Registry supports remote MCP servers via the remotes property in server.json:
+- [Official MCP Registry Terms of Service](https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/terms-of-service.md): Effective date: 2025-09-02
+- [Versioning Published MCP Servers](https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/versioning.md): MCP servers MUST define a version string in server.json.
+
+## API Reference
+
+- [Generic Registry API Specification](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/api/generic-registry-api.md): A standardized RESTful HTTP API for MCP registries to provide consistent endpoints for discovering and retrieving MCP servers.
+- [Official MCP Registry API](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/api/official-registry-api.md): This document describes the API for the official MCP Registry hosted at registry.modelcontextprotocol.io.
+
+## Optional
+
+- [Contributing to the MCP Registry](https://github.com/modelcontextprotocol/registry/blob/main/CONTRIBUTING.md): Thank you for your interest in contributing!
+- [Security Policy](https://github.com/modelcontextprotocol/registry/blob/main/SECURITY.md): Thank you for helping keep the Model Context Protocol and its ecosystem secure.

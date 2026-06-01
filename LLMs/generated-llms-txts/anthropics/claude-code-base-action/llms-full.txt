@@ -1,0 +1,364 @@
+# ⚠️ This is a Mirror Repository
+
+> GitHub Actions 上で Claude Code を実行できる公式コンポジットアクション。Anthropic API・AWS Bedrock・Google Vertex AI の 3 プロバイダに対応し、CI/CD ワークフローへの AI コーディング支援を提供する。
+
+---
+
+## Guide
+
+### CLAUDE.md
+
+*Source: CLAUDE.md | URL: https://github.com/anthropics/claude-code-base-action/blob/main/CLAUDE.md*
+
+# CLAUDE.md
+
+## Common Commands
+
+### Development Commands
+
+- Build/Type check: `bun run typecheck`
+- Format code: `bun run format`
+- Check formatting: `bun run format:check`
+- Run tests: `bun test`
+- Install dependencies: `bun install`
+
+### Action Testing
+
+- Test action locally: `./test-local.sh`
+- Test specific file: `bun test test/prepare-prompt.test.ts`
+
+## Architecture Overview
+
+This is a GitHub Action that allows running Claude Code within GitHub workflows. The action consists of:
+
+### Core Components
+
+1. **Action Definition** (`action.yml`): Defines inputs, outputs, and the composite action steps
+2. **Prompt Preparation** (`src/index.ts`): Runs Claude Code with specified arguments
+
+### Key Design Patterns
+
+- Uses Bun runtime for development and execution
+- JSON streaming output format for execution logs
+- Composite action pattern to orchestrate multiple steps
+- Provider-agnostic design supporting Anthropic API, AWS Bedrock, and Google Vertex AI
+
+## Provider Authentication
+
+1. **Anthropic API** (default): Requires API key via `anthropic_api_key` input
+2. **AWS Bedrock**: Uses OIDC authentication when `use_bedrock: true`
+3. **Google Vertex AI**: Uses OIDC authentication when `use_vertex: true`
+
+## Testing Strategy
+
+### Local Testing
+
+- Use `act` tool to run GitHub Actions workflows locally
+- `test-local.sh` script automates local testing setup
+- Requires `ANTHROPIC_API_KEY` environment variable
+
+### Test Structure
+
+- Unit tests for configuration logic
+- Integration tests for prompt preparation
+- Full workflow tests in `.github/workflows/test-base-action.yml`
+
+## Important Technical Details
+
+- Outputs execution logs as JSON to `/tmp/claude-execution-output.json`
+- Timeout enforcement via `timeout` command wrapper
+- Strict TypeScript configuration with Bun-specific settings
+
+### Contributor Covenant Code of Conduct
+
+*Source: CODE_OF_CONDUCT.md | URL: https://github.com/anthropics/claude-code-base-action/blob/main/CODE_OF_CONDUCT.md*
+
+# Contributor Covenant Code of Conduct
+
+## Our Pledge
+
+We as members, contributors, and leaders pledge to make participation in our
+community a harassment-free experience for everyone, regardless of age, body
+size, visible or invisible disability, ethnicity, sex characteristics, gender
+identity and expression, level of experience, education, socio-economic status,
+nationality, personal appearance, race, religion, or sexual identity
+and orientation.
+
+We pledge to act and interact in ways that contribute to an open, welcoming,
+diverse, inclusive, and healthy community.
+
+## Our Standards
+
+Examples of behavior that contributes to a positive environment for our
+community include:
+
+- Demonstrating empathy and kindness toward other people
+- Being respectful of differing opinions, viewpoints, and experiences
+- Giving and gracefully accepting constructive feedback
+- Accepting responsibility and apologizing to those affected by our mistakes,
+  and learning from the experience
+- Focusing on what is best not just for us as individuals, but for the
+  overall community
+
+Examples of unacceptable behavior include:
+
+- The use of sexualized language or imagery, and sexual attention or
+  advances of any kind
+- Trolling, insulting or derogatory comments, and personal or political attacks
+- Public or private harassment
+- Publishing others' private information, such as a physical or email
+  address, without their explicit permission
+- Other conduct which could reasonably be considered inappropriate in a
+  professional setting
+
+## Enforcement Responsibilities
+
+Community leaders are responsible for clarifying and enforcing our standards of
+acceptable behavior and will take appropriate and fair corrective action in
+response to any behavior that they deem inappropriate, threatening, offensive,
+or harmful.
+
+Community leaders have the right and responsibility to remove, edit, or reject
+comments, commits, code, wiki edits, issues, and other contributions that are
+not aligned to this Code of Conduct, and will communicate reasons for moderation
+decisions when appropriate.
+
+## Scope
+
+This Code of Conduct applies within all community spaces, and also applies when
+an individual is officially representing the community in public spaces.
+Examples of representing our community include using an official e-mail address,
+posting via an official social media account, or acting as an appointed
+representative at an online or offline event.
+
+## Enforcement
+
+Instances of abusive, harassing, or otherwise unacceptable behavior may be
+reported to the community leaders responsible for enforcement at
+claude-code-action-coc@anthropic.com.
+All complaints will be reviewed and investigated promptly and fairly.
+
+All community leaders are obligated to respect the privacy and security of the
+reporter of any incident.
+
+## Enforcement Guidelines
+
+Community leaders will follow these Community Impact Guidelines in determining
+the consequences for any action they deem in violation of this Code of Conduct:
+
+### 1. Correction
+
+**Community Impact**: Use of inappropriate language or other behavior deemed
+unprofessional or unwelcome in the community.
+
+**Consequence**: A private, written warning from community leaders, providing
+clarity around the nature of the violation and an explanation of why the
+behavior was inappropriate. A public apology may be requested.
+
+### 2. Warning
+
+**Community Impact**: A violation through a single incident or series
+of actions.
+
+**Consequence**: A warning with consequences for continued behavior. No
+interaction with the people involved, including unsolicited interaction with
+those enforcing the Code of Conduct, for a specified period of time. This
+includes avoiding interactions in community spaces as well as external channels
+like social media. Violating these terms may lead to a temporary or
+permanent ban.
+
+### 3. Temporary Ban
+
+**Community Impact**: A serious violation of community standards, including
+sustained inappropriate behavior.
+
+**Consequence**: A temporary ban from any sort of interaction or public
+communication with the community for a specified period of time. No public or
+private interaction with the people involved, including unsolicited interaction
+with those enforcing the Code of Conduct, is allowed during this period.
+Violating these terms may lead to a permanent ban.
+
+### 4. Permanent Ban
+
+**Community Impact**: Demonstrating a pattern of violation of community
+standards, including sustained inappropriate behavior, harassment of an
+individual, or aggression toward or disparagement of classes of individuals.
+
+**Consequence**: A permanent ban from any sort of public interaction within
+the community.
+
+## Attribution
+
+This Code of Conduct is adapted from the [Contributor Covenant][homepage],
+version 2.0, available at
+https://www.contributor-covenant.org/version/2/0/code_of_conduct.html.
+
+Community Impact Guidelines were inspired by [Mozilla's code of conduct
+enforcement ladder](https://github.com/mozilla/diversity).
+
+[homepage]: https://www.contributor-covenant.org
+
+For answers to common questions about this code of conduct, see the FAQ at
+https://www.contributor-covenant.org/faq. Translations are available at
+https://www.contributor-covenant.org/translations.
+
+### ⚠️ This is a Mirror Repository
+
+*Source: MIRROR_DISCLAIMER.md | URL: https://github.com/anthropics/claude-code-base-action/blob/main/MIRROR_DISCLAIMER.md*
+
+# ⚠️ This is a Mirror Repository
+
+This repository is an automated mirror of the `base-action` directory from [anthropics/claude-code-action](https://github.com/anthropics/claude-code-action).
+
+**Do not submit PRs or issues to this repository.** Instead, please contribute to the main repository:
+
+- 🐛 [Report issues](https://github.com/anthropics/claude-code-action/issues)
+- 🔧 [Submit pull requests](https://github.com/anthropics/claude-code-action/pulls)
+- 📖 [View documentation](https://github.com/anthropics/claude-code-action#readme)
+
+---
+
+---
+
+## Optional
+
+### Contributing to Claude Code Base Action
+
+*Source: CONTRIBUTING.md | URL: https://github.com/anthropics/claude-code-base-action/blob/main/CONTRIBUTING.md*
+
+# Contributing to Claude Code Base Action
+
+Thank you for your interest in contributing to Claude Code Base Action! This document provides guidelines and instructions for contributing to the project.
+
+## Getting Started
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) runtime
+- [Docker](https://www.docker.com/) (for running GitHub Actions locally)
+- [act](https://github.com/nektos/act) (installed automatically by our test script)
+- An Anthropic API key (for testing)
+
+### Setup
+
+1. Fork the repository on GitHub and clone your fork:
+
+   ```bash
+   git clone https://github.com/your-username/claude-code-base-action.git
+   cd claude-code-base-action
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   bun install
+   ```
+
+3. Set up your Anthropic API key:
+   ```bash
+   export ANTHROPIC_API_KEY="your-api-key-here"
+   ```
+
+## Development
+
+### Available Scripts
+
+- `bun test` - Run all tests
+- `bun run typecheck` - Type check the code
+- `bun run format` - Format code with Prettier
+- `bun run format:check` - Check code formatting
+
+## Testing
+
+### Running Tests Locally
+
+1. **Unit Tests**:
+
+   ```bash
+   bun test
+   ```
+
+2. **Integration Tests** (using GitHub Actions locally):
+
+   ```bash
+   ./test-local.sh
+   ```
+
+   This script:
+
+   - Installs `act` if not present (requires Homebrew on macOS)
+   - Runs the GitHub Action workflow locally using Docker
+   - Requires your `ANTHROPIC_API_KEY` to be set
+
+   On Apple Silicon Macs, the script automatically adds the `--container-architecture linux/amd64` flag to avoid compatibility issues.
+
+## Pull Request Process
+
+1. Create a new branch from `main`:
+
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. Make your changes and commit them:
+
+   ```bash
+   git add .
+   git commit -m "feat: add new feature"
+   ```
+
+3. Run tests and formatting:
+
+   ```bash
+   bun test
+   bun run typecheck
+   bun run format:check
+   ```
+
+4. Push your branch and create a Pull Request:
+
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+5. Ensure all CI checks pass
+
+6. Request review from maintainers
+
+## Action Development
+
+### Testing Your Changes
+
+When modifying the action:
+
+1. Test locally with the test script:
+
+   ```bash
+   ./test-local.sh
+   ```
+
+2. Test in a real GitHub Actions workflow by:
+   - Creating a test repository
+   - Using your branch as the action source:
+     ```yaml
+     uses: your-username/claude-code-base-action@your-branch
+     ```
+
+### Debugging
+
+- Use `console.log` for debugging in development
+- Check GitHub Actions logs for runtime issues
+- Use `act` with `-v` flag for verbose output:
+  ```bash
+  act push -v --secret ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY"
+  ```
+
+## Common Issues
+
+### Docker Issues
+
+Make sure Docker is running before using `act`. You can check with:
+
+```bash
+docker ps
+```

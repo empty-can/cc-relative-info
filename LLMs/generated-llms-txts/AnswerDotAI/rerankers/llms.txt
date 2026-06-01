@@ -1,0 +1,34 @@
+# rerankers
+
+> 検索パイプラインを構築する開発者向けに、クロスエンコーダー・ColBERT・LLM ベース・API 呼び出し型など多様なリランカーを統一インターフェースで差し替え可能にする Python ライブラリ。
+
+## Guide
+
+- [Langchain Integration](https://github.com/AnswerDotAI/rerankers/blob/main/examples/langchain_integration.ipynb)
+- [Hello there.](https://github.com/AnswerDotAI/rerankers/blob/main/examples/overview.ipynb): _Version 0.3 of this notebook.
+- [Introduction: The models have eyes: reranking goes multi-modal!](https://github.com/AnswerDotAI/rerankers/blob/main/examples/reranker_images.ipynb): Welcome to this short introductory notebook!
+- [Test Colbert](https://github.com/AnswerDotAI/rerankers/blob/main/tests/consistency_notebooks/test_colbert.ipynb)
+- [Test Crossenc](https://github.com/AnswerDotAI/rerankers/blob/main/tests/consistency_notebooks/test_crossenc.ipynb)
+- [Test Inranker](https://github.com/AnswerDotAI/rerankers/blob/main/tests/consistency_notebooks/test_inranker.ipynb)
+- [Test T5](https://github.com/AnswerDotAI/rerankers/blob/main/tests/consistency_notebooks/test_t5.ipynb)
+
+## Source Modules
+
+- [rerankers.documents](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/documents.py)
+- [rerankers.integrations.langchain](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/integrations/langchain.py): Rerank a list of documents relevant to a query.
+- [rerankers.models.api_rankers](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/api_rankers.py)
+- [rerankers.models.colbert_ranker](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/colbert_ranker.py)
+- [rerankers.models.flashrank_ranker](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/flashrank_ranker.py)
+- [rerankers.models.llm_layerwise_ranker](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/llm_layerwise_ranker.py)
+- [rerankers.models.llm_relevance_filter](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/llm_relevance_filter.py): Score a single document.
+- [rerankers.models.monovlm_ranker](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/monovlm_ranker.py)
+- [rerankers.models.mxbai_v2](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/mxbai_v2.py): A reranker that uses MxBai models for yes/no-based relevance classification.
+- [rerankers.models.pylate_ranker](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/pylate_ranker.py)
+- [rerankers.models.ranker](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/ranker.py): End-to-end reranking of documents.
+- [rerankers.models.rankgpt_rankers](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/rankgpt_rankers.py)
+- [rerankers.models.rankllm_ranker](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/rankllm_ranker.py)
+- [rerankers.models.transformer_ranker](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/transformer_ranker.py)
+- [rerankers.models.upr](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/models/upr.py): UPR (Unsupervised Passage Reranker) replicates the negative log-likelihood
+- [rerankers.reranker](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/reranker.py)
+- [rerankers.results](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/results.py): Returns the total number of results.
+- [rerankers.utils](https://github.com/AnswerDotAI/rerankers/blob/main/rerankers/utils.py): Prepare image documents for processing. Can handle base64 encoded images or file paths.

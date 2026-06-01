@@ -1,0 +1,7 @@
+# Claude's Constitution
+
+> Claude's Constitution is Anthropic's foundational guidance document defining the values, priorities, and behavioral principles for Claude — enabling any developer or researcher to understand how Claude balances safety, ethics, and helpfulness across all interactions.
+
+## Guide
+
+- [Claude’s Constitution](https://github.com/anthropics/claude-constitution/blob/main/20260120-constitution.md): Overview

@@ -1,0 +1,20 @@
+# fastlite
+
+> SQLite を Python から扱う開発者向けに、テーブル・カラムのオートコンプリートや dataclass との統合など快適な操作性を薄いラッパーで提供するライブラリ。
+
+## Guide
+
+- [Source](https://github.com/AnswerDotAI/fastlite/blob/main/nbs/00_core.ipynb): Source code for fastlite
+- [fastlite](https://github.com/AnswerDotAI/fastlite/blob/main/nbs/index.ipynb): A bit of extra usability for sqlite
+- [Test Insert Operations](https://github.com/AnswerDotAI/fastlite/blob/main/nbs/test_insert.ipynb): Note: Make sure to use fastlite's database() here
+- [Test Update Operations](https://github.com/AnswerDotAI/fastlite/blob/main/nbs/test_update.ipynb): Note: Make sure to use fastlite's database() here
+- [Test Upsert Operations](https://github.com/AnswerDotAI/fastlite/blob/main/nbs/test_upsert.ipynb): Note: Make sure to use fastlite's database() here
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/fastlite/blob/main/CHANGELOG.md): - Fix KeyError in insert when ignore=True and duplicate key exists (#78), thanks to @dienhoa
+
+## Source Modules
+
+- [fastlite.core](https://github.com/AnswerDotAI/fastlite/blob/main/fastlite/core.py)
+- [fastlite.kw](https://github.com/AnswerDotAI/fastlite/blob/main/fastlite/kw.py)

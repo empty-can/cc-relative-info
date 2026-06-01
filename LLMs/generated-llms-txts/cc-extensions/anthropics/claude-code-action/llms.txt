@@ -1,0 +1,48 @@
+# Claude Code Action
+
+> GitHub Actions integration that runs Claude Code as an automated agent on pull request and issue events, providing subagents for code quality, documentation accuracy, performance, security, and test coverage review.
+
+## Agents
+
+- [code-quality-reviewer](https://github.com/anthropics/claude-code-action/blob/main/.claude/agents/code-quality-reviewer.md): Use this agent when you need to review code for quality, maintainability, and adherence to best practices. Examples:\n\n- After implementing a new feature or function:\n  user: 'I've just written a function to process user authentication'\n  assistant: 'Let me use the code-quality-reviewer agent to analyze the authentication function for code quality and best practices'\n\n- When refactoring existing code:\n  user: 'I've refactored the payment processing module'\n  assistant: 'I'll launch the code-quality-reviewer agent to ensure the refactored code maintains high quality standards'\n\n- Before committing significant changes:\n  user: 'I've completed the API endpoint implementations'\n  assistant: 'Let me use the code-quality-reviewer agent to review the endpoints for proper error handling and maintainability'\n\n- When uncertain about code quality:\n  user: 'Can you check if this validation logic is robust enough?'\n  assistant: 'I'll use the code-quality-reviewer agent to thoroughly analyze the validation logic
+- [documentation-accuracy-reviewer](https://github.com/anthropics/claude-code-action/blob/main/.claude/agents/documentation-accuracy-reviewer.md): Use this agent when you need to verify that code documentation is accurate, complete, and up-to-date. Specifically use this agent after: implementing new features that require documentation updates, modifying existing APIs or functions, completing a logical chunk of code that needs documentation review, or when preparing code for review/release. Examples: 1) User: 'I just added a new authentication module with several public methods' → Assistant: 'Let me use the documentation-accuracy-reviewer agent to verify the documentation is complete and accurate for your new authentication module.' 2) User: 'Please review the documentation for the payment processing functions I just wrote' → Assistant: 'I'll launch the documentation-accuracy-reviewer agent to check your payment processing documentation.' 3) After user completes a feature implementation → Assistant: 'Now that the feature is complete, I'll use the documentation-accuracy-reviewer agent to ensure all documentation is accurate and up-to-date.
+- [performance-reviewer](https://github.com/anthropics/claude-code-action/blob/main/.claude/agents/performance-reviewer.md): Use this agent when you need to analyze code for performance issues, bottlenecks, and resource efficiency. Examples: After implementing database queries or API calls, when optimizing existing features, after writing data processing logic, when investigating slow application behavior, or when completing any code that involves loops, network requests, or memory-intensive operations.
+- [security-code-reviewer](https://github.com/anthropics/claude-code-action/blob/main/.claude/agents/security-code-reviewer.md): Use this agent when you need to review code for security vulnerabilities, input validation issues, or authentication/authorization flaws. Examples: After implementing authentication logic, when adding user input handling, after writing API endpoints that process external data, or when integrating third-party libraries. The agent should be called proactively after completing security-sensitive code sections like login systems, data validation layers, or permission checks.
+- [test-coverage-reviewer](https://github.com/anthropics/claude-code-action/blob/main/.claude/agents/test-coverage-reviewer.md): Use this agent when you need to review testing implementation and coverage. Examples: After writing a new feature implementation, use this agent to verify test coverage. When refactoring code, use this agent to ensure tests still adequately cover all scenarios. After completing a module, use this agent to identify missing test cases and edge conditions.
+
+## Source Modules
+
+- [base-action.src.execution-file](https://github.com/anthropics/claude-code-action/blob/main/base-action/src/execution-file.ts)
+- [base-action.src.index](https://github.com/anthropics/claude-code-action/blob/main/base-action/src/index.ts)
+- [base-action.src.prepare-prompt](https://github.com/anthropics/claude-code-action/blob/main/base-action/src/prepare-prompt.ts)
+- [base-action.src.run-claude-sdk](https://github.com/anthropics/claude-code-action/blob/main/base-action/src/run-claude-sdk.ts)
+- [base-action.src.run-claude](https://github.com/anthropics/claude-code-action/blob/main/base-action/src/run-claude.ts)
+- [base-action.src.setup-claude-code-settings](https://github.com/anthropics/claude-code-action/blob/main/base-action/src/setup-claude-code-settings.ts)
+- [base-action.src.validate-env](https://github.com/anthropics/claude-code-action/blob/main/base-action/src/validate-env.ts)
+- [src.auth.workload-identity](https://github.com/anthropics/claude-code-action/blob/main/src/auth/workload-identity.ts)
+- [src.entrypoints.cleanup-ssh-signing](https://github.com/anthropics/claude-code-action/blob/main/src/entrypoints/cleanup-ssh-signing.ts)
+- [src.entrypoints.collect-inputs](https://github.com/anthropics/claude-code-action/blob/main/src/entrypoints/collect-inputs.ts)
+- [src.entrypoints.prepare](https://github.com/anthropics/claude-code-action/blob/main/src/entrypoints/prepare.ts)
+- [src.github.api.client](https://github.com/anthropics/claude-code-action/blob/main/src/github/api/client.ts)
+- [src.github.context](https://github.com/anthropics/claude-code-action/blob/main/src/github/context.ts)
+- [src.github.data.fetcher](https://github.com/anthropics/claude-code-action/blob/main/src/github/data/fetcher.ts)
+- [src.github.data.formatter](https://github.com/anthropics/claude-code-action/blob/main/src/github/data/formatter.ts)
+- [src.github.operations.branch](https://github.com/anthropics/claude-code-action/blob/main/src/github/operations/branch.ts)
+- [src.github.operations.comments.common](https://github.com/anthropics/claude-code-action/blob/main/src/github/operations/comments/common.ts)
+- [src.github.operations.comments.update-claude-comment](https://github.com/anthropics/claude-code-action/blob/main/src/github/operations/comments/update-claude-comment.ts)
+- [src.github.token](https://github.com/anthropics/claude-code-action/blob/main/src/github/token.ts)
+- [src.github.utils.actor-filter](https://github.com/anthropics/claude-code-action/blob/main/src/github/utils/actor-filter.ts)
+- [src.github.utils.sanitizer](https://github.com/anthropics/claude-code-action/blob/main/src/github/utils/sanitizer.ts)
+- [src.github.validation.trigger](https://github.com/anthropics/claude-code-action/blob/main/src/github/validation/trigger.ts)
+- [src.mcp.github-actions-server](https://github.com/anthropics/claude-code-action/blob/main/src/mcp/github-actions-server.ts)
+- [src.mcp.github-comment-server](https://github.com/anthropics/claude-code-action/blob/main/src/mcp/github-comment-server.ts)
+- [src.mcp.github-file-ops-server](https://github.com/anthropics/claude-code-action/blob/main/src/mcp/github-file-ops-server.ts)
+- [src.mcp.install-mcp-server](https://github.com/anthropics/claude-code-action/blob/main/src/mcp/install-mcp-server.ts)
+- [src.mcp.path-validation](https://github.com/anthropics/claude-code-action/blob/main/src/mcp/path-validation.ts)
+- [src.modes.agent.index](https://github.com/anthropics/claude-code-action/blob/main/src/modes/agent/index.ts)
+- [src.modes.agent.parse-tools](https://github.com/anthropics/claude-code-action/blob/main/src/modes/agent/parse-tools.ts)
+- [src.modes.detector](https://github.com/anthropics/claude-code-action/blob/main/src/modes/detector.ts)
+- [src.modes.tag.index](https://github.com/anthropics/claude-code-action/blob/main/src/modes/tag/index.ts)
+- [src.utils.branch-template](https://github.com/anthropics/claude-code-action/blob/main/src/utils/branch-template.ts)
+- [src.utils.extract-user-request](https://github.com/anthropics/claude-code-action/blob/main/src/utils/extract-user-request.ts)
+- [src.utils.retry](https://github.com/anthropics/claude-code-action/blob/main/src/utils/retry.ts)

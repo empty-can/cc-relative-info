@@ -15,6 +15,26 @@ from pathlib import Path
 _SCRIPT_DIR = Path(__file__).resolve().parent          # gen-llms-txt/
 _REPO_ROOT = _SCRIPT_DIR.parent.parent.parent          # cc-relative-info/
 _DEFAULT_OUTPUT_BASE = _REPO_ROOT / 'LLMs' / 'work' / 'gen-out'
+# Error logs mirror the gen-out tree under a sibling gen-error/ directory.
+_DEFAULT_ERROR_BASE = _REPO_ROOT / 'LLMs' / 'work' / 'gen-error'
+
+# Generation notices collected during a run, flushed to the error log at the end.
+# WARN = action required on this side (missing optional package etc.)
+# INFO = situation report (no expected files in target / option-target mismatch)
+_WARNINGS: list[str] = []
+_INFOS: list[str] = []
+
+
+def _warn(msg: str) -> None:
+    """Print a WARN to stderr and record it for the error log."""
+    _WARNINGS.append(msg)
+    print(f'WARN: {msg}', file=sys.stderr)
+
+
+def _info(msg: str) -> None:
+    """Print an INFO to stderr and record it for the error log."""
+    _INFOS.append(msg)
+    print(f'INFO: {msg}', file=sys.stderr)
 
 
 def _infer_output_dir(base_url: str, repo_path: Path, cc_extensions: bool = False) -> Path:
@@ -45,6 +65,12 @@ CC_SECTION_MAP: dict[str, str] = {
 # Sections whose subdirectories each contain a SKILL.md (one entry per subdirectory)
 CC_SKILL_LIKE_SECTIONS = {'skills', 'plugins'}
 CC_SECTION_ORDER = ['Plugins', 'Skills', 'Rules', 'Agents', 'Templates', 'Hooks', 'Optional', 'Guide']
+# CC ext + doc を統合した cc-extensions モードの出力順
+COMBINED_SECTION_ORDER = [
+    'Plugins', 'Skills', 'Rules', 'Agents', 'Templates', 'Hooks',
+    'Getting Started', 'Guide', 'API Reference',
+    'Optional',
+]
 
 SECTION_RULES = [
     (['install', 'setup', 'quickstart', 'getting-started', 'getting_started', 'start'], 'Getting Started'),
@@ -53,7 +79,7 @@ SECTION_RULES = [
     (['changelog', 'release', 'faq', 'contributing', 'license', 'security', 'migration'], 'Optional'),
 ]
 SECTION_ORDER = ['Getting Started', 'Guide', 'API Reference', 'Optional']
-DOC_EXTENSIONS = ('.md', '.mdx', '.rst')
+DOC_EXTENSIONS = ('.md', '.mdx', '.rst', '.adoc', '.asciidoc', '.ipynb')
 SOURCE_EXTENSIONS = (
     '.py', '.ts', '.tsx', '.js', '.jsx',
     '.go', '.rs', '.java', '.kt', '.swift', '.cs', '.rb', '.php', '.lua',
@@ -190,6 +216,36 @@ def _try_rst_h1(
     return None
 
 
+def _try_asciidoc_h1(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    """Return the AsciiDoc level-0 document title (a line starting with '= ')."""
+    for line in lines[fm_end:fm_end + H1_SEARCH_WINDOW]:
+        stripped = line.strip()
+        if stripped.startswith('= '):
+            return stripped[2:].strip()
+    return None
+
+
+def _try_notebook_h1(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    """First Markdown H1 in a converted notebook, ignoring '#' inside code blocks.
+
+    Notebooks often place export/import code cells before the title cell, so the
+    document H1 can appear well past the usual head window.
+    """
+    in_code = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('```'):
+            in_code = not in_code
+            continue
+        if not in_code and stripped.startswith('# ') and not stripped.startswith('## '):
+            return stripped[2:].strip()
+    return None
+
+
 def _try_filename_title(
     file_path: Path, content: str, lines: list[str], fm_end: int
 ) -> str | None:
@@ -202,6 +258,9 @@ _TITLE_EXTRACTORS: dict[str, list] = {
     '.md':  [_try_frontmatter_title, _try_frontmatter_name, _try_head_h1, _try_filename_title],
     '.mdx': [_try_frontmatter_title, _try_head_h1,  _try_filename_title],
     '.rst': [_try_rst_h1,            _try_filename_title],
+    '.adoc':     [_try_asciidoc_h1, _try_filename_title],
+    '.asciidoc': [_try_asciidoc_h1, _try_filename_title],
+    '.ipynb':    [_try_notebook_h1, _try_filename_title],
 }
 _DEFAULT_TITLE_EXTRACTORS = [_try_head_h1, _try_filename_title]
 
@@ -292,12 +351,109 @@ def _try_body_first_sentence(
     return (text[:150] + '…').strip() if len(text) > 150 else text.strip()
 
 
+def _clean_asciidoc_prose(text: str) -> str:
+    """Strip common AsciiDoc inline formatting from a prose string."""
+    text = re.sub(r'(?:link|xref):[^\[\]\s]*\[([^\]]*)\]', r'\1', text)  # link:url[text]
+    text = re.sub(r'https?://\S*?\[([^\]]*)\]', r'\1', text)             # https://url[text]
+    text = re.sub(r'`(.+?)`', r'\1', text)
+    text = re.sub(r'\*(.+?)\*', r'\1', text)
+    text = re.sub(r'_(.+?)_', r'\1', text)
+    return text
+
+
+def _try_asciidoc_first_sentence(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    """First prose sentence in an AsciiDoc file, skipping headings/attributes/macros."""
+    paragraph: list[str] = []
+    for raw in lines[fm_end:]:
+        stripped = raw.strip()
+        if not stripped:
+            if paragraph:
+                break
+            continue
+        if (stripped.startswith('=')          # doc title or section heading
+                or stripped.startswith(':')   # attribute entry
+                or stripped.startswith('//')  # comment
+                or stripped.startswith('[')   # block attribute / anchor
+                or stripped.startswith('*')   # list item / nav
+                or stripped.startswith('.')   # block title / ordered list
+                or stripped.startswith('|')   # table cell
+                or stripped.startswith('image:')
+                or stripped.startswith('xref:')
+                or stripped.startswith('include::')  # transclusion directive
+                or re.match(r'^[-=~^*_.+]{3,}$', stripped)):  # block delimiter
+            if paragraph:
+                break
+            continue
+        paragraph.append(stripped)
+
+    if not paragraph:
+        return None
+
+    text = _clean_asciidoc_prose(' '.join(paragraph))
+    m = re.match(r'(.+?[.!?])(?:\s|$)', text)
+    if m:
+        return m.group(1).strip()
+    return (text[:150] + '…').strip() if len(text) > 150 else text.strip()
+
+
+def _try_notebook_desc(
+    file_path: Path, content: str, lines: list[str], fm_end: int
+) -> str | None:
+    """Description for a converted notebook.
+
+    Prefers the nbdev-style '> summary' blockquote right after the title; falls
+    back to the first prose sentence. '#' inside code blocks is ignored.
+    """
+    seen_h1 = False
+    in_code = False
+    paragraph: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('```'):
+            in_code = not in_code
+            if paragraph:
+                break
+            continue
+        if in_code:
+            continue
+        if not seen_h1:
+            if stripped.startswith('# ') and not stripped.startswith('## '):
+                seen_h1 = True
+            continue
+        if stripped.startswith('> '):
+            return _clean_prose(stripped[2:].strip())
+        if not stripped:
+            if paragraph:
+                break
+            continue
+        if (stripped.startswith('#')
+                or stripped.startswith('- ') or stripped.startswith('* ')
+                or _is_non_prose(stripped)):
+            if paragraph:
+                break
+            continue
+        paragraph.append(stripped)
+
+    if not paragraph:
+        return None
+    text = _clean_prose(' '.join(paragraph))
+    m = re.match(r'(.+?[.!?])(?:\s|$)', text)
+    if m:
+        return m.group(1).strip()
+    return (text[:150] + '…').strip() if len(text) > 150 else text.strip()
+
+
 # Extension → ordered description extractors
 # Add '.rst': [...] or other extensions here to extend support.
 _DESC_EXTRACTORS: dict[str, list] = {
     '.md':  [_try_frontmatter_desc, _try_body_first_sentence],
     '.mdx': [_try_frontmatter_desc, _try_body_first_sentence],
     '.rst': [],  # rst body extraction not implemented; add _try_* here to enable
+    '.adoc':     [_try_asciidoc_first_sentence],
+    '.asciidoc': [_try_asciidoc_first_sentence],
+    '.ipynb':    [_try_notebook_desc],
 }
 _DEFAULT_DESC_EXTRACTORS: list = []
 
@@ -351,8 +507,92 @@ def _is_skipped(rel_parts: tuple[str, ...]) -> bool:
     return any(p in SKIP_DIRS or p.startswith('.') for p in rel_parts)
 
 
-def collect_doc_sections(repo_path: Path) -> list[tuple[str, list[tuple[Path, str]]]]:
-    """Return [(section_name, [(file_path, content)])] ordered by SECTION_ORDER."""
+# Antora navigation files are pure menus (xref link lists) with no prose content.
+_DOC_NOISE_NAMES = {'nav.adoc', 'local-nav.adoc'}
+
+
+def _is_noise_doc(f: Path) -> bool:
+    """Skip navigation-only docs that carry no standalone prose."""
+    return f.name.lower() in _DOC_NOISE_NAMES
+
+
+_NBFORMAT = None  # cached nbformat module; False once an import attempt has failed
+
+
+def _get_nbformat():
+    """Lazily import nbformat, warning once if it is unavailable."""
+    global _NBFORMAT
+    if _NBFORMAT is None:
+        try:
+            import nbformat
+            _NBFORMAT = nbformat
+        except ImportError:
+            _NBFORMAT = False
+            _warn('nbformat パッケージが未導入のため、.ipynb ファイルをスキップしました。'
+          'pip install nbformat でインストールしてください。')
+    return _NBFORMAT or None
+
+
+def _render_notebook(path: Path) -> str | None:
+    """Convert a Jupyter notebook to Markdown for indexing.
+
+    Markdown cells verbatim, code cells in fenced blocks, short text outputs.
+    Logic mirrors AnswerDotAI nbs2ctx (render_notebook_to_markdown); reimplemented
+    here so .ipynb support needs no extra runtime dependency beyond nbformat.
+    """
+    nbformat = _get_nbformat()
+    if not nbformat:
+        return None
+    try:
+        nb = nbformat.read(str(path), as_version=4)
+    except Exception:
+        return None
+    language = nb.metadata.get('kernelspec', {}).get('language', 'python')
+    parts: list[str] = []
+    for cell in nb.cells:
+        if cell.cell_type == 'markdown':
+            parts.append(''.join(cell.source))
+        elif cell.cell_type == 'code':
+            code = ''.join(cell.source)
+            if not code.strip():
+                continue
+            parts.append(f'```{language}\n{code}\n```')
+            outputs: list[str] = []
+            for output in cell.get('outputs', []):
+                otype = output.get('output_type')
+                if otype == 'stream':
+                    text = ''.join(output.get('text', ''))
+                elif otype in ('execute_result', 'display_data'):
+                    text = ''.join(output.get('data', {}).get('text/plain', ''))
+                else:
+                    continue
+                if text:
+                    outputs.append(text[:200] + (' … (truncated)' if len(text) > 200 else ''))
+            if outputs:
+                parts.append('**Outputs:**\n' + '\n'.join(outputs))
+    return '\n\n'.join(parts)
+
+
+def _read_doc_content(f: Path) -> str | None:
+    """Read a doc file as text, converting notebooks to Markdown."""
+    if f.suffix == '.ipynb':
+        return _render_notebook(f)
+    try:
+        return f.read_text(encoding='utf-8', errors='replace')
+    except OSError:
+        return None
+
+
+def collect_doc_sections(
+    repo_path: Path,
+    *,
+    exclude_top_dirs: frozenset[str] = frozenset(),
+) -> list[tuple[str, list[tuple[Path, str]]]]:
+    """Return [(section_name, [(file_path, content)])] ordered by SECTION_ORDER.
+
+    exclude_top_dirs: top-level directory names to skip (used in --cc-extensions
+    mode to avoid re-collecting CC scan directories like skills/, rules/, agents/).
+    """
     buckets: dict[str, list[tuple[Path, str]]] = {s: [] for s in SECTION_ORDER}
 
     for ext in DOC_EXTENSIONS:
@@ -360,14 +600,15 @@ def collect_doc_sections(repo_path: Path) -> list[tuple[str, list[tuple[Path, st
             rel = f.relative_to(repo_path)
             if _is_skipped(rel.parts[:-1]):
                 continue
+            if exclude_top_dirs and rel.parts and rel.parts[0] in exclude_top_dirs:
+                continue
+            if _is_noise_doc(f):
+                continue
             section = classify_section(f, repo_path)
             if section is None:
                 continue
-            try:
-                content = f.read_text(encoding='utf-8', errors='replace')
-            except OSError:
-                continue
-            if content.strip():
+            content = _read_doc_content(f)
+            if content and content.strip():
                 buckets[section].append((f, content))
 
     return [(s, buckets[s]) for s in SECTION_ORDER if buckets[s]]
@@ -445,9 +686,9 @@ def collect_cc_sections(repo_path: Path) -> list[tuple[str, list[tuple[Path, str
     _scan_cc_base(repo_path / '.claude', buckets)
 
     if not any(buckets.values()):
-        print('WARNING: No CC extension files found '
-              '(checked skills/, .claude/skills/, rules/, .claude/rules/)',
-              file=sys.stderr)
+        _info('Claude Code 拡張ファイル(Skill / Rule)が見つかりませんでした'
+              '(skills/, .claude/skills/, rules/, .claude/rules/ を確認)。'
+              'CC 拡張リポジトリでない場合は --cc-extensions を外して実行することを検討してください。')
 
     return [(s, buckets[s]) for s in CC_SECTION_ORDER if buckets[s]]
 
@@ -504,7 +745,8 @@ def collect_source_sections(
     try:
         from codesigs import file_sigs
     except ImportError:
-        print('WARNING: codesigs not installed — skipping --extract-sigs.', file=sys.stderr)
+        _warn('codesigs パッケージが未導入のため、--extract-sigs をスキップしました。'
+              'pip install codesigs でインストールしてください。')
         return []
 
     SOURCE_SKIP_DIRS = {'tests', 'test', 'spec', '__tests__', 'e2e'}
@@ -540,6 +782,23 @@ def collect_source_sections(
 # Generation
 # ---------------------------------------------------------------------------
 
+def _merge_sections_by_name(
+    cc_sections: list[tuple[str, list[tuple[Path, str]]]],
+    doc_sections: list[tuple[str, list[tuple[Path, str]]]],
+    order: list[str],
+) -> list[tuple[str, list[tuple[Path, str]]]]:
+    """Combine CC and doc section lists. Sections with the same name (e.g. Optional /
+    Guide) are merged into a single entry to avoid duplicate '## Name' blocks in the
+    generated llms.txt. Output order follows `order`; unknown names come at the end.
+    """
+    merged: dict[str, list[tuple[Path, str]]] = {}
+    for name, files in (*cc_sections, *doc_sections):
+        merged.setdefault(name, []).extend(files)
+    ordered = [(n, merged[n]) for n in order if n in merged and merged[n]]
+    extras = [(n, merged[n]) for n in merged if n not in order and merged[n]]
+    return ordered + extras
+
+
 def generate(
     repo_path: Path,
     base_url: str,
@@ -554,22 +813,40 @@ def generate(
     )
 
     if cc_extensions:
-        sections = collect_cc_sections(repo_path)
+        cc_sections = collect_cc_sections(repo_path)
+        # CC スキャン対象の top-level ディレクトリは doc スキャンから除外して二重カウントを防ぐ
+        doc_sections = collect_doc_sections(
+            repo_path, exclude_top_dirs=frozenset(CC_SECTION_MAP.keys()),
+        )
+        sections = _merge_sections_by_name(cc_sections, doc_sections, COMBINED_SECTION_ORDER)
         src_secs = collect_source_sections(repo_path, base_url)  # always enabled in CC mode
-        if not sections:
-            print('WARNING: No .claude/ files found.', file=sys.stderr)
+        if not cc_sections:
+            _info('.claude/ ディレクトリ配下のファイルが見つかりませんでした。'
+                  'CC 拡張を含まないリポジトリの場合は --cc-extensions を外して実行することを検討してください。')
+        # cc-extensions モードでは docs は補助情報のため、0 件でも INFO は出さない
     else:
-        sections = collect_doc_sections(repo_path)
+        cc_sections = []
+        doc_sections = collect_doc_sections(repo_path)
+        sections = doc_sections
         if not sections:
-            print('WARNING: No documentation files found.', file=sys.stderr)
+            _info('ドキュメントファイル(.md / .mdx / .rst / .adoc / .ipynb)が見つかりませんでした。'
+                  'ソースコードのみのリポジトリであれば、--extract-sigs フラグを付けて'
+                  'ソースシグネチャを索引化することを検討してください。')
         src_secs = collect_source_sections(repo_path, base_url) if extract_sigs else []
 
     _write_llms_full(project_name, sections, src_secs, base_url, repo_path, output_dir)
     _write_llms_txt(project_name, sections, src_secs, base_url, repo_path, output_dir)
 
-    total_docs = sum(len(files) for _, files in sections)
-    mode_label = 'CC extension file(s)' if cc_extensions else 'doc file(s)'
-    print(f'Processed {total_docs} {mode_label} across {len(sections)} section(s)'
+    cc_count = sum(len(files) for _, files in cc_sections)
+    doc_count = sum(len(files) for _, files in doc_sections)
+    if cc_extensions:
+        if doc_count > 0:
+            file_summary = f'{cc_count} CC extension file(s), {doc_count} doc file(s)'
+        else:
+            file_summary = f'{cc_count} CC extension file(s)'
+    else:
+        file_summary = f'{doc_count} doc file(s)'
+    print(f'Processed {file_summary} across {len(sections)} section(s)'
           + (f', {len(src_secs)} source module(s).' if src_secs else '.'))
     print(f'Generated: {output_dir / "llms-full.txt"}')
     print(f'Generated: {output_dir / "llms.txt"}')
@@ -653,6 +930,72 @@ def _write_llms_txt(
 
 
 # ---------------------------------------------------------------------------
+# Error log (mirrored under gen-error/, sibling of gen-out/)
+# ---------------------------------------------------------------------------
+
+def _error_log_dir(output_dir: Path) -> Path:
+    """Mirror output_dir under the gen-error tree so logs never collide with output."""
+    try:
+        rel = output_dir.relative_to(_DEFAULT_OUTPUT_BASE)
+        return _DEFAULT_ERROR_BASE / rel
+    except ValueError:
+        # Custom --output not under the default gen-out base.
+        parts = list(output_dir.parts)
+        if 'gen-out' in parts:
+            parts[parts.index('gen-out')] = 'gen-error'
+            return Path(*parts)
+        # Last resort: a gen-error sibling next to the output directory.
+        return output_dir.parent / 'gen-error' / output_dir.name
+
+
+def _write_error_log(output_dir: Path, *, cc_extensions: bool, extract_sigs: bool) -> None:
+    """Flush collected warnings to error-log.md under the gen-error tree."""
+    error_dir = _error_log_dir(output_dir)
+    error_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        target_id = output_dir.relative_to(_DEFAULT_OUTPUT_BASE).as_posix()
+    except ValueError:
+        target_id = output_dir.name
+    lines = [
+        f'# Error Log: {target_id}',
+        f'CC_EXTENSIONS={str(cc_extensions).lower()}',
+        f'EXTRACT_SIGS={str(extract_sigs).lower()}',
+        '',
+    ]
+    n_warn = len(_WARNINGS)
+    n_info = len(_INFOS)
+    if n_warn == 0 and n_info == 0:
+        lines += ['## 結果: 成功(WARN・INFO なし)', '',
+                  'No errors encountered. Generation completed successfully.']
+    else:
+        parts = []
+        if n_warn:
+            parts.append(f'WARN {n_warn} 件')
+        if n_info:
+            parts.append(f'INFO {n_info} 件')
+        lines += [f'## 結果: {"、".join(parts)}で完了']
+        if n_warn:
+            lines += ['', '## WARN']
+            lines += [f'- {w}' for w in _WARNINGS]
+        if n_info:
+            lines += ['', '## INFO']
+            lines += [f'- {i}' for i in _INFOS]
+    lines.append('')
+    log_path = error_dir / 'error-log.md'
+    log_path.write_text('\n'.join(lines), encoding='utf-8')
+
+    summary_parts = []
+    if n_warn:
+        summary_parts.append(f'WARN ({n_warn})')
+    if n_info:
+        summary_parts.append(f'INFO ({n_info})')
+    if summary_parts:
+        print(f'{", ".join(summary_parts)}: {log_path}')
+    else:
+        print(f'生成ログ: {log_path}')
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
@@ -702,6 +1045,9 @@ def main() -> None:
 
     generate(repo_path, args.base_url, output_dir,
              extract_sigs=args.extract_sigs, cc_extensions=args.cc_extensions)
+
+    _write_error_log(output_dir, cc_extensions=args.cc_extensions,
+                     extract_sigs=args.extract_sigs)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,1781 @@
+# Welcome!
+
+> ModernBERT は AnswerDotAI が提供する次世代エンコーダ専用モデルで、FlashAttention と 8192 トークン長文脈対応により、テキスト分類・NER・検索など従来の BERT 用途を高速かつ高精度に実現します。
+
+---
+
+## Guide
+
+### How to Run Evaluations
+
+*Source: RunEvals.md | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/RunEvals.md*
+
+# How to Run Evaluations
+
+This document explains how to run fine-tuning evaluations for pre-trained models using the scripts `run_evals.py` and `generate_eval_config.py`. These scripts assume you have a pre-trained or finetuned Composer `FlexBert`checkpoint to evaluate.
+
+## 1. Optionally Login to Hugging Face
+
+First, make sure you are logged into Hugging Face, or provide a Hugging Face token to the `hub_token` argument:
+
+```bash
+huggingface-cli login
+```
+
+Follow the prompts to enter your authentication token.
+
+## 2. Run Evaluations
+
+### Option 1: Run Evaluations for All Checkpoints using `run_evals.py`
+
+You can use the `run_evals.py` script to run evaluations for all checkpoints in a directory.
+
+First, view the available arguments:
+```bash
+python run_evals.py --help
+```
+
+To simplify the process, create a YAML configuration file (e.g., `run_evals_args.yaml`) with the required argument values. For example:
+
+```yaml
+# Checkpoint & Config Paths
+checkpoints: checkpoints
+train_config: path/to/training_config.yaml # optional, uses default config if not provided and a wandb run isn't specified
+
+# Model Options
+model_size: base # default FlexBert model config to use
+
+# Hugging Face Download
+hub_repo: {org}/{repo}
+hub_token: {your_hf_token} # needed if downloading from a private/gated repo and `huggingface-cli login` wasn't used
+hub_files: {checkpoint_files} # optional limit to only download specific repo files or directories
+
+# Evaluation Tasks
+tasks:
+    - mnli
+    - sst2
+    - cola
+    - mrpc
+
+# Task Settings
+parallel: false
+seeds:
+    - 42
+    - 314
+    - 1234
+
+# Weights & Biases (logging & config downloading)
+wandb_run: ${your_pretraining_run_name} # these two options are only needed to download a non-default pretraining config
+wandb_project: ${your_pretraining_wandb_project}
+
+track_run: true # set these options to track the evaluation run in W&B
+wandb_entity: ${your_wandb_entity}
+track_run_project: ${your_evaluation_wandb_project}
+
+# GPU Options (which GPUs to use)
+gpu_ids:
+    - 0
+    - 1
+```
+
+Replace the placeholders with your specific values:
+
+- `{parallel}`: Set to `true` to run evaluations on one checkpoint in parallel. Note that this can randomly error out.
+- `{training_config.yaml}`: Path to your optional training configuration file if not using the default config.
+- `{org}/{repo}`: Hugging Face Hub repository ID (e.g., `your_org/your_repo` where the Composer checkpoints are stored).
+- `{your_hf_token}`: Your Hugging Face authentication token.
+- `your_wandb_entity`: Your Weights & Biases entity (username or team name).
+- `your_wandb_run_name`: The name of the Weights & Biases run containing the training configuration.
+- `your_evaluation_wandb_project`: The name of your Weights & Biases evaluation project to log the eval runs to.
+
+To run the script, use:
+
+```bash
+python run_evals.py --config run_evals_args.yaml
+```
+
+This will:
+
+- **Download checkpoints** from the specified Hugging Face repository (if `hub_repo` is provided).
+- **Generate evaluation configurations** for the specified tasks.
+- **Run evaluations** in parallel on the specified GPUs.
+
+### Option 2: Run Evaluation for a Specific Checkpoint using `generate_eval_config.py` and `eval.py`
+
+If you want to run evaluation for a specific checkpoint, you can use `generate_eval_config.py` to generate the evaluation configuration, and then run `eval.py`.
+
+#### Step 1: Generate the Evaluation Configuration
+
+```bash
+python generate_eval_config.py \
+  --checkpoint path/to/checkpoint \
+  --output-dir configs \
+  --model-size base \
+  --rope-theta 10000.0 \
+  --tasks mnli sst2 \
+  --wandb-entity ${your_wandb_entity} \
+  --wandb-project ${your_wandb_project} \
+  --wandb-run ${your_wandb_run_name} \
+  --track-run \
+  --track-run-project ${your_wandb_project}
+```
+
+Replace the placeholders accordingly:
+
+- `path/to/checkpoint`: Path to your specific checkpoint file or directory.
+- `configs`: Directory where the generated configuration file will be saved.
+- `mnli sst2`: List of tasks you want to evaluate.
+- `your_wandb_entity`, `your_wandb_project`, `your_wandb_run_name`: Your Weights & Biases details.
+
+This command will generate a configuration YAML file in the `configs` directory.
+
+#### Step 2: Run the Evaluation
+
+```bash
+python eval.py configs/generated_config.yaml
+```
+
+Replace `configs/generated_config.yaml` with the actual path to the generated configuration file.
+
+## Tips & Tricks
+
+1. **Building Evaluation Configurations for Single Tasks**
+
+   If you want to build a fine-tuning evaluation configuration YAML for a single task, you can use `generate_eval_config.py` with the `--tasks` option to specify the task(s).
+
+   For example:
+
+       python generate_eval_config.py \
+         --checkpoint path/to/checkpoint \
+         --output-dir configs \
+         --tasks mnli
+
+   Then, run the evaluation with `eval.py`:
+
+       python eval.py configs/generated_config.yaml
+
+2. **Monitoring GPU Usage**
+
+   Install `nvitop` to monitor GPU usage more effectively:
+
+       pip install nvitop
+       nvitop
+
+   This provides a more useful and user-friendly interface than `nvidia-smi`.
+
+## Additional Notes
+
+- **Parallel Evaluations**: When running evaluations in parallel, you can specify the GPU IDs to use with the `--gpu-ids` option or in the YAML configuration file.
+
+- **Configurable Options**: Both `run_evals.py` and `generate_eval_config.py` support various options to fine-tune the evaluation process. Use `--help` with these scripts to see all available options.
+
+      python run_evals.py --help
+      python generate_eval_config.py --help
+
+- **Using Configuration Files**: You can use YAML configuration files to specify arguments for the scripts, which can simplify command-line usage. Command-line options will override options specified in the configuration file.
+
+- **Hugging Face Hub Integration**: If you have your checkpoints stored in a private repository on Hugging Face Hub, ensure you have access by logging in via `huggingface-cli login` and providing your token.
+
+- **Loading Training Configurations**: If you have a training configuration file or a Weights & Biases run containing the training configuration, you can provide it using the `--train-config` or `--wandb-run` options to ensure consistency between training and evaluation.
+
+## Optional: Manual Checkpoint Download
+
+If you prefer to manually download checkpoints instead of using the automatic download feature in `run_evals.py`, you can use `huggingface-cli`:
+
+Replace `{org}`, `{repo}`, and `{checkpoint_folder}` with the appropriate organization, repository, and checkpoint folder names.
+
+### Example Command:
+
+```bash
+huggingface-cli download {org}/{repo} --include "{checkpoint_folder}/*" --local-dir checkpoints
+huggingface-cli download {org}/{repo} --include "{checkpoint_folder}" --local-dir checkpoints
+```
+
+### Notes:
+- If there are multiple Composer checkpoints, use the latest one (usually starts with "ep-1").
+- This manual download is optional since `run_evals.py` can automatically download checkpoints when you specify the `hub_repo`, `hub_folder`, and `hub_token` arguments.
+
+---
+
+This README reflects the latest updates in the scripts `run_evals.py` and `generate_eval_config.py`. Be sure to review the scripts and their help messages for the most current information.
+
+### Getting Started with ModernBERT & GLUE
+
+*Source: examples/finetune_modernbert_on_glue.ipynb | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/examples/finetune_modernbert_on_glue.ipynb*
+
+# Getting Started with ModernBERT & GLUE
+
+Created by: [Wayde Gilliam](https://twitter.com/waydegilliam)
+
+## Encoders Strike Back!
+
+Like many, I have fond memories of finetuning deberta, roberta and bert models for a number of Kaggle comps and real-world problems (e.g., NER, sentiment analysis, etc.).  Encoder models were "the thing" back in the day and continue to be the primary workhorse for many ML pipelines today though they have been eclipsed by recent advancements in LLMs which typically are based on decoder-only architectures. Long have we awaited a return to an encoder model for the modern world. With ModernBERT, that wait is over! ModernBERT is a new encoder-only model that incorporates the latest features in making neural networks more efficient, faster, and better at handling tasks that encoder models have long excelled at such at text classification.  In addition, ModernBERT allows us to break out of that max 512 token limit with their long context capabilities which give us 8,192 tokens to play with.
+
+In this tutorial, we'll go through the steps of fine-tuning ModernBERT for one of the GLUE tasks, MRPC.  We'll cover some key settings required to use it with the HuggingFace trainer and include with some recommended hyperparameters that have served us well in fine-tuning ModernBERT for GLUE.  We'll also see how to use the model for inference and cleanup the model from the GPU to free up resources.
+
+As an aside, I'm running all this code on a single 3090 with plenty of GPU memory to spare.
+
+Though not strictly necessary, **ModernBERT trains better with FlashAttention!**. Training and inference will be much faster with it installed. See below:
+
+ModernBERT is built on top of FlashAttention which is a highly optimized implementation of the attention mechanism that is faster and more memory efficient than the standard implementation.  ***The beauty of this is all you need to do is install it for ModernBERT to work with it!***  Here's how ...
+
+For NVIDIA GPUs with compute capability 8.0+ (Ampere/Ada/Hopper architecture - A100, A6000, RTX 3090, RTX 4090, H100 etc):
+```python
+pip install flash-attn --no-build-isolation
+```
+
+For older NVIDIA GPUs (pre-Ampere):
+```python
+pip install flash-attn --no-deps
+```
+
+
+```python
+#! pip install transformers datasets accelerate scikit-learn -Uqq
+
+```
+
+```python
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
+```
+
+```python
+import numpy as np
+import pandas as pd
+import torch
+from functools import partial
+import gc
+
+from datasets import load_dataset
+from sklearn.metrics import f1_score
+from transformers import (
+    AutoTokenizer,
+    AutoModelForSequenceClassification,
+    DataCollatorWithPadding,
+    TrainingArguments,
+    Trainer,
+    TrainerCallback,
+)
+
+from sklearn.metrics import matthews_corrcoef, accuracy_score, f1_score
+from scipy.stats import pearsonr, spearmanr
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+```
+
+**Outputs:**
+/home/wgilliam/mambaforge/envs/hf_tutorials/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/ … (truncated)
+
+## What is GLUE?
+
+The [General Language Understanding Evaluation (GLUE) benchmark](https://gluebenchmark.com/) is a collection of nine diverse natural language understanding tasks designed to evaluate and compare the performance of NLP models across various language comprehension challenges. By providing a standardized framework, GLUE facilitates the development of models that generalize well across multiple tasks, promoting advancements in creating robust and versatile language understanding systems. 
+
+Let's put this all these tasks in a dictionary along with some other helpful metadata about each one that might prove useful to iteratting over all of them.
+
+
+
+```python
+glue_tasks = {
+    "cola": {
+        "abbr": "CoLA",
+        "name": "Corpus of Linguistic Acceptability",
+        "description": "Predict whether a sequence is a grammatical English sentence",
+        "task_type": "Single-Sentence Task",
+        "domain": "Misc.",
+        "size": "8.5k",
+        "metrics": "Matthews corr.",
+        "dataset_names": {"train": "train", "valid": "validation", "test": "test"},
+        "inputs": ["sentence"],
+        "target": "label",
+        "metric_funcs": [matthews_corrcoef],
+        "n_labels": 2,
+    },
+    "sst2": {
+        "abbr": "SST-2",
+        "name": "Stanford Sentiment Treebank",
+        "description": "Predict the sentiment of a given sentence",
+        "task_type": "Single-Sentence Task",
+        "domain": "Movie reviews",
+        "size": "67k",
+        "metrics": "Accuracy",
+        "dataset_names": {"train": "train", "valid": "validation", "test": "test"},
+        "inputs": ["sentence"],
+        "target": "label",
+        "metric_funcs": [accuracy_score],
+        "n_labels": 2,
+    },
+    "mrpc": {
+        "abbr": "MRPC",
+        "name": "Microsoft Research Paraphrase Corpus",
+        "description": "Predict whether two sentences are semantically equivalent",
+        "task_type": "Similarity and Paraphrase Tasks",
+        "domain": "News",
+        "size": "3.7k",
+        "metrics": "F1/Accuracy",
+        "dataset_names": {"train": "train", "valid": "validation", "test": "test"},
+        "inputs": ["sentence1", "sentence2"],
+        "target": "label",
+        "metric_funcs": [accuracy_score, f1_score],
+        "n_labels": 2,
+    },
+    "stsb": {
+        "abbr": "SST-B",
+        "name": "Semantic Textual Similarity Benchmark",
+        "description": "Predict the similarity score for two sentences on a scale from 1 to 5",
+        "task_type": "Similarity and Paraphrase Tasks",
+        "domain": "Misc.",
+        "size": "7k",
+        "metrics": "Pearson/Spearman corr.",
+        "dataset_names": {"train": "train", "valid": "validation", "test": "test"},
+        "inputs": ["sentence1", "sentence2"],
+        "target": "label",
+        "metric_funcs": [pearsonr, spearmanr],
+        "n_labels": 1,
+    },
+    "qqp": {
+        "abbr": "QQP",
+        "name": "Quora question pair",
+        "description": "Predict if two questions are a paraphrase of one another",
+        "task_type": "Similarity and Paraphrase Tasks",
+        "domain": "Social QA questions",
+        "size": "364k",
+        "metrics": "F1/Accuracy",
+        "dataset_names": {"train": "train", "valid": "validation", "test": "test"},
+        "inputs": ["question1", "question2"],
+        "target": "label",
+        "metric_funcs": [f1_score, accuracy_score],
+        "n_labels": 2,
+    },
+    "mnli-matched": {
+        "abbr": "MNLI",
+        "name": "Mulit-Genre Natural Language Inference",
+        "description": "Predict whether the premise entails, contradicts or is neutral to the hypothesis",
+        "task_type": "Inference Tasks",
+        "domain": "Misc.",
+        "size": "393k",
+        "metrics": "Accuracy",
+        "dataset_names": {"train": "train", "valid": "validation_matched", "test": "test_matched"},
+        "inputs": ["premise", "hypothesis"],
+        "target": "label",
+        "metric_funcs": [accuracy_score],
+        "n_labels": 3,
+    },
+    "mnli-mismatched": {
+        "abbr": "MNLI",
+        "name": "Mulit-Genre Natural Language Inference",
+        "description": "Predict whether the premise entails, contradicts or is neutral to the hypothesis",
+        "task_type": "Inference Tasks",
+        "domain": "Misc.",
+        "size": "393k",
+        "metrics": "Accuracy",
+        "dataset_names": {"train": "train", "valid": "validation_mismatched", "test": "test_mismatched"},
+        "inputs": ["premise", "hypothesis"],
+        "target": "label",
+        "metric_funcs": [accuracy_score],
+        "n_labels": 3,
+    },
+    "qnli": {
+        "abbr": "QNLI",
+        "name": "Stanford Question Answering Dataset",
+        "description": "Predict whether the context sentence contains the answer to the question",
+        "task_type": "Inference Tasks",
+        "domain": "Wikipedia",
+        "size": "105k",
+        "metrics": "Accuracy",
+        "dataset_names": {"train": "train", "valid": "validation", "test": "test"},
+        "inputs": ["question", "sentence"],
+        "target": "label",
+        "metric_funcs": [accuracy_score],
+        "n_labels": 2,
+    },
+    "rte": {
+        "abbr": "RTE",
+        "name": "Recognize Textual Entailment",
+        "description": "Predict whether one sentece entails another",
+        "task_type": "Inference Tasks",
+        "domain": "News, Wikipedia",
+        "size": "2.5k",
+        "metrics": "Accuracy",
+        "dataset_names": {"train": "train", "valid": "validation", "test": "test"},
+        "inputs": ["sentence1", "sentence2"],
+        "target": "label",
+        "metric_funcs": [accuracy_score],
+        "n_labels": 2,
+    },
+    "wnli": {
+        "abbr": "WNLI",
+        "name": "Winograd Schema Challenge",
+        "description": "Predict if the sentence with the pronoun substituted is entailed by the original sentence",
+        "task_type": "Inference Tasks",
+        "domain": "Fiction books",
+        "size": "634",
+        "metrics": "Accuracy",
+        "dataset_names": {"train": "train", "valid": "validation", "test": "test"},
+        "inputs": ["sentence1", "sentence2"],
+        "target": "label",
+        "metric_funcs": [accuracy_score],
+        "n_labels": 2,
+    },
+}
+
+# for v in glue_tasks.values(): print(v)
+glue_tasks.values()
+
+glue_df = pd.DataFrame(glue_tasks.values(), columns=["abbr", "name", "task_type", "description", "size", "metrics"])
+glue_df.columns = glue_df.columns.str.replace("_", " ").str.capitalize()
+display(glue_df.style.set_properties(**{"text-align": "left"}))
+
+```
+
+**Outputs:**
+<pandas.io.formats.style.Styler at 0x7f7fdb367fd0>
+
+## Let's Fine-Tune ModernBERT for MRPC
+
+### Configuration
+
+ModernBERT currently comes in two flavors, base and large. To keep things lean and mean, we'll use the "answerdotai/ModernBERT-base" checkpoint for this example.
+
+```python
+task = "mrpc"
+task_meta = glue_tasks[task]
+train_ds_name = task_meta["dataset_names"]["train"]
+valid_ds_name = task_meta["dataset_names"]["valid"]
+test_ds_name = task_meta["dataset_names"]["test"]
+
+task_inputs = task_meta["inputs"]
+task_target = task_meta["target"]
+n_labels = task_meta["n_labels"]
+task_metrics = task_meta["metric_funcs"]
+
+checkpoint = "answerdotai/ModernBERT-base"  # "answerdotai/ModernBERT-base", "answerdotai/ModernBERT-large"
+```
+
+### Data
+
+We'll use the `Datasets` library to load the data.  As its always recommended to "look at your data" before we get training, we'll also print out a single example to see what we're working with as well as the features of the dataset.
+
+```python
+raw_datasets = load_dataset("glue", task)
+
+print(f"{raw_datasets}\n")
+print(f"{raw_datasets[train_ds_name][0]}\n")
+print(f"{raw_datasets[train_ds_name].features}\n")
+```
+
+**Outputs:**
+DatasetDict({
+    train: Dataset({
+        features: ['sentence1', 'sentence2', 'label', 'idx'],
+        num_rows: 3668
+    })
+    validation: Dataset({
+        features: ['sentence1', 'sentence2', 'l … (truncated)
+
+We can use the following dictionaries when building our model with `AutoModelForSequenceClassification` to map between the label ids and names.
+
+```python
+def get_label_maps(raw_datasets, train_ds_name):
+    labels = raw_datasets[train_ds_name].features["label"]
+
+    id2label = {idx: name.upper() for idx, name in enumerate(labels.names)} if hasattr(labels, "names") else None
+    label2id = {name.upper(): idx for idx, name in enumerate(labels.names)} if hasattr(labels, "names") else None
+
+    return id2label, label2id
+```
+
+```python
+id2label, label2id = get_label_maps(raw_datasets, train_ds_name)
+
+print(f"{id2label}")
+print(f"{label2id}")
+
+```
+
+**Outputs:**
+{0: 'NOT_EQUIVALENT', 1: 'EQUIVALENT'}
+{'NOT_EQUIVALENT': 0, 'EQUIVALENT': 1}
+
+
+MRPC is a sentence-pair classification task where we're given two sentences and asked to predict whether they are paraphrases of one another.  The dataset is split into train, validation and test sets. We'll need to keep all this in mind when we set up tokenization next with `AutoTokenizer`.
+
+### Tokenizer
+
+Next we define our Tokenizer and a preprocess function to create the input_ids, attention_mask, and token_type_ids the model nees to train.  For this example, including `truncation=True` is enough as we'll rely on our data collation function below to put our batches into the correct shape.
+
+```python
+hf_tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+```
+
+```python
+task_inputs
+```
+
+**Outputs:**
+['sentence1', 'sentence2']
+
+```python
+def preprocess_function(examples, task_inputs):
+    inps = [examples[inp] for inp in task_inputs]
+    tokenized = hf_tokenizer(*inps, truncation=True)
+    return tokenized
+```
+
+```python
+tokenized_datasets = raw_datasets.map(partial(preprocess_function, task_inputs=task_inputs), batched=True)
+
+print(f"{tokenized_datasets}\n")
+print(f"{tokenized_datasets[train_ds_name][0]}\n")
+print(f"{tokenized_datasets[train_ds_name].features}\n")
+```
+
+**Outputs:**
+DatasetDict({
+    train: Dataset({
+        features: ['sentence1', 'sentence2', 'label', 'idx', 'input_ids', 'attention_mask'],
+        num_rows: 3668
+    })
+    validation: Dataset({
+        features … (truncated)
+
+It's always good to see what the tokenizer is doing to our data to ensure the special tokens are where we expect them to be!
+
+```python
+hf_tokenizer.decode(tokenized_datasets[train_ds_name][0]["input_ids"])
+```
+
+**Outputs:**
+'[CLS]Amrozi accused his brother, whom he called " the witness ", of deliberately distorting his evidence.[SEP]Referring to him as only " the witness ", Amrozi accused his brother of deliberately dist … (truncated)
+
+### Metrics
+
+We'll use our `task_metrics` to compute the metrics for our model.  We'll return a dictionary of the metric name and value for each metric we're interested in.
+
+```python
+def compute_metrics(eval_pred, task_metrics):
+    predictions, labels = eval_pred
+
+    metrics_d = {}
+    for metric_func in task_metrics:
+        metric_name = metric_func.__name__
+        if metric_name in ["pearsonr", "spearmanr"]:
+            score = metric_func(labels, np.squeeze(predictions))
+        else:
+            score = metric_func(np.argmax(predictions, axis=-1), labels)
+
+        if isinstance(score, tuple):
+            metrics_d[metric_func.__name__] = score[0]
+        else:
+            metrics_d[metric_func.__name__] = score
+
+    return metrics_d
+```
+
+### Train
+
+This is where the fun begins! Here we setup a few hyperparameters than have proven to work well for us in fine-tuning ModernBERT-base on GLUE tasks.  We'll also setup our model, data collator, and training arguments.
+
+```python
+train_bsz, val_bsz = 32, 32
+lr = 8e-5
+betas = (0.9, 0.98)
+n_epochs = 2
+eps = 1e-6
+wd = 8e-6
+```
+
+When configuring `AutoModelForSequenceClassification`, two settings are critical to get things working with the HuggingFace `Trainer`. One is the `num_labels` we're expecting and the other is to set `compile=False` to avoid using the `torch.compile` function which is not supported in Transformers at the time of this writing.
+
+```python
+hf_model = AutoModelForSequenceClassification.from_pretrained(
+    checkpoint, num_labels=n_labels, id2label=id2label, label2id=label2id, compile=False
+)
+
+```
+
+**Outputs:**
+Some weights of ModernBertForSequenceClassification were not initialized from the model checkpoint at answerdotai/ModernBERT-base and are newly initialized: ['classifier.bias', 'classifier.weight']
+Yo … (truncated)
+
+Collation is easy for GLUE tasks as we can use the `DataCollatorWithPadding` class to pad our input_ids and attention_mask to the max length in the batch.
+
+**Note**: If you have installed Flash Attention, ModernBERT removes the padding internally, which makes it the fastest version. SPDA and Eager mode will be slower.
+
+```python
+hf_data_collator = DataCollatorWithPadding(tokenizer=hf_tokenizer)
+```
+
+With all the pieces in place, we can now setup our `TrainingArguments` and `Trainer` and get to training! Lots of customization is possible here and it is recommended to play with different schedulers and the hyperparameters we've started y'all off with above to improve results.
+
+```python
+training_args = TrainingArguments(
+    output_dir=f"aai_ModernBERT_{task}_ft",
+    learning_rate=lr,
+    per_device_train_batch_size=train_bsz,
+    per_device_eval_batch_size=val_bsz,
+    num_train_epochs=n_epochs,
+    lr_scheduler_type="linear",
+    optim="adamw_torch",
+    adam_beta1=betas[0],
+    adam_beta2=betas[1],
+    adam_epsilon=eps,
+    logging_strategy="epoch",
+    eval_strategy="epoch",
+    save_strategy="epoch",
+    load_best_model_at_end=True,
+    bf16=True,
+    bf16_full_eval=True,
+    push_to_hub=False,
+)
+```
+
+We define `TrainerCallback` so that we can capture all the training and evaluation logs and store them for later analysis. By default, the `Trainer` class will only keep the latest logs.
+
+
+```python
+class MetricsCallback(TrainerCallback):
+    def __init__(self):
+        self.training_history = {"train": [], "eval": []}
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        if logs is not None:
+            if "loss" in logs:  # Training logs
+                self.training_history["train"].append(logs)
+            elif "eval_loss" in logs:  # Evaluation logs
+                self.training_history["eval"].append(logs)
+```
+
+```python
+trainer = Trainer(
+    model=hf_model,
+    args=training_args,
+    train_dataset=tokenized_datasets[train_ds_name],
+    eval_dataset=tokenized_datasets[valid_ds_name],
+    processing_class=hf_tokenizer,
+    data_collator=hf_data_collator,
+    compute_metrics=partial(compute_metrics, task_metrics=task_metrics),
+)
+
+metrics_callback = MetricsCallback()
+trainer.add_callback(metrics_callback)
+
+trainer.train()
+
+train_history_df = pd.DataFrame(metrics_callback.training_history["train"])
+train_history_df = train_history_df.add_prefix("train_")
+eval_history_df = pd.DataFrame(metrics_callback.training_history["eval"])
+train_res_df = pd.concat([train_history_df, eval_history_df], axis=1)
+
+args_df = pd.DataFrame([training_args.to_dict()])
+
+display(train_res_df)
+display(args_df)
+```
+
+**Outputs:**
+<IPython.core.display.HTML object>
+   train_loss  train_grad_norm  train_learning_rate  train_epoch  eval_loss  \
+0      0.6060         3.989608              0.00004          1.0   0.550361   
+1      0.4148         5.573590             … (truncated)
+               output_dir  overwrite_output_dir  do_train  do_eval  \
+0  aai_modernbert_mrpc_ft                 False     False     True   
+
+   do_predict eval_strategy  prediction_loss_only  \
+0      … (truncated)
+
+### Inference
+
+There'a number of options for inference within the HuggingFace ecosystem.  We'll go a bit old school here and just use the `forward` method of the model. We're not uploading this model to the hub, but this is an easy enough task for you to try out on your own should you like to share your ModernBERT finetune :).
+
+```python
+ex_1 = "The quick brown fox jumps over the lazy dog."
+ex_2 = "I love lamp!"
+
+inf_inputs = hf_tokenizer(ex_1, ex_2, return_tensors="pt")
+inf_inputs = inf_inputs.to("cuda")
+
+with torch.no_grad():
+    logits = hf_model(**inf_inputs).logits
+
+print(logits)
+print(f"Prediction: {hf_model.config.id2label[logits.argmax().item()]}")
+
+```
+
+**Outputs:**
+tensor([[ 1.2422, -1.5234]], device='cuda:0')
+Prediction: NOT_EQUIVALENT
+
+
+### Cleanup
+
+```python
+def cleanup(things_to_delete: list | None = None):
+    if things_to_delete is not None:
+        for thing in things_to_delete:
+            if thing is not None:
+                del thing
+
+    gc.collect()
+    torch.cuda.empty_cache()
+
+```
+
+```python
+cleanup(things_to_delete=[hf_model, trainer])
+```
+
+## Train all the GLUE!
+
+If you got this far you're probably wondering why I put together that dictionary of GLUE tasks if all we're doing is finetuning a single model. The answer is basically that I'm a good and lazy programmer who would like to easily run hyperparameter sweeps and/or fine-tunes on all the GLUE tasks. So ... let's do that!
+
+We'll run with the training hyperparameters specified above and I leave it to the reader to improve the method below to be able to override these values should folks be looking for something to do :)
+
+```python
+def finetune_glue_task(
+    task: str, checkpoint: str = "answerdotai/ModernBERT-base", train_subset: int | None = None, do_cleanup: bool = True
+):  # 1. Load the task metadata
+    task_meta = glue_tasks[task]
+    train_ds_name = task_meta["dataset_names"]["train"]
+    valid_ds_name = task_meta["dataset_names"]["valid"]
+
+    task_inputs = task_meta["inputs"]
+    n_labels = task_meta["n_labels"]
+    task_metrics = task_meta["metric_funcs"]
+
+    # 2. Load the dataset
+    raw_datasets = load_dataset("glue", task.split("-")[0] if "-" in task else task)
+    if train_subset is not None and len(raw_datasets["train"]) > train_subset:
+        raw_datasets["train"] = raw_datasets["train"].shuffle(seed=42).select(range(train_subset))
+
+    id2label, label2id = get_label_maps(raw_datasets, train_ds_name)
+
+    # 3. Load the tokenizer
+    hf_tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+    tokenized_datasets = raw_datasets.map(partial(preprocess_function, task_inputs=task_inputs), batched=True)
+
+    # 4. Define the compute metrics function
+    task_compute_metrics = partial(compute_metrics, task_metrics=task_metrics)
+
+    # 5. Load the model and data collator
+    model_additional_kwargs = {"id2label": id2label, "label2id": label2id} if id2label and label2id else {}
+    hf_model = AutoModelForSequenceClassification.from_pretrained(
+        checkpoint, num_labels=n_labels, compile=False, **model_additional_kwargs
+    )
+
+    hf_data_collator = DataCollatorWithPadding(tokenizer=hf_tokenizer)
+
+    # 6. Define the training arguments and trainer
+    training_args = TrainingArguments(
+        output_dir=f"aai_ModernBERT_{task}_ft",
+        learning_rate=lr,
+        per_device_train_batch_size=train_bsz,
+        per_device_eval_batch_size=val_bsz,
+        num_train_epochs=n_epochs,
+        lr_scheduler_type="linear",
+        optim="adamw_torch",
+        adam_beta1=betas[0],
+        adam_beta2=betas[1],
+        adam_epsilon=eps,
+        logging_strategy="epoch",
+        eval_strategy="epoch",
+        save_strategy="epoch",
+        load_best_model_at_end=True,
+        bf16=True,
+        bf16_full_eval=True,
+        push_to_hub=False,
+    )
+
+    trainer = Trainer(
+        model=hf_model,
+        args=training_args,
+        train_dataset=tokenized_datasets[train_ds_name],
+        eval_dataset=tokenized_datasets[valid_ds_name],
+        processing_class=hf_tokenizer,
+        data_collator=hf_data_collator,
+        compute_metrics=task_compute_metrics,
+    )
+
+    # Add callback to trainer
+    metrics_callback = MetricsCallback()
+    trainer.add_callback(metrics_callback)
+
+    trainer.train()
+
+    # 7. Get the training results and hyperparameters
+    train_history_df = pd.DataFrame(metrics_callback.training_history["train"])
+    train_history_df = train_history_df.add_prefix("train_")
+    eval_history_df = pd.DataFrame(metrics_callback.training_history["eval"])
+    train_res_df = pd.concat([train_history_df, eval_history_df], axis=1)
+
+    args_df = pd.DataFrame([training_args.to_dict()])
+
+    # 8. Cleanup (optional)
+    if do_cleanup:
+        cleanup(things_to_delete=[trainer, hf_model, hf_tokenizer, tokenized_datasets, raw_datasets])
+
+    return train_res_df, args_df, hf_model, hf_tokenizer
+```
+
+This helpful function encapsulates all the steps we've been through above and allows us to easily run a fine-tune on a single task. In addition to the HuggingFace objects, it returns the training results, training hyperparameters (all potentially helpful for performing sweeps and or documenting your results).
+
+Let's give it a go on both MRPC and CoLA.
+
+
+```python
+train_res_df, args_df, hf_model, hf_tokenizer = finetune_glue_task(
+    "mrpc", checkpoint="answerdotai/ModernBERT-base", do_cleanup=True
+)
+
+display(train_res_df)
+display(args_df)
+
+```
+
+**Outputs:**
+Some weights of ModernBertForSequenceClassification were not initialized from the model checkpoint at answerdotai/ModernBERT-base and are newly initialized: ['classifier.bias', 'classifier.weight']
+Yo … (truncated)
+<IPython.core.display.HTML object>
+   train_loss  train_grad_norm  train_learning_rate  train_epoch  eval_loss  \
+0      0.5637         3.246023              0.00004          1.0   0.414041   
+1      0.3267         5.002162             … (truncated)
+               output_dir  overwrite_output_dir  do_train  do_eval  \
+0  aai_modernbert_mrpc_ft                 False     False     True   
+
+   do_predict eval_strategy  prediction_loss_only  \
+0      … (truncated)
+
+```python
+train_res_df, args_df, hf_model, hf_tokenizer = finetune_glue_task(
+    "cola", checkpoint="answerdotai/ModernBERT-base", do_cleanup=True
+)
+
+display(train_res_df)
+display(args_df)
+```
+
+**Outputs:**
+Some weights of ModernBertForSequenceClassification were not initialized from the model checkpoint at answerdotai/ModernBERT-base and are newly initialized: ['classifier.bias', 'classifier.weight']
+Yo … (truncated)
+<IPython.core.display.HTML object>
+   train_loss  train_grad_norm  train_learning_rate  train_epoch  eval_loss  \
+0      0.6151         8.100638              0.00004          1.0   0.525902   
+1      0.4066        11.885351             … (truncated)
+               output_dir  overwrite_output_dir  do_train  do_eval  \
+0  aai_modernbert_cola_ft                 False     False     True   
+
+   do_predict eval_strategy  prediction_loss_only  \
+0      … (truncated)
+
+**Send it!**
+
+Grab yourself a good cup of coffee, take your pups out for a walk, or whatever as your GPU purrs along while finetuning all things GLUE!
+
+Note the `train_subset` parameter which allows us to train on a subset of the dataset. This is helpful for quickly testing the model on a small dataset to make sure all the bits work as expected.  Feel free to set it to `None` for a full send!
+
+```python
+for task in glue_tasks.keys():
+    print(f"----- Finetuning {task} -----")
+    train_res_df, args_df, hf_model, hf_tokenizer = finetune_glue_task(
+        task, checkpoint="answerdotai/ModernBERT-base", train_subset=1_000, do_cleanup=True
+    )
+
+    print(":: Results ::")
+    display(train_res_df)
+    display(args_df)
+
+```
+
+**Outputs:**
+----- Finetuning cola -----
+
+Some weights of ModernBertForSequenceClassification were not initialized from the model checkpoint at answerdotai/ModernBERT-base and are newly initialized: ['classifier.bias', 'classifier.weight']
+Yo … (truncated)
+<IPython.core.display.HTML object>
+:: Results ::
+
+   train_loss  train_grad_norm  train_learning_rate  train_epoch  eval_loss  \
+0      0.6078        40.798195              0.00004          1.0   0.604273   
+1      0.4050        12.892710             … (truncated)
+               output_dir  overwrite_output_dir  do_train  do_eval  \
+0  aai_modernbert_cola_ft                 False     False     True   
+
+   do_predict eval_strategy  prediction_loss_only  \
+0      … (truncated)
+----- Finetuning sst2 -----
+
+Some weights of ModernBertForSequenceClassification were not initialized from the model checkpoint at answerdotai/ModernBERT-base and are newly initialized: ['classifier.bias', 'classifier.weight']
+Yo … (truncated)
+<IPython.core.display.HTML object>
+:: Results ::
+
+   train_loss  train_grad_norm  train_learning_rate  train_epoch  eval_loss  \
+0      0.5692        13.669675              0.00004          1.0   0.393088   
+1      0.2314         5.367749             … (truncated)
+               output_dir  overwrite_output_dir  do_train  do_eval  \
+0  aai_modernbert_sst2_ft                 False     False     True   
+
+   do_predict eval_strategy  prediction_loss_only  \
+0      … (truncated)
+----- Finetuning mrpc -----
+
+Some weights of ModernBertForSequenceClassification were not initialized from the model checkpoint at answerdotai/ModernBERT-base and are newly initialized: ['classifier.bias', 'classifier.weight']
+Yo … (truncated)
+<IPython.core.display.HTML object>
+:: Results ::
+
+   train_loss  train_grad_norm  train_learning_rate  train_epoch  eval_loss  \
+0      0.6376        13.762523              0.00004          1.0   0.508369   
+1      0.4279        10.919047             … (truncated)
+               output_dir  overwrite_output_dir  do_train  do_eval  \
+0  aai_modernbert_mrpc_ft                 False     False     True   
+
+   do_predict eval_strategy  prediction_loss_only  \
+0      … (truncated)
+----- Finetuning stsb -----
+
+Some weights of ModernBertForSequenceClassification were not initialized from the model checkpoint at answerdotai/ModernBERT-base and are newly initialized: ['classifier.bias', 'classifier.weight']
+Yo … (truncated)
+<IPython.core.display.HTML object>
+:: Results ::
+
+   train_loss  train_grad_norm  train_learning_rate  train_epoch  eval_loss  \
+0      2.4414        43.095963              0.00004          1.0   1.323127   
+1      0.7436        22.308477             … (truncated)
+               output_dir  overwrite_output_dir  do_train  do_eval  \
+0  aai_modernbert_stsb_ft                 False     False     True   
+
+   do_predict eval_strategy  prediction_loss_only  \
+0      … (truncated)
+----- Finetuning qqp -----
+
+Map:   0%|          | 0/390965 [00:00<?, ? examples/s]Asking to truncate to max_length but no maximum length is provided and the model has no predefined maximum length. Default to no truncation.
+Map:  … (truncated)
+<IPython.core.display.HTML object>
+:: Results ::
+
+   train_loss  train_grad_norm  train_learning_rate  train_epoch  eval_loss  \
+0      0.6074          8.23535              0.00004          1.0   0.499629   
+1      0.4850         36.08305             … (truncated)
+              output_dir  overwrite_output_dir  do_train  do_eval  do_predict  \
+0  aai_modernbert_qqp_ft                 False     False     True       False   
+
+  eval_strategy  prediction_loss_only … (truncated)
+----- Finetuning mnli-matched -----
+
+Map:   0%|          | 0/9847 [00:00<?, ? examples/s]Asking to truncate to max_length but no maximum length is provided and the model has no predefined maximum length. Default to no truncation.
+Map: 10 … (truncated)
+<IPython.core.display.HTML object>
+:: Results ::
+
+   train_loss  train_grad_norm  train_learning_rate  train_epoch  eval_loss  \
+0      1.1471         7.386725              0.00004          1.0   1.068802   
+1      0.9358        13.833081             … (truncated)
+                       output_dir  overwrite_output_dir  do_train  do_eval  \
+0  aai_modernbert_mnli-matched_ft                 False     False     True   
+
+   do_predict eval_strategy  prediction_los … (truncated)
+----- Finetuning mnli-mismatched -----
+
+Some weights of ModernBertForSequenceClassification were not initialized from the model checkpoint at answerdotai/ModernBERT-base and are newly initialized: ['classifier.bias', 'classifier.weight']
+Yo … (truncated)
+<IPython.core.display.HTML object>
+:: Results ::
+
+   train_loss  train_grad_norm  train_learning_rate  train_epoch  eval_loss  \
+0      1.1471         7.386725              0.00004          1.0   1.055565   
+1      0.9355        12.523493             … (truncated)
+                          output_dir  overwrite_output_dir  do_train  do_eval  \
+0  aai_modernbert_mnli-mismatched_ft                 False     False     True   
+
+   do_predict eval_strategy  predicti … (truncated)
+----- Finetuning qnli -----
+
+Map:   0%|          | 0/5463 [00:00<?, ? examples/s]Asking to truncate to max_length but no maximum length is provided and the model has no predefined maximum length. Default to no truncation.
+Map: 10 … (truncated)
+<IPython.core.display.HTML object>
+:: Results ::
+
+   train_loss  train_grad_norm  train_learning_rate  train_epoch  eval_loss  \
+0      0.6957        69.748146              0.00004          1.0   0.526290   
+1      0.4177        16.136906             … (truncated)
+               output_dir  overwrite_output_dir  do_train  do_eval  \
+0  aai_modernbert_qnli_ft                 False     False     True   
+
+   do_predict eval_strategy  prediction_loss_only  \
+0      … (truncated)
+----- Finetuning rte -----
+
+Map:   0%|          | 0/3000 [00:00<?, ? examples/s]Asking to truncate to max_length but no maximum length is provided and the model has no predefined maximum length. Default to no truncation.
+Map: 10 … (truncated)
+<IPython.core.display.HTML object>
+:: Results ::
+
+   train_loss  train_grad_norm  train_learning_rate  train_epoch  eval_loss  \
+0      0.7551         5.044735              0.00004          1.0   0.707934   
+1      0.6556         6.338690             … (truncated)
+              output_dir  overwrite_output_dir  do_train  do_eval  do_predict  \
+0  aai_modernbert_rte_ft                 False     False     True       False   
+
+  eval_strategy  prediction_loss_only … (truncated)
+----- Finetuning wnli -----
+
+Map:   0%|          | 0/146 [00:00<?, ? examples/s]Asking to truncate to max_length but no maximum length is provided and the model has no predefined maximum length. Default to no truncation.
+Map: 100 … (truncated)
+<IPython.core.display.HTML object>
+:: Results ::
+
+   train_loss  train_grad_norm  train_learning_rate  train_epoch  eval_loss  \
+0      0.7898         6.372931              0.00004          1.0   0.709700   
+1      0.7183         3.087399             … (truncated)
+               output_dir  overwrite_output_dir  do_train  do_eval  \
+0  aai_modernbert_wnli_ft                 False     False     True   
+
+   do_predict eval_strategy  prediction_loss_only  \
+0      … (truncated)
+
+## Conclusion
+
+With ModernBERT encoders are back baby!  We've seen that ModernBERT-base can compete with the best of them on GLUE tasks and with a little more tuning, we'll see that ModernBERT-large can do even better.  I'm excited to see what the community will do with this model and I'm looking forward to seeing what you all build with it! We'll be exploring more of the capabilities of ModernBERT in future tutorials.
+
+Until next time, happy coding!
+
+---
+
+## Source Modules
+
+### benchmark
+
+*Source: benchmark.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/benchmark.py*
+
+- `ModelType`
+- `conf_callback`
+- `get_model`
+- `get_gpu_power`
+- `benchmark_training`
+- `benchmark_inference`
+- `create_dummy_data`
+- `tile_list_to_length`
+- `main`
+
+### convert_to_hf
+
+*Source: convert_to_hf.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/convert_to_hf.py*
+
+- `TorchDtype`
+- `update_config`
+- `main`: Convert a ModernBERT Composer checkpoint to HuggingFace pretrained format.
+
+### download_artifacts_from_wandb
+
+*Source: download_artifacts_from_wandb.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/download_artifacts_from_wandb.py*
+
+- `get_model_artifacts`
+- `get_base_folder`
+- `get_ba`
+- `main`
+
+### efficiency.multiprocess_bench
+
+*Source: efficiency/multiprocess_bench.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/efficiency/multiprocess_bench.py*
+
+- `create_fixed_short_dataset`
+- `create_fixed_long_dataset`
+- `create_variable_short_dataset`
+- `create_variable_long_dataset`
+- `create_all_datasets`
+- `test_batch_size_worker`: Worker that:
+- `find_max_batch_size_worker`: Worker that runs the batch size finding logic.
+- `try_batch_size`
+- `inference_worker`: Worker to run inference multiple times and report mean/std of times.
+- `run_inference_benchmark`
+
+### eval
+
+*Source: eval.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/eval.py*
+
+- `build_algorithm`
+- `build_callback`
+- `build_logger`
+- `build_scheduler`
+- `build_optimizer`
+- `build_model`
+- `get_values_from_path`: Parses out information from a path/string that looks like.
+- `get_checkpoint_name_from_path`: To go from checkpoint name to path, replace | with /
+- `download_starting_checkpoint`: Downloads the pretrained checkpoints to start from.
+- `create_job_configs`
+- `run_job_worker`: Instantiates the job object and runs it.
+- `run_jobs_parallel`: Runs a list of jobs (passed in as Hydra configs) across GPUs.
+- `run_jobs_serial`: Runs the jobs serially, rather than in parallel.
+- `format_job_name`: Formats the job name for pretty printing.
+- `train`: Main training logic.
+
+### examples.train_pylate
+
+*Source: examples/train_pylate.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/examples/train_pylate.py*
+
+- `main`
+
+### examples.train_st
+
+*Source: examples/train_st.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/examples/train_st.py*
+
+- `main`
+
+### examples.train_st_gooaq
+
+*Source: examples/train_st_gooaq.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/examples/train_st_gooaq.py*
+
+- `main`
+
+### generate_eval_config
+
+*Source: generate_eval_config.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/generate_eval_config.py*
+
+- `conf_callback`
+- `ModelSize`
+- `get_model_defaults`
+- `ordered_yaml_dump`
+- `OrderedDumper`
+- `safe_get`
+- `get_wandb_config`
+- `main`
+
+### glue
+
+*Source: glue.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/glue.py*
+
+- `build_algorithm`
+- `build_callback`
+- `build_logger`
+- `build_scheduler`
+- `build_model`
+- `get_values_from_path`: Parses out information from a path/string that looks like.
+- `get_checkpoint_name_from_path`: To go from checkpoint name to path, replace | with /
+- `download_starting_checkpoint`: Downloads the pretrained checkpoints to start from.
+- `create_job_configs`
+- `run_job_worker`: Instantiates the job object and runs it.
+- `run_jobs_parallel`: Runs a list of jobs (passed in as Hydra configs) across GPUs.
+- `run_jobs_serial`: Runs the jobs serially, rather than in parallel.
+- `format_job_name`: Formats the job name for pretty printing.
+- `train`: Main training logic.
+
+### main
+
+*Source: main.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/main.py*
+
+- `update_batch_size_info`
+- `param_groups_weight_decay`
+- `log_config`
+- `build_algorithm`
+- `build_callback`
+- `build_logger`
+- `build_scheduler`
+- `build_optimizer`
+- `get_num_tokens_in_batch_unpadded`
+- `build_dataloader`
+- `build_model`
+- `init_from_checkpoint`
+- `main`
+
+### run_evals
+
+*Source: run_evals.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/run_evals.py*
+
+- `ModelSize`
+- `conf_callback`
+- `kill_process_tree`
+- `signal_handler`
+- `get_gpu_memory_usage`: Get memory usage for a specific GPU.
+- `get_free_gpu`: Check for free GPUs, prioritizing potentially free GPUs.
+- `run_subprocess`
+- `handle_process_completion`: Handles the completion of a process, checks for errors, cleans up stderr_file, and logs messages.
+- `run_job`: Run a job with optional GPU management.
+- `check_finished_jobs`: Check for finished jobs and free up their GPUs.
+- `manage_jobs`: Manage the launching of jobs for each configuration file in the directory.
+- `create_symlink_for_newest_checkpoint`: Create a symlink to the newest checkpoint file if 'latest-rank0.pt' does not exist.
+- `generate_eval_configs`: Generate evaluation configs for each checkpoint.
+- `download_dataset`
+- `download_datasets`
+- `find_checkpoint_file`
+- `extract_numbers`
+- `download_hub_files`: Download specific files or the entire repository from a Hugging Face Hub repository.
+- `move_and_flatten_files`
+- `main`: Run evaluations on model checkpoints.
+
+### sequence_classification
+
+*Source: sequence_classification.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/sequence_classification.py*
+
+- `update_batch_size_info`
+- `log_config`
+- `build_algorithm`
+- `build_callback`
+- `build_logger`
+- `build_scheduler`
+- `build_optimizer`
+- `build_my_dataloader`: Create a dataloader for classification.
+- `build_model`
+- `train`
+
+### src.algorithms.rope_schedule
+
+*Source: src/algorithms/rope_schedule.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/algorithms/rope_schedule.py*
+
+- `FlexBertRopeSchedule`
+- `match`
+- `apply`
+
+### src.bert_layers.activation
+
+*Source: src/bert_layers/activation.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/activation.py*
+
+- `ClassInstantier`
+- `get_act_fn`
+
+### src.bert_layers.attention
+
+*Source: src/bert_layers/attention.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/attention.py*
+
+- `BertAlibiUnpadSelfAttention`: Performs multi-headed self attention on a batch of unpadded sequences.
+- `forward`: Perform self-attention.
+- `BertSelfOutput`: Computes the output of the attention layer.
+- `forward`
+- `BertAlibiUnpadAttention`: Chains attention, Dropout, and LayerNorm for Mosaic BERT.
+- `forward`: Forward pass for scaled self-attention without padding.
+- `FlexBertAttentionBase`: A FlexBERT attention base class for type hints.
+- `forward`
+- `extra_repr`
+- `FlexBertUnpadAttention`: Performs multi-headed self attention on a batch of unpadded sequences.
+- `forward`: Perform self-attention.
+- `FlexBertUnpadParallelAttention`: Computes the output of the multi-headed self parallel attention on a batch of unpadded sequences
+- `forward`: Perform self-attention.
+- `FlexBertPaddedAttention`: Performs multi-headed self attention on a batch of padded sequences.
+- `forward`: Perform self-attention.
+- `FlexBertUnpadRopeAttention`: Performs multi-headed self attention on a batch of unpadded sequences.
+- `forward`: Perform self-attention.
+- `FlexBertPaddedRopeAttention`: Performs multi-headed self attention on a batch of padded sequences.
+- `forward`: Perform self-attention.
+- `FlexBertUnpadRopeParallelAttention`: Performs multi-headed self attention on a batch of unpadded sequences.
+- `forward`: Perform self-attention.
+- `FlexBertPaddedRopeParallelAttention`: Performs multi-headed self attention on a batch of padded sequences.
+- `forward`: Perform self-attention.
+- `FlexBertPaddedParallelAttention`: Performs multi-headed self attention on a batch of padded sequences.
+- `forward`: Perform self-attention.
+- `get_attention_layer`
+
+### src.bert_layers.configuration_bert
+
+*Source: src/bert_layers/configuration_bert.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/configuration_bert.py*
+
+- `BertConfig`
+- `FlexBertConfig`
+- `maybe_add_padding`
+
+### src.bert_layers.embeddings
+
+*Source: src/bert_layers/embeddings.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/embeddings.py*
+
+- `BertAlibiEmbeddings`: Construct the embeddings for words, ignoring position.
+- `forward`
+- `FlexBertEmbeddingsBase`: A FlexBERT embeddings base class for type hints.
+- `reset_parameters`
+- `forward`
+- `FlexBertAbsoluteEmbeddings`: Construct the embeddings with absolute positional embeddings.
+- `forward`
+- `FlexBertCompiledSansPositionEmbeddings`: Construct the embeddings from token embeddings without any positional embeddings.
+- `forward`
+- `FlexBertSansPositionEmbeddings`: Construct the embeddings from token embeddings without any positional embeddings.
+- `forward`
+- `get_embedding_layer`
+
+### src.bert_layers.initialization
+
+*Source: src/bert_layers/initialization.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/initialization.py*
+
+- `InitFnType`
+- `ModuleType`
+- `init_weights`: Initialize weights of a linear or embedding module.
+- `TileMode`
+- `tile_weight`: Tile or center an input tensor to a larger desired size. Works for both 2D and 1D tensors.
+- `tile_fused_qkv`: Tile the weights of a fused pretrained QKV layer to a new, larger QKV dimension.
+- `tile_fused_glu`: Tile the weights of a fused pretrained GLU layer to a new, larger GLU dimension.
+- `tile_fused_qkvff`: Tile the weights of a fused pretrained QKVFF layer to a new, larger QKVFF dimension.
+- `TileLinear`
+- `tile_linear`: Tile the weights of a linear layer to a new, larger linear dimension.
+- `tile_norm`: Tile the weights of a pretrained norm layer to a new, larger layer norm dimension.
+- `tile_embedding`: Tile the weights of an embedding layer to a new, larger embedding dimension.
+
+### src.bert_layers.layers
+
+*Source: src/bert_layers/layers.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/layers.py*
+
+- `BertAlibiLayer`: Composes the Mosaic BERT attention and FFN blocks into a single layer.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `BertAlibiEncoder`: A stack of BERT layers providing the backbone of Mosaic BERT.
+- `rebuild_alibi_tensor`
+- `get_slopes_power_of_2`
+- `forward`
+- `BertPooler`
+- `forward`
+- `BertPredictionHeadTransform`
+- `forward`
+- `FlexBertLayerBase`: A FlexBERT Layer base class for type hints.
+- `reset_parameters`
+- `forward`
+- `FlexBertCompileUnpadPreNormLayer`: Composes the FlexBERT attention and MLP blocks into a single layer using pre-normalization.
+- `compiled_mlp`
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `FlexBertUnpadPreNormLayer`: Composes the FlexBERT attention and MLP blocks into a single layer using pre-normalization.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `FlexBertUnpadParallelPreNormLayer`: Composes the FlexBERT parallel attention and MLP blocks into a single layer using pre-normalization.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `FlexBertPaddedPreNormLayer`: Composes the FlexBERT attention and MLP blocks into a single layer using pre-normalization.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `FlexBertPaddedParallelPreNormLayer`: Composes the FlexBERT attention and MLP blocks into a single layer using pre-normalization.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `FlexBertUnpadPostNormLayer`: Composes the FlexBERT attention and MLP blocks into a single layer using post-normalization.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `FlexBertPaddedPostNormLayer`: Composes the FlexBERT attention and MLP blocks into a single layer using post-normalization.
+- `forward`: Forward pass for a BERT layer, including both attention and MLP.
+- `get_bert_layer`
+- `FlexBertEncoderBase`: A FlexBERT base class for type hints.
+- `reset_parameters`
+- `forward`
+- `FlexBertUnpadEncoder`: A stack of BERT layers providing the backbone of FlexBERT.
+- `forward`
+- `FlexBertPaddedEncoder`: A stack of BERT layers providing the backbone of FlexBERT.
+- `forward`
+- `get_encoder_layer`
+
+### src.bert_layers.loss
+
+*Source: src/bert_layers/loss.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/loss.py*
+
+- `get_loss_fn`
+
+### src.bert_layers.mlp
+
+*Source: src/bert_layers/mlp.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/mlp.py*
+
+- `BertResidualGLU`: Applies the FFN at the end of each Mosaic BERT layer.
+- `forward`: Compute new hidden states from current hidden states.
+- `FlexBertMLPBase`: A FlexBERT MLP base class for type hints.
+- `reset_parameters`
+- `forward`
+- `FlexBertMLP`: Applies the MLP at the end of each FlexBERT layer.
+- `forward`: Compute new hidden states from current hidden states.
+- `FlexBertGLU`: Applies the GLU at the end of each FlexBERT layer.
+- `forward`
+- `FlexBertParallelGLU`: Applies the GLU at the end of each FlexBERT layer using intermediate_ff computed in parallel of the attention.
+- `forward`
+- `get_mlp_layer`
+
+### src.bert_layers.model
+
+*Source: src/bert_layers/model.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/model.py*
+
+- `BertModel`: Overall BERT model.
+- `get_input_embeddings`
+- `set_input_embeddings`
+- `forward`
+- `BertLMPredictionHead`
+- `forward`
+- `BertOnlyMLMHead`
+- `forward`
+- `BertOnlyNSPHead`
+- `forward`
+- `BertForPreTraining`
+- `BertLMHeadModel`
+- `BertForMaskedLM`
+- `from_composer`: Load from pre-trained.
+- `get_output_embeddings`
+- `set_output_embeddings`
+- `forward`
+- `prepare_inputs_for_generation`
+- `BertForNextSentencePrediction`
+- `BertForSequenceClassification`: Bert Model transformer with a sequence classification/regression head.
+- `from_composer`: Load from pre-trained.
+- `forward`
+- `BertForMultipleChoice`: Bert Model with a multiple choice classification head on top (a linear layer on top of the pooled output and a
+- `from_composer`: Load from pre-trained.
+- `forward`: labels (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
+- `BertForTokenClassification`
+- `BertForQuestionAnswering`: Bert Model with a span classification head.
+- `FlexBertPredictionHead`
+- `reset_parameters`
+- `forward`
+- `FlexBertPoolingHead`
+- `forward`
+- `reset_parameters`
+- `MaskedLMOutput`: Base class for masked language models outputs.
+- `MaskedLMOutputZLoss`: Base class for masked language models outputs.
+- `FlexBertPreTrainedModel`: An abstract class to handle custom weights initialization of modules
+- `FlexBertModel`: Overall BERT model.
+- `post_init`
+- `get_input_embeddings`
+- `set_input_embeddings`
+- `forward`
+- `reset_parameters`
+- `get_number_parameters`: Returns the number of parameters in the model.
+- `FlexBertForMaskedLM`
+- `from_composer`: Load from pre-trained.
+- `get_output_embeddings`
+- `set_output_embeddings`
+- `unpad_inputs`
+- `pad_inputs`
+- `compiled_head`
+- `forward`
+- `prepare_inputs_for_generation`
+- `get_number_parameters`: Returns the number of parameters in the model.
+- `FlexBertForSequenceClassification`: Bert Model transformer with a sequence classification/regression head.
+- `from_composer`: Load from pre-trained.
+- `forward`
+- `get_number_parameters`: Returns the number of parameters in the model.
+- `FlexBertForMultipleChoice`: Bert Model with a multiple choice classification head on top (a linear layer on top of the pooled output and a
+- `from_composer`: Load from pre-trained.
+- `forward`
+- `get_number_parameters`: Returns the number of parameters in the model.
+- `init_model_from_pretrained`: Initialize the new model from the pretrained model.
+- `init_mlm_model_from_pretrained`: Initialize the new model from the pretrained model.
+
+### src.bert_layers.normalization
+
+*Source: src/bert_layers/normalization.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/normalization.py*
+
+- `RMSNorm`: Llama2 RMSNorm implementation
+- `forward`: Forward pass through the RMSNorm layer.
+- `reset_parameters`
+- `get_norm_layer`
+
+### src.bert_layers.options
+
+*Source: src/bert_layers/options.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/options.py*
+
+- `print_layer_options`
+
+### src.bert_layers.padding
+
+*Source: src/bert_layers/padding.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/padding.py*
+
+- `unpad_input`: Remove padding from input sequences.
+- `pad_input`: Add padding to sequences.
+
+### src.bert_layers.rotary
+
+*Source: src/bert_layers/rotary.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_layers/rotary.py*
+
+- `ApplyRotaryEmbUnpad`
+- `forward`
+- `backward`
+- `apply_rotary_emb_unpad`: Arguments:
+- `UnpaddedRotaryEmbedding`: The rotary position embeddings applied directly to unpadded sequences.
+- `forward`: qkv: (total_nnz, 3, nheads, headdim)
+- `extra_repr`
+
+### src.bert_padding
+
+*Source: src/bert_padding.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/bert_padding.py*
+
+- `IndexFirstAxis`
+- `forward`: Get just the values of `input` which are at `indices`.
+- `backward`
+- `IndexPutFirstAxis`
+- `forward`
+- `backward`
+- `unpad_input`: Remove padding from input sequences.
+- `unpad_input_only`: Like unpad_input, but only return the unpadded first tensor.
+- `pad_input`: Add padding to sequences.
+
+### src.callbacks.dataloader_speed
+
+*Source: src/callbacks/dataloader_speed.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/callbacks/dataloader_speed.py*
+
+- `DataloaderSpeedMonitor`: Measure how long it takes to return a batch from the dataloader.
+- `before_dataloader`
+- `after_dataloader`
+
+### src.callbacks.log_grad_norm
+
+*Source: src/callbacks/log_grad_norm.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/callbacks/log_grad_norm.py*
+
+- `LogGradNorm`: Logs the precomputed L1 and L2 gradient norms from StableAdamW
+- `epoch_start`
+- `batch_end`
+
+### src.callbacks.packing_efficiency
+
+*Source: src/callbacks/packing_efficiency.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/callbacks/packing_efficiency.py*
+
+- `PackingEfficency`: Records the packing efficiency for each batch.
+- `after_dataloader`
+
+### src.callbacks.scheduled_gc
+
+*Source: src/callbacks/scheduled_gc.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/callbacks/scheduled_gc.py*
+
+- `gc_cuda`: Garbage collect Torch (CUDA) memory.
+- `ScheduledGarbageCollector`: Disable automatic garbage collection and collect garbage at interval.
+- `fit_start`
+- `fit_end`
+- `before_dataloader`
+- `eval_start`
+- `eval_end`
+
+### src.colbert_beir.index_and_score
+
+*Source: src/colbert_beir/index_and_score.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/colbert_beir/index_and_score.py*
+
+- `build_colbert_index`
+- `colbert_score`
+
+### src.colbert_beir.train
+
+*Source: src/colbert_beir/train.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/colbert_beir/train.py*
+
+- `colbert_train`
+
+### src.convert_dataset
+
+*Source: src/convert_dataset.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/convert_dataset.py*
+
+- `ConcatMode`
+- `parse_args`: Parse commandline arguments.
+- `DataSplitConstants`
+- `DatasetConstants`
+- `TrainSmallConstants`
+- `ValSmallConstants`
+- `NoConcatDataset`: An IterableDataset that returns text samples for MDSWriter.
+- `ConcatTokensDataset`: An IterableDataset that returns token samples for MDSWriter.
+- `build_hf_dataset`: Build an IterableDataset over the HF C4 or pile source data.
+- `build_dataloader`
+- `generate_samples`: Generator over samples of a dataloader.
+- `main`: Main: create C4/pile streaming dataset.
+
+### src.data.get_counts_from_hf
+
+*Source: src/data/get_counts_from_hf.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/get_counts_from_hf.py*
+
+- `get_counts_for_repo`
+- `get_counts`
+
+### src.data.hf_to_mds
+
+*Source: src/data/hf_to_mds.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/hf_to_mds.py*
+
+- `push_to_hub_incrementally`
+- `sample_hf`
+
+### src.data.mds_conversion
+
+*Source: src/data/mds_conversion.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/mds_conversion.py*
+
+- `maybe_decompress_shard`: If shard does not have decompressed data,
+- `main`
+
+### src.data.relative_prop_to_instance_prop
+
+*Source: src/data/relative_prop_to_instance_prop.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/relative_prop_to_instance_prop.py*
+
+- `relative_to_instance`
+
+### src.data.sample_dataset_from_config
+
+*Source: src/data/sample_dataset_from_config.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/sample_dataset_from_config.py*
+
+- `tokenize_and_write`
+- `sample_dataset_from_config`
+
+### src.data.source_stats
+
+*Source: src/data/source_stats.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/data/source_stats.py*
+
+- `main`
+
+### src.evals.data
+
+*Source: src/evals/data.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/data.py*
+
+- `create_eval_dataset`
+- `create_glue_dataset`
+- `create_superglue_dataset`
+- `create_swag_dataset`
+- `create_eurlex_dataset`
+- `create_ultrafeedback_dataset`
+- `create_mlmmlu_dataset`
+
+### src.evals.finetuning_jobs
+
+*Source: src/evals/finetuning_jobs.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/finetuning_jobs.py*
+
+- `multiple_choice_collate_fn`
+- `build_dataloader`
+- `reset_trainer`: Cleans up memory usage left by trainer.
+- `log_config`
+- `FineTuneJob`: Encapsulates a fine-tuning job.
+- `get_trainer`: Returns the trainer for the job.
+- `print_metrics`: Prints fine-tuning results.
+- `job_name`: Job name, defaults to class name.
+- `run`: Trains the model, optionally pulling a GPU id from the queue.
+- `ClassificationJob`
+- `get_trainer`
+
+### src.evals.glue_jobs
+
+*Source: src/evals/glue_jobs.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/glue_jobs.py*
+
+- `MNLIJob`: MNLI.
+- `RTEJob`: RTE.
+- `QQPJob`: QQP.
+- `COLAJob`: COLA.
+- `MRPCJob`: MRPC.
+- `QNLIJob`: QNLI.
+- `SST2Job`: SST2.
+- `STSBJob`: STSB.
+
+### src.evals.misc_jobs
+
+*Source: src/evals/misc_jobs.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/misc_jobs.py*
+
+- `SWAGJob`: SWAG.
+- `tokenize_fn_factory`
+- `tokenize_fn`
+- `EurlexMultilabelF1Score`
+- `EurlexJob`: Eurlex multi-label classification.
+- `tokenize_fn_factory`
+- `tokenize_fn`
+- `generate_labels`
+- `UltrafeedbackAUROC`
+- `UltrafeedbackJob`: ultrafeedback binary classification.
+- `tokenize_fn_factory`
+- `tokenize_fn`
+- `MLMMLUAmateurSemipro`: MLMMLU for Amateur & Semipro
+- `tokenize_fn_factory`
+- `tokenize_fn`
+- `MLMMLUReserveRookie`: MLMMLU for Reserve & Rookie
+- `tokenize_fn_factory`
+- `tokenize_fn`
+
+### src.evals.superglue_jobs
+
+*Source: src/evals/superglue_jobs.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/evals/superglue_jobs.py*
+
+- `BoolQJob`: BoolQ.
+- `CBMetric`
+- `update`
+- `compute`
+- `CBJob`: CB.
+- `COPAJob`: COPA.
+- `tokenize_fn_factory`
+- `tokenize_fn`
+- `MultiRCMetric`
+- `update`
+- `compute`
+- `compute_final`
+- `MultiRCJob`: MultiRC.
+- `tokenize_fn_factory`
+- `tokenize_fn`
+- `collate_fn`
+- `WiCJob`: WiC.
+
+### src.flex_bert
+
+*Source: src/flex_bert.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/flex_bert.py*
+
+- `rename_class`
+- `class_renamer`
+- `FALanguageCrossEntropy`: Torchmetric that computes cross entropy on language modeling outputs using flash_attn's Cross Entropy.
+- `EfficientCrossEntropy`: Torchmetric that grabs the precomputed ce_loss value from the model outputs
+- `update`: Updates the internal state with results from a new batch.
+- `compute`: Aggregate the state over all processes to compute the metric.
+- `EfficientZLoss`: Torchmetric that grabs the precomputed z_loss value from the model outputs
+- `update`: Updates the internal state with results from a new batch.
+- `compute`: Aggregate the state over all processes to compute the metric.
+- `EfficientHuggingFaceModel`
+- `eval_forward`
+- `update_metric`
+- `create_flex_bert_mlm`: FlexBERT masked language model based on |:hugging_face:| Transformers.
+- `create_flex_bert_classification`: FlexBERT classification model based on |:hugging_face:| Transformers.
+
+### src.hf_bert
+
+*Source: src/hf_bert.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/hf_bert.py*
+
+- `create_hf_bert_mlm`: BERT model based on |:hugging_face:| Transformers.
+- `create_hf_bert_classification`: BERT model based on |:hugging_face:| Transformers.
+
+### src.mosaic_bert
+
+*Source: src/mosaic_bert.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/mosaic_bert.py*
+
+- `create_mosaic_bert_mlm`: Mosaic BERT masked language model based on |:hugging_face:| Transformers.
+- `create_mosaic_bert_classification`: Mosaic BERT classification model based on |:hugging_face:| Transformers.
+
+### src.optimizer
+
+*Source: src/optimizer.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/optimizer.py*
+
+- `StableAdamW`: StableAdamW optimizer. An AdamW-Adafactor hybrid with learning rate update clipping.
+- `step`: Performs a single optimization step on the whole model or individual parameter.
+- `stableadamw`: Functional API to apply a StableAdamW optimization step.
+
+### src.scheduler
+
+*Source: src/scheduler.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/scheduler.py*
+
+- `Schedule`
+- `WarmupStableDecayScheduler`: Args:
+- `CosineInverseSqrtScheduler`: Decays the learning rate according to a cosine decay followed by an inverse square root decay, with optional warmup and cooldown.
+- `OneMinusSqrtScheduler`: Decays the learning rate according to a 1 - sqrt function, without an initial warmup phase.
+
+### src.sequence_packer
+
+*Source: src/sequence_packer.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/sequence_packer.py*
+
+- `BatchSizeWarmupScheduler`
+- `SequencePackerBatchOutputTuple`
+- `SequencePacker`
+- `seqs_emitted`
+- `seqs_consumed`
+- `mlm_masking`: Prepare masked tokens inputs/labels for masked language modeling: 80% MASK, 10% random, 10% original.
+- `find_best_fit`
+- `GreedyBestFitSequencePacker`
+- `from_composer`
+- `BufferedIterable`
+- `BufferedIterator`
+- `split_packed_batch`
+- `get_num_samples_in_packed_batch`
+
+### src.text_data
+
+*Source: src/text_data.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/text_data.py*
+
+- `DistributedSamplerPCG64DXSM`
+- `build_tokenizer`
+- `StreamingTextDataset`: Generic text dataset using MosaicML's StreamingDataset.
+- `ConcatenatedSequenceCollatorWrapper`: Collator wrapper to add sequence_id to batch.
+- `get_sequence_id_from_batch`
+- `build_streaming_dataset`
+- `build_no_streaming_dataset`
+- `build_text_dataloader`
+- `NoStreamingDataset`: A dataset class that can read data with raw mds-format (mosaic streaming-format without compression)
+
+### src.utils
+
+*Source: src/utils.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/src/utils.py*
+
+- `warning_once`: This method is identical to `logger.warning()`, but will emit the warning with the same message only once
+- `StrEnum`: This is equivalent to Python's :class:`enum.StrEnum` since version 3.11.
+
+### wandb_log_live_eval
+
+*Source: wandb_log_live_eval.py | URL: https://github.com/AnswerDotAI/ModernBERT/blob/main/wandb_log_live_eval.py*
+
+- `parse_model_string`
+- `init_run`
+- `process_data`
+- `main`

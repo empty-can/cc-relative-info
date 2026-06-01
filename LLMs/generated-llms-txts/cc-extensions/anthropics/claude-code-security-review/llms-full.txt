@@ -1,0 +1,86 @@
+# Claude Code Security Reviewer
+
+> Claude Code を使って GitHub PR の差分をセキュリティ審査し、SAST 検出結果のフォルスポジティブをフィルタリングする GitHub Actions 向け Python ツール。CC 拡張（Skill/Rule/Agent）は含まない。
+
+---
+
+## Source Modules
+
+### claudecode.claude_api_client
+
+*Source: claudecode/claude_api_client.py | URL: https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/claude_api_client.py*
+
+- `ClaudeAPIClient`: Client for calling Claude API directly for security analysis tasks.
+- `validate_api_access`: Validate that API access is working.
+- `call_with_retry`: Make Claude API call with retry logic.
+- `analyze_single_finding`: Analyze a single security finding to filter false positives using Claude API.
+- `get_claude_api_client`: Convenience function to get Claude API client.
+
+### claudecode.evals.eval_engine
+
+*Source: claudecode/evals/eval_engine.py | URL: https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/evals/eval_engine.py*
+
+- `EvalCase`: Single evaluation test case.
+- `EvalResult`: Result of a single evaluation.
+- `to_dict`: Convert to dictionary for JSON serialization.
+- `EvaluationEngine`: Engine for running security evaluations on GitHub PRs.
+- `log`: Log a message if verbose mode is enabled.
+- `run_evaluation`: Run security evaluation on a single PR.
+- `run_single_evaluation`: Convenience function to run a single evaluation.
+
+### claudecode.evals.run_eval
+
+*Source: claudecode/evals/run_eval.py | URL: https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/evals/run_eval.py*
+
+- `EvalCase`: Single evaluation test case.
+- `EvalResult`: Result of a single evaluation.
+- `to_dict`: Convert to dictionary for JSON serialization.
+- `main`: Main entry point for single PR SAST evaluation.
+
+### claudecode.findings_filter
+
+*Source: claudecode/findings_filter.py | URL: https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/findings_filter.py*
+
+- `FilterStats`: Statistics about the filtering process.
+- `HardExclusionRules`: Hard exclusion rules for common false positives.
+- `get_exclusion_reason`: Check if a finding should be excluded based on hard rules.
+- `FindingsFilter`: Main filter class for security findings.
+- `filter_findings`: Filter security findings to remove false positives.
+
+### claudecode.github_action_audit
+
+*Source: claudecode/github_action_audit.py | URL: https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/github_action_audit.py*
+
+- `ConfigurationError`: Raised when configuration is invalid or missing.
+- `AuditError`: Raised when security audit operations fail.
+- `GitHubActionClient`: Simplified GitHub API client for GitHub Actions environment.
+- `get_pr_data`: Get PR metadata and files from GitHub API.
+- `get_pr_diff`: Get complete PR diff in unified format.
+- `SimpleClaudeRunner`: Simplified Claude Code runner for GitHub Actions.
+- `run_security_audit`: Run Claude Code security audit.
+- `validate_claude_available`: Validate that Claude Code is available.
+- `get_environment_config`: Get and validate environment configuration.
+- `initialize_clients`: Initialize GitHub and Claude clients.
+- `initialize_findings_filter`: Initialize findings filter based on environment configuration.
+- `run_security_audit`: Run the security audit with Claude Code.
+- `apply_findings_filter`: Apply findings filter to reduce false positives.
+- `main`: Main execution function for GitHub Action.
+
+### claudecode.json_parser
+
+*Source: claudecode/json_parser.py | URL: https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/json_parser.py*
+
+- `extract_json_from_text`: Extract JSON object from text, looking in various formats and locations.
+- `parse_json_with_fallbacks`: Parse JSON from text with multiple fallback strategies and error handling.
+
+### claudecode.logger
+
+*Source: claudecode/logger.py | URL: https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/logger.py*
+
+- `get_logger`: Get a configured logger that outputs to stderr.
+
+### claudecode.prompts
+
+*Source: claudecode/prompts.py | URL: https://github.com/anthropics/claude-code-security-review/blob/main/claudecode/prompts.py*
+
+- `get_security_audit_prompt`: Generate security audit prompt for Claude Code.

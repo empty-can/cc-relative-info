@@ -1,0 +1,27 @@
+# fastprogress
+
+> Jupyter Notebookとコンソール向けの軽量プログレスバーライブラリで、fast.aiのSylvain Guggerが開発し、ネスト表示やコメント付き進捗管理をシンプルなAPIで提供する。
+
+## Guide
+
+- [Contributor Covenant Code of Conduct](https://github.com/AnswerDotAI/fastprogress/blob/master/CODE-OF-CONDUCT.md): In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to making participation in our project and our community a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+- [Contributor Covenant Code of Conduct](https://github.com/AnswerDotAI/fastprogress/blob/master/CODE_OF_CONDUCT.md): In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to make participation in our project and our community a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+- [fastprogress](https://github.com/AnswerDotAI/fastprogress/blob/master/docs/index.md): A fast and simple progress bar for Jupyter Notebook and console.
+- [Example](https://github.com/AnswerDotAI/fastprogress/blob/master/Example.ipynb)
+- [Core](https://github.com/AnswerDotAI/fastprogress/blob/master/nbs/00_core.ipynb): Utility functions for fastprogress
+- [01 Fastprogress](https://github.com/AnswerDotAI/fastprogress/blob/master/nbs/01_fastprogress.ipynb)
+- [Index](https://github.com/AnswerDotAI/fastprogress/blob/master/nbs/index.ipynb)
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/fastprogress/blob/master/CHANGELOG.md): - Lazy imports (#125)
+- [How to contribute to fastprogress](https://github.com/AnswerDotAI/fastprogress/blob/master/CONTRIBUTING.md): First, thanks a lot for wanting to help!
+- [Build and Release Instructions](https://github.com/AnswerDotAI/fastprogress/blob/master/RELEASE.md): You can skip this step if you have done it once already on the system you're making the release from.
+
+## Source Modules
+
+- [fastprogress._nbdev](https://github.com/AnswerDotAI/fastprogress/blob/master/fastprogress/_nbdev.py)
+- [fastprogress.core](https://github.com/AnswerDotAI/fastprogress/blob/master/fastprogress/core.py)
+- [docs.js.jekyll-search](https://github.com/AnswerDotAI/fastprogress/blob/master/docs/js/jekyll-search.js)
+- [docs.js.jquery.ba-throttle-debounce.min](https://github.com/AnswerDotAI/fastprogress/blob/master/docs/js/jquery.ba-throttle-debounce.min.js)
+- [docs.js.jquery.shuffle.min](https://github.com/AnswerDotAI/fastprogress/blob/master/docs/js/jquery.shuffle.min.js)

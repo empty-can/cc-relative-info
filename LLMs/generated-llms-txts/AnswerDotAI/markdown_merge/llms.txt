@@ -1,0 +1,16 @@
+# MarkdownMerge
+
+> Markdown テンプレートから変数を展開して HTML/テキスト両対応のメールを生成・SMTP 送信する Python ライブラリ。開発者が一括メール配信を簡単に実装できます。
+
+## Guide
+
+- [MarkdownMerge](https://github.com/AnswerDotAI/markdown_merge/blob/master/nbs/00_core.ipynb): API details
+- [MarkdownMerge](https://github.com/AnswerDotAI/markdown_merge/blob/master/nbs/index.ipynb): Send templated emails in markdown.
+
+## Optional
+
+- [Release notes](https://github.com/AnswerDotAI/markdown_merge/blob/master/CHANGELOG.md): - Attachments (#11)
+
+## Source Modules
+
+- [markdown_merge.core](https://github.com/AnswerDotAI/markdown_merge/blob/master/markdown_merge/core.py)

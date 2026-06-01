@@ -1,0 +1,318 @@
+# MCP Inspector
+
+> MCP Inspector は Model Context Protocol サーバの開発・デバッグ・動作確認を行うためのビジュアル検査ツール。CLI・Web クライアント・プロキシサーバの 3 層構成で、MCP サーバに接続してツール・リソース・プロンプトを対話的に呼び出し、レスポンスをリアルタイムに確認できる。Claude Code 拡張（MCP サーバ）を開発する際の動作検証インフラとして活用できる。
+
+---
+
+## Optional
+
+### Version Management Scripts
+
+*Source: scripts/README.md | URL: https://github.com/modelcontextprotocol/inspector/blob/main/scripts/README.md*
+
+# Version Management Scripts
+
+This directory contains scripts for managing version consistency across the monorepo.
+
+## Scripts
+
+### update-version.js
+
+Updates the version across all package.json files in the monorepo and updates package-lock.json.
+
+**Usage:**
+
+```bash
+npm run update-version <new-version>
+# Example:
+npm run update-version 0.14.3
+```
+
+This script will:
+
+1. Update the version in all package.json files (root, client, server, cli)
+2. Update workspace dependencies in the root package.json
+3. Run `npm install` to update package-lock.json
+4. Provide next steps for committing and tagging
+
+### check-version-consistency.js
+
+Checks that all packages have consistent versions and that package-lock.json is up to date.
+
+**Usage:**
+
+```bash
+npm run check-version
+```
+
+This script checks:
+
+1. All package.json files have the same version
+2. Workspace dependencies in root package.json match the current version
+3. package-lock.json version matches package.json
+4. Workspace packages in package-lock.json have the correct versions
+
+This check runs automatically in CI on every PR and push to main.
+
+## CI Integration
+
+The version consistency check is integrated into the GitHub Actions workflow (`.github/workflows/main.yml`) and will fail the build if:
+
+- Package versions are inconsistent
+- package-lock.json is out of sync
+
+## Common Workflows
+
+### Bumping version for a release:
+
+```bash
+# Update to new version
+npm run update-version 0.15.0
+
+# Verify everything is correct
+npm run check-version
+
+# Commit the changes
+git add -A
+git commit -m "chore: bump version to 0.15.0"
+
+# Create a tag
+git tag 0.15.0
+
+# Push changes and tag
+git push && git push --tags
+```
+
+---
+
+## Source Modules
+
+### cli.src.cli
+
+*Source: cli/src/cli.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/cli.ts*
+
+- `function handleError`
+- `function delay`
+- `function runWebClient`
+- `function runCli`
+- `function loadConfigFile`
+- `function parseKeyValuePair`
+- `function parseHeaderPair`
+- `function parseArgs`
+- `function main`
+
+### cli.src.client.connection
+
+*Source: cli/src/client/connection.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/client/connection.ts*
+
+- `function connect`
+- `function disconnect`
+- `function setLoggingLevel`
+
+### cli.src.client.prompts
+
+*Source: cli/src/client/prompts.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/client/prompts.ts*
+
+- `function listPrompts`
+- `function getPrompt`
+
+### cli.src.client.resources
+
+*Source: cli/src/client/resources.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/client/resources.ts*
+
+- `function listResources`
+- `function readResource`
+- `function listResourceTemplates`
+
+### cli.src.client.tools
+
+*Source: cli/src/client/tools.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/client/tools.ts*
+
+- `function listTools`
+- `function convertParameterValue`
+- `function convertParameters`
+- `function callTool`
+
+### cli.src.error-handler
+
+*Source: cli/src/error-handler.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/error-handler.ts*
+
+- `function formatError`
+- `function handleError`
+
+### cli.src.transport
+
+*Source: cli/src/transport.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/transport.ts*
+
+- `function createStdioTransport`
+- `function createTransport`
+
+### cli.src.utils.awaitable-log
+
+*Source: cli/src/utils/awaitable-log.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/cli/src/utils/awaitable-log.ts*
+
+- `function awaitableLog`
+
+### client.src.lib.auth
+
+*Source: client/src/lib/auth.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/auth.ts*
+
+- `constructor`
+- `scope`
+- `redirectUrl`
+- `debugRedirectUrl`
+- `redirect_uris`
+- `clientMetadata`
+- `state`
+- `clientInformation`
+- `saveClientInformation`
+- `tokens`
+- `saveTokens`
+- `redirectToAuthorization`
+- `saveCodeVerifier`
+- `codeVerifier`
+- `clear`
+- `redirectUrl`
+- `saveServerMetadata`
+- `getServerMetadata`
+- `clear`
+
+### client.src.lib.connectionAuthErrors
+
+*Source: client/src/lib/connectionAuthErrors.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/connectionAuthErrors.ts*
+
+- `function isPlainObject`
+- `function mcpProxyTransportErrorDataIndicatesUnauthorized`
+- `function isConnectionAuthError`
+
+### client.src.lib.hooks.useCompletionState
+
+*Source: client/src/lib/hooks/useCompletionState.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/hooks/useCompletionState.ts*
+
+- `function debounce`
+- `function useCompletionState`
+
+### client.src.lib.hooks.useConnection
+
+*Source: client/src/lib/hooks/useConnection.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/hooks/useConnection.ts*
+
+- `function useConnection`
+
+### client.src.lib.hooks.useCopy
+
+*Source: client/src/lib/hooks/useCopy.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/hooks/useCopy.ts*
+
+- `function useCopy`
+
+### client.src.lib.hooks.useDraggablePane
+
+*Source: client/src/lib/hooks/useDraggablePane.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/hooks/useDraggablePane.ts*
+
+- `function useDraggablePane`
+- `function useDraggableSidebar`
+
+### client.src.lib.hooks.useToast
+
+*Source: client/src/lib/hooks/useToast.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/hooks/useToast.ts*
+
+- `function genId`
+- `function dispatch`
+- `function toast`
+- `function useToast`
+
+### client.src.lib.oauth-state-machine
+
+*Source: client/src/lib/oauth-state-machine.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/oauth-state-machine.ts*
+
+- `constructor`
+- `executeStep`
+
+### client.src.lib.proxyFetch
+
+*Source: client/src/lib/proxyFetch.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/proxyFetch.ts*
+
+- `function isJsonObject`
+- `function messageFromProxyInfrastructureError`
+- `function parseMirroredUpstreamJson`
+- `function createProxyFetch`
+
+### client.src.lib.utils
+
+*Source: client/src/lib/utils.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/lib/utils.ts*
+
+- `function cn`
+
+### client.src.utils.escapeUnicode
+
+*Source: client/src/utils/escapeUnicode.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/utils/escapeUnicode.ts*
+
+- `function escapeUnicode`
+
+### client.src.utils.jsonUtils
+
+*Source: client/src/utils/jsonUtils.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/utils/jsonUtils.ts*
+
+- `function getDataType`
+- `function tryParseJson`
+- `function updateValueAtPath`
+- `function updateArray`
+- `function updateObject`
+- `function getValueAtPath`
+
+### client.src.utils.schemaUtils
+
+*Source: client/src/utils/schemaUtils.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/utils/schemaUtils.ts*
+
+- `function cacheToolOutputSchemas`
+- `function getToolOutputValidator`
+- `function validateToolOutput`
+- `function hasOutputSchema`
+- `function generateDefaultValue`
+- `function isPropertyRequired`
+- `function resolveRef`
+- `function normalizeUnionType`
+- `function formatFieldLabel`
+- `function resolveRefsInMessage`
+
+### client.src.utils.urlValidation
+
+*Source: client/src/utils/urlValidation.ts | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/utils/urlValidation.ts*
+
+- `function validateRedirectUrl`
+
+### client.src.App
+
+*Source: client/src/App.tsx | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/App.tsx*
+
+- `async`
+
+### client.src.components.AppsTab
+
+*Source: client/src/components/AppsTab.tsx | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/components/AppsTab.tsx*
+
+- `setParams`
+
+### client.src.components.ui.combobox
+
+*Source: client/src/components/ui/combobox.tsx | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/src/components/ui/combobox.tsx*
+
+- `function Combobox`
+- `cn`
+
+### cli.scripts.make-executable
+
+*Source: cli/scripts/make-executable.js | URL: https://github.com/modelcontextprotocol/inspector/blob/main/cli/scripts/make-executable.js*
+
+- `function makeExecutable`
+
+### client.bin.start
+
+*Source: client/bin/start.js | URL: https://github.com/modelcontextprotocol/inspector/blob/main/client/bin/start.js*
+
+- `function delay`
+- `function getClientUrl`
+- `function startDevServer`
+- `function startProdServer`
+- `function startDevClient`
+- `function startProdClient`
+- `function main`

@@ -1,0 +1,26 @@
+# Claude Code Extensions
+
+> Claude Code 拡張（Skill / Rule / Agent 等）リポジトリのローカルインデックス。generate-llms-txt --cc-extensions で生成した個別リポジトリの llms.txt へのナビゲーションファイル。
+
+## Extensions
+
+- [Claude Platform CLI](anthropics/anthropic-cli/llms.txt): Anthropic Platform の全 API エンドポイントを CLI から操作できる公式コマンドラインツール（Go 製）。メッセージ送受信・ファイル管理・メモリストア・モデル一覧・バッチ処理・環境管理など、プラットフォームの機能を `ant` コマンドで網羅的に利用できる。
+- [Claude.ai MCP Integration](anthropics/claude-ai-mcp/llms.txt): Anthropic の公式コミュニケーションハブ。Claude.ai における MCP（Model Context Protocol）統合に関する技術的変更のアナウンス・バグ報告・機能リクエストを一元管理し、プロトコル変更・セッション管理・ツール/リソースハンドリング・OAuth 認証の最新情報を提供する。
+- [Claude Code Action](anthropics/claude-code-action/llms.txt): GitHub Actions integration that runs Claude Code as an automated agent on pull request and issue events, providing subagents for code quality, documentation accuracy, performance, security, and test coverage review.
+- [⚠️ This is a Mirror Repository](anthropics/claude-code-base-action/llms.txt): Anthropic 公式の GitHub Actions ベースアクション。CI/CD パイプライン上で Claude Code を自動実行するための TypeScript 実装（プロンプト準備・環境検証・SDK 実行・設定セットアップ）を提供する。
+- [Claude Code Security Reviewer](anthropics/claude-code-security-review/llms.txt)
+- [Claude Plugins — Community](anthropics/claude-plugins-community/llms.txt): A read-only mirror of the Claude community plugin marketplace, listing community-contributed plugins for Claude Code and Claude Cowork that have passed Anthropic's automated security scanning and approval pipeline.
+- [Claude Code Plugins Directory](anthropics/claude-plugins-official/llms.txt): Anthropic 公式の Claude Code プラグインリポジトリ。フック入力をルールエンジンで制御する `hookify` プラグインと、Skill の生成・評価ループを自動化する `skill-creator` プラグインの 2 つを提供する。
+- [Claude Quickstarts](anthropics/claude-quickstarts/llms.txt)
+- [Harness Primitives for Long-Running Claude Agents](anthropics/cwc-long-running-agents/llms.txt)
+- [cwc-workshops](anthropics/cwc-workshops/llms.txt)
+- [The unreasonable effectiveness of HTML — examples](anthropics/html-effectiveness/llms.txt)
+- [Knowledge Work Plugins](anthropics/knowledge-work-plugins/llms.txt): Anthropic 公式のナレッジワーク向け Claude Code プラグイン集。バイオ研究（単一細胞 RNA-seq・Nextflow パイプライン・Allotrope 形式変換）とデータ解析の Skills を収録し、研究者や分析者の専門業務を Claude Code から直接支援する。
+- [Long-Horizon Coding Agent Demo](anthropics/riv2025-long-horizon-coding-agent-demo/llms.txt)
+- [Skills](anthropics/skills/llms.txt): 17 個の Skill を収録する anthropics 公式 Claude Code 拡張リポジトリ。アート生成・フロントエンドデザイン・Office ファイル操作（Word / Excel / PowerPoint / PDF）・MCP サーバ構築・Claude API 開発・内部コミュニケーション文書作成・Web アプリテスト等の用途に対応。
+- [Claude Code Starter Kit](cloudnative-co/claude-code-starter-kit/llms.txt): Node.js / TypeScript / React プロジェクト向け Claude Code 拡張キット。12 の Skills（コーディング規約・バックエンド/フロントエンドパターン・TDD・セキュリティレビュー・ClickHouse 分析等）、10 の Rules（アンチパターン防止・Git ワークフロー・権限管理等）、9 の Agents（architect / planner / code-reviewer / tdd-guide / security-reviewer 等）を一括提供し、開発ライフサイクル全体を Claude Code でカバーする。
+- [Ext Apps](modelcontextprotocol/ext-apps/llms.txt): MCP Apps SDK および Claude Code Agent Skills の公式リポジトリ。MCP ツールにチャート・フォーム・ダッシュボード等のインタラクティブ UI を付与し、Claude・ChatGPT をはじめとする MCP 準拠クライアント上でインライン表示を可能にする。create-mcp-app・migrate-oai-app・add-app-to-server・convert-web-app の 4 つの Agent Skill を同梱し、AI コーディングエージェントによる MCP App の生成・移行・統合を支援する。
+- [MCP Inspector](modelcontextprotocol/inspector/llms.txt): MCP Inspector は Model Context Protocol サーバの開発・デバッグ・動作確認を行うためのビジュアル検査ツール。CLI・Web クライアント・プロキシサーバの 3 層構成で、MCP サーバに接続してツール・リソース・プロンプトを対話的に呼び出し、レスポンスをリアルタイムに確認できる。Claude Code 拡張（MCP サーバ）を開発する際の動作検証インフラとして活用できる。
+- [Quickstart Resources](modelcontextprotocol/quickstart-resources/llms.txt): MCP クイックスタート用のサンプルリポジトリ。複数言語（Python・TypeScript・Go・Rust・Ruby）による MCP クライアントおよびウェザーサーバーの実装例を収録し、MCP プロトコルの基本的な使い方を示す。
+- [MCP Registry](modelcontextprotocol/registry/llms.txt): MCP サーバーの発見・公開・管理を担う公式レジストリサービス（Go 製）。GitHub 認証・OIDC・複数のキー署名プロバイダーによる安全な publish フローと、Kubernetes ベースのインフラ構成スクリプトを含む。
+- [Model Context Protocol servers](modelcontextprotocol/servers/llms.txt): MCP 公式リファレンスサーバー群のリポジトリ。fetch・git・time（Python 実装）および everything・filesystem・sequentialthinking（TypeScript 実装）の 6 種のサーバーを収録し、Claude Code から MCP 経由で HTTP フェッチ・Git 操作・時刻変換・ファイルシステム操作・段階的思考を利用するための実装基盤を提供する。
