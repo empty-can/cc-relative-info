@@ -28,10 +28,19 @@ disable-model-invocation: true
 
 Read tool で `$LATEST_DETAIL` を読み込む。
 
-- ファイルが存在する場合: 末尾の HTML コメント `<!-- ... head_commit: <hash> ... -->` から `BASE_COMMIT` を抽出。同時に `generated_at` も抽出して `PREV_GENERATED_AT` とする (アーカイブフォルダ名で使用)
-- ファイルが存在しない場合:
-  - 引数 `--from <commit>` があれば `BASE_COMMIT = <commit>`
-  - なければ標準エラーに `初版作成には --from <commit> 指定が必要です` を出力して終了
+**BASE_COMMIT の決定**(引数 `--from` を最優先):
+
+- 引数 `--from <commit>` がある場合: `BASE_COMMIT = <commit>`(既存ファイルの有無に関係なく優先)
+- 引数 `--from` がない場合:
+  - `$LATEST_DETAIL` が存在する: 末尾の HTML コメント `<!-- ... head_commit: <hash> ... -->` から `BASE_COMMIT` を抽出
+  - 存在しない: 標準エラーに `初版作成には --from <commit> 指定が必要です` を出力して終了
+
+**PREV_GENERATED_AT の決定**(アーカイブフォルダ名で使用):
+
+- `$LATEST_DETAIL` が存在する: frontmatter から `作成日` を抽出して `PREV_GENERATED_AT` とする
+- 存在しない: `PREV_GENERATED_AT` は空(手順 10 の旧版アーカイブをスキップ)
+
+> `--from` 指定時に既存ファイルが存在しても、その既存ファイルは手順 10 で `${ARCHIVES_DIR}<PREV_GENERATED_AT>/` へ通常通り退避される。`--from` は **新たな BASE_COMMIT を明示する** だけで、既存サマリの扱いは変えない。
 
 ### 2. HEAD_COMMIT 取得と差分検出
 
