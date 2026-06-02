@@ -1,8 +1,8 @@
 ---
 name: update-official-doc-summary
 description: official-llms-txts 配下の公式ドキュメント (llms.txt / llms-full.txt) の更新差分を、人間向けの changelog / リリースノート風 Markdown として生成する。対象サイトは --site で切り替える (claude-code-docs / mcp)。詳細版を LLM で生成し、ライト版は固定スクリプトで詳細版から機械的に抽出する。
-allowed-tools: Read, Write, Edit, Grep, Bash(git diff:*), Bash(git log:*), Bash(git rev-parse:*), Bash(mkdir -p:*), Bash(mv:*), Bash(git checkout:*), Bash(git clean:*), Bash(python:*), Bash(echo:*), Agent(doc-summary-reviewer)
-argument-hint: "[--site <slug>] [--from <commit>]"
+allowed-tools: Read, Write, Edit, Grep, Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(git rev-parse:*), Bash(mkdir -p:*), Bash(mv:*), Bash(git checkout:*), Bash(git clean:*), Bash(python:*), Bash(echo:*), Agent(doc-summary-reviewer)
+argument-hint: "[--site <slug>] [--from <commit>] [--automated]"
 disable-model-invocation: true
 ---
 
@@ -10,6 +10,7 @@ disable-model-invocation: true
 
 - `--site <slug>`: 対象サイト。省略時は `claude-code-docs`(後方互換)。有効値は「サイト設定テーブル」の `slug` 列。値を `SITE` とする
 - `--from <commit>`: 初版作成時の起点コミット。省略時は前回サマリの末尾フッタから `head_commit` を取得し `BASE_COMMIT` とする。前回サマリが無く `--from` も無ければエラー終了
+- `--automated`: 無人（ヘッドレス/パイプライン）実行を示すフラグ。**本フラグがあれば `AUTOMATED=1`、無ければ `AUTOMATED=0`** とする（手順 13 の Phase 3 要否判定で使用）。ラッパー `run-doc-summary.ps1` が自動付与する。手動・対話起動では付けない
 
 ## サイト設定テーブル
 
@@ -232,7 +233,7 @@ mv ${LATEST_DETAIL} ${ARCHIVES_DIR}<PREV_GENERATED_AT>/latest-detail.md
 
 ### 11. 詳細版書き出し
 
-Write tool で手順 6〜9 の最終結果を `$LATEST_DETAIL` に書き出す。
+Write tool で手順 6〜9 の最終結果を `$LATEST_DETAIL` に書き出す。**手順 10 の旧版アーカイブを必ず先に済ませること**（先に `$LATEST_DETAIL` を上書きすると旧版が失われ、アーカイブのため `git show HEAD:` からの復元が必要になる）。
 
 ### 12. ライト版生成
 
@@ -250,10 +251,10 @@ python ${DERIVE_SCRIPT} ${LATEST_DETAIL}
 
 #### 実行要否の判定
 
-Bash で `echo "${DOC_SUMMARY_AUTOMATED:-0}"` を実行し、結果を `AUTOMATED` とする。
+`AUTOMATED` は冒頭「引数パース」で決定済み（`--automated` 引数があれば `1`、無ければ `0`）。ツール実行は不要。
 
 - `AUTOMATED` が `1` (無人・ヘッドレス/パイプライン実行): 本 Phase は**必須**。スキップ不可
-- `AUTOMATED` が `1` 以外 (手動・対話実行): 本 Phase は**任意**。ユーザーから明示指示がある場合のみ実行し、無ければ手順 14 へ進む
+- `AUTOMATED` が `0` (手動・対話実行): 本 Phase は**任意**。ユーザーから明示指示がある場合のみ実行し、無ければ手順 14 へ進む
 
 > 理由: ハルシネーションは執筆者が確信的に書くため Phase 1/2 セルフレビューでは捕捉できない。人が成果物を見ない無人実行時のみ機械レビューを必須化する。
 
