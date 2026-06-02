@@ -264,7 +264,7 @@ Bash で `echo "${DOC_SUMMARY_AUTOMATED:-0}"` を実行し、結果を `AUTOMATE
 1. Agent tool で `doc-summary-reviewer` (subagent_type) を起動。プロンプトに以下を渡す:
    - `SITE` / `INPUT_BASE` / `BASE_COMMIT` / `HEAD_COMMIT` / `LATEST_DETAIL` / `LATEST_LIGHT`
    - `URL_LANG`: URL言語併記=あり のサイトは `あり`、なし のサイトは `なし`
-2. reviewer 出力の**先頭行** `判定: PASS` または `判定: FAIL` を解釈する
+2. reviewer 出力から `判定:` で始まる行を探し、`判定: PASS` または `判定: FAIL` を解釈する（reviewer は 1 行目に置く規約）
 3. `判定: PASS` の場合: ループを抜けて手順 14 へ
 4. `判定: FAIL` の場合:
    - 各 `[CRITICAL]` / `[IMPORTANT]` 指摘の修正案を Edit tool で `$LATEST_DETAIL` に反映する (`[SUGGESTION]` は任意反映)

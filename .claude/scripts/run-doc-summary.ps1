@@ -123,7 +123,14 @@ try {
     if ($botExists) {
         Write-Log "bot ブランチへ切替し $BASE_BRANCH を取り込み"
         Invoke-Git checkout $BOT_BRANCH | Out-Null
-        Invoke-Git merge --no-edit $BASE_BRANCH | Out-Null
+        try {
+            Invoke-Git merge --no-edit $BASE_BRANCH | Out-Null
+        } catch {
+            # コンフリクト等の merge 失敗時はツリーを mid-merge で残さず中断する
+            # （残すと次回以降の未コミット判定で全実行が恒久ブロックされるため）
+            & git merge --abort 2>$null | Out-Null
+            throw "bot ブランチへの $BASE_BRANCH 取り込みに失敗（merge --abort 実施済み）: $($_.Exception.Message)"
+        }
     } else {
         Write-Log "bot ブランチを $BASE_BRANCH から新規作成"
         Invoke-Git checkout -b $BOT_BRANCH $BASE_BRANCH | Out-Null
@@ -180,7 +187,8 @@ try {
 
         # claude の終了コード + JSON の is_error を二重判定
         $isError = $true
-        try { $isError = ($raw | ConvertFrom-Json).is_error } catch { $isError = $true }
+        # $raw は 2>&1 で複数行（object[]）になり得るため join して 1 つの JSON として解釈する
+        try { $isError = (($raw -join "`n") | ConvertFrom-Json).is_error } catch { $isError = $true }
         if ($cliExit -ne 0 -or $isError) {
             Write-Log "[$($s.Slug)] 生成失敗 (exit=$cliExit is_error=$isError)。当該サイトの生成物を破棄し push 抑止" "ERROR"
             Write-Log $raw "ERROR"

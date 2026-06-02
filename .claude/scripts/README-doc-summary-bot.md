@@ -32,9 +32,9 @@ Sonnet とモデルを分けて確証バイアスを抑える。`develop`/`main`
 
 | ファイル | 役割 |
 |---|---|
-| `run-doc-summary.ps1` | 中核ラッパー。dl→生成→commit→bot 限定 push を無人実行 |
-| `register-doc-summary-task.ps1` | タスクスケジューラへの日次登録ヘルパー |
-| `notify-bot-branch.sh` | SessionStart で「bot に未確定生成あり」を通知（異常系の後追い検出） |
+| `.claude/scripts/run-doc-summary.ps1` | 中核ラッパー。dl→生成→commit→bot 限定 push を無人実行 |
+| `.claude/scripts/register-doc-summary-task.ps1` | タスクスケジューラへの日次登録ヘルパー |
+| `.claude/scripts/notify-bot-branch.sh` | SessionStart で「bot に未確定生成あり」を通知（異常系の後追い検出） |
 | `.claude/agents/doc-summary-reviewer.md` | Phase 3 の第三者レビューア（Sonnet, read-only） |
 | `.claude/skills/update-official-doc-summary/` | 生成本体の Skill（Phase 3 ループ込み） |
 

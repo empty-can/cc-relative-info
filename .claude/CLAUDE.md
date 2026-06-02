@@ -68,7 +68,7 @@ sub-agent / background Agent 起動を含む作業の着手前には **8 種別�
 
 ## settings.json の SessionStart hook と個人通知 hook
 
-`settings.json` の `SessionStart` hook が `git status --short` を実行する（OS 中立コマンドのみを使う方針）。Notification / TaskCompleted / PostToolUseFailure / PermissionRequest / Stop の音声・効果音 hook は `settings.local.json` に個人用として配置されており、Windows の `SoundPlayer` + `SAPI.SpVoice` を使う。
+`settings.json`（共有）の `SessionStart` hook は `bash .claude/scripts/notify-bot-branch.sh` を実行し、doc-summary-bot ブランチに未確定の自動生成サマリ（`feature/LLMs` へ未マージの bot コミット）が残っていれば通知する（OS 中立コマンドのみを使う方針）。`git status --short` を実行する SessionStart hook と、Notification / TaskCompleted / PostToolUseFailure / PermissionRequest / Stop の音声・効果音 hook は `settings.local.json` に個人用として配置されており、Windows の `SoundPlayer` + `SAPI.SpVoice` を使う。
 
 ## 流用元由来の参照に関する注意
 
