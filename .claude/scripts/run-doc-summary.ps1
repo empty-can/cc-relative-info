@@ -118,7 +118,7 @@ try {
     }
 
     # 2. bot ブランチ準備（無ければ BASE から作成、有れば BASE を取り込み最新化）
-    & git rev-parse --verify --quiet $BOT_BRANCH 2>$null | Out-Null
+    & git rev-parse --verify --quiet "refs/heads/$BOT_BRANCH" 2>$null | Out-Null
     $botExists = ($LASTEXITCODE -eq 0)
     if ($botExists) {
         Write-Log "bot ブランチへ切替し $BASE_BRANCH を取り込み"
@@ -147,7 +147,7 @@ try {
 
     # 4. dl 差分を commit（取り込みと生成のコミットを分離）
     Invoke-Git add "LLMs/official-llms-txts" | Out-Null
-    $dlStaged = & git diff --cached --quiet "LLMs/official-llms-txts"; $dlChanged = ($LASTEXITCODE -ne 0)
+    & git diff --cached --quiet "LLMs/official-llms-txts" | Out-Null; $dlChanged = ($LASTEXITCODE -ne 0)
     if ($dlChanged) {
         Invoke-Git commit -m "chore(LLMs): 公式 llms.txt 定期取り込み (bot)" | Out-Null
         Write-Log "dl 差分を commit"
@@ -207,7 +207,7 @@ try {
     # 6. 生成物を commit
     $summaryDir = "LLMs/official-doc-update-summary"
     Invoke-Git add $summaryDir | Out-Null
-    $genStaged = & git diff --cached --quiet $summaryDir; $genChanged = ($LASTEXITCODE -ne 0)
+    & git diff --cached --quiet $summaryDir | Out-Null; $genChanged = ($LASTEXITCODE -ne 0)
     if ($genChanged) {
         Invoke-Git commit -m "feat(LLMs): 公式ドキュ更新サマリ自動生成 (bot)" | Out-Null
         Write-Log "生成サマリを commit"

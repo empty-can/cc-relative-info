@@ -55,7 +55,7 @@ if (-not $pwshExe) { throw "pwsh / powershell が PATH に見つからない" }
 
 $argLine = '-NoProfile -ExecutionPolicy Bypass -File "{0}" -Site all' -f $RUNNER
 $action  = New-ScheduledTaskAction -Execute $pwshExe -Argument $argLine -WorkingDirectory $REPO_ROOT
-$trigger = New-ScheduledTaskTrigger -Daily -At $At
+$trigger = New-ScheduledTaskTrigger -Daily -At ([datetime]::ParseExact($At, 'HH:mm', $null))
 
 $me = "$env:USERDOMAIN\$env:USERNAME"
 if ($RunWhenLoggedOff) {
