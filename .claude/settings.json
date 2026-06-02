@@ -1,13 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
-    "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(./secrets/**)",
-      "Read(~/.aws/credentials)",
-      "Read(~/.ssh/**)"
-    ],
     "allow": [
       "Bash(git status:*)",
       "Bash(git diff:*)",
@@ -30,6 +23,13 @@
       "Bash(git rev-parse:*)",
       "Bash(echo:*)",
       "Agent(doc-summary-reviewer)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Read(~/.aws/credentials)",
+      "Read(~/.ssh/**)"
     ]
   },
   "hooks": {
@@ -54,5 +54,8 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "security-guidance@claude-plugins-official": true
   }
 }
