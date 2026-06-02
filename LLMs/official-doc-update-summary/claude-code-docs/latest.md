@@ -1,36 +1,25 @@
 ---
-対象期間: 2026年05月31日 〜 2026年06月02日
+対象期間: 2026年06月02日 〜 2026年06月02日
 作成日: 2026-06-02
 ---
 
 # Claude Code 公式ドキュメント更新サマリ
 
-> 今回の更新は新着情報（週間ダイジェスト）2 件分で、Week 21・Week 22 で告知された主要機能と多数の小規模改善が反映されています。リファレンス／ガイドページ自体の新規追加・大幅更新はありません。
+> 今回の更新はリファレンスページ 1 件の新規追加が中心で、MCP サーバー接続用のクイックスタートページが新設されました。既存ページの大幅更新や新着情報（週間ダイジェスト）はありません。
 >
 > 主要なものを以下に挙げます。
 >
-> 1. Claude Opus 4.8 が Max / Team Premium / Enterprise pay-as-you-go / Anthropic API の新しいデフォルトモデルに
-> 2. 動的ワークフロー（Dynamic workflows、research preview）で多数のサブエージェントをスクリプトからオーケストレーション
-> 3. security-guidance プラグインが Claude のコード変更を脆弱性観点でレビューし同一セッション内で修正
-> 4. Fast モードが Opus 4.8 に対応（$10 / $50 per MTok）
-> 5. Auto モードが Pro プランと Sonnet 4.6 に対応
+> 1. MCP サーバー接続用のクイックスタートページ「MCP サーバーに接続する」が新設
 
 ## ハイライト
 
-1. [**Claude Opus 4.8 リリース**](./latest-detail.md#1-claude-opus-48-リリース):  
-  Max / Team Premium / Enterprise pay-as-you-go / Anthropic API の新しいデフォルトモデル。デフォルトで high effort、最難タスクには `/effort xhigh`。v2.1.154 以降が必要。
-2. [**動的ワークフロー**](./latest-detail.md#2-動的ワークフロー):  
-  Claude がタスク用に書き起こすオーケストレーションスクリプトを、多数のサブエージェントでバックグラウンド実行する research preview 機能。`/workflows` で管理。
-3. [**security-guidance プラグイン**](./latest-detail.md#3-security-guidance-プラグイン):  
-  Claude のコード変更を脆弱性観点でレビューし同一セッション内で修正するプラグイン。編集時の高速パターンチェック・ターン終了時のモデルレビュー・コミット／プッシュ時の詳細レビューの 3 段構え。
-4. [**Opus 4.8 での Fast モード**](./latest-detail.md#4-opus-48-での-fast-モード):  
-  Fast モードのデフォルトが Opus 4.8（$10 / $50 per MTok、標準の 2 倍の料金で約 2.5 倍の速度）に。Opus 4.6 の Fast モードは非推奨化。
-5. [**Pro プランでの Auto モード**](./latest-detail.md#5-pro-プランでの-auto-モード):  
-  Auto モードが Pro プランでも利用可能になり Sonnet 4.6 に対応。パーミッションプロンプトをバックグラウンドの安全性チェックに置き換える。
+1. [**MCP サーバー接続クイックスタートの新設**](./latest-detail.md#1-mcp-サーバー接続クイックスタートの新設):  
+  MCP サーバーの追加・接続確認・設定ファイルの所在確認までを最短手順で案内する入門ページ。包括的な `mcp` ページとは別に、初学者向けの導線として MCP セクションに新設された。
 
 ## 新規追加されたページ
 
-*(リファレンス／ガイドの新規追加ページはありません)*
+- [**MCP サーバーに接続する**](./latest-detail.md#1-mcp-サーバーに接続する) ([日本語](https://code.claude.com/docs/ja/mcp-quickstart) / [English](https://code.claude.com/docs/en/mcp-quickstart)):  
+  MCP サーバーの追加から接続確認、スコープ変更、`.mcp.json` の直接編集までを段階的に解説する入門ページ。
 
 ## 大幅に更新されたページ
 
@@ -38,21 +27,28 @@
 
 ## 軽微な更新
 
-*(軽微な更新はありません)*
+- [日本語](https://code.claude.com/docs/ja/hooks-guide) / [English](https://code.claude.com/docs/en/hooks-guide):  
+  フックのガイドページのタイトルが「Automate workflows with hooks」から「Automate actions with hooks」へ変更されました（内容は同一で表現の調整）。
+- [日本語](https://code.claude.com/docs/ja/changelog) / [English](https://code.claude.com/docs/en/changelog):  
+  v2.1.159（2026年05月31日）が追記されました。内部インフラの改善のみで、ユーザー向けの変更はありません。
+- [日本語](https://code.claude.com/docs/ja/goal) / [English](https://code.claude.com/docs/en/goal):  
+  `/goal` ページの見出しが「Compare to other autonomous workflows」から「Compare ways to keep a session running」へ改称されました。
+- [日本語](https://code.claude.com/docs/ja/interactive-mode) / [English](https://code.claude.com/docs/en/interactive-mode):  
+  インタラクティブモードのリファレンスに、プラグインの有効化・無効化操作の項目が追加されました。
+- [日本語](https://code.claude.com/docs/ja/troubleshooting) / [English](https://code.claude.com/docs/en/troubleshooting):  
+  トラブルシューティングページに、バックグラウンドサービスが応答しないケースと、macOS でバックグラウンドセッションがデスクトップ・書類・ダウンロードフォルダを読めないケースの 2 項目が追加されました。
 
 ## 新着情報
 
-- [**2026年05月18日～22日(Week 21)**](./latest-detail.md#2026年05月18日22日week-21) ([日本語](https://code.claude.com/docs/ja/whats-new/2026-w21) / [English](https://code.claude.com/docs/en/whats-new/2026-w21)):  
-  Pro プランでの Auto モード対応を目玉に、`/usage` のカテゴリ別内訳、新しい `/code-review` コマンド、バックグラウンドセッションの `/resume` 表示など。
-- [**2026年05月25日～29日(Week 22)**](./latest-detail.md#2026年05月25日29日week-22) ([日本語](https://code.claude.com/docs/ja/whats-new/2026-w22) / [English](https://code.claude.com/docs/en/whats-new/2026-w22)):  
-  Claude Opus 4.8 リリースを目玉に、動的ワークフロー、security-guidance プラグイン、Opus 4.8 での Fast モードなど 4 機能。
+*(今回の対象期間に新着情報（週間ダイジェスト）の更新はありません)*
 
 ## 関連リンク
 
-- (初版のため、前回サマリはありません)
+- 前回サマリ(ライト版): [./archives/2026-06-02/latest.md](./archives/2026-06-02/latest.md)
+- 前回サマリ(詳細版): [./archives/2026-06-02/latest-detail.md](./archives/2026-06-02/latest-detail.md)
 
 <!--
-base_commit: 21ff319
-head_commit: d4a9a8aaebd53fd9593d3c9cba8cb7e60b0e36a4
-generated_at_full: 2026-06-02T01:36:15+09:00
+base_commit: d4a9a8aaebd53fd9593d3c9cba8cb7e60b0e36a4
+head_commit: 2e5333166f191bf5c6e336edbf92daeda50feebd
+generated_at_full: 2026-06-02T11:25:52+09:00
 -->
