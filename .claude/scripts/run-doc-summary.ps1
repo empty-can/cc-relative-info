@@ -74,6 +74,22 @@ function Invoke-Git {
     return $out
 }
 
+# bash を解決する。PATH に無ければ Git for Windows 同梱の bash を探す
+# （タスクスケジューラ実行時は PATH に Git の bin が通っていない構成があり得るため）。
+function Resolve-BashExe {
+    $c = Get-Command bash -ErrorAction SilentlyContinue
+    if ($c) { return $c.Source }
+    $g = Get-Command git -ErrorAction SilentlyContinue
+    if ($g) {
+        $gitRoot = Split-Path (Split-Path $g.Source -Parent) -Parent
+        foreach ($rel in @("bin\bash.exe", "usr\bin\bash.exe")) {
+            $p = Join-Path $gitRoot $rel
+            if (Test-Path $p) { return $p }
+        }
+    }
+    throw "bash が見つからない（PATH にも Git for Windows 同梱位置にも無い）。Git for Windows を導入するか PATH を通すこと"
+}
+
 # bot ブランチ限定 push。GCM を一時無効化し、User scope の PAT を inline
 # credential helper 経由でその push 1 回だけ git に渡す（URL/引数/ログに露出させない）。
 # 無人実行で GCM の GUI プロンプトが出ないため確実に非対話で push できる。
@@ -139,7 +155,8 @@ try {
     # 3. dl_llms.sh（公式 llms.txt 取り込み）
     if (-not $SkipDownload) {
         Write-Log "dl_llms.sh 実行"
-        & bash "LLMs/scripts/dl_llms.sh" 2>&1 | Tee-Object -FilePath $LOG_FILE -Append | Out-Null
+        $bashExe = Resolve-BashExe
+        & $bashExe "LLMs/scripts/dl_llms.sh" 2>&1 | Tee-Object -FilePath $LOG_FILE -Append | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "dl_llms.sh が失敗 (exit $LASTEXITCODE)" }
     } else {
         Write-Log "dl_llms.sh はスキップ (-SkipDownload)"
