@@ -21,7 +21,7 @@
   終了時に開始前のブランチへ戻す（手動テスト時の利便のため。既定は戻さない）。
 
 .NOTES
-  実行モードは子プロセスへ環境変数 DOC_SUMMARY_AUTOMATED=1 で伝え、SKILL の
+  無人実行であることは子プロセスへ --automated 引数で伝え、SKILL の
   Phase 3（第三者レビュー）を必須化する。
 #>
 [CmdletBinding()]
@@ -46,7 +46,7 @@ $GEN_MODEL   = "opus"               # ヘッドレス生成のモデル（レビ
 # 初回セットアップ: Read-Host -AsSecureString | Export-Clixml $TOKEN_FILE
 $TOKEN_FILE  = Join-Path $env:USERPROFILE ".claude\doc-summary-bot-token.xml"
 # claude が SKILL 実行で使うツール群（acceptEdits と二重で明示）
-$ALLOWED_TOOLS = "Read Write Edit Grep Bash(git diff:*) Bash(git log:*) Bash(git rev-parse:*) Bash(mkdir -p:*) Bash(mv:*) Bash(git checkout:*) Bash(git clean:*) Bash(python:*) Bash(echo:*) Task Agent(doc-summary-reviewer)"
+$ALLOWED_TOOLS = "Read Write Edit Grep Bash(git diff:*) Bash(git log:*) Bash(git show:*) Bash(git rev-parse:*) Bash(mkdir -p:*) Bash(mv:*) Bash(git checkout:*) Bash(git clean:*) Bash(python:*) Bash(echo:*) Task Agent(doc-summary-reviewer)"
 
 # サイト設定（SKILL.md サイト設定テーブルと一致させる）
 $SITES = @(
@@ -193,19 +193,24 @@ try {
         }
 
         Write-Log "[$($s.Slug)] 差分あり。ヘッドレス生成を開始 ($baseCommit..$($headCommit.Substring(0,7)))"
-        $env:DOC_SUMMARY_AUTOMATED = "1"
-        $raw = & claude -p "/update-official-doc-summary --site $($s.Slug)" `
+        # 無人実行であることは --automated 引数で SKILL へ確実に伝える。
+        # （環境変数 + Bash echo 経由の検知はモデルが命令形を改変し allowedTools 不一致で
+        #   拒否され、Phase 3 がスキップされ得るため。引数はプロンプト内で権限不要に読める）
+        $raw = & claude -p "/update-official-doc-summary --site $($s.Slug) --automated" `
             --model $GEN_MODEL `
             --permission-mode acceptEdits `
             --allowedTools $ALLOWED_TOOLS `
             --output-format json 2>&1
         $cliExit = $LASTEXITCODE
-        Remove-Item Env:\DOC_SUMMARY_AUTOMATED -ErrorAction SilentlyContinue
 
-        # claude の終了コード + JSON の is_error を二重判定
+        # 終了コード + result JSON の is_error を二重判定。stdout 末尾の result 行
+        # （"type":"result" を含む）だけを取り出して解釈し、2>&1 で混入する stderr 警告
+        # （"no stdin data received" 等）が JSON parse を壊すのを防ぐ。
         $isError = $true
-        # $raw は 2>&1 で複数行（object[]）になり得るため join して 1 つの JSON として解釈する
-        try { $isError = (($raw -join "`n") | ConvertFrom-Json).is_error } catch { $isError = $true }
+        $jsonLine = @($raw | ForEach-Object { $_.ToString() } | Where-Object { $_ -match '"type":"result"' }) | Select-Object -Last 1
+        if ($jsonLine) {
+            try { $isError = [bool]($jsonLine | ConvertFrom-Json).is_error } catch { $isError = $true }
+        }
         if ($cliExit -ne 0 -or $isError) {
             Write-Log "[$($s.Slug)] 生成失敗 (exit=$cliExit is_error=$isError)。当該サイトの生成物を破棄し push 抑止" "ERROR"
             Write-Log $raw "ERROR"
