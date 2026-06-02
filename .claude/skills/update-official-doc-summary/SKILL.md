@@ -1,7 +1,7 @@
 ---
 name: update-official-doc-summary
 description: official-llms-txts 配下の公式ドキュメント (llms.txt / llms-full.txt) の更新差分を、人間向けの changelog / リリースノート風 Markdown として生成する。対象サイトは --site で切り替える (claude-code-docs / mcp)。詳細版を LLM で生成し、ライト版は固定スクリプトで詳細版から機械的に抽出する。
-allowed-tools: Read, Write, Edit, Grep, Bash(git diff:*), Bash(git log:*), Bash(git rev-parse:*), Bash(mkdir -p:*), Bash(mv:*), Bash(python:*), Bash(echo:*), Agent(doc-summary-reviewer)
+allowed-tools: Read, Write, Edit, Grep, Bash(git diff:*), Bash(git log:*), Bash(git rev-parse:*), Bash(mkdir -p:*), Bash(mv:*), Bash(git checkout:*), Bash(git clean:*), Bash(python:*), Bash(echo:*), Agent(doc-summary-reviewer)
 argument-hint: "[--site <slug>] [--from <commit>]"
 disable-model-invocation: true
 ---
@@ -271,8 +271,13 @@ Bash で `echo "${DOC_SUMMARY_AUTOMATED:-0}"` を実行し、結果を `AUTOMATE
    - Bash で `python ${DERIVE_SCRIPT} ${LATEST_DETAIL}` を再実行し `$LATEST_LIGHT` を再生成する
    - `N` を +1 してループ先頭へ戻る
 5. `N` が 3 を超えても `判定: FAIL` の場合 (打ち切り):
-   - `AUTOMATED` が `1`: 残存指摘を標準エラーに出力し、**非ゼロ終了**する (ラッパーが push を抑止する)
-   - `AUTOMATED` が `1` 以外: 残存指摘をユーザーに提示し判断を仰ぐ (手順 14 の完了報告は行わない)
+   - `AUTOMATED` が `1`: 残存指摘を標準エラーに出力する。さらに、レビュー FAIL の生成物が commit・push されるのを**決定論的に防ぐ**ため、Bash で当該サイトの生成物を HEAD 状態へ戻す:
+     ```
+     git checkout -- ${SUMMARY_DIR}
+     git clean -fd ${SUMMARY_DIR}
+     ```
+     これで `${SUMMARY_DIR}` の追跡ファイルは HEAD に戻り、手順 10 で退避した未追跡コピーも除去されるため、ラッパーの add 対象に差分が残らず push されない (`claude -p` の終了コード挙動に依存せず push を抑止できる)。
+   - `AUTOMATED` が `1` 以外: 残存指摘をユーザーに提示し判断を仰ぐ (手順 14 の完了報告は行わない。生成物は破棄せず人手判断に委ねる)
 
 ### 14. 完了報告
 

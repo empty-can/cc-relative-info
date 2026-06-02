@@ -102,7 +102,7 @@ pwsh -NoProfile -File .claude\scripts\register-doc-summary-task.ps1 -At 07:00
 
 - **生成失敗**（claude 非ゼロ終了 or JSON `is_error`）: 当該サイトの生成途中物をロールバックし、
   以後 push を抑止（他サイト・dl コミットは保持）
-- **レビュー打ち切り**（Phase 3 が 3 回 FAIL）: SKILL が非ゼロ終了 → ラッパーが push 抑止
+- **レビュー打ち切り**（Phase 3 が 3 回 FAIL）: 無人時は SKILL が当該サイトの生成物を `git checkout` + `git clean` で HEAD 状態へ戻す。push 対象に差分が残らないため、`claude -p` の終了コード挙動に依存せず FAIL 生成物の push を確実に抑止する（残存指摘はログへ出力）
 - **push 失敗**: 例外を捕捉してログ記録・終了コード 1
 
 これらの異常時、生成コミットは **bot ブランチにローカル残存**する。次回セッション開始時に

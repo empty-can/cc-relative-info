@@ -46,7 +46,7 @@ $GEN_MODEL   = "opus"               # ヘッドレス生成のモデル（レビ
 # 初回セットアップ: Read-Host -AsSecureString | Export-Clixml $TOKEN_FILE
 $TOKEN_FILE  = Join-Path $env:USERPROFILE ".claude\doc-summary-bot-token.xml"
 # claude が SKILL 実行で使うツール群（acceptEdits と二重で明示）
-$ALLOWED_TOOLS = "Read Write Edit Grep Bash(git diff:*) Bash(git log:*) Bash(git rev-parse:*) Bash(mkdir -p:*) Bash(mv:*) Bash(python:*) Bash(echo:*) Task Agent(doc-summary-reviewer)"
+$ALLOWED_TOOLS = "Read Write Edit Grep Bash(git diff:*) Bash(git log:*) Bash(git rev-parse:*) Bash(mkdir -p:*) Bash(mv:*) Bash(git checkout:*) Bash(git clean:*) Bash(python:*) Bash(echo:*) Task Agent(doc-summary-reviewer)"
 
 # サイト設定（SKILL.md サイト設定テーブルと一致させる）
 $SITES = @(
@@ -192,8 +192,12 @@ try {
         if ($cliExit -ne 0 -or $isError) {
             Write-Log "[$($s.Slug)] 生成失敗 (exit=$cliExit is_error=$isError)。当該サイトの生成物を破棄し push 抑止" "ERROR"
             Write-Log $raw "ERROR"
-            # 失敗サイトの生成途中物をロールバック（他サイト・dl commit は保持）
-            Invoke-Git checkout -- (Split-Path $s.Detail -Parent) | Out-Null
+            # 失敗サイトの生成途中物をロールバック（他サイト・dl commit は保持）。
+            # checkout で追跡ファイルを HEAD へ戻し、clean で手順10退避コピー等の
+            # 未追跡ファイルも除去する（次の git add で混入させない）。
+            $siteDir = Split-Path $s.Detail -Parent
+            Invoke-Git checkout -- $siteDir | Out-Null
+            & git clean -fd $siteDir 2>$null | Out-Null
             $hadFailure = $true
         } else {
             Write-Log "[$($s.Slug)] 生成成功 (Phase 3 含む)"
