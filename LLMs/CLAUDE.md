@@ -22,3 +22,4 @@
 - **`scripts/dl_llms.sh`**: `official-llms-txts/` への定期ダウンロードスクリプト。実行: `bash LLMs/scripts/dl_llms.sh`（リポジトリルートから）。`scripts/download_list.tsv` でダウンロード対象を管理
 - **`scripts/gen-llms-txt/gen_llms.sh`**: `targets.txt` を読み、clone → `gen_llms_full.py` → `validate.sh` を一括実行するバッチエントリ。実行: `bash LLMs/scripts/gen-llms-txt/gen_llms.sh`（リポジトリルートから）。生成物の blockquote / description プレースホルダは未補完で残るため、補完が要る場合は `/generate-llms-txt` Skill を併用する
 - WebFetch で `llms.txt` を取得する場合、参照頻度の高いドメインは `.claude/settings.json` の allow リストに既登録あり（`code.claude.com` / `docs.claude.com` / `github.com/anthropics`）。他ドメインは個別に追加する
+- **公式ドキュメント更新サマリ**: `official-doc-update-summary/` に Claude Code / MCP 公式ドキュメントの更新差分サマリ（人間向け changelog）を生成・蓄積する。生成は `/update-official-doc-summary` Skill。無人・日次の自動生成パイプライン（ラッパー `run-doc-summary.ps1` / スケジューラ登録 / bot ブランチ限定 push / 第三者レビュー / 異常系通知）の運用手順は `.claude/scripts/README-doc-summary-bot.md` 参照
