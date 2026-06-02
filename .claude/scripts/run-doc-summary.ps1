@@ -42,7 +42,9 @@ $BASE_BRANCH = "feature/LLMs"
 $REPO_ROOT   = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $LOG_DIR     = Join-Path $REPO_ROOT "LLMs\work\doc-summary-bot"
 $GEN_MODEL   = "opus"               # ヘッドレス生成のモデル（レビューは agent 定義で sonnet 固定）
-$TOKEN_ENV   = "GH_PUSH_TOKEN"      # bot push 用 PAT を保持する User scope 環境変数名
+# bot push 用 PAT を DPAPI 暗号化して保管するファイル（同一ユーザー・同一マシンでのみ復号可）。
+# 初回セットアップ: Read-Host -AsSecureString | Export-Clixml $TOKEN_FILE
+$TOKEN_FILE  = Join-Path $env:USERPROFILE ".claude\doc-summary-bot-token.xml"
 # claude が SKILL 実行で使うツール群（acceptEdits と二重で明示）
 $ALLOWED_TOOLS = "Read Write Edit Grep Bash(git diff:*) Bash(git log:*) Bash(git rev-parse:*) Bash(mkdir -p:*) Bash(mv:*) Bash(python:*) Bash(echo:*) Task Agent(doc-summary-reviewer)"
 

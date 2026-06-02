@@ -26,7 +26,10 @@
       "Bash(python LLMs:*)",
       "Bash(python3 LLMs:*)",
       "Bash(bash LLMs:*)",
-      "Bash(mkdir -p:*)"
+      "Bash(mkdir -p:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(echo:*)",
+      "Agent(doc-summary-reviewer)"
     ]
   },
   "hooks": {
