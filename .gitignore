@@ -3,6 +3,9 @@ LLMs/work/tmp-clone/
 LLMs/work/gen-out/
 LLMs/work/gen-error/
 
+# ドキュ更新サマリ自動化ラッパーの実行ログ
+LLMs/work/doc-summary-bot/
+
 # Python キャッシュ
 __pycache__/
 *.pyc
