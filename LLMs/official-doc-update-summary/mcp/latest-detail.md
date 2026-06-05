@@ -1,49 +1,47 @@
 ---
-対象期間: 2026年05月29日 〜 2026年06月02日
-作成日: 2026-06-02
+対象期間: 2026年06月02日 〜 2026年06月05日
+作成日: 2026-06-05
 ---
 
 # MCP 公式ドキュメント更新サマリ - 詳細版
 
 <!-- light:summary:start -->
-> 今回の更新はリファレンスページの新規追加・大幅更新は無く、既存ページの本文改修が中心です。Tool Header Parameters（SEP-2243）と Tasks 拡張（SEP-2663）の仕様の厳格化・整理が主な変更で、ほかにクライアント対応の拡大とワーキンググループ運営情報の更新があります。
+> 今回の更新は新規ページ 1 件の追加が中心で、MCP 認可 Interest Group の設立憲章ページ「Authorization Charter」が新設されました。既存ページの大幅な書き換えはなく、その他は community（コミュニティ／ガバナンス）配下の charter ページ群の再配置と SEP 索引の整列が中心です。
 >
 > 主要なものを以下に挙げます。
 >
-> 1. SEP-2243（HTTP ヘッダ標準化）: `x-mcp-header` の制約厳格化（RFC 9110 トークン準拠・`number` 型禁止→integer 限定・ネスト許可・base64 センチネル衝突回避 ほか）
-> 2. SEP-2663（Tasks 拡張）: 後方互換性の表形式整理（`2025-11-25` ↔ `2026-06-30`）とエラーコード `-32003` の追加
+> 1. MCP 認可 Interest Group の設立憲章ページ「Authorization Charter」が新設
 <!-- light:summary:end -->
 
 ## ハイライト
 
 <!-- light:highlight-list:start -->
-1. [**SEP-2243 HTTP ヘッダ標準化**](#1-sep-2243-http-ヘッダ標準化):  
-  Streamable HTTP transport のツールヘッダパラメータ（`x-mcp-header`）の制約が厳格化。RFC 9110 トークン構文準拠・制御文字禁止・`number` 型禁止（integer 限定）・任意ネスト許可・base64 センチネル衝突回避などが追加された。
-2. [**SEP-2663 Tasks 拡張**](#2-sep-2663-tasks-拡張):  
-  エラーコード `-32003`（Missing Required Client Capability）の追加と、後方互換性記述の表形式整理（`2025-11-25` の実験的 tasks と `2026-06-30` の本拡張の挙動マトリクス化）。
+1. [**MCP 認可 Interest Group 憲章の新設**](#1-mcp-認可-interest-group-憲章の新設):  
+  OAuth 2.1 ベースの認可仕様の実運用課題を収集し、検証済みの問題を Working Group へ橋渡しするための Interest Group（IG）設立憲章。スコープ・体制・配下の認可 Working Group 一覧を定義する。
 <!-- light:highlight-list:end -->
 
-## 1. SEP-2243 HTTP ヘッダ標準化
+## 1. MCP 認可 Interest Group 憲章の新設
 
-Streamable HTTP transport におけるツールヘッダパラメータ（`x-mcp-header`）の仕様が厳格化されました。値の制約が「ASCII 文字（空白と `:` を除く）」から RFC 9110 のフィールド名トークン構文（`1*tchar`）準拠に変わり、制御文字（CR `\r` / LF `\n`）が明示的に禁止されました。適用可能な型からは `number` が除外され integer・string・boolean に限定され（integer は JavaScript の安全範囲 −2^53+1〜2^53−1）、さらに `inputSchema` 内のトップレベルに限らず任意のネスト階層のプロパティへ適用できるようになりました。reject 義務は Streamable HTTP transport を使うクライアントに限定され、stdio など他の transport は `x-mcp-header` アノテーションを無視してよいことが明記されました。
+新しい憲章ページ「Authorization Charter」（`community/auth/charter`）が追加されました。これは MCP の **Authorization Interest Group（認可 IG）** の設立憲章で、MCP 実装者・ID プロバイダーベンダー・セキュリティ実務者が、MCP クライアント／サーバーを実運用する際に直面する認可上の課題を持ち寄る場として位置づけられています。IG はユースケースを収集し、現行の OAuth 2.1 ベース認可仕様のギャップを文書化し、検証済みで十分にスコープが定まった問題を、標準のグループ作成プロセスを通じて専用の Working Group（WG）へと橋渡しして対応する SEP を駆動します。
 
-加えて値エンコーディングでは `number`→`integer` へ表記が変更され、base64 センチネル（`=?base64?...?=`）が大文字小文字を区別する旨と、プレーン ASCII 値がセンチネルパターンに一致してしまう場合も base64 エンコードする衝突回避ルールが追加されました。ヘッダ値とボディ値の整数は文字列ではなく数値として比較すべき（`42.0` と `42` は等価）、`inputSchema` 未取得・キャッシュ失効時はカスタムヘッダを送らず必要に応じて `tools/list` 後にリトライする、中間装置はミラーされたヘッダで方針判断する際に `MCP-Protocol-Version` を検証すべき、といった Implementation Note も追加されています。
+憲章では、In Scope（デプロイ経験レポート、エンタープライズ ID 連携、委譲・エージェント的アクセス、スコープ粒度、非 HTTP トランスポートの資格情報、クライアント登録、脅威モデリング入力 など）と Out of Scope（エンドユーザー認証、トランスポート層セキュリティ、サーバー ID／来歴、製品個別の設定手順 など）が明確に区切られています。ファシリテーターは Okta・Amazon・Anthropic の 3 名で、参加は誰でも可能（`#auth-ig` Discord チャンネルや GitHub Discussions）です。配下には Client Registration・Mix-up Protection・Profiles・Tool Scopes・Fine-Grained Authorization・Improve DevX といった認可 WG が一覧化されています（一部は Completed、Tool Scopes と Fine-Grained Authorization は Active）。
 
-- [SEP-2243: HTTP Header Standardization for Streamable HTTP Transport - MCP Docs](https://modelcontextprotocol.io/seps/2243-http-standardization)
-
-## 2. SEP-2663 Tasks 拡張
-
-Tasks 拡張の仕様が更新されました。新たにエラーコード `-32003`（Missing Required Client Capability）が追加され、必要なクライアント能力を宣言していないクライアントが `subscriptions/listen` でのタスク通知購読や `tasks/get`・`tasks/update`・`tasks/cancel` を要求した場合に、サーバーがこのエラーを返すことが規定されました。
-
-また後方互換性の記述が表形式に整理され、`2025-11-25`（実験的 tasks）と `2026-06-30`（本拡張）の各プロトコルバージョンにおける、レガシー能力（`tasks.*`）と新能力（`io.modelcontextprotocol/tasks`）の挙動が一覧化されました。`tasks/result` の削除、`CallToolRequest` の `task` パラメータ廃止、レガシー能力宣言から `io.modelcontextprotocol/tasks` への移行義務などが、バージョン×能力の組み合わせごとに明確化されています。
-
-- [SEP-2663: Tasks Extension - MCP Docs](https://modelcontextprotocol.io/seps/2663-tasks-extension)
+- [Authorization Charter - MCP Docs](https://modelcontextprotocol.io/community/auth/charter)
 
 ## 新規追加されたページ
 
 <!-- light:new-pages:start -->
-*(リファレンスページの新規追加はありません)*
+- [**Authorization Charter**](#1-authorization-charter) ([modelcontextprotocol.io](https://modelcontextprotocol.io/community/auth/charter)):  
+  MCP 認可 Interest Group の設立憲章。認可の実運用課題の収集と Working Group へのインキュベーションを担う。
 <!-- light:new-pages:end -->
+
+## 1. Authorization Charter
+
+「Authorization Charter」（`community/auth/charter`）は、MCP の認可 Interest Group を定義する新規ページです。Group Type（Interest Group）・Mission Statement・Scope（In Scope / Out of Scope / Related Groups）・Leadership・Membership・Operations・Working Group Incubation・Deliverables & Success Metrics・Changelog という節で構成されます。
+
+IG の役割は問題のインキュベーション（問題提起から WG 提案まで）に限定され、WG の承認はコミュニティモデレーターとコアメンテナーに委ねられる点、認可拡張仕様が `modelcontextprotocol/ext-auth` リポジトリに集約される点、隔週のディスカッションコールで運用される点などが明記されています。Changelog には「2026-06-02 Initial charter」が記録されています。
+
+- [Authorization Charter - MCP Docs](https://modelcontextprotocol.io/community/auth/charter)
 
 ## 大幅に更新されたページ
 
@@ -54,18 +52,17 @@ Tasks 拡張の仕様が更新されました。新たにエラーコード `-32
 ## 軽微な更新
 
 <!-- light:minor-updates:start -->
-- [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) / [Extension Support Matrix](https://modelcontextprotocol.io/extensions/client-matrix):  
-  サポートクライアントに Archestra.AI を追加（Extension Support Matrix にも対応状況を追記）。
-- [Skills Over MCP Charter](https://modelcontextprotocol.io/community/skills-over-mcp/charter) / [Tool Annotations Charter](https://modelcontextprotocol.io/community/tool-annotations/charter):  
-  ワーキンググループ／インタレストグループの membership 更新（参加者の追加）。
+- [Working and Interest Groups（community / ガバナンス再編）](https://modelcontextprotocol.io/community/working-interest-groups):  
+  `llms-full.txt` 上では community 配下の charter ページ群（registry / sdk / server-card など）の再配置、SEP 索引（`seps/index`）のエントリ整列、各 SEP の Status バッジ表記の調整といった再生成由来の差分が大きく出ていますが、新規の Authorization Charter を除き、ページ本文の実質的な内容変更はありません。
 <!-- light:minor-updates:end -->
 
 ## 関連リンク
 
-- (初版のため、前回サマリはありません)
+- 前回サマリ(ライト版): [./archives/2026-06-02/latest.md](./archives/2026-06-02/latest.md)
+- 前回サマリ(詳細版): [./archives/2026-06-02/latest-detail.md](./archives/2026-06-02/latest-detail.md)
 
 <!--
-base_commit: 534cac6
-head_commit: 5eba50e20508f9a33b6e9ca4dff9f48b8afb601b
-generated_at_full: 2026-06-02T03:11:18+09:00
+base_commit: 5eba50e20508f9a33b6e9ca4dff9f48b8afb601b
+head_commit: a266740e84fc0b8638ba00bdb5d77781b4ce3ef8
+generated_at_full: 2026-06-05T22:44:14+09:00
 -->

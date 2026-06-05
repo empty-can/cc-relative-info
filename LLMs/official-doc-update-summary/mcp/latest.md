@@ -1,27 +1,25 @@
 ---
-対象期間: 2026年05月29日 〜 2026年06月02日
-作成日: 2026-06-02
+対象期間: 2026年06月02日 〜 2026年06月05日
+作成日: 2026-06-05
 ---
 
 # MCP 公式ドキュメント更新サマリ
 
-> 今回の更新はリファレンスページの新規追加・大幅更新は無く、既存ページの本文改修が中心です。Tool Header Parameters（SEP-2243）と Tasks 拡張（SEP-2663）の仕様の厳格化・整理が主な変更で、ほかにクライアント対応の拡大とワーキンググループ運営情報の更新があります。
+> 今回の更新は新規ページ 1 件の追加が中心で、MCP 認可 Interest Group の設立憲章ページ「Authorization Charter」が新設されました。既存ページの大幅な書き換えはなく、その他は community（コミュニティ／ガバナンス）配下の charter ページ群の再配置と SEP 索引の整列が中心です。
 >
 > 主要なものを以下に挙げます。
 >
-> 1. SEP-2243（HTTP ヘッダ標準化）: `x-mcp-header` の制約厳格化（RFC 9110 トークン準拠・`number` 型禁止→integer 限定・ネスト許可・base64 センチネル衝突回避 ほか）
-> 2. SEP-2663（Tasks 拡張）: 後方互換性の表形式整理（`2025-11-25` ↔ `2026-06-30`）とエラーコード `-32003` の追加
+> 1. MCP 認可 Interest Group の設立憲章ページ「Authorization Charter」が新設
 
 ## ハイライト
 
-1. [**SEP-2243 HTTP ヘッダ標準化**](./latest-detail.md#1-sep-2243-http-ヘッダ標準化):  
-  Streamable HTTP transport のツールヘッダパラメータ（`x-mcp-header`）の制約が厳格化。RFC 9110 トークン構文準拠・制御文字禁止・`number` 型禁止（integer 限定）・任意ネスト許可・base64 センチネル衝突回避などが追加された。
-2. [**SEP-2663 Tasks 拡張**](./latest-detail.md#2-sep-2663-tasks-拡張):  
-  エラーコード `-32003`（Missing Required Client Capability）の追加と、後方互換性記述の表形式整理（`2025-11-25` の実験的 tasks と `2026-06-30` の本拡張の挙動マトリクス化）。
+1. [**MCP 認可 Interest Group 憲章の新設**](./latest-detail.md#1-mcp-認可-interest-group-憲章の新設):  
+  OAuth 2.1 ベースの認可仕様の実運用課題を収集し、検証済みの問題を Working Group へ橋渡しするための Interest Group（IG）設立憲章。スコープ・体制・配下の認可 Working Group 一覧を定義する。
 
 ## 新規追加されたページ
 
-*(リファレンスページの新規追加はありません)*
+- [**Authorization Charter**](./latest-detail.md#1-authorization-charter) ([modelcontextprotocol.io](https://modelcontextprotocol.io/community/auth/charter)):  
+  MCP 認可 Interest Group の設立憲章。認可の実運用課題の収集と Working Group へのインキュベーションを担う。
 
 ## 大幅に更新されたページ
 
@@ -29,17 +27,16 @@
 
 ## 軽微な更新
 
-- [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) / [Extension Support Matrix](https://modelcontextprotocol.io/extensions/client-matrix):  
-  サポートクライアントに Archestra.AI を追加（Extension Support Matrix にも対応状況を追記）。
-- [Skills Over MCP Charter](https://modelcontextprotocol.io/community/skills-over-mcp/charter) / [Tool Annotations Charter](https://modelcontextprotocol.io/community/tool-annotations/charter):  
-  ワーキンググループ／インタレストグループの membership 更新（参加者の追加）。
+- [Working and Interest Groups（community / ガバナンス再編）](https://modelcontextprotocol.io/community/working-interest-groups):  
+  `llms-full.txt` 上では community 配下の charter ページ群（registry / sdk / server-card など）の再配置、SEP 索引（`seps/index`）のエントリ整列、各 SEP の Status バッジ表記の調整といった再生成由来の差分が大きく出ていますが、新規の Authorization Charter を除き、ページ本文の実質的な内容変更はありません。
 
 ## 関連リンク
 
-- (初版のため、前回サマリはありません)
+- 前回サマリ(ライト版): [./archives/2026-06-02/latest.md](./archives/2026-06-02/latest.md)
+- 前回サマリ(詳細版): [./archives/2026-06-02/latest-detail.md](./archives/2026-06-02/latest-detail.md)
 
 <!--
-base_commit: 534cac6
-head_commit: 5eba50e20508f9a33b6e9ca4dff9f48b8afb601b
-generated_at_full: 2026-06-02T03:11:18+09:00
+base_commit: 5eba50e20508f9a33b6e9ca4dff9f48b8afb601b
+head_commit: a266740e84fc0b8638ba00bdb5d77781b4ce3ef8
+generated_at_full: 2026-06-05T22:44:14+09:00
 -->
