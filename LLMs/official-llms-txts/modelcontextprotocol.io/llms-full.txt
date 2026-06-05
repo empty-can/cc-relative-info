@@ -27089,7 +27089,7 @@ Tools `inputSchema` & `outputSchema` Conform to JSON Schema 2020-12
 
 <div>
   <Badge>
-    Draft
+    Final
   </Badge>
 
   <Badge>
@@ -27101,7 +27101,7 @@ Tools `inputSchema` & `outputSchema` Conform to JSON Schema 2020-12
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **SEP**       | 2106                                                                                                                                                                          |
 | **Title**     | Tools `inputSchema` & `outputSchema` Conform to JSON Schema 2020-12                                                                                                           |
-| **Status**    | Draft                                                                                                                                                                         |
+| **Status**    | Final                                                                                                                                                                         |
 | **Type**      | Standards Track                                                                                                                                                               |
 | **Created**   | 2026-01-06                                                                                                                                                                    |
 | **Author(s)** | John McBride ([@jpmcb](https://github.com/jpmcb)) — original proposal; Ola Hungerford ([@olaservo](https://github.com/olaservo)) — current shepherd, post-SEP-1850 conversion |
@@ -28772,7 +28772,7 @@ Standardize Resource Not Found Error Code
 
 <div>
   <Badge>
-    Draft
+    Final
   </Badge>
 
   <Badge>
@@ -28784,7 +28784,7 @@ Standardize Resource Not Found Error Code
 | ------------- | ------------------------------------------------------------------------------- |
 | **SEP**       | 2164                                                                            |
 | **Title**     | Standardize Resource Not Found Error Code                                       |
-| **Status**    | Draft                                                                           |
+| **Status**    | Final                                                                           |
 | **Type**      | Standards Track                                                                 |
 | **Created**   | 2026-01-28                                                                      |
 | **Author(s)** | Peter Alexander ([@pja-ant](https://github.com/pja-ant))                        |
@@ -28876,7 +28876,7 @@ OIDC-Flavored Refresh Token Guidance
 
 <div>
   <Badge>
-    Accepted
+    Final
   </Badge>
 
   <Badge>
@@ -28888,7 +28888,7 @@ OIDC-Flavored Refresh Token Guidance
 | ------------- | ------------------------------------------------------------------------------- |
 | **SEP**       | 2207                                                                            |
 | **Title**     | OIDC-Flavored Refresh Token Guidance                                            |
-| **Status**    | Accepted                                                                        |
+| **Status**    | Final                                                                           |
 | **Type**      | Standards Track                                                                 |
 | **Created**   | 2026-02-04                                                                      |
 | **Author(s)** | Wils Dawson ([@wdawson](https://github.com/wdawson))                            |
@@ -30190,7 +30190,7 @@ Multi Round-Trip Requests
 
 <div>
   <Badge>
-    Accepted
+    Final
   </Badge>
 
   <Badge>
@@ -30202,7 +30202,7 @@ Multi Round-Trip Requests
 | ------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | **SEP**       | 2322                                                                                                                      |
 | **Title**     | Multi Round-Trip Requests                                                                                                 |
-| **Status**    | Accepted                                                                                                                  |
+| **Status**    | Final                                                                                                                     |
 | **Type**      | Standards Track                                                                                                           |
 | **Created**   | 2026-02-03                                                                                                                |
 | **Author(s)** | Mark D. Roth ([@markdroth](https://github.com/markdroth)), Caitie McCaffrey ([@CaitieM20](https://github.com/CaitieM20)), |
@@ -31583,7 +31583,7 @@ Recommend Issuer (iss) Parameter in MCP Auth Responses
 
 <div>
   <Badge>
-    In-Review
+    Final
   </Badge>
 
   <Badge>
@@ -31595,7 +31595,7 @@ Recommend Issuer (iss) Parameter in MCP Auth Responses
 | ------------- | ------------------------------------------------------------------------------- |
 | **SEP**       | 2468                                                                            |
 | **Title**     | Recommend Issuer (iss) Parameter in MCP Auth Responses                          |
-| **Status**    | In-Review                                                                       |
+| **Status**    | Final                                                                           |
 | **Type**      | Standards Track                                                                 |
 | **Created**   | 2026-03-25                                                                      |
 | **Author(s)** | Emily Lauber ([@EmLauber](https://github.com/EmLauber))                         |
@@ -31688,7 +31688,7 @@ Require Conformance Tests for Standards Track SEPs to Reach Final Status
 
 <div>
   <Badge>
-    Draft
+    Final
   </Badge>
 
   <Badge>
@@ -31700,7 +31700,7 @@ Require Conformance Tests for Standards Track SEPs to Reach Final Status
 | ------------- | ------------------------------------------------------------------------------- |
 | **SEP**       | 2484                                                                            |
 | **Title**     | Require Conformance Tests for Standards Track SEPs to Reach Final Status        |
-| **Status**    | Draft                                                                           |
+| **Status**    | Final                                                                           |
 | **Type**      | Process                                                                         |
 | **Created**   | 2026-03-27                                                                      |
 | **Author(s)** | Paul Carleton ([@pcarleton](https://github.com/pcarleton))                      |
@@ -31886,7 +31886,7 @@ TTL for List Results
 
 <div>
   <Badge>
-    Accepted
+    Final
   </Badge>
 
   <Badge>
@@ -31898,7 +31898,7 @@ TTL for List Results
 | ------------- | ------------------------------------------------------------------------------- |
 | **SEP**       | 2549                                                                            |
 | **Title**     | TTL for List Results                                                            |
-| **Status**    | Accepted                                                                        |
+| **Status**    | Final                                                                           |
 | **Type**      | Standards Track                                                                 |
 | **Created**   | 2026-04-09                                                                      |
 | **Author(s)** | Caitie McCaffrey ([@CaitieM20](https://github.com/CaitieM20))                   |
@@ -32407,7 +32407,7 @@ Make MCP Stateless
 
 <div>
   <Badge>
-    Accepted
+    Final
   </Badge>
 
   <Badge>
@@ -32419,7 +32419,7 @@ Make MCP Stateless
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | **SEP**       | 2575                                                                                                                            |
 | **Title**     | Make MCP Stateless                                                                                                              |
-| **Status**    | Accepted                                                                                                                        |
+| **Status**    | Final                                                                                                                           |
 | **Type**      | Standards Track                                                                                                                 |
 | **Created**   | 2025-06-18                                                                                                                      |
 | **Author(s)** | Jonathan Hefner ([@jonathanhefner](https://github.com/jonathanhefner)), Mark Roth ([@markdroth](https://github.com/markdroth)), |
@@ -33541,7 +33541,7 @@ Specification Feature Lifecycle and Deprecation Policy
 
 <div>
   <Badge>
-    Draft
+    Final
   </Badge>
 
   <Badge>
@@ -33553,7 +33553,7 @@ Specification Feature Lifecycle and Deprecation Policy
 | ------------- | ------------------------------------------------------------------------------- |
 | **SEP**       | 2596                                                                            |
 | **Title**     | Specification Feature Lifecycle and Deprecation Policy                          |
-| **Status**    | Draft                                                                           |
+| **Status**    | Final                                                                           |
 | **Type**      | Process                                                                         |
 | **Created**   | 2026-04-17                                                                      |
 | **Author(s)** | Den Delimarsky ([@localden](https://github.com/localden))                       |
@@ -36043,56 +36043,53 @@ Specification Enhancement Proposals (SEPs) are the primary mechanism for proposi
 
 ## Summary
 
-* **Final**: 32
-* **Draft**: 4
-* **Accepted**: 4
-* **In-review**: 1
+* **Final**: 41
 
 ## All SEPs
 
-| SEP                                                                                  | Title                                                                         | Status                   | Type             | Created    |
-| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ------------------------ | ---------------- | ---------- |
-| [SEP-2663](/seps/2663-tasks-extension)                                               | Tasks Extension                                                               | <Badge>Final</Badge>     | Extensions Track | 2026-04-27 |
-| [SEP-2596](/seps/2596-spec-feature-lifecycle-and-deprecation)                        | Specification Feature Lifecycle and Deprecation Policy                        | <Badge>Draft</Badge>     | Process          | 2026-04-17 |
-| [SEP-2577](/seps/2577-deprecate-roots-sampling-and-logging)                          | Deprecate Roots, Sampling, and Logging                                        | <Badge>Final</Badge>     | Standards Track  | 2026-04-14 |
-| [SEP-2575](/seps/2575-stateless-mcp)                                                 | Make MCP Stateless                                                            | <Badge>Accepted</Badge>  | Standards Track  | 2025-06-18 |
-| [SEP-2567](/seps/2567-sessionless-mcp)                                               | Sessionless MCP via Explicit State Handles                                    | <Badge>Final</Badge>     | Standards Track  | 2026-03-11 |
-| [SEP-2549](/seps/2549-TTL-for-list-results)                                          | TTL for List Results                                                          | <Badge>Accepted</Badge>  | Standards Track  | 2026-04-09 |
-| [SEP-2484](/seps/2484-conformance-tests-required-for-final-seps)                     | Require Conformance Tests for Standards Track SEPs to Reach Final Status      | <Badge>Draft</Badge>     | Process          | 2026-03-27 |
-| [SEP-2468](/seps/2468-recommend-issuer-claim-for-auth)                               | Recommend Issuer (iss) Parameter in MCP Auth Responses                        | <Badge>In-Review</Badge> | Standards Track  | 2026-03-25 |
-| [SEP-2322](/seps/2322-MRTR)                                                          | Multi Round-Trip Requests                                                     | <Badge>Accepted</Badge>  | Standards Track  | 2026-02-03 |
-| [SEP-2260](/seps/2260-Require-Server-requests-to-be-associated-with-Client-requests) | Require Server requests to be associated with a Client request.               | <Badge>Final</Badge>     | Standards Track  | 2026-02-16 |
-| [SEP-2243](/seps/2243-http-standardization)                                          | HTTP Header Standardization for Streamable HTTP Transport                     | <Badge>Final</Badge>     | Standards Track  | 2026-02-04 |
-| [SEP-2207](/seps/2207-oidc-refresh-token-guidance)                                   | OIDC-Flavored Refresh Token Guidance                                          | <Badge>Accepted</Badge>  | Standards Track  | 2026-02-04 |
-| [SEP-2164](/seps/2164-resource-not-found-error)                                      | Standardize Resource Not Found Error Code                                     | <Badge>Draft</Badge>     | Standards Track  | 2026-01-28 |
-| [SEP-2149](/seps/2149-working-group-charter-template)                                | MCP Group Governance and Charter Template                                     | <Badge>Final</Badge>     | Process          | 2025-01-15 |
-| [SEP-2148](/seps/2148-contributor-ladder)                                            | MCP Contributor Ladder                                                        | <Badge>Final</Badge>     | Process          | 2026-01-15 |
-| [SEP-2133](/seps/2133-extensions)                                                    | Extensions                                                                    | <Badge>Final</Badge>     | Standards Track  | 2025-01-21 |
-| [SEP-2106](/seps/2106-json-schema-2020-12)                                           | Tools `inputSchema` & `outputSchema` Conform to JSON Schema 2020-12           | <Badge>Draft</Badge>     | Standards Track  | 2026-01-06 |
-| [SEP-2085](/seps/2085-governance-succession-and-amendment)                           | Governance Succession and Amendment Procedures                                | <Badge>Final</Badge>     | Process          | 2025-12-05 |
-| [SEP-1865](/seps/1865-mcp-apps-interactive-user-interfaces-for-mcp)                  | MCP Apps - Interactive User Interfaces for MCP                                | <Badge>Final</Badge>     | Extensions Track | 2025-11-21 |
-| [SEP-1850](/seps/1850-pr-based-sep-workflow)                                         | PR-Based SEP Workflow                                                         | <Badge>Final</Badge>     | Process          | 2025-11-20 |
-| [SEP-1730](/seps/1730-sdks-tiering-system)                                           | SDKs Tiering System                                                           | <Badge>Final</Badge>     | Standards Track  | 2025-10-29 |
-| [SEP-1699](/seps/1699-support-sse-polling-via-server-side-disconnect)                | Support SSE polling via server-side disconnect                                | <Badge>Final</Badge>     | Standards Track  | 2025-10-22 |
-| [SEP-1686](/seps/1686-tasks)                                                         | Tasks                                                                         | <Badge>Final</Badge>     | Standards Track  | 2025-10-20 |
-| [SEP-1613](/seps/1613-establish-json-schema-2020-12-as-default-dialect-f)            | Establish JSON Schema 2020-12 as Default Dialect for MCP                      | <Badge>Final</Badge>     | Standards Track  | 2025-10-06 |
-| [SEP-1577](/seps/1577--sampling-with-tools)                                          | Sampling With Tools                                                           | <Badge>Final</Badge>     | Standards Track  | 2025-09-30 |
-| [SEP-1330](/seps/1330-elicitation-enum-schema-improvements-and-standards)            | Elicitation Enum Schema Improvements and Standards Compliance                 | <Badge>Final</Badge>     | Standards Track  | 2025-08-11 |
-| [SEP-1319](/seps/1319-decouple-request-payload-from-rpc-methods-definiti)            | Decouple Request Payload from RPC Methods Definition                          | <Badge>Final</Badge>     | Standards Track  | 2025-08-08 |
-| [SEP-1303](/seps/1303-input-validation-errors-as-tool-execution-errors)              | Input Validation Errors as Tool Execution Errors                              | <Badge>Final</Badge>     | Standards Track  | 2025-08-05 |
-| [SEP-1302](/seps/1302-formalize-working-groups-and-interest-groups-in-mc)            | Formalize Working Groups and Interest Groups in MCP Governance                | <Badge>Final</Badge>     | Standards Track  | 2025-08-05 |
-| [SEP-1046](/seps/1046-support-oauth-client-credentials-flow-in-authoriza)            | Support OAuth client credentials flow in authorization                        | <Badge>Final</Badge>     | Standards Track  | 2025-07-23 |
-| [SEP-1036](/seps/1036-url-mode-elicitation-for-secure-out-of-band-intera)            | URL Mode Elicitation for secure out-of-band interactions                      | <Badge>Final</Badge>     | Standards Track  | 2025-07-22 |
-| [SEP-1034](/seps/1034--support-default-values-for-all-primitive-types-in)            | Support default values for all primitive types in elicitation schemas         | <Badge>Final</Badge>     | Standards Track  | 2025-07-22 |
-| [SEP-1024](/seps/1024-mcp-client-security-requirements-for-local-server-)            | MCP Client Security Requirements for Local Server Installation                | <Badge>Final</Badge>     | Standards Track  | 2025-07-22 |
-| [SEP-994](/seps/994-shared-communication-practicesguidelines)                        | Shared Communication Practices/Guidelines                                     | <Badge>Final</Badge>     | Process          | 2025-07-17 |
-| [SEP-991](/seps/991-enable-url-based-client-registration-using-oauth-c)              | Enable URL-based Client Registration using OAuth Client ID Metadata Documents | <Badge>Final</Badge>     | Standards Track  | 2025-07-07 |
-| [SEP-990](/seps/990-enable-enterprise-idp-policy-controls-during-mcp-o)              | Enable enterprise IdP policy controls during MCP OAuth flows                  | <Badge>Final</Badge>     | Standards Track  | 2025-06-04 |
-| [SEP-986](/seps/986-specify-format-for-tool-names)                                   | Specify Format for Tool Names                                                 | <Badge>Final</Badge>     | Standards Track  | 2025-07-16 |
-| [SEP-985](/seps/985-align-oauth-20-protected-resource-metadata-with-rf)              | Align OAuth 2.0 Protected Resource Metadata with RFC 9728                     | <Badge>Final</Badge>     | Standards Track  | 2025-07-16 |
-| [SEP-973](/seps/973-expose-additional-metadata-for-implementations-res)              | Expose additional metadata for Implementations, Resources, Tools and Prompts  | <Badge>Final</Badge>     | Standards Track  | 2025-07-15 |
-| [SEP-932](/seps/932-model-context-protocol-governance)                               | Model Context Protocol Governance                                             | <Badge>Final</Badge>     | Process          | 2025-07-08 |
-| [SEP-414](/seps/414-request-meta)                                                    | Document OpenTelemetry Trace Context Propagation Conventions                  | <Badge>Final</Badge>     | Standards Track  | 2025-04-25 |
+| SEP                                                                                  | Title                                                                         | Status               | Type             | Created    |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | -------------------- | ---------------- | ---------- |
+| [SEP-2663](/seps/2663-tasks-extension)                                               | Tasks Extension                                                               | <Badge>Final</Badge> | Extensions Track | 2026-04-27 |
+| [SEP-2596](/seps/2596-spec-feature-lifecycle-and-deprecation)                        | Specification Feature Lifecycle and Deprecation Policy                        | <Badge>Final</Badge> | Process          | 2026-04-17 |
+| [SEP-2577](/seps/2577-deprecate-roots-sampling-and-logging)                          | Deprecate Roots, Sampling, and Logging                                        | <Badge>Final</Badge> | Standards Track  | 2026-04-14 |
+| [SEP-2575](/seps/2575-stateless-mcp)                                                 | Make MCP Stateless                                                            | <Badge>Final</Badge> | Standards Track  | 2025-06-18 |
+| [SEP-2567](/seps/2567-sessionless-mcp)                                               | Sessionless MCP via Explicit State Handles                                    | <Badge>Final</Badge> | Standards Track  | 2026-03-11 |
+| [SEP-2549](/seps/2549-TTL-for-list-results)                                          | TTL for List Results                                                          | <Badge>Final</Badge> | Standards Track  | 2026-04-09 |
+| [SEP-2484](/seps/2484-conformance-tests-required-for-final-seps)                     | Require Conformance Tests for Standards Track SEPs to Reach Final Status      | <Badge>Final</Badge> | Process          | 2026-03-27 |
+| [SEP-2468](/seps/2468-recommend-issuer-claim-for-auth)                               | Recommend Issuer (iss) Parameter in MCP Auth Responses                        | <Badge>Final</Badge> | Standards Track  | 2026-03-25 |
+| [SEP-2322](/seps/2322-MRTR)                                                          | Multi Round-Trip Requests                                                     | <Badge>Final</Badge> | Standards Track  | 2026-02-03 |
+| [SEP-2260](/seps/2260-Require-Server-requests-to-be-associated-with-Client-requests) | Require Server requests to be associated with a Client request.               | <Badge>Final</Badge> | Standards Track  | 2026-02-16 |
+| [SEP-2243](/seps/2243-http-standardization)                                          | HTTP Header Standardization for Streamable HTTP Transport                     | <Badge>Final</Badge> | Standards Track  | 2026-02-04 |
+| [SEP-2207](/seps/2207-oidc-refresh-token-guidance)                                   | OIDC-Flavored Refresh Token Guidance                                          | <Badge>Final</Badge> | Standards Track  | 2026-02-04 |
+| [SEP-2164](/seps/2164-resource-not-found-error)                                      | Standardize Resource Not Found Error Code                                     | <Badge>Final</Badge> | Standards Track  | 2026-01-28 |
+| [SEP-2149](/seps/2149-working-group-charter-template)                                | MCP Group Governance and Charter Template                                     | <Badge>Final</Badge> | Process          | 2025-01-15 |
+| [SEP-2148](/seps/2148-contributor-ladder)                                            | MCP Contributor Ladder                                                        | <Badge>Final</Badge> | Process          | 2026-01-15 |
+| [SEP-2133](/seps/2133-extensions)                                                    | Extensions                                                                    | <Badge>Final</Badge> | Standards Track  | 2025-01-21 |
+| [SEP-2106](/seps/2106-json-schema-2020-12)                                           | Tools `inputSchema` & `outputSchema` Conform to JSON Schema 2020-12           | <Badge>Final</Badge> | Standards Track  | 2026-01-06 |
+| [SEP-2085](/seps/2085-governance-succession-and-amendment)                           | Governance Succession and Amendment Procedures                                | <Badge>Final</Badge> | Process          | 2025-12-05 |
+| [SEP-1865](/seps/1865-mcp-apps-interactive-user-interfaces-for-mcp)                  | MCP Apps - Interactive User Interfaces for MCP                                | <Badge>Final</Badge> | Extensions Track | 2025-11-21 |
+| [SEP-1850](/seps/1850-pr-based-sep-workflow)                                         | PR-Based SEP Workflow                                                         | <Badge>Final</Badge> | Process          | 2025-11-20 |
+| [SEP-1730](/seps/1730-sdks-tiering-system)                                           | SDKs Tiering System                                                           | <Badge>Final</Badge> | Standards Track  | 2025-10-29 |
+| [SEP-1699](/seps/1699-support-sse-polling-via-server-side-disconnect)                | Support SSE polling via server-side disconnect                                | <Badge>Final</Badge> | Standards Track  | 2025-10-22 |
+| [SEP-1686](/seps/1686-tasks)                                                         | Tasks                                                                         | <Badge>Final</Badge> | Standards Track  | 2025-10-20 |
+| [SEP-1613](/seps/1613-establish-json-schema-2020-12-as-default-dialect-f)            | Establish JSON Schema 2020-12 as Default Dialect for MCP                      | <Badge>Final</Badge> | Standards Track  | 2025-10-06 |
+| [SEP-1577](/seps/1577--sampling-with-tools)                                          | Sampling With Tools                                                           | <Badge>Final</Badge> | Standards Track  | 2025-09-30 |
+| [SEP-1330](/seps/1330-elicitation-enum-schema-improvements-and-standards)            | Elicitation Enum Schema Improvements and Standards Compliance                 | <Badge>Final</Badge> | Standards Track  | 2025-08-11 |
+| [SEP-1319](/seps/1319-decouple-request-payload-from-rpc-methods-definiti)            | Decouple Request Payload from RPC Methods Definition                          | <Badge>Final</Badge> | Standards Track  | 2025-08-08 |
+| [SEP-1303](/seps/1303-input-validation-errors-as-tool-execution-errors)              | Input Validation Errors as Tool Execution Errors                              | <Badge>Final</Badge> | Standards Track  | 2025-08-05 |
+| [SEP-1302](/seps/1302-formalize-working-groups-and-interest-groups-in-mc)            | Formalize Working Groups and Interest Groups in MCP Governance                | <Badge>Final</Badge> | Standards Track  | 2025-08-05 |
+| [SEP-1046](/seps/1046-support-oauth-client-credentials-flow-in-authoriza)            | Support OAuth client credentials flow in authorization                        | <Badge>Final</Badge> | Standards Track  | 2025-07-23 |
+| [SEP-1036](/seps/1036-url-mode-elicitation-for-secure-out-of-band-intera)            | URL Mode Elicitation for secure out-of-band interactions                      | <Badge>Final</Badge> | Standards Track  | 2025-07-22 |
+| [SEP-1034](/seps/1034--support-default-values-for-all-primitive-types-in)            | Support default values for all primitive types in elicitation schemas         | <Badge>Final</Badge> | Standards Track  | 2025-07-22 |
+| [SEP-1024](/seps/1024-mcp-client-security-requirements-for-local-server-)            | MCP Client Security Requirements for Local Server Installation                | <Badge>Final</Badge> | Standards Track  | 2025-07-22 |
+| [SEP-994](/seps/994-shared-communication-practicesguidelines)                        | Shared Communication Practices/Guidelines                                     | <Badge>Final</Badge> | Process          | 2025-07-17 |
+| [SEP-991](/seps/991-enable-url-based-client-registration-using-oauth-c)              | Enable URL-based Client Registration using OAuth Client ID Metadata Documents | <Badge>Final</Badge> | Standards Track  | 2025-07-07 |
+| [SEP-990](/seps/990-enable-enterprise-idp-policy-controls-during-mcp-o)              | Enable enterprise IdP policy controls during MCP OAuth flows                  | <Badge>Final</Badge> | Standards Track  | 2025-06-04 |
+| [SEP-986](/seps/986-specify-format-for-tool-names)                                   | Specify Format for Tool Names                                                 | <Badge>Final</Badge> | Standards Track  | 2025-07-16 |
+| [SEP-985](/seps/985-align-oauth-20-protected-resource-metadata-with-rf)              | Align OAuth 2.0 Protected Resource Metadata with RFC 9728                     | <Badge>Final</Badge> | Standards Track  | 2025-07-16 |
+| [SEP-973](/seps/973-expose-additional-metadata-for-implementations-res)              | Expose additional metadata for Implementations, Resources, Tools and Prompts  | <Badge>Final</Badge> | Standards Track  | 2025-07-15 |
+| [SEP-932](/seps/932-model-context-protocol-governance)                               | Model Context Protocol Governance                                             | <Badge>Final</Badge> | Process          | 2025-07-08 |
+| [SEP-414](/seps/414-request-meta)                                                    | Document OpenTelemetry Trace Context Propagation Conventions                  | <Badge>Final</Badge> | Standards Track  | 2025-04-25 |
 
 ## SEP Status Definitions
 
@@ -36106,6 +36103,94 @@ Specification Enhancement Proposals (SEPs) are the primary mechanism for proposi
 | <Badge>Withdrawn</Badge>  | SEP withdrawn by the author                              |
 | <Badge>Superseded</Badge> | SEP replaced by a newer SEP                              |
 | <Badge>Dormant</Badge>    | SEP without a sponsor, closed after 6 months             |
+
+
+# Authorization Charter
+Source: https://modelcontextprotocol.io/community/auth/charter
+
+Charter for the MCP Authorization Interest Group.
+
+## Group Type
+
+**Interest Group**
+
+## Mission Statement
+
+The Authorization Interest Group provides a venue for MCP implementers, identity-provider vendors, and security practitioners to surface real-world authorization challenges encountered when deploying MCP clients and servers. The group gathers use cases, documents gaps in the current OAuth 2.1–based authorization specification, and incubates validated problems until they are scoped well enough to propose a focused Working Group via the standard [group-creation process](/community/working-interest-groups#creating-a-working-group) to drive the corresponding [SEPs](/community/sep-guidelines).
+
+## Scope
+
+### In Scope
+
+* **Deployment experience reports**: how implementers have integrated the current authorization spec (OAuth 2.1, [RFC 9728](https://www.rfc-editor.org/rfc/rfc9728) Protected Resource Metadata, [RFC 7591](https://www.rfc-editor.org/rfc/rfc7591) Dynamic Client Registration, Client ID Metadata Documents) with real authorization servers, and where it falls short
+* **Enterprise identity integration**: requirements and friction points when connecting MCP servers to enterprise IdPs (Okta, Entra ID, Ping, Keycloak, etc.), including SSO, tenant isolation, and admin consent flows
+* **Delegated and agentic access**: use cases for on-behalf-of token exchange, downstream resource access, audience restriction, and consent when an MCP client acts through chains of agents or tools
+* **Scope and permission granularity**: whether and how MCP servers should advertise fine-grained scopes (per-tool, per-resource) and how clients should request and present them
+* **Credentials for non-HTTP transports**: patterns for stdio, WebSocket, and future transports where the HTTP authorization spec does not directly apply
+* **Client identity and registration**: operator experience with Dynamic Client Registration, Client ID Metadata Documents, software statements, and pre-registered clients
+* **Threat modelling input**: cataloguing authorization-related attack surfaces (token confusion, confused-deputy, audience mismatch, redirect handling) to inform Security Best Practices documentation
+* **Proposing Working Groups**: once a problem is validated and scoped, the IG submits a Working Group creation proposal via the standard `#wg-ig-group-creation` process; approval remains with community moderators and core maintainers
+* **Problem statements and requirements**: use-case catalogues and recommendations published to GitHub Discussions for consumption by SEP authors and Working Groups
+
+### Out of Scope
+
+* **Authentication of end users to MCP clients**: how a host application authenticates its own users is a host concern, not a protocol concern
+* **Transport security (TLS, mTLS, certificate handling)**: belongs to the Transports WG
+* **Server identity, provenance, and trust signalling**: belongs to the Server Card / Registry efforts
+* **End-user product configuration walk-throughs**: the IG discusses patterns, not step-by-step setup for individual IdP products. Vendor-reported constraints on what an authorization server can or cannot implement *are* in scope as deployment experience
+* **Competitively sensitive or non-public business information**, per the [MCP Antitrust Policy](/community/antitrust)
+
+### Related Groups
+
+* **Transports WG**: authorization is currently specified at the HTTP transport level; changes to transports affect where credentials are carried
+* **Agents WG**: delegated/on-behalf-of access and consent for multi-agent chains overlap heavily with agentic use cases
+* **[Server Card WG](/community/server-card/charter) / [Registry](/community/registry/charter)**: client and server identity, discovery metadata, and trust establishment intersect with how authorization servers and resource servers are located and verified
+* **SDK Maintainers**: SDKs ship the auth client implementations; IG findings should inform cross-SDK auth ergonomics
+
+## Leadership
+
+| Role        | Name          | Organization | GitHub                                     | Term    |
+| ----------- | ------------- | ------------ | ------------------------------------------ | ------- |
+| Facilitator | Aaron Parecki | Okta         | [@aaronpk](https://github.com/aaronpk)     | Initial |
+| Facilitator | Darin McAdams | Amazon       | [@D-McAdams](https://github.com/D-McAdams) | Initial |
+| Facilitator | Paul Carleton | Anthropic    | [@pcarleton](https://github.com/pcarleton) | Initial |
+
+## Membership
+
+Open to anyone; no formal membership or approval step is required to join the channel, attend calls, or contribute.
+
+Join the `#auth-ig` channel on the [MCP Contributors Discord](/community/communication#discord) or open a thread in the Authorization category of [GitHub Discussions](https://github.com/modelcontextprotocol/modelcontextprotocol/discussions). If your topic clearly matches one of the Working Groups in the table below, you can post directly in that WG's channel. Calls are open and attendance is optional — async participation via Discord and GitHub is equally valued.
+
+## Operations
+
+| Meeting         | Frequency     | Duration | Purpose                                                                      |
+| --------------- | ------------- | -------- | ---------------------------------------------------------------------------- |
+| Discussion Call | Every 2 weeks | 45 min   | Use-case sharing, problem triage, WG proposal decisions, implementer reports |
+
+Discord: [#auth-ig](https://discord.com/channels/1358869848138059966/1360835991749001368)
+
+### Working Group Incubation
+
+A topic graduates to a Working Group proposal when it has a written problem statement in GitHub Discussions and rough consensus on a bi-weekly call (recorded in published notes). A facilitator then files the standard WG creation template in `#wg-ig-group-creation`, citing that discussion. The IG's role ends at the proposal; approval remains with community moderators and core maintainers.
+
+## Deliverables & Success Metrics
+
+The IG incubates problems until they are well-scoped, then proposes focused Working Groups to drive specific SEPs. Each spawned WG maintains its own charter; this list is a directory, not a substitute. The IG stewards [modelcontextprotocol/ext-auth](https://github.com/modelcontextprotocol/ext-auth), where individual WGs land authorization extension specifications via PR.
+
+| Working Group              | Discord                        | Focus                                                                                                                                                                               | Status    | Charter |
+| -------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------- |
+| Client Registration        | `#auth-wg-client-registration` | Dynamic Client Registration, Client ID Metadata Documents, software statements, and pre-registered client workflows                                                                 | Completed | —       |
+| Mix-up Protection          | `#auth-wg-mixup-protection`    | Mitigating OAuth authorization-server mix-up and token-audience confusion attacks                                                                                                   | Completed | —       |
+| Profiles                   | `#auth-wg-profiles`            | Extension specifications for additional grant types and token-binding mechanisms (Client Credentials, Enterprise-Managed Authorization, DPoP, Workload Identity Federation)         | Completed | —       |
+| Tool Scopes                | `#auth-wg-tool-scopes`         | Per-tool OAuth scope advertisement, step-up authorization / scope challenge, and client-side scope accumulation — mechanics within the OAuth scope-string model                     | Active    | Pending |
+| Fine-Grained Authorization | `#auth-wg-fine-grained-authz`  | Authorization granularity beyond scope strings — Rich Authorization Requests ([RFC 9396](https://www.rfc-editor.org/rfc/rfc9396)), remediation hints, and multi-credential handling | Active    | Pending |
+| Improve DevX               | `#auth-wg-improve-devx`        | Best-practices guidance and tutorials for building secure MCP clients and servers, beyond the normative spec                                                                        | Completed | —       |
+
+## Changelog
+
+| Date       | Change          |
+| ---------- | --------------- |
+| 2026-06-02 | Initial charter |
 
 
 # Registry Charter

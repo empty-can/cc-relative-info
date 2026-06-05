@@ -34,7 +34,7 @@ LLMs/official-doc-update-summary/
     ├── latest.md           ライト版(機械抽出)
     ├── latest-detail.md    詳細版(LLM 生成)
     └── archives/
-        └── <YYYY-MM-DD>/   前回 generated_at
+        └── <YYYY-MM-DD>/   前回サマリの作成日(=対象期間の最終日)。同日に複数回生成した場合は衝突回避のため <YYYY-MM-DD>_<HHMM>
             ├── latest.md
             └── latest-detail.md
 ```

@@ -48,12 +48,15 @@ Read tool で `$LATEST_DETAIL` を読み込む。
   - `$LATEST_DETAIL` が存在する: 末尾の HTML コメント `<!-- ... head_commit: <hash> ... -->` から `BASE_COMMIT` を抽出
   - 存在しない: 標準エラーに `初版作成には --from <commit> 指定が必要です` を出力して終了
 
-**PREV_GENERATED_AT の決定**(アーカイブフォルダ名で使用):
+**PREV_GENERATED_AT / ARCHIVE_NAME の決定**(アーカイブフォルダ名で使用):
 
-- `$LATEST_DETAIL` が存在する: frontmatter から `作成日` を抽出して `PREV_GENERATED_AT` とする
+- `$LATEST_DETAIL` が存在する: frontmatter から `作成日` を抽出して `PREV_GENERATED_AT` とする(= 前回サマリの作成日 = 前回対象期間の最終日。**起点日ではなく最終日を使う**)。あわせて末尾フッタ `generated_at_full` の時刻を `HHMM`(4 桁・24h) として抽出し `PREV_GENERATED_TIME` とする
 - 存在しない: `PREV_GENERATED_AT` は空(手順 10 の旧版アーカイブをスキップ)
+- **`ARCHIVE_NAME` の決定**(アーカイブフォルダ名。手順 10 の退避先と手順 6 の `{{PREV_GENERATED_AT}}` の双方で使う):
+  - 既定は `ARCHIVE_NAME = <PREV_GENERATED_AT>`
+  - ただし `${ARCHIVES_DIR}<PREV_GENERATED_AT>/` が **既に存在する** 場合(= 同一作成日のサマリが既にアーカイブ済み = 同日に複数回生成)は、そのまま退避すると既存アーカイブを上書き消失させるため、`ARCHIVE_NAME = <PREV_GENERATED_AT>_<PREV_GENERATED_TIME>`(例: `2026-06-02_1125`) とする
 
-> `--from` 指定時に既存ファイルが存在しても、その既存ファイルは手順 10 で `${ARCHIVES_DIR}<PREV_GENERATED_AT>/` へ通常通り退避される。`--from` は **新たな BASE_COMMIT を明示する** だけで、既存サマリの扱いは変えない。
+> `--from` 指定時に既存ファイルが存在しても、その既存ファイルは手順 10 で `${ARCHIVES_DIR}<ARCHIVE_NAME>/` へ通常通り退避される。`--from` は **新たな BASE_COMMIT を明示する** だけで、既存サマリの扱いは変えない。
 
 ### 2. HEAD_COMMIT 取得と差分検出
 
@@ -116,7 +119,7 @@ Read tool で `$TEMPLATE` を読み込む。
 | `{{BASE_COMMIT}}` | 手順 1 で決定した値 |
 | `{{HEAD_COMMIT}}` | 手順 2 で取得した値 |
 | `{{GENERATED_AT_FULL}}` | 生成時刻 (`YYYY-MM-DDTHH:MM:SS+09:00` 形式) |
-| `{{PREV_GENERATED_AT}}` | 前回サマリの `作成日` (初版時は `(none)` 等の placeholder、関連リンクは手動編集で削除) |
+| `{{PREV_GENERATED_AT}}` | アーカイブフォルダ名 `<ARCHIVE_NAME>`(手順 1 で決定。通常は前回サマリの作成日、同日衝突時は `_<HHMM>` 付き)。関連リンクのパスがこの値になる(初版時は `(none)` 等の placeholder、関連リンクは手動編集で削除) |
 
 URL 併記ルール(サイト依存):
 - URL言語併記=あり のサイト: en URL の `/docs/en/` を `/docs/ja/` に機械的置換して ja URL とし、ja/en を併記する
@@ -222,14 +225,14 @@ URL 併記ルール(サイト依存):
 
 ### 10. 旧版アーカイブ (前回サマリが存在する場合のみ)
 
-Bash で実行:
+`ARCHIVE_NAME` は手順 1 で決定済み(通常は `<PREV_GENERATED_AT>`、同日衝突時は `<PREV_GENERATED_AT>_<PREV_GENERATED_TIME>`)。Bash で実行:
 ```
-mkdir -p ${ARCHIVES_DIR}<PREV_GENERATED_AT>/
-mv ${LATEST_LIGHT} ${ARCHIVES_DIR}<PREV_GENERATED_AT>/latest.md
-mv ${LATEST_DETAIL} ${ARCHIVES_DIR}<PREV_GENERATED_AT>/latest-detail.md
+mkdir -p ${ARCHIVES_DIR}<ARCHIVE_NAME>/
+mv ${LATEST_LIGHT} ${ARCHIVES_DIR}<ARCHIVE_NAME>/latest.md
+mv ${LATEST_DETAIL} ${ARCHIVES_DIR}<ARCHIVE_NAME>/latest-detail.md
 ```
 
-(`<PREV_GENERATED_AT>` は手順 1 で抽出した値)
+> 手順 6 の `{{PREV_GENERATED_AT}}` placeholder(関連リンクのパス)にも同じ `<ARCHIVE_NAME>` を使い、アーカイブ実体とリンク先を一致させる。
 
 ### 11. 詳細版書き出し
 
@@ -284,7 +287,7 @@ python ${DERIVE_SCRIPT} ${LATEST_DETAIL}
 
 以下の情報を含む完了メッセージを出力:
 - 生成パス: `$LATEST_LIGHT` / `$LATEST_DETAIL`
-- 旧版アーカイブ先 (該当する場合): `${ARCHIVES_DIR}<PREV_GENERATED_AT>/`
+- 旧版アーカイブ先 (該当する場合): `${ARCHIVES_DIR}<ARCHIVE_NAME>/`
 - 統計: ハイライト件数 / 新規追加件数 / 大幅更新件数 / 軽微更新件数 / 新着情報件数
 - 期間: `<BASE_COMMIT short> .. <HEAD_COMMIT short>` (各 7 桁)
 - Phase 3 結果: 実行した場合は `判定: PASS` (N 回目で合格) / スキップした場合は `Phase 3: スキップ (手動実行)`
