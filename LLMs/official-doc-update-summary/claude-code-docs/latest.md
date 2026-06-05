@@ -1,25 +1,33 @@
 ---
-対象期間: 2026年06月02日 〜 2026年06月02日
-作成日: 2026-06-02
+対象期間: 2026年06月02日 〜 2026年06月05日
+作成日: 2026-06-05
 ---
 
 # Claude Code 公式ドキュメント更新サマリ
 
-> 今回の更新はリファレンスページ 1 件の新規追加が中心で、MCP サーバー接続用のクイックスタートページが新設されました。既存ページの大幅更新や新着情報（週間ダイジェスト）はありません。
+> 今回の更新は既存ページへの小規模な追記が中心で、新規ページの追加・既存ページの大幅な書き換え・新着情報（週間ダイジェスト）はありません。クラウドプロバイダーでの auto mode 有効化、fast mode とプロンプトキャッシュのコスト、コンテキスト管理、動的ワークフローへの入力など、運用面の細かな改善がまとまっています。
 >
 > 主要なものを以下に挙げます。
 >
-> 1. MCP サーバー接続用のクイックスタートページ「MCP サーバーに接続する」が新設
+> 1. クラウドプロバイダー（Bedrock・Vertex AI・Foundry）での auto mode 有効化手順が追記
+> 2. fast mode 有効化時にプロンプトキャッシュが一度無効化されるコストの解説が追加
+> 3. コンテキストが埋まる前に取れる能動的な対処（`/compact` 集中・`/clear`・サブエージェント委譲）が整理
+> 4. 保存済みワークフローへ実行時に入力を渡す `args` の解説が追加
 
 ## ハイライト
 
-1. [**MCP サーバー接続クイックスタートの新設**](./latest-detail.md#1-mcp-サーバー接続クイックスタートの新設):  
-  MCP サーバーの追加・接続確認・設定ファイルの所在確認までを最短手順で案内する入門ページ。包括的な `mcp` ページとは別に、初学者向けの導線として MCP セクションに新設された。
+1. [**クラウドプロバイダーでの auto mode 有効化**](./latest-detail.md#1-クラウドプロバイダーでの-auto-mode-有効化):  
+  Bedrock・Vertex AI・Foundry では環境変数 `CLAUDE_CODE_ENABLE_AUTO_MODE=1` を設定するまで auto mode が `Shift+Tab` サイクルに現れない。対応は v2.1.158 以降・Opus 4.7/4.8 のみ。
+2. [**fast mode 有効化時のプロンプトキャッシュのコスト**](./latest-detail.md#2-fast-mode-有効化時のプロンプトキャッシュのコスト):  
+  fast mode を有効化すると会話履歴全体がキャッシュ未ヒットで読み直され、その分が fast mode 料金で課金される。コストは会話ごとに一度のみで、以降のオン・オフ切り替えはキャッシュを保持する。
+3. [**コンテキストが埋まる前に取れる対処**](./latest-detail.md#3-コンテキストが埋まる前に取れる対処):  
+  自動コンパクション任せにせず、指示付き `/compact`・`/clear`・サブエージェントへの読み込み委譲で能動的にコンテキストを管理する方法が整理された。
+4. [**保存済みワークフローへの入力受け渡し**](./latest-detail.md#4-保存済みワークフローへの入力受け渡し):  
+  保存済み動的ワークフローが `args` パラメータで実行時入力を受け取れるようになり、スクリプトを編集せずに問い・対象パス・設定を渡せる。
 
 ## 新規追加されたページ
 
-- [**MCP サーバーに接続する**](./latest-detail.md#1-mcp-サーバーに接続する) ([日本語](https://code.claude.com/docs/ja/mcp-quickstart) / [English](https://code.claude.com/docs/en/mcp-quickstart)):  
-  MCP サーバーの追加から接続確認、スコープ変更、`.mcp.json` の直接編集までを段階的に解説する入門ページ。
+*(新規追加されたページはありません)*
 
 ## 大幅に更新されたページ
 
@@ -27,16 +35,14 @@
 
 ## 軽微な更新
 
-- [日本語](https://code.claude.com/docs/ja/hooks-guide) / [English](https://code.claude.com/docs/en/hooks-guide):  
-  フックのガイドページのタイトルが「Automate workflows with hooks」から「Automate actions with hooks」へ変更されました（内容は同一で表現の調整）。
-- [日本語](https://code.claude.com/docs/ja/changelog) / [English](https://code.claude.com/docs/en/changelog):  
-  v2.1.159（2026年05月31日）が追記されました。内部インフラの改善のみで、ユーザー向けの変更はありません。
-- [日本語](https://code.claude.com/docs/ja/goal) / [English](https://code.claude.com/docs/en/goal):  
-  `/goal` ページの見出しが「Compare to other autonomous workflows」から「Compare ways to keep a session running」へ改称されました。
-- [日本語](https://code.claude.com/docs/ja/interactive-mode) / [English](https://code.claude.com/docs/en/interactive-mode):  
-  インタラクティブモードのリファレンスに、プラグインの有効化・無効化操作の項目が追加されました。
+- [日本語](https://code.claude.com/docs/ja/agent-sdk/typescript) / [English](https://code.claude.com/docs/en/agent-sdk/typescript):  
+  TypeScript Agent SDK リファレンスに、新しいメッセージ型 `SDKCommandsChangedMessage` が追加されました。サブディレクトリへ移動してスキルが検出されるなど、セッション途中で利用可能なコマンド集合が変化したときに発行され、`commands` 配列が更新後の全リストになります。初期化時のスナップショットを返す `supportedCommands()` の再呼び出しでは反映されない点が補足されています。
+- [日本語](https://code.claude.com/docs/ja/agent-sdk/hooks) / [English](https://code.claude.com/docs/en/agent-sdk/hooks):  
+  フックのレシピ見出しが「Filter with regex matchers」から「Filter with multi-tool matchers」へ改称され、複数ツールマッチャーで 1 つのコールバックを共有する例が示されました。パイプ区切りの完全一致リスト（`Write|Edit|Delete`）・正規表現（`^mcp__`）・マッチャー省略（全ツール対象）の 3 つのスコープを使い分けられます。
 - [日本語](https://code.claude.com/docs/ja/troubleshooting) / [English](https://code.claude.com/docs/en/troubleshooting):  
-  トラブルシューティングページに、バックグラウンドサービスが応答しないケースと、macOS でバックグラウンドセッションがデスクトップ・書類・ダウンロードフォルダを読めないケースの 2 項目が追加されました。
+  トラブルシューティングに、VS Code・Cursor・Devin Desktop の統合ターミナルで文字が箱・かすれ・誤ったグリフとして描画されるケースが追加されました。多くはターミナルの GPU レンダラーが原因で、`/terminal-setup` の実行（`terminal.integrated.gpuAcceleration` を `"off"` に設定）で対処できます。
+- [日本語](https://code.claude.com/docs/ja/changelog) / [English](https://code.claude.com/docs/en/changelog):  
+  Changelog ページのタイトルが索引上で「Changelog」から「Claude Code changelog」に変更されました（表記の明確化のみで内容に変更はありません）。
 
 ## 新着情報
 
@@ -44,11 +50,11 @@
 
 ## 関連リンク
 
-- 前回サマリ(ライト版): [./archives/2026-06-02/latest.md](./archives/2026-06-02/latest.md)
-- 前回サマリ(詳細版): [./archives/2026-06-02/latest-detail.md](./archives/2026-06-02/latest-detail.md)
+- 前回サマリ(ライト版): [./archives/2026-06-02_1125/latest.md](./archives/2026-06-02_1125/latest.md)
+- 前回サマリ(詳細版): [./archives/2026-06-02_1125/latest-detail.md](./archives/2026-06-02_1125/latest-detail.md)
 
 <!--
-base_commit: d4a9a8aaebd53fd9593d3c9cba8cb7e60b0e36a4
-head_commit: 2e5333166f191bf5c6e336edbf92daeda50feebd
-generated_at_full: 2026-06-02T11:25:52+09:00
+base_commit: 2e5333166f191bf5c6e336edbf92daeda50feebd
+head_commit: 1e3e2b137e7caf8898440f8f3e9733bb21fc7fdf
+generated_at_full: 2026-06-05T22:16:14+09:00
 -->
