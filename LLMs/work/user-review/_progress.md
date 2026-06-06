@@ -4,7 +4,7 @@
 > P0〜P4 完了後は内容を `summary.md` に集約し、本ファイルは削除または `_archive/` 配下に移動する想定。
 > 不測の中断（API エラー等）が発生した場合、このファイルを最初に読めば再開地点が分かるよう、**リアルタイム更新する**。
 
-最終更新: 2026-05-26（P0.1 round 2 着手前）
+最終更新: 2026-06-06（_progress.md 整合性修正＝round 2 実施済みの反映漏れを是正）。直近の実活動は 2026-05-28（B-10pre 拡張調査）。P0.1 round 2 は実施済み・最終確定のみ据え置き
 
 ---
 
@@ -14,7 +14,7 @@
 
 | Phase | 内容 | 状態 |
 |---|---|---|
-| **P0.1** | ユーザーシナリオ設計（multi-agent） | round 1 完了、**round 2 実施予定** |
+| **P0.1** | ユーザーシナリオ設計（multi-agent） | round 1・round 2 完了（7 シナリオに集約）。**最終確定（Q1〜Q6）は据え置き** |
 | **P0.2** | 代表サンプル選定（5 件 fast pass、後で網羅性向上の 2nd pass を想定） | 未着手 |
 | **P0.3** | タスクブレスト（multi-agent、発散優先） | 未着手 |
 | **P0.4** | タスク粒度決定と task-spec 作成 | 未着手 |
@@ -24,6 +24,13 @@
 ---
 
 ## 確定済み方針
+
+### 活動の位置づけとリポジトリ間連携（確定、2026-06-06）
+
+- 本活動（ユースケース設計＝user-review）は **A リポジトリ（cc-relative-info）で継続**する。評価対象である `gen-out`（生成 llms.txt 47 ターゲット）が A にあり、活動自体が確定前の内部検証＋メタ開発資産であるため。
+- 確定した知見は **適宜 B リポジトリ（empty-can/LLMs）の運用・公開設計へ反映**する。
+  - 反映済み事例: P0.1 round 2 の 7 シナリオ統合（`_workspace/agent-c-synthesis.md`）が確立した **CLAUDE.md 配置原則** → B のレイアウト設計（root CLAUDE.md 撤去・`.claude/CLAUDE.md` 一本化・content dir ナビの README.md 化）に 2026-06-06 反映済み。
+- 将来 `gen-out` 由来の生成 llms.txt を B で公開する判断をする段階で、本活動自体を成果ごと B へ移すことを検討する（バックログ B-2 と同じ意思決定）。
 
 ### 出力先
 
@@ -102,15 +109,15 @@
 - [x] round 1 を `_workspace/round1/` にアーカイブ
 - [x] glossary.md 作成
 
-### round 2（実施予定）
+### round 2（完了。最終シナリオ確定のみ据え置き）
 
-- [ ] Agent A/B プロンプトを更新（glossary 必読・round1 参照禁止を追加）
-- [ ] Agent A/B を並列起動（ゼロベース実施）
-- [ ] Agent A 完了 → `_workspace/agent-a.md` に出力
-- [ ] Agent B 完了 → `_workspace/agent-b.md` に出力
-- [ ] Agent C 起動 → `_workspace/agent-c-synthesis.md` に出力
-- [ ] round 1 と round 2 を比較し作業指示者に提示
-- [ ] 最終シナリオ確定 → 本ファイルの「確定済み方針」に追記
+- [x] Agent A/B プロンプトを更新（glossary 必読・round1 参照禁止を追加）
+- [x] Agent A/B を並列起動（ゼロベース実施）
+- [x] Agent A 完了 → `_workspace/agent-a.md` に出力（15 件）
+- [x] Agent B 完了 → `_workspace/agent-b.md` に出力（13 件、merge-candidate 6 ペア）
+- [x] Agent C 起動 → `_workspace/agent-c-synthesis.md` に出力（7 シナリオに分離）
+- [x] round 1 と round 2 を比較し作業指示者に提示（確認事項 Q1〜Q6 として提示）
+- [ ] 最終シナリオ確定 → 本ファイルの「確定済み方針」に追記（**据え置き**: 2026-05-28 作業指示者判断により Q1〜Q6 は本格公開段階まで保留。下記「保留中の判断事項」参照）
 
 ---
 
@@ -167,6 +174,8 @@
 ---
 
 ## 派生残タスク・バックログ
+
+> **トラック分離管理（2026-06-06）**: 以下は official-docs / gen-out 両トラック混在の元リスト。各項目がどちらのトラックに属するか・official-docs で実施不要かの仕分けは `../provision-tracks-status.md`（単一情報源）を参照。本リストのうち **gen-out トラック分が user-review の主管轄**。
 
 P0.1 ユーザーレビュー活動本体の外側で発生した、忘れずに管理すべきタスク:
 
