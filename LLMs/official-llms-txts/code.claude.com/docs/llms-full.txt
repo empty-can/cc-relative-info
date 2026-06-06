@@ -64,18 +64,19 @@ See [Server-managed settings](/docs/en/server-managed-settings) and [Settings fi
 
 Managed settings can lock down tools, sandbox execution, restrict MCP servers and plugin sources, and control which hooks run. Each row is a control surface with the setting keys that drive it.
 
-| Control                                                                                | What it does                                                                                                                       | Key settings                                                                                                 |
-| :------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------- |
-| [Permission rules](/docs/en/permissions)                                                    | Allow, ask, or deny specific tools and commands                                                                                    | `permissions.allow`, `permissions.deny`                                                                      |
-| [Permission lockdown](/docs/en/permissions#managed-only-settings)                           | Only managed permission rules apply; disable `--dangerously-skip-permissions`                                                      | `allowManagedPermissionRulesOnly`, `permissions.disableBypassPermissionsMode`                                |
-| [Sandboxing](/docs/en/sandboxing)                                                           | OS-level filesystem and network isolation with domain allowlists                                                                   | `sandbox.enabled`, `sandbox.network.allowedDomains`                                                          |
-| [Managed policy CLAUDE.md](/docs/en/memory#deploy-organization-wide-claude-md)              | Org-wide instructions loaded in every session, cannot be excluded                                                                  | File at the managed policy path                                                                              |
-| [MCP server control](/docs/en/managed-mcp)                                                  | Restrict which MCP servers users can add or connect to, or deploy a fixed set                                                      | `allowedMcpServers`, `deniedMcpServers`, `allowManagedMcpServersOnly`, or a deployed `managed-mcp.json` file |
-| [Plugin marketplace control](/docs/en/plugin-marketplaces#managed-marketplace-restrictions) | Restrict which marketplace sources users can add and install from                                                                  | `strictKnownMarketplaces`, `blockedMarketplaces`                                                             |
-| [Customization lockdown](/docs/en/settings#strictpluginonlycustomization)                   | Block skills, agents, hooks, and MCP servers from user and project sources, so they can only come from plugins or managed settings | `strictPluginOnlyCustomization`                                                                              |
-| [Hook restrictions](/docs/en/settings#hook-configuration)                                   | Only managed hooks load; restrict HTTP hook URLs                                                                                   | `allowManagedHooksOnly`, `allowedHttpHookUrls`                                                               |
-| [Disable agent view](/docs/en/agent-view#how-background-sessions-are-hosted)                | Turn off `claude agents`, `--bg`, `/background`, and the on-demand supervisor                                                      | `disableAgentView`                                                                                           |
-| [Version floor](/docs/en/settings)                                                          | Prevent auto-update from installing below an org-wide minimum                                                                      | `minimumVersion`                                                                                             |
+| Control                                                                                | What it does                                                                                                                                   | Key settings                                                                                                 |
+| :------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------- |
+| [Permission rules](/docs/en/permissions)                                                    | Allow, ask, or deny specific tools and commands                                                                                                | `permissions.allow`, `permissions.deny`                                                                      |
+| [Permission lockdown](/docs/en/permissions#managed-only-settings)                           | Only managed permission rules apply; disable `--dangerously-skip-permissions`                                                                  | `allowManagedPermissionRulesOnly`, `permissions.disableBypassPermissionsMode`                                |
+| [Sandboxing](/docs/en/sandboxing)                                                           | OS-level filesystem and network isolation with domain allowlists                                                                               | `sandbox.enabled`, `sandbox.network.allowedDomains`                                                          |
+| [Managed policy CLAUDE.md](/docs/en/memory#deploy-organization-wide-claude-md)              | Org-wide instructions loaded in every session, cannot be excluded                                                                              | File at the managed policy path                                                                              |
+| [MCP server control](/docs/en/managed-mcp)                                                  | Restrict which MCP servers users can add or connect to, or deploy a fixed set                                                                  | `allowedMcpServers`, `deniedMcpServers`, `allowManagedMcpServersOnly`, or a deployed `managed-mcp.json` file |
+| [Plugin marketplace control](/docs/en/plugin-marketplaces#managed-marketplace-restrictions) | Restrict which marketplace sources users can add and install from                                                                              | `strictKnownMarketplaces`, `blockedMarketplaces`                                                             |
+| [Customization lockdown](/docs/en/settings#strictpluginonlycustomization)                   | Block skills, agents, hooks, and MCP servers from user and project sources, so they can only come from plugins or managed settings             | `strictPluginOnlyCustomization`                                                                              |
+| [Hook restrictions](/docs/en/settings#hook-configuration)                                   | Only managed hooks load; restrict HTTP hook URLs                                                                                               | `allowManagedHooksOnly`, `allowedHttpHookUrls`                                                               |
+| [Disable agent view](/docs/en/agent-view#how-background-sessions-are-hosted)                | Turn off `claude agents`, `--bg`, `/background`, and the on-demand supervisor                                                                  | `disableAgentView`                                                                                           |
+| [Version floor](/docs/en/settings)                                                          | Prevent auto-update from installing below an org-wide minimum                                                                                  | `minimumVersion`                                                                                             |
+| [Required version range](/docs/en/settings)                                                 | Refuse to start at all when the running version is outside an org-approved range. Stronger than `minimumVersion`, which only blocks downgrades | `requiredMinimumVersion`, `requiredMaximumVersion`                                                           |
 
 Permission rules and sandboxing cover different layers. Denying WebFetch blocks Claude's fetch tool, but if Bash is allowed, `curl` and `wget` can still reach any URL. Sandboxing closes that gap with a network domain allowlist enforced at the OS level.
 
@@ -1001,7 +1002,7 @@ Every background session has a short ID you can use from the shell. The ID is pr
 | :--------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `claude agents`              | Open agent view                                                                                                                                                                                                                                                                                                                         |
 | `claude agents --cwd <path>` | Open agent view scoped to sessions started under `<path>`                                                                                                                                                                                                                                                                               |
-| `claude agents --json`       | Print live sessions as a JSON array and exit. Each entry has `pid`, `cwd`, `kind`, and `startedAt`, plus `sessionId`, `name`, and `status` when set. Combine with `--cwd <path>` to filter                                                                                                                                              |
+| `claude agents --json`       | Print live sessions as a JSON array and exit. Each entry has `pid`, `cwd`, `kind`, and `startedAt`, plus `sessionId`, `name`, and `status` when set. When `status` is `waiting`, `waitingFor` says what the session is blocked on, such as `permission prompt` or `input needed`. Combine with `--cwd <path>` to filter                 |
 | `claude attach <id>`         | Attach to a session in this terminal                                                                                                                                                                                                                                                                                                    |
 | `claude logs <id>`           | Print the session's recent output                                                                                                                                                                                                                                                                                                       |
 | `claude stop <id>`           | Stop a session. Also accepts `claude kill`                                                                                                                                                                                                                                                                                              |
@@ -1343,7 +1344,7 @@ When enabling Bedrock for Claude Code, keep the following in mind:
 ### 4. Pin model versions
 
 <Warning>
-  Pin specific model versions when deploying to multiple users. Without pinning, model aliases such as `sonnet` and `opus` resolve to the latest version, which may not yet be available in your Bedrock account when Anthropic releases an update. Claude Code [falls back](#startup-model-checks) to the previous version at startup when the latest is unavailable, but pinning lets you control when your users move to a new model.
+  Pin specific model versions when deploying to multiple users. Without pinning, model aliases such as `sonnet` and `opus` resolve to Claude Code's built-in default for Bedrock, which can lag the newest release and may not yet be available in your account. Claude Code [falls back](#startup-model-checks) to the previous version at startup when the default is unavailable, but pinning lets you control when your users move to a new model.
 </Warning>
 
 Set these environment variables to specific Bedrock model IDs.
@@ -2984,7 +2985,7 @@ The techniques below are the ones that most reliably move someone from a first t
 </Tip>
 
 
-# Changelog
+# Claude Code changelog
 Source: https://code.claude.com/docs/en/changelog
 
 Release notes for Claude Code, including new features, improvements, and bug fixes by version.
@@ -2992,6 +2993,35 @@ Release notes for Claude Code, including new features, improvements, and bug fix
 This page is generated from the [CHANGELOG.md on GitHub](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md).
 
 Run `claude --version` to check your installed version.
+
+<Update label="2.1.165" description="June 5, 2026">
+  * Bug fixes and reliability improvements
+</Update>
+
+<Update label="2.1.163" description="June 4, 2026">
+  * Added `requiredMinimumVersion` and `requiredMaximumVersion` managed settings — Claude Code refuses to start if its version is outside the allowed range and directs the user to an approved version
+  * Added `/plugin list` command to list installed plugins, with `--enabled`/`--disabled` filters
+  * Added a "c to copy" shortcut to `/btw` that copies the raw markdown answer to the clipboard, preserving formatting when pasted elsewhere
+  * Hooks: Stop and SubagentStop hooks can now return `hookSpecificOutput.additionalContext` to give Claude feedback and keep the turn going without being labeled a hook error
+  * Skills: added `\$` escape syntax to include a literal `$` before a digit in command bodies
+  * stdio MCP servers now receive the same `CLAUDE_CODE_SESSION_ID` as hooks/Bash on `--resume`
+  * Fixed `claude -p` hanging forever after its final result when a backgrounded command never exits — background shells are now stopped \~5s after the result once stdin closes
+  * Fixed `claude -p` failing with "ANTHROPIC\_API\_KEY required" on Bedrock/Vertex/Foundry when `CI=true` and no Anthropic API key is set
+  * Fixed bash commands failing under bazel and EDR-protected Go workflows: `$TMPDIR` was overridden to `/tmp/claude-{uid}` for all commands instead of only sandboxed ones (regression in 2.1.154)
+  * Fixed Bash commands failing on Windows with "EEXIST: file already exists" on the session-env directory when it has the read-only attribute or is inside OneDrive
+  * Fixed org-managed permission rules not applying for the entire session when the managed settings fetch completed during startup on a fresh config directory
+  * Fixed background sessions in `claude agents` losing their running background tasks when reattached after a Claude Code update
+  * Fixed terminal misalignment and a multi-second hang when exiting the agent view by pressing Esc
+  * Fixed clicking Stop on a background-task chip in the desktop app not clearing the chip when the underlying process was already gone
+  * Fixed keyboard input becoming permanently unresponsive after a paste operation whose end marker is dropped by the terminal
+  * Fixed hook `if: "Bash(...)"` conditions firing on every Bash command containing `$()` or `$VAR`; the pattern now matches against commands inside subshells and backticks too
+  * Fixed deny rules on home-directory paths (e.g. `Read(~/Desktop/**)`) not blocking Bash commands that reference the path via `$HOME`
+  * Fixed a stray "(no content)" line left in the transcript after closing panel dialogs like /mcp and /plugins
+  * Background agent sessions now update to a new Claude Code version in the background, so opening a session after an update no longer waits on a cold restart
+  * Clearer descriptions for built-in commands and skills in the / menu
+  * The subscription-switch suggestion now shows in the startup announcement slot instead of a toast
+  * `claude agents` dispatching from the state-grouped view now starts the session in the directory the agent view was opened from
+</Update>
 
 <Update label="2.1.162" description="June 3, 2026">
   * `claude agents --json` now includes `waitingFor` showing what a waiting session is blocked on (e.g. permission prompt)
@@ -8968,7 +8998,7 @@ Claude Platform on AWS is opt-in even when AWS credentials are present in your e
 
 ### 3. Pin model versions
 
-Claude Platform on AWS uses the same model IDs as the direct Claude API. The default aliases `opus`, `sonnet`, and `haiku` resolve to the latest versions available in your workspace.
+Claude Platform on AWS uses the same model IDs as the direct Claude API. The default aliases `opus`, `sonnet`, and `haiku` resolve to Claude Code's built-in defaults for Claude Platform on AWS, which can lag the newest release. Without `ANTHROPIC_DEFAULT_OPUS_MODEL`, the `opus` alias resolves to Opus 4.7.
 
 If you deploy Claude Code to a team, pin the model IDs explicitly so a new release doesn't move everyone at once:
 
@@ -9564,7 +9594,7 @@ In the table below, `<arg>` indicates a required argument and `[arg]` indicates 
 | `/insights`                                                                        | Generate a report analyzing your Claude Code sessions, including project areas, interaction patterns, and friction points                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `/install-github-app`                                                              | Set up the [Claude GitHub Actions](/docs/en/github-actions) app for a repository. Walks you through selecting a repo and configuring the integration                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `/install-slack-app`                                                               | Install the Claude Slack app. Opens a browser to complete the OAuth flow                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `/keybindings`                                                                     | Open or create your keybindings configuration file                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `/keybindings`                                                                     | Open your [keyboard shortcuts](/docs/en/keybindings) file                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `/login`                                                                           | Sign in to your Anthropic account                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `/logout`                                                                          | Sign out from your Anthropic account                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `/loop [interval] [prompt]`                                                        | **[Skill](/docs/en/skills#bundled-skills).** Run a prompt repeatedly while the session stays open. Omit the interval and Claude self-paces between iterations. Omit the prompt and, [where available](/docs/en/scheduled-tasks#run-the-built-in-maintenance-prompt), Claude runs an autonomous maintenance check or the prompt in `.claude/loop.md`. Example: `/loop 5m check if the deploy finished`. See [Run prompts on a schedule](/docs/en/scheduled-tasks). Alias: `/proactive`                                                                                                                                                                                                                                                                 |
@@ -9575,17 +9605,17 @@ In the table below, `<arg>` indicates a required argument and `[arg]` indicates 
 | `/passes`                                                                          | Share a free week of Claude Code with friends. Only visible if your account is eligible                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `/permissions`                                                                     | Manage allow, ask, and deny rules for tool permissions. Opens an interactive dialog where you can view rules by scope, add or remove rules, manage working directories, and review [recent auto mode denials](/docs/en/auto-mode-config#review-denials). Alias: `/allowed-tools`                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `/plan [description]`                                                              | Enter plan mode directly from the prompt. Pass an optional description to enter plan mode and immediately start with that task, for example `/plan fix the auth bug`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `/plugin`                                                                          | Manage Claude Code [plugins](/docs/en/plugins)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `/plugin [subcommand]`                                                             | Manage Claude Code [plugins](/docs/en/plugins). Run with no argument to open the plugin menu, or pass a subcommand such as `list`, `install`, `enable`, or `disable` to act directly                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `/powerup`                                                                         | Discover Claude Code features through quick interactive lessons with animated demos                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `/pr-comments [PR]`                                                                | Removed in v2.1.91. Ask Claude directly to view pull request comments instead. On earlier versions, fetches and displays comments from a GitHub pull request; automatically detects the PR for the current branch, or pass a PR URL or number. Requires the `gh` CLI                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `/privacy-settings`                                                                | View and update your privacy settings. Only available for Pro and Max plan subscribers                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `/radio`                                                                           | Open Claude FM lo-fi radio in your browser. Prints the stream URL when no browser is available. Not available on Bedrock, Vertex, or Foundry                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `/recap`                                                                           | Generate a one-line summary of the current session on demand. See [Session recap](/docs/en/interactive-mode#session-recap) for the automatic recap that appears after you've been away                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `/release-notes`                                                                   | View the changelog in an interactive version picker. Select a specific version to see its release notes, or choose to show all versions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `/reload-plugins`                                                                  | Reload all active [plugins](/docs/en/plugins) to apply pending changes without restarting. Reports counts for each reloaded component and flags any load errors                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `/reload-plugins [--force]`                                                        | Reload all active [plugins](/docs/en/plugins) to apply pending changes without restarting. Reports counts for each reloaded component and flags any load errors. When the reload would change which MCP tools are loaded and invalidate the prompt cache, the command warns and skips unless you pass `--force`                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `/reload-skills`                                                                   | Re-scan [skill](/docs/en/skills) and command directories so skills added or changed on disk during the session become available without restarting. Reports how many skills are available and how many were added or removed. Added in v2.1.152                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `/remote-control`                                                                  | Make this session available for [remote control](/docs/en/remote-control) from claude.ai. Alias: `/rc`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `/remote-env`                                                                      | Configure the default remote environment for [web sessions started with `--remote`](/docs/en/claude-code-on-the-web#configure-your-environment)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `/remote-env`                                                                      | Choose the default environment for [cloud agents](/docs/en/claude-code-on-the-web#configure-your-environment)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `/rename [name]`                                                                   | Rename the current session and show the name on the prompt bar. Without a name, auto-generates one from conversation history                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `/resume [session]`                                                                | Resume a conversation by ID or name, or open the session picker. As of v2.1.144, [background sessions](/docs/en/agent-view) appear in the picker marked with `bg`. Alias: `/continue`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `/review [PR]`                                                                     | Review a pull request locally in your current session. For a deeper cloud-based review, see [`/code-review ultra`](/docs/en/ultrareview)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
@@ -9605,7 +9635,7 @@ In the table below, `<arg>` indicates a required argument and `[arg]` indicates 
 | `/statusline`                                                                      | Configure Claude Code's [status line](/docs/en/statusline). Describe what you want, or run without arguments to auto-configure from your shell prompt                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `/stickers`                                                                        | Order Claude Code stickers                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `/stop`                                                                            | Stop the current [background session](/docs/en/agent-view). Only available while attached to a background session; the transcript and any worktree are kept. To detach without stopping, use `/exit` or press `←`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `/tasks`                                                                           | List and manage background tasks. Also available as `/bashes`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `/tasks`                                                                           | View and manage everything running in the background. Also available as `/bashes`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `/team-onboarding`                                                                 | Generate a team onboarding guide from your Claude Code usage history. Claude analyzes your sessions, commands, and MCP server usage from the past 30 days and produces a markdown guide a teammate can paste as a first message to get set up quickly. For claude.ai subscribers on Pro, Max, Team, and Enterprise plans, also returns a share link teammates can open directly in Claude Code                                                                                                                                                                                                                                                                                                                                         |
 | `/teleport`                                                                        | Pull a [Claude Code on the web](/docs/en/claude-code-on-the-web#from-web-to-terminal) session into this terminal: opens a picker, then fetches the branch and conversation. Also available as `/tp`. Requires a claude.ai subscription                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `/terminal-setup`                                                                  | Configure terminal keybindings for Shift+Enter and other shortcuts. Only visible in terminals that need it, like VS Code, Cursor, Devin Desktop, Alacritty, or Zed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -11447,7 +11477,7 @@ The link itself can be hosted anywhere, but the session always opens locally on 
 
 A deep link never executes anything on its own. The link only chooses a directory and fills the prompt box. If you click a link from a page you do not trust, the prompt is still inert: nothing reaches the model until you read what was filled in and press Enter.
 
-When the session opens, a banner above the input shows that an external link launched it and which directory it selected. For prompts over 1,000 characters, the banner tells you to scroll and review the full text before pressing Enter, since long prompts can push instructions off screen. Permission rules, `CLAUDE.md`, and trust prompts for the selected directory apply the same way as for any other session.
+When the session opens, a warning line below the input box reads `Prompt from an external link` and stays visible until you send or clear the prompt. For prompts over 1,000 characters, the warning includes the character count and tells you to scroll and review the full text before pressing Enter, since long prompts can push instructions off screen. Permission rules, `CLAUDE.md`, and trust prompts for the selected directory apply the same way as for any other session.
 
 ## Build a link
 
@@ -11493,7 +11523,7 @@ Use `repo` when the link is shared and each person clones to a different locatio
 * The lookup only finds paths where you have already run Claude Code at least once.
 * The link does not change which branch is checked out. The session opens in whatever state that directory is currently in.
 
-The launched session shows which path it picked and when that clone last fetched from the remote, so you can tell if you are looking at stale code.
+The welcome header shows which path it picked so you can confirm the right clone opened.
 
 ## Examples
 
@@ -13106,6 +13136,14 @@ When you install a plugin that declares dependencies, the install output lists w
 
 You can also manage plugins with direct commands.
 
+List installed plugins without opening the menu:
+
+```shell theme={null}
+/plugin list
+```
+
+Pass `--enabled` or `--disabled` to show only plugins in that state.
+
 Disable a plugin without uninstalling:
 
 ```shell theme={null}
@@ -13456,7 +13494,7 @@ Claude Code reads environment variables at startup, so changes take effect the n
 | `CLAUDE_CODE_EXTRA_BODY`                                | JSON object to merge into the top level of every API request body. Useful for passing provider-specific parameters that Claude Code does not expose directly                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS`               | Override the default token limit for file reads. Useful when you need to read larger files in full                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `CLAUDE_CODE_FORCE_SYNC_OUTPUT`                         | Set to `1` to force-enable DEC private mode 2026 [synchronized output](https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036) when your terminal supports it but is not auto-detected. Useful for emulators such as Emacs `eat` that implement BSU/ESU but do not reply to the capability probe. Has no effect under tmux                                                                                                                                                                                                                                                                                                               |
-| `CLAUDE_CODE_FORK_SUBAGENT`                             | Set to `1` to make [forked subagents](/docs/en/sub-agents#fork-the-current-conversation) the model's default: Claude spawns a fork, a subagent that inherits the full conversation context instead of starting fresh, whenever it would otherwise use the general-purpose subagent, and all subagent spawns run in the background. The explicit [`/fork`](/docs/en/commands) command works without this variable. Works in interactive mode and via the SDK or `claude -p`                                                                                                                                                                                            |
+| `CLAUDE_CODE_FORK_SUBAGENT`                             | Set to `1` to make [forked subagents](/docs/en/sub-agents#fork-the-current-conversation) the model's default, or `0` to disable them, overriding any server-side rollout. When enabled, Claude spawns a fork, a subagent that inherits the full conversation context instead of starting fresh, whenever it would otherwise use the general-purpose subagent, and all subagent spawns run in the background. The explicit [`/fork`](/docs/en/commands) command works without this variable. Works in interactive mode and via the SDK or `claude -p`                                                                                                                  |
 | `CLAUDE_CODE_GIT_BASH_PATH`                             | Windows only: path to the Git Bash executable (`bash.exe`). Use when Git Bash is installed but not in your PATH. See [Windows setup](/docs/en/setup#set-up-on-windows)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `CLAUDE_CODE_GLOB_HIDDEN`                               | Set to `false` to exclude dotfiles from results when Claude invokes the [Glob tool](/docs/en/tools-reference#glob-tool-behavior). Included by default. Does not affect `@` file autocomplete, `ls`, Grep, or Read                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `CLAUDE_CODE_GLOB_NO_IGNORE`                            | Set to `false` to make the [Glob tool](/docs/en/tools-reference#glob-tool-behavior) respect `.gitignore` patterns. By default, Glob returns all matching files including gitignored ones. Does not affect `@` file autocomplete, which has its own [`respectGitignore` setting](/docs/en/settings#available-settings)                                                                                                                                                                                                                                                                                                                                                 |
@@ -13499,7 +13537,7 @@ Claude Code reads environment variables at startup, so changes take effect the n
 | `CLAUDE_CODE_SCRIPT_CAPS`                               | JSON object limiting how many times specific scripts may be invoked per session when `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` is set. Keys are substrings matched against the command text; values are integer call limits. For example, `{"deploy.sh": 2}` allows `deploy.sh` to be called at most twice. Matching is substring-based so shell-expansion tricks like `./scripts/deploy.sh $(evil)` still count against the cap. Runtime fan-out via `xargs` or `find -exec` is not detected; this is a defense-in-depth control                                                                                                                                  |
 | `CLAUDE_CODE_SCROLL_SPEED`                              | Set the mouse wheel scroll multiplier in [fullscreen rendering](/docs/en/fullscreen#mouse-wheel-scrolling). Accepts values from 1 to 20. Set to `3` to match `vim` if your terminal sends one wheel event per notch without amplification. Ignored in the JetBrains IDE terminal, where Claude Code uses its own scroll handling                                                                                                                                                                                                                                                                                                                                 |
 | `CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS`               | Override the time budget in milliseconds for [SessionEnd](/docs/en/hooks#sessionend) hooks. Applies to session exit, `/clear`, and switching sessions via interactive `/resume`. By default the budget is 1.5 seconds, automatically raised to the highest per-hook `timeout` configured in settings files, up to 60 seconds. Timeouts on plugin-provided hooks do not raise the budget                                                                                                                                                                                                                                                                          |
-| `CLAUDE_CODE_SESSION_ID`                                | Set automatically to the current session ID in Bash and PowerShell tool subprocesses, [hook command](/docs/en/hooks) subprocesses, and stdio [MCP server](/docs/en/mcp) subprocesses. For Bash, PowerShell, and hooks this matches the `session_id` field in the hook JSON input and is updated on `/clear`. An MCP server subprocess retains the ID it was spawned with, and may receive the initial startup ID rather than the resumed ID when launched via `--resume` or `--continue`. Use to correlate scripts and external tools with the Claude Code session that launched them                                                                                 |
+| `CLAUDE_CODE_SESSION_ID`                                | Set automatically to the current session ID in Bash and PowerShell tool subprocesses, [hook command](/docs/en/hooks) subprocesses, and stdio [MCP server](/docs/en/mcp) subprocesses. For Bash, PowerShell, and hooks this matches the `session_id` field in the hook JSON input and is updated on `/clear`. An MCP server subprocess retains the ID it was spawned with. On `--resume <session-id>` it receives the resumed ID, matching hooks and Bash. On `--continue` or `--resume` without an explicit ID it may receive the initial startup ID instead. Use to correlate scripts and external tools with the Claude Code session that launched them             |
 | `CLAUDE_CODE_SHELL`                                     | Override automatic shell detection. Useful when your login shell differs from your preferred working shell (for example, `bash` vs `zsh`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `CLAUDE_CODE_SHELL_PREFIX`                              | Command prefix that wraps shell commands Claude Code spawns: Bash tool calls, [hook](/docs/en/hooks) commands, and stdio [MCP server](/docs/en/mcp) startup commands. Useful for logging or auditing. Example: setting `/path/to/logger.sh` runs each command as `/path/to/logger.sh <command>`                                                                                                                                                                                                                                                                                                                                                                       |
 | `CLAUDE_CODE_SIMPLE`                                    | Set to `1` to run with a minimal system prompt and only the Bash, file read, and file edit tools. MCP tools from `--mcp-config` are still available. Disables auto-discovery of hooks, skills, plugins, MCP servers, auto memory, and CLAUDE.md. OAuth tokens and keychain credentials are not read, so Anthropic authentication must come from `ANTHROPIC_API_KEY` or an `apiKeyHelper` in `--settings`. Equivalent to passing [`--bare`](/docs/en/headless#start-faster-with-bare-mode)                                                                                                                                                                        |
@@ -13516,11 +13554,12 @@ Claude Code reads environment variables at startup, so changes take effect the n
 | `CLAUDE_CODE_SYNC_PLUGIN_INSTALL`                       | Set to `1` in non-interactive mode (the `-p` flag) to wait for plugin installation to complete before the first query. Without this, plugins install in the background and may not be available on the first turn. Combine with `CLAUDE_CODE_SYNC_PLUGIN_INSTALL_TIMEOUT_MS` to bound the wait                                                                                                                                                                                                                                                                                                                                                              |
 | `CLAUDE_CODE_SYNC_PLUGIN_INSTALL_TIMEOUT_MS`            | Timeout in milliseconds for synchronous plugin installation. When exceeded, Claude Code proceeds without plugins and logs an error. No default: without this variable, synchronous installation waits until complete                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `CLAUDE_CODE_SYNC_SKILLS`                               | Set to `1` to download your enabled claude.ai skills into `~/.claude/skills/` before the first query and resync every 10 minutes. Applies only in non-interactive mode with the `-p` flag. Set automatically in [Claude Code on the web](/docs/en/claude-code-on-the-web) sessions. Requires claude.ai authentication                                                                                                                                                                                                                                                                                                                                            |
+| `CLAUDE_CODE_SYNC_SKILLS_INSTALL_TIMEOUT_MS`            | Timeout in milliseconds for a mid-session skills resync when `CLAUDE_CODE_SYNC_SKILLS` is set (default: 30000). Bounds the download triggered when the host requests a skill reload during the session. When exceeded, the resync stops and remaining downloads continue in the background                                                                                                                                                                                                                                                                                                                                                                  |
 | `CLAUDE_CODE_SYNC_SKILLS_WAIT_TIMEOUT_MS`               | Timeout in milliseconds for the first query to wait on the initial skills sync when `CLAUDE_CODE_SYNC_SKILLS` is set (default: 5000). When exceeded, the query proceeds and remaining skill downloads continue in the background                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `CLAUDE_CODE_SYNTAX_HIGHLIGHT`                          | Set to `false` to disable syntax highlighting in diff output. Useful when colors interfere with your terminal setup. To also disable highlighting in code blocks and file previews, use the [`syntaxHighlightingDisabled`](/docs/en/settings) setting                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `CLAUDE_CODE_TASK_LIST_ID`                              | Share a task list across sessions. Set the same ID in multiple Claude Code instances to coordinate on a shared task list. See [Task list](/docs/en/interactive-mode#task-list)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `CLAUDE_CODE_TEAM_NAME`                                 | Name of the agent team this teammate belongs to. Set automatically on [agent team](/docs/en/agent-teams) members                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `CLAUDE_CODE_TMPDIR`                                    | Override the temp directory used for internal temp files. Claude Code appends `/claude-{uid}/` on Unix or `/claude/` on Windows to this path. Default: `/tmp` on macOS, `os.tmpdir()` on Linux and Windows. As of v2.1.161, on macOS and Linux, Bash subprocesses receive a short fallback `$TMPDIR` under the system default when your override is a long path, since some tools fail when temp paths get too long. Claude Code's own temp files always use your override                                                                                                                                                                                  |
+| `CLAUDE_CODE_TMPDIR`                                    | Override the temp directory used for internal temp files. Claude Code appends `/claude-{uid}/` on Unix or `/claude/` on Windows to this path. Default: `/tmp` on macOS, `os.tmpdir()` on Linux and Windows. As of v2.1.161, on macOS and Linux, [sandboxed](/docs/en/sandboxing) Bash subprocesses receive a short fallback `$TMPDIR` under the system default when your override is a long path, since some tools fail when temp paths get too long. Unsandboxed Bash commands inherit your shell's `$TMPDIR` unchanged. Claude Code's own temp files always use your override                                                                                  |
 | `CLAUDE_CODE_TMUX_TRUECOLOR`                            | Set to `1` to allow 24-bit truecolor output inside tmux. By default, Claude Code clamps to 256 colors when `$TMUX` is set because tmux does not pass through truecolor escape sequences unless configured to. Set this after adding `set -ga terminal-overrides ',*:Tc'` to your `~/.tmux.conf`. See [Terminal configuration](/docs/en/terminal-config) for other tmux settings                                                                                                                                                                                                                                                                                  |
 | `CLAUDE_CODE_USE_ANTHROPIC_AWS`                         | Use [Claude Platform on AWS](/docs/en/claude-platform-on-aws)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `CLAUDE_CODE_USE_BEDROCK`                               | Use [Bedrock](/docs/en/amazon-bedrock)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -13580,7 +13619,7 @@ Claude Code reads environment variables at startup, so changes take effect the n
 | `MCP_REMOTE_SERVER_CONNECTION_BATCH_SIZE`               | Maximum number of remote MCP servers (HTTP/SSE) to connect in parallel during startup (default: 20)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `MCP_SERVER_CONNECTION_BATCH_SIZE`                      | Maximum number of local MCP servers (stdio) to connect in parallel during startup (default: 3)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `MCP_TIMEOUT`                                           | Timeout in milliseconds for MCP server startup (default: 30000, or 30 seconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `MCP_TOOL_TIMEOUT`                                      | Timeout in milliseconds for MCP tool execution (default: 100000000, about 28 hours). A per-server `timeout` field in `.mcp.json` overrides this for that server. Values below 1000 are floored to one second                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `MCP_TOOL_TIMEOUT`                                      | Timeout in milliseconds for MCP tool execution (default: 100000000, about 28 hours). A per-server `timeout` field in `.mcp.json` overrides this for that server. For the env variable, values below 1000 are floored to one second; for the per-server field, values below 1000 are ignored                                                                                                                                                                                                                                                                                                                                                                 |
 | `NO_PROXY`                                              | List of domains and IPs to which requests will be directly issued, bypassing proxy                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `OTEL_LOG_RAW_API_BODIES`                               | Emit Anthropic Messages API request and response JSON as `api_request_body` / `api_response_body` log events. Set to `1` for inline bodies truncated at 60 KB, or `file:<dir>` to write untruncated bodies to disk and emit a `body_ref` path instead. Disabled by default; bodies include the entire conversation history. See [Monitoring](/docs/en/monitoring-usage#api-request-body-event)                                                                                                                                                                                                                                                                   |
 | `OTEL_LOG_TOOL_CONTENT`                                 | Set to `1` to include tool input and output content in OpenTelemetry span events. Disabled by default to protect sensitive data. See [Monitoring](/docs/en/monitoring-usage)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -14167,7 +14206,7 @@ There's an issue with the selected model (claude-...). It may not exist or you m
 * **Interactive CLI**: run `/model` to pick from models available to your account.
 * **Non-interactive mode (`-p`)**: pass `--model` with a valid alias or ID, or set [`ANTHROPIC_MODEL`](/docs/en/env-vars). The error text shows `Run --model` on this surface.
 * **Agent SDK**: the error text omits the hint because the model is set programmatically. Set [`model` on `Options`](/docs/en/agent-sdk/typescript#options) in TypeScript or [`ClaudeAgentOptions(model=...)`](/docs/en/agent-sdk/python#claudeagentoptions) in Python, and handle the structured `model_not_found` error to surface your own retry or model picker.
-* Use an alias such as `sonnet` or `opus` instead of a full versioned ID. Aliases track the latest release so they do not go stale. See [Model configuration](/docs/en/model-config).
+* Use an alias such as `sonnet` or `opus` instead of a full versioned ID. Aliases resolve to a maintained default so they do not go stale. See [Model configuration](/docs/en/model-config).
 * If the wrong model keeps coming back in the CLI, a stale ID is set somewhere. Check in [priority order](/docs/en/model-config#setting-your-model): the `--model` flag, the `ANTHROPIC_MODEL` environment variable, then the `model` field in `.claude/settings.local.json`, your project's `.claude/settings.json`, and `~/.claude/settings.json`. Remove the stale value and Claude Code falls back to your account default.
 * For Vertex AI deployments, see [Vertex AI troubleshooting](/docs/en/google-vertex-ai#troubleshooting).
 
@@ -16576,7 +16615,7 @@ Claude Code disables [MCP tool search](/docs/en/mcp#scale-with-mcp-tool-search) 
 ### 5. Pin model versions
 
 <Warning>
-  Pin specific model versions when deploying to multiple users. Without pinning, model aliases such as `sonnet` and `opus` resolve to the latest version, which may not yet be enabled in your Vertex AI project when Anthropic releases an update. Claude Code [falls back](#startup-model-checks) to the previous version at startup when the latest is unavailable, but pinning lets you control when your users move to a new model.
+  Pin specific model versions when deploying to multiple users. Without pinning, model aliases such as `sonnet` and `opus` resolve to Claude Code's built-in default for Vertex AI, which can lag the newest release and may not yet be enabled in your project. Claude Code [falls back](#startup-model-checks) to the previous version at startup when the default is unavailable, but pinning lets you control when your users move to a new model.
 </Warning>
 
 Set these environment variables to specific Vertex AI model IDs.
@@ -16729,6 +16768,10 @@ Bare mode skips OAuth and keychain reads. Anthropic authentication must come fro
 <Note>
   `--bare` is the recommended mode for scripted and SDK calls, and will become the default for `-p` in a future release.
 </Note>
+
+### Background tasks at exit
+
+If Claude starts a [background Bash task](/docs/en/tools-reference#bash-tool-behavior) during a `claude -p` run, for example a dev server or a watch build, that task is terminated about five seconds after Claude returns its final result and stdin closes. The grace period lets a task that finishes right after the result still deliver its output. Before v2.1.163, a never-exiting background process would hold the `claude -p` invocation open indefinitely.
 
 ## Examples
 
@@ -17216,15 +17259,27 @@ Each object in the inner `hooks` array is a hook handler: the shell command, HTT
 
 These fields apply to all hook types:
 
-| Field           | Required | Description                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| :-------------- | :------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `type`          | yes      | `"command"`, `"http"`, `"mcp_tool"`, `"prompt"`, or `"agent"`                                                                                                                                                                                                                                                                                                                                                                                          |
-| `if`            | no       | Permission rule syntax to filter when this hook runs, such as `"Bash(git *)"` or `"Edit(*.ts)"`. The hook only spawns if the tool call matches the pattern, or if a Bash command is too complex to parse. Only evaluated on tool events: `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, and `PermissionDenied`. On other events, a hook with `if` set never runs. Uses the same syntax as [permission rules](/docs/en/permissions) |
-| `timeout`       | no       | Seconds before canceling. Defaults: 600 for `command`, `http`, and `mcp_tool`; 30 for `prompt`; 60 for `agent`. [`UserPromptSubmit`](#userpromptsubmit) lowers the `command`, `http`, and `mcp_tool` default to 30, and [`MessageDisplay`](#messagedisplay) lowers it to 10                                                                                                                                                                            |
-| `statusMessage` | no       | Custom spinner message displayed while the hook runs                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `once`          | no       | If `true`, runs once per session then is removed. Only honored for hooks declared in [skill frontmatter](#hooks-in-skills-and-agents); ignored in settings files and agent frontmatter                                                                                                                                                                                                                                                                 |
+| Field           | Required | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| :-------------- | :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`          | yes      | `"command"`, `"http"`, `"mcp_tool"`, `"prompt"`, or `"agent"`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `if`            | no       | Permission rule syntax to filter when this hook runs, such as `"Bash(git *)"` or `"Edit(*.ts)"`. The hook command only runs if the tool call matches the pattern. See the [Bash matching table](#bash-if-matching) below for how Bash patterns evaluate against subcommands, `$()`, and backticks. Only evaluated on tool events: `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, and `PermissionDenied`. On other events, a hook with `if` set never runs. Uses the same syntax as [permission rules](/docs/en/permissions) |
+| `timeout`       | no       | Seconds before canceling. Defaults: 600 for `command`, `http`, and `mcp_tool`; 30 for `prompt`; 60 for `agent`. [`UserPromptSubmit`](#userpromptsubmit) lowers the `command`, `http`, and `mcp_tool` default to 30, and [`MessageDisplay`](#messagedisplay) lowers it to 10                                                                                                                                                                                                                                                                     |
+| `statusMessage` | no       | Custom spinner message displayed while the hook runs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `once`          | no       | If `true`, runs once per session then is removed. Only honored for hooks declared in [skill frontmatter](#hooks-in-skills-and-agents); ignored in settings files and agent frontmatter                                                                                                                                                                                                                                                                                                                                                          |
 
-The `if` field holds exactly one permission rule. There is no `&&`, `||`, or list syntax for combining rules; to apply multiple conditions, define a separate hook handler for each. For Bash, the rule is matched against each subcommand of the tool input after leading `VAR=value` assignments are stripped, so `if: "Bash(git push *)"` matches both `FOO=bar git push` and `npm test && git push`. The hook runs if any subcommand matches, and always runs when the command is too complex to parse.
+The `if` field holds exactly one permission rule. There is no `&&`, `||`, or list syntax for combining rules; to apply multiple conditions, define a separate hook handler for each.
+
+<span />For Bash patterns, whether your hook command runs depends on the shape of the pattern and the Bash command Claude is invoking. Leading `VAR=value` assignments are stripped before matching.
+
+| `if` pattern       | Bash command           | Hook runs? | Why                                                                                    |
+| :----------------- | :--------------------- | :--------- | :------------------------------------------------------------------------------------- |
+| `Bash(git *)`      | `FOO=bar git push`     | yes        | leading assignments are stripped; `git push` matches                                   |
+| `Bash(git *)`      | `npm test && git push` | yes        | each subcommand is checked; `git push` matches                                         |
+| `Bash(rm *)`       | `echo $(rm -rf /)`     | yes        | commands inside `$()` and backticks are checked; `rm -rf /` matches                    |
+| `Bash(rm *)`       | `echo $(date)`         | no         | no subcommand matches `rm *`                                                           |
+| `Bash(git push *)` | `echo $(date)`         | yes        | patterns that constrain past the command name fail open on `$()`, backticks, or `$VAR` |
+
+The filter also fails open, running your hook regardless of pattern, when the Bash command cannot be parsed. Because the `if` filter is best-effort, use the [permission system](/docs/en/permissions) rather than a hook to enforce a hard allow or deny.
 
 #### Command hook fields
 
@@ -17356,10 +17411,10 @@ This example calls the `security_scan` tool on the `my_server` MCP server after 
 
 In addition to the [common fields](#common-fields), prompt and agent hooks accept these fields:
 
-| Field    | Required | Description                                                                                 |
-| :------- | :------- | :------------------------------------------------------------------------------------------ |
-| `prompt` | yes      | Prompt text to send to the model. Use `$ARGUMENTS` as a placeholder for the hook input JSON |
-| `model`  | no       | Model to use for evaluation. Defaults to a fast model                                       |
+| Field    | Required | Description                                                                                                                                                               |
+| :------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `prompt` | yes      | Prompt text to send to the model. Use `$ARGUMENTS` as a placeholder for the hook input JSON. Escape with a backslash to include literal text: `\$1.00` renders as `$1.00` |
+| `model`  | no       | Model to use for evaluation. Defaults to a fast model                                                                                                                     |
 
 All matching hooks run in parallel, and identical handlers are deduplicated automatically. Command hooks are deduplicated by command string and `args`, and HTTP hooks are deduplicated by URL. Handlers run in the current directory with Claude Code's environment. The `$CLAUDE_CODE_REMOTE` environment variable is set to `"true"` in remote web environments and not set in the local CLI.
 
@@ -17687,6 +17742,7 @@ Where the reminder appears depends on the event:
 * [SessionStart](#sessionstart), [Setup](#setup), and [SubagentStart](#subagentstart): at the start of the conversation, before the first prompt
 * [UserPromptSubmit](#userpromptsubmit) and [UserPromptExpansion](#userpromptexpansion): alongside the submitted prompt
 * [PreToolUse](#pretooluse), [PostToolUse](#posttooluse), [PostToolUseFailure](#posttoolusefailure), and [PostToolBatch](#posttoolbatch): next to the tool result
+* [Stop](#stop) and [SubagentStop](#subagentstop): at the end of the turn. The conversation continues so Claude can act on the feedback. See [Stop decision control](#stop-decision-control)
 
 When several hooks return `additionalContext` for the same event, Claude receives all of the values. If a value exceeds 10,000 characters, Claude Code writes the full text to a file in the session directory and passes Claude the file path with a short preview instead.
 
@@ -17708,7 +17764,7 @@ Not every event supports blocking or controlling behavior through JSON. The even
 
 | Events                                                                                                                              | Decision pattern               | Key fields                                                                                                                                                                                                                          |
 | :---------------------------------------------------------------------------------------------------------------------------------- | :----------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UserPromptSubmit, UserPromptExpansion, PostToolUse, PostToolUseFailure, PostToolBatch, Stop, SubagentStop, ConfigChange, PreCompact | Top-level `decision`           | `decision: "block"`, `reason`                                                                                                                                                                                                       |
+| UserPromptSubmit, UserPromptExpansion, PostToolUse, PostToolUseFailure, PostToolBatch, Stop, SubagentStop, ConfigChange, PreCompact | Top-level `decision`           | `decision: "block"`, `reason`. Stop and SubagentStop also accept `hookSpecificOutput.additionalContext` for [non-error feedback that continues the conversation](#stop-decision-control)                                            |
 | TeammateIdle, TaskCreated, TaskCompleted                                                                                            | Exit code or `continue: false` | Exit code 2 blocks the action with stderr feedback. JSON `{"continue": false, "stopReason": "..."}` also stops the teammate entirely, matching `Stop` hook behavior                                                                 |
 | PreToolUse                                                                                                                          | `hookSpecificOutput`           | `permissionDecision` (allow/deny/ask/defer), `permissionDecisionReason`                                                                                                                                                             |
 | PermissionRequest                                                                                                                   | `hookSpecificOutput`           | `decision.behavior` (allow/deny)                                                                                                                                                                                                    |
@@ -18847,7 +18903,7 @@ SubagentStop hooks also receive the `background_tasks` and `session_crons` array
 }
 ```
 
-SubagentStop hooks use the same decision control format as [Stop hooks](#stop-decision-control). They do not support `additionalContext`. Returning `decision: "block"` with a `reason` keeps the subagent running and delivers `reason` to the subagent as its next instruction. To inject context into the parent session after a subagent returns, use a [`PostToolUse`](#posttooluse) hook on the `Agent` tool instead.
+SubagentStop hooks use the same decision control format as [Stop hooks](#stop-decision-control), including `hookSpecificOutput.additionalContext` with `hookEventName` set to `"SubagentStop"`, for non-error feedback that keeps the subagent running. Returning `decision: "block"` with a `reason` keeps the subagent running and delivers `reason` to the subagent as its next instruction. To inject context into the parent session after a subagent returns, use a [`PostToolUse`](#posttooluse) hook on the `Agent` tool instead.
 
 ### TaskCreated
 
@@ -19036,15 +19092,27 @@ This example shows a Stop input with one in-flight shell task and one recurring 
 
 `Stop` and `SubagentStop` hooks can control whether Claude continues. In addition to the [JSON output fields](#json-output) available to all hooks, your hook script can return these event-specific fields:
 
-| Field      | Description                                                                |
-| :--------- | :------------------------------------------------------------------------- |
-| `decision` | `"block"` prevents Claude from stopping. Omit to allow Claude to stop      |
-| `reason`   | Required when `decision` is `"block"`. Tells Claude why it should continue |
+| Field                                  | Description                                                                                                                                                                               |
+| :------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `decision`                             | `"block"` prevents Claude from stopping. Omit to allow Claude to stop                                                                                                                     |
+| `reason`                               | Required when `decision` is `"block"`. Tells Claude why it should continue                                                                                                                |
+| `hookSpecificOutput.additionalContext` | Non-error feedback for Claude. The conversation continues so Claude can act on it, but unlike `decision: "block"` it is shown in the transcript as hook feedback rather than a hook error |
 
 ```json theme={null}
 {
   "decision": "block",
   "reason": "Must be provided when Claude is blocked from stopping"
+}
+```
+
+Use `additionalContext` when the hook is working as designed and giving Claude guidance, such as "run the test suite before finishing". It keeps the conversation going through the same loop protections as `decision: "block"`, namely the `stop_hook_active` input and the 8-consecutive-continuation cap, but the transcript labels it `Stop hook feedback` and no hook error notification is shown:
+
+```json theme={null}
+{
+  "hookSpecificOutput": {
+    "hookEventName": "Stop",
+    "additionalContext": "Please run the test suite before finishing"
+  }
 }
 ```
 
@@ -20626,7 +20694,7 @@ For full matcher syntax, see the [Hooks reference](/docs/en/hooks#configuration)
   The `if` field requires Claude Code v2.1.85 or later. Earlier versions ignore it and run the hook on every matched call.
 </Note>
 
-The `if` field uses [permission rule syntax](/docs/en/permissions) to filter hooks by tool name and arguments together, so the hook process only spawns when the tool call matches, or when a Bash command is too complex to parse. This goes beyond `matcher`, which filters at the group level by tool name only.
+The `if` field uses [permission rule syntax](/docs/en/permissions) to filter hooks by tool name and arguments together, so the hook process only spawns when the tool call matches. This goes beyond `matcher`, which filters at the group level by tool name only.
 
 For example, to run a hook only when Claude uses `git` commands rather than all Bash commands:
 
@@ -20649,7 +20717,19 @@ For example, to run a hook only when Claude uses `git` commands rather than all 
 }
 ```
 
-The hook process only spawns when a subcommand of the Bash command matches `git *`, or when the command is too complex to parse into subcommands. For compound commands like `npm test && git push`, Claude Code evaluates each subcommand and fires the hook because `git push` matches. The `if` field accepts the same patterns as permission rules: `"Bash(git *)"`, `"Edit(*.ts)"`, and so on. To match multiple tool names, use separate handlers each with its own `if` value, or match at the `matcher` level where pipe alternation is supported.
+Whether your hook command runs depends on the shape of your `if` pattern and the Bash command Claude is invoking:
+
+| `if` pattern       | Bash command           | Hook runs? | Why                                                                                    |
+| :----------------- | :--------------------- | :--------- | :------------------------------------------------------------------------------------- |
+| `Bash(git *)`      | `git push`             | yes        | command name matches                                                                   |
+| `Bash(git *)`      | `npm test && git push` | yes        | each subcommand is checked; `git push` matches                                         |
+| `Bash(git *)`      | `echo $(git log)`      | yes        | commands inside `$()` and backticks are checked; `git log` matches                     |
+| `Bash(git *)`      | `echo $(date)`         | no         | no subcommand matches `git *`                                                          |
+| `Bash(git push *)` | `echo $(date)`         | yes        | patterns that constrain past the command name fail open on `$()`, backticks, or `$VAR` |
+
+The filter also fails open, running your hook regardless of pattern, when the Bash command cannot be parsed. Because the filter is best-effort, use the [permission system](/docs/en/permissions) rather than a hook to enforce a hard allow or deny.
+
+The `if` field accepts the same patterns as permission rules: `"Bash(git *)"`, `"Edit(*.ts)"`, and so on. To match multiple tool names, use separate handlers each with its own `if` value, or match at the `matcher` level where pipe alternation is supported.
 
 `if` only works on tool events: `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, and `PermissionDenied`. Adding it to any other event prevents the hook from running.
 
@@ -21460,6 +21540,7 @@ Once the answer appears, the overlay accepts these keys. Earlier side questions 
 | :------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `Space`, `Enter`, `Escape` | Dismiss the answer and return to the prompt                                                                                                                                                                                                                               |
 | `Up` / `Down`              | Scroll the answer                                                                                                                                                                                                                                                         |
+| `c`                        | Copy the answer to your clipboard as raw Markdown. Use this instead of mouse selection, which captures the hard-wrapped terminal rendering rather than the source text                                                                                                    |
 | `f`                        | Fork into a new session. The fork inherits the parent conversation plus this question and answer as real transcript turns, so you can continue with full tool access. The original session is preserved under [`/resume`](/docs/en/commands). Available in local sessions only |
 | `x`                        | Clear the list of earlier `/btw` exchanges shown above the current answer                                                                                                                                                                                                 |
 
@@ -23307,21 +23388,23 @@ This variable is set in the server's environment, not in Claude Code's own envir
 claude mcp add [options] <name> -- <command> [args...]
 
 # Real example: Add Airtable server
-claude mcp add --transport stdio --env AIRTABLE_API_KEY=YOUR_KEY airtable \
+claude mcp add --env AIRTABLE_API_KEY=YOUR_KEY --transport stdio airtable \
   -- npx -y airtable-mcp-server
 ```
 
 <Note>
-  **Important: Option ordering**
+  **Important: Separate server arguments with `--`**
 
-  All options (`--transport`, `--env`, `--scope`, `--header`) must come **before** the server name. The `--` (double dash) then separates the server name from the command and arguments that get passed to the MCP server.
+  For stdio servers, the `--` (double dash) separates Claude's own options, such as `--transport`, `--env`, and `--scope`, from the command and arguments that run the server. Everything after `--` is passed to the server untouched.
 
   For example:
 
   * `claude mcp add --transport stdio myserver -- npx server` → runs `npx server`
-  * `claude mcp add --transport stdio --env KEY=value myserver -- python server.py --port 8080` → runs `python server.py --port 8080` with `KEY=value` in environment
+  * `claude mcp add --env KEY=value --transport stdio myserver -- python server.py --port 8080` → runs `python server.py --port 8080` with `KEY=value` in environment
 
-  This prevents conflicts between Claude's flags and the server's flags.
+  Without `--`, Claude Code would try to parse the server's flags, like `--port` above, as its own options.
+
+  `--env` accepts multiple `KEY=value` pairs. If the server name comes directly after `--env`, the CLI reads the name as another pair and rejects it, so place at least one other option between `--env` and the server name, as in the examples above.
 </Note>
 
 ### Option 4: Add a remote WebSocket server
@@ -23391,7 +23474,7 @@ An MCP server can also push messages directly into your session so Claude can re
   * Use `/mcp` to authenticate with remote servers that require OAuth 2.0 authentication
 </Tip>
 
-The per-server `timeout` is a hard wall-clock limit per tool call, and progress notifications from the server do not extend it. Values below 1000 are floored to one second. For HTTP and SSE servers, the per-request fetch first-byte budget has a 60-second minimum regardless of this value, so only the tool-call watchdog honors smaller values.
+The per-server `timeout` is a hard wall-clock limit per tool call, and progress notifications from the server do not extend it. Values below 1000 are ignored and fall through to `MCP_TOOL_TIMEOUT`, or to its default of about 28 hours when that variable is unset. Before v2.1.162, values below 1000 were floored to one second instead. For HTTP and SSE servers, the per-request fetch first-byte budget has a 60-second minimum.
 
 ### Plugin-provided MCP servers
 
@@ -23974,6 +24057,8 @@ From v2.1.161, connectors you have never signed in to are collapsed behind a `Sh
 Claude.ai connectors are fetched only when your active [authentication method](/docs/en/authentication#authentication-precedence) is your Claude.ai subscription. They are not loaded when `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `apiKeyHelper`, or a third-party provider such as Bedrock or Vertex is active, even if you previously ran `/login`. If `/mcp` does not list a connector you added, run `/status` to confirm which authentication method is active, unset that environment variable or remove the `apiKeyHelper` setting, then run `/login` to select your Claude.ai account.
 
 A server you've added in Claude Code takes [precedence](#scope-hierarchy-and-precedence) over a claude.ai connector that points at the same URL. When this happens, `/mcp` lists the connector as hidden and shows how to remove the duplicate if you'd rather use the connector.
+
+Some Anthropic-hosted connectors, such as Microsoft 365, Gmail, and Google Calendar, do not support local OAuth from Claude Code because the upstream identity provider only accepts the redirect URL that claude.ai registered. From v2.1.162, authenticating one of these hosts in `/mcp` shows a message directing you to connect it at Settings → Connectors on claude.ai instead. Once connected there, the connector appears in Claude Code automatically.
 
 To disable claude.ai MCP servers in Claude Code, set the `ENABLE_CLAUDEAI_MCP_SERVERS` environment variable to `false`:
 
@@ -24779,7 +24864,7 @@ ln -s AGENTS.md CLAUDE.md
 
 On Windows, creating a symlink requires Administrator privileges or Developer Mode, so use the `@AGENTS.md` import instead.
 
-Running [`/init`](/docs/en/commands) in a repo that already has an `AGENTS.md` reads it and incorporates the relevant parts into the generated `CLAUDE.md`. It also reads other tool configs like `.cursorrules` and `.windsurfrules`.
+Running [`/init`](/docs/en/commands) in a repo that already has an `AGENTS.md` reads it and incorporates the relevant parts into the generated `CLAUDE.md`. It also reads other tool configs like `.cursorrules`, `.devin/rules/`, and `.windsurfrules`.
 
 ### How CLAUDE.md files load
 
@@ -25091,7 +25176,7 @@ Before configuring Claude Code with Microsoft Foundry, ensure you have:
 * Azure CLI installed and configured (optional - only needed if you don't have another mechanism for getting credentials)
 
 <Note>
-  If you are deploying Claude Code to multiple users, [pin your model versions](#4-pin-model-versions) to prevent breakage when Anthropic releases new models.
+  If you are deploying Claude Code to multiple users, [pin your model versions](#4-pin-model-versions) before rolling out.
 </Note>
 
 ## Setup
@@ -25154,7 +25239,7 @@ export ANTHROPIC_FOUNDRY_RESOURCE={resource}
 ### 4. Pin model versions
 
 <Warning>
-  Pin specific model versions for every deployment. If you use model aliases (`sonnet`, `opus`, `haiku`) without pinning, Claude Code may attempt to use a newer model version that isn't available in your Foundry account, breaking existing users when Anthropic releases updates. When you create Azure deployments, select a specific model version rather than "auto-update to latest."
+  Pin specific model versions for every deployment. Without pinning, model aliases such as `sonnet` and `opus` resolve to Claude Code's built-in default for Foundry, which can lag the newest release and may not yet be available in your account. Foundry has no startup model check, so requests fail when the default is unavailable. When you create Azure deployments, select a specific model version rather than "auto-update to latest."
 </Warning>
 
 Set the model variables to match the deployment names you created in step 1.
@@ -25535,7 +25620,7 @@ Note: `ANTHROPIC_SMALL_FAST_MODEL` is deprecated in favor of
 
 When deploying Claude Code through [Bedrock](/docs/en/amazon-bedrock), [Vertex AI](/docs/en/google-vertex-ai), [Foundry](/docs/en/microsoft-foundry), or [Claude Platform on AWS](/docs/en/claude-platform-on-aws), pin model versions before rolling out to users.
 
-Without pinning, Claude Code uses model aliases (`sonnet`, `opus`, `haiku`) that resolve to the latest version. When Anthropic releases a new model that isn't yet enabled in a user's account, Bedrock and Vertex AI users see a notice and fall back to the previous version for that session, while Foundry users see errors because Foundry has no equivalent startup check.
+Without pinning, Claude Code uses model aliases such as `sonnet`, `opus`, and `haiku` that resolve to a built-in default model ID for each provider. That default can lag the newest Anthropic release, and the model it points to may not yet be enabled in a user's account. When the default is unavailable, Bedrock and Vertex AI users see a notice and fall back to the previous version for that session, while Foundry users see errors because Foundry has no equivalent startup check.
 
 <Warning>
   Set all three model environment variables to specific version IDs as part of your initial setup. Pinning lets you control when your users move to a new model.
@@ -25844,17 +25929,19 @@ Each retry attempt is also recorded as a `gen_ai.request.attempt` span event wit
 
 **`claude_code.tool`**
 
-| Attribute         | Description                                                                                                        | Gated by                |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------ | ----------------------- |
-| `tool_name`       | Tool name                                                                                                          |                         |
-| `duration_ms`     | Wall-clock duration including permission wait and execution                                                        |                         |
-| `result_tokens`   | Approximate token size of the tool result                                                                          |                         |
-| `agent_id`        | Identifier of the subagent or teammate that ran the tool. Absent on the main session                               |                         |
-| `parent_agent_id` | Identifier of the agent that spawned this one. Absent for the main session and for agents spawned directly from it |                         |
-| `file_path`       | Target file path for Read, Edit, and Write tools                                                                   | `OTEL_LOG_TOOL_DETAILS` |
-| `full_command`    | Command string for the Bash tool                                                                                   | `OTEL_LOG_TOOL_DETAILS` |
-| `skill_name`      | Skill name for the Skill tool                                                                                      | `OTEL_LOG_TOOL_DETAILS` |
-| `subagent_type`   | Subagent type for the Agent tool or legacy Task tool                                                               | `OTEL_LOG_TOOL_DETAILS` |
+| Attribute             | Description                                                                                                                                                                                                                          | Gated by                |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
+| `tool_name`           | Tool name                                                                                                                                                                                                                            |                         |
+| `duration_ms`         | Wall-clock duration including permission wait and execution                                                                                                                                                                          |                         |
+| `result_tokens`       | Approximate token size of the tool result                                                                                                                                                                                            |                         |
+| `agent_id`            | Identifier of the subagent or teammate that ran the tool. Absent on the main session                                                                                                                                                 |                         |
+| `parent_agent_id`     | Identifier of the agent that spawned this one. Absent for the main session and for agents spawned directly from it                                                                                                                   |                         |
+| `tool_use_id`         | The model's `tool_use` block id for this call. Matches the `tool_use_id` on the [tool\_result](#tool-result-event) and [tool\_decision](#tool-decision-event) events and in hook payloads, so you can join the span to those records |                         |
+| `gen_ai.tool.call.id` | Same value as `tool_use_id`. OpenTelemetry GenAI semantic convention                                                                                                                                                                 |                         |
+| `file_path`           | Target file path for Read, Edit, and Write tools                                                                                                                                                                                     | `OTEL_LOG_TOOL_DETAILS` |
+| `full_command`        | Command string for the Bash tool                                                                                                                                                                                                     | `OTEL_LOG_TOOL_DETAILS` |
+| `skill_name`          | Skill name for the Skill tool                                                                                                                                                                                                        | `OTEL_LOG_TOOL_DETAILS` |
+| `subagent_type`       | Subagent type for the Agent tool or legacy Task tool                                                                                                                                                                                 | `OTEL_LOG_TOOL_DETAILS` |
 
 When `OTEL_LOG_TOOL_CONTENT=1`, this span also records a `tool.output` span event whose attributes contain the tool's input and output bodies, truncated at 60 KB per attribute.
 
@@ -25868,11 +25955,13 @@ When `OTEL_LOG_TOOL_CONTENT=1`, this span also records a `tool.output` span even
 
 **`claude_code.tool.execution`**
 
-| Attribute     | Description                                                                                                                                       | Gated by                |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| `duration_ms` | Time spent running the tool body                                                                                                                  |                         |
-| `success`     | `true` or `false`                                                                                                                                 |                         |
-| `error`       | Error category string when execution failed, such as `Error:ENOENT` or `ShellError`. Contains the full error message instead when the gate is set | `OTEL_LOG_TOOL_DETAILS` |
+| Attribute             | Description                                                                                                                                       | Gated by                |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `duration_ms`         | Time spent running the tool body                                                                                                                  |                         |
+| `tool_use_id`         | Same value as on the parent `claude_code.tool` span                                                                                               |                         |
+| `gen_ai.tool.call.id` | Same value as `tool_use_id`. OpenTelemetry GenAI semantic convention                                                                              |                         |
+| `success`             | `true` or `false`                                                                                                                                 |                         |
+| `error`               | Error category string when execution failed, such as `Error:ENOENT` or `ShellError`. Contains the full error message instead when the gate is set | `OTEL_LOG_TOOL_DETAILS` |
 
 **`claude_code.hook`**
 
@@ -26268,6 +26357,21 @@ Logged when an API request to Claude fails.
 * `effort`: [Effort level](/docs/en/model-config#adjust-effort-level) applied to the request. Absent when the model does not support effort.
 * `agent.name`, `skill.name`, `plugin.name`, `marketplace.name`, `mcp_server.name`, `mcp_tool.name`: Skill, plugin, agent, and MCP attribution for the request. See [Cost counter](#cost-counter) for definitions and redaction behavior.
 
+#### API refusal event
+
+Logged when an API request returns `stop_reason: "refusal"`. Refusals arrive on a successful response stream rather than as an HTTP error, so the `api_error` event does not fire for them. This event lets you track refusal frequency.
+
+**Event Name**: `claude_code.api_refusal`
+
+**Attributes**:
+
+* All [standard attributes](#standard-attributes)
+* `event.name`: `"api_refusal"`
+* `event.timestamp`: ISO 8601 timestamp
+* `event.sequence`: monotonically increasing counter for ordering events within a session
+* `model`: Model identifier from the request
+* `request_id`: Anthropic API request ID from the response's `request-id` header, such as `"req_011..."`. Present only when the API returns one.
+
 #### API request body event
 
 Logged for each API request attempt when `OTEL_LOG_RAW_API_BODIES` is set. One event is emitted per attempt, so retries with adjusted parameters each produce their own event.
@@ -26387,6 +26491,9 @@ Logged when an MCP server connects, disconnects, or fails to connect.
 * `server_scope`: Scope the server is configured at, such as `"user"`, `"project"`, or `"local"`
 * `duration_ms`: Connection attempt duration in milliseconds
 * `error_code`: Error code when the connection failed
+* `is_plugin`: `true` when the server is provided by a plugin, `false` otherwise
+* `plugin_id_hash` (when `is_plugin` is `true`): Stable hash of the plugin name and marketplace, for grouping events by plugin without exposing the name
+* `plugin.name` (when `is_plugin` is `true`): Name of the plugin that provides the server. For third-party plugins this is the literal string `"third-party"` unless `OTEL_LOG_TOOL_DETAILS=1`; this protects third-party plugin names from appearing in logs by default. Plugins from official Anthropic sources are always identified by name. The `plugin_id_hash` and `plugin.name` attributes flow to your own monitoring backend and are not sent to Anthropic
 * `server_name` (when `OTEL_LOG_TOOL_DETAILS=1`): Configured server name
 * `error` (when `OTEL_LOG_TOOL_DETAILS=1`): Full error message when the connection failed
 
@@ -26462,6 +26569,7 @@ Logged when a skill is invoked, whether Claude calls it through the Skill tool o
 * `skill.name`: Name of the skill. For user-defined and third-party plugin skills the value is the placeholder `"custom_skill"` unless `OTEL_LOG_TOOL_DETAILS=1`
 * `invocation_trigger`: How the skill was triggered (`"user-slash"`, `"claude-proactive"`, or `"nested-skill"`)
 * `skill.source`: Where the skill was loaded from (for example, `"bundled"`, `"userSettings"`, `"projectSettings"`, `"plugin"`)
+* `skill.kind`: `"workflow"` when the skill is a workflow skill. Absent otherwise
 * `plugin.name` (when `OTEL_LOG_TOOL_DETAILS=1` or the plugin is from an official marketplace): Name of the owning plugin when the skill is provided by a plugin
 * `marketplace.name` (when `OTEL_LOG_TOOL_DETAILS=1` or the plugin is from an official marketplace): Marketplace the owning plugin was installed from, when the skill is provided by a plugin
 
@@ -26701,7 +26809,7 @@ Without `OTEL_LOG_TOOL_DETAILS`, these events drop the identifying detail:
 
 * `tool_result`: keeps `tool_name` and `mcp_server_scope`, omits `mcp_server_name`, `mcp_tool_name`, and arguments
 * `tool_decision`: keeps `tool_name`, omits `tool_parameters`
-* `mcp_server_connection`: omits `server_name` and the error message
+* `mcp_server_connection`: omits `server_name` and the error message, but keeps `is_plugin`, `plugin_id_hash`, and `plugin.name`, with non-Anthropic plugin names redacted to the literal `"third-party"`, so plugin-provided servers remain distinguishable without detailed logging
 
 ### Map security questions to events
 
@@ -26713,7 +26821,7 @@ When building detection rules, look up the signal you want to monitor and query 
 | Permission mode escalation                | `permission_mode_changed`                                                             | `from_mode`, `to_mode`, `trigger`                            |
 | Policy hook blocked an action             | `hook_execution_complete`                                                             | `hook_event`, `num_blocking`                                 |
 | Login, logout, and authentication failure | `auth`                                                                                | `action`, `success`, `error_category`                        |
-| MCP server connect or failure             | `mcp_server_connection`                                                               | `status`, `server_name`, `error_code`                        |
+| MCP server connect or failure             | `mcp_server_connection`                                                               | `status`, `server_name`, `is_plugin`, `error_code`           |
 | Plugin installed and its source           | `plugin_installed`                                                                    | `plugin.name`, `marketplace.name`, `marketplace.is_official` |
 | Commands run and files touched            | `tool_result` (executed) or `tool_decision` (rejected) with `OTEL_LOG_TOOL_DETAILS=1` | `tool_parameters`; `tool_input` (`tool_result` only)         |
 
@@ -30087,7 +30195,7 @@ Editing your MCP config does not by itself change the cache. The new config take
 
 The exception is a plugin that provides [MCP servers](/docs/en/plugins-reference#mcp-servers). Enabling or disabling one follows the same rules as [connecting or disconnecting an MCP server](#connecting-or-disconnecting-an-mcp-server): the cache survives when the server's tools are deferred, and the next request re-reads the entire conversation when they load into the prefix.
 
-Plugin changes apply when you run [`/reload-plugins`](/docs/en/discover-plugins#apply-plugin-changes-without-restarting) or start a new session. The cost, whether appended announcements or a full re-read, shows up on the first turn after the reload, not when you run `/plugin install`, `/plugin enable`, or `/plugin disable`.
+Plugin changes apply when you run [`/reload-plugins`](/docs/en/discover-plugins#apply-plugin-changes-without-restarting) or start a new session. The cost, whether appended announcements or a full re-read, shows up on the first turn after the reload, not when you run `/plugin install`, `/plugin enable`, or `/plugin disable`. As of v2.1.163, when a reload would trigger the full re-read, `/reload-plugins` warns and holds instead of applying it. Pass `--force` to apply anyway.
 
 Disabling a plugin you enabled earlier in the session restores the previous request shape. If that prefix is still within its [cache lifetime](#cache-lifetime), the next request reads the older cache entry instead of rebuilding.
 
@@ -30332,19 +30440,19 @@ To install Claude Code, use one of the following methods:
   <Tab title="Native Install (Recommended)">
     **macOS, Linux, WSL:**
 
-    ```bash theme={null}
+    ```bash theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null}
     curl -fsSL https://claude.ai/install.sh | bash
     ```
 
     **Windows PowerShell:**
 
-    ```powershell theme={null}
+    ```powershell theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null}
     irm https://claude.ai/install.ps1 | iex
     ```
 
     **Windows CMD:**
 
-    ```batch theme={null}
+    ```batch theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null}
     curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
     ```
 
@@ -30358,7 +30466,7 @@ To install Claude Code, use one of the following methods:
   </Tab>
 
   <Tab title="Homebrew">
-    ```bash theme={null}
+    ```bash theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null}
     brew install --cask claude-code
     ```
 
@@ -30370,7 +30478,7 @@ To install Claude Code, use one of the following methods:
   </Tab>
 
   <Tab title="WinGet">
-    ```powershell theme={null}
+    ```powershell theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null}
     winget install Anthropic.ClaudeCode
     ```
 
@@ -30413,7 +30521,7 @@ cd /path/to/your/project
 claude
 ```
 
-You'll see the Claude Code welcome screen with your session information, recent conversations, and latest updates. Type `/help` for available commands or `/resume` to continue a previous conversation.
+You'll see the Claude Code prompt with the version, current model, and working directory shown above it. Type `/help` for available commands or `/resume` to continue a previous conversation.
 
 <Tip>
   After logging in (Step 2), your credentials are stored on your system. Learn more in [Credential Management](/docs/en/authentication#credential-management).
@@ -32994,7 +33102,7 @@ A few keys are read once at session start and apply on the next restart instead:
 | `includeGitInstructions`          | Include built-in commit and PR workflow instructions and the git status snapshot in Claude's system prompt (default: `true`). Set to `false` to remove both, for example when using your own git workflow skills. The `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS` environment variable takes precedence over this setting when set                                                                                                                                                                                                                                                                                                                                                                                                                                              | `false`                                                                                                                        |
 | `language`                        | Configure Claude's preferred response language (e.g., `"japanese"`, `"spanish"`, `"french"`). Claude will respond in this language by default. Also sets the [voice dictation](/en/voice-dictation#change-the-dictation-language) language                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `"japanese"`                                                                                                                   |
 | `maxSkillDescriptionChars`        | Per-skill character cap on the combined `description` and `when_to_use` text in the [skill listing](/en/skills#skill-descriptions-are-cut-short) Claude sees each turn (default: `1536`). Text longer than this is truncated. Raise to keep long descriptions intact at the cost of more context per turn; lower to fit more skills under [`skillListingBudgetFraction`](#available-settings). Requires Claude Code v2.1.105 or later                                                                                                                                                                                                                                                                                                                                      | `2048`                                                                                                                         |
-| `minimumVersion`                  | Floor that prevents background auto-updates and `claude update` from installing a version below this one. Switching from the `"latest"` channel to `"stable"` via `/config` prompts you to stay on the current version or allow the downgrade. Choosing to stay sets this value. Also useful in [managed settings](/en/permissions#managed-settings) to pin an organization-wide minimum                                                                                                                                                                                                                                                                                                                                                                                   | `"2.1.100"`                                                                                                                    |
+| `minimumVersion`                  | Floor that prevents background auto-updates and `claude update` from installing a version below this one. Switching from the `"latest"` channel to `"stable"` via `/config` prompts you to stay on the current version or allow the downgrade. Choosing to stay sets this value. Also useful in [managed settings](/en/permissions#managed-settings) to pin an organization-wide minimum. For a hard floor that blocks startup entirely, see `requiredMinimumVersion`                                                                                                                                                                                                                                                                                                      | `"2.1.100"`                                                                                                                    |
 | `model`                           | Override the default model to use for Claude Code. `--model` and [`ANTHROPIC_MODEL`](/en/model-config#environment-variables) override this for one session                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `"claude-sonnet-4-6"`                                                                                                          |
 | `modelOverrides`                  | Map Anthropic model IDs to provider-specific model IDs such as Bedrock inference profile ARNs. Each model picker entry uses its mapped value when calling the provider API. See [Override model IDs per version](/en/model-config#override-model-ids-per-version)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `{"claude-opus-4-6": "arn:aws:bedrock:..."}`                                                                                   |
 | `otelHeadersHelper`               | Script to generate dynamic OpenTelemetry headers. Runs at startup and periodically. Set the refresh interval with [`CLAUDE_CODE_OTEL_HEADERS_HELPER_DEBOUNCE_MS`](/en/env-vars). See [Dynamic headers](/en/monitoring-usage#dynamic-headers)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | `/bin/generate_otel_headers.sh`                                                                                                |
@@ -33008,6 +33116,8 @@ A few keys are read once at session start and apply on the next restart instead:
 | `preferredNotifChannel`           | Method for task-complete and permission-prompt notifications: `"auto"`, `"terminal_bell"`, `"iterm2"`, `"iterm2_with_bell"`, `"kitty"`, `"ghostty"`, or `"notifications_disabled"`. Default: `"auto"`, which sends a desktop notification in iTerm2, Ghostty, and Kitty and does nothing in other terminals. Set `"terminal_bell"` to ring the bell character in any terminal. Appears in `/config` as **Notifications**. See [Get a terminal bell or notification](/en/terminal-config#get-a-terminal-bell-or-notification)                                                                                                                                                                                                                                               | `"terminal_bell"`                                                                                                              |
 | `prefersReducedMotion`            | Reduce or disable UI animations (spinners, shimmer, flash effects) for accessibility                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `true`                                                                                                                         |
 | `prUrlTemplate`                   | URL template for the PR badge shown in the footer and in tool-result summaries. Substitutes `{host}`, `{owner}`, `{repo}`, `{number}`, and `{url}` from the `gh`-reported PR URL. Use to point PR links at an internal code-review tool instead of `github.com`. Does not affect `#123` autolinks in Claude's prose                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `"https://reviews.example.com/{owner}/{repo}/pull/{number}"`                                                                   |
+| `requiredMaximumVersion`          | Managed settings only. Maximum Claude Code version allowed to start. If the running version is newer, Claude Code exits at startup and instructs the user to install an approved version through the organization's approved method; `claude install <version>` may also work. Background auto-updates and `claude update` skip versions above the ceiling, so an in-range installation stays in range. `claude update`, `claude install`, and `claude doctor` keep working above the ceiling so users can recover. Versions that predate this setting ignore it                                                                                                                                                                                                           | `"2.1.150"`                                                                                                                    |
+| `requiredMinimumVersion`          | Managed settings only. Minimum Claude Code version required to start. If the running version is older, Claude Code exits at startup and instructs the user to update through the organization's approved method. `claude update`, `claude install`, and `claude doctor` keep working below the floor so users can recover. Differs from `minimumVersion`, which prevents downgrades but never blocks startup. Versions that predate this setting ignore it                                                                                                                                                                                                                                                                                                                 | `"2.1.150"`                                                                                                                    |
 | `respectGitignore`                | Control whether the `@` file picker respects `.gitignore` patterns. When `true` (default), files matching `.gitignore` patterns are excluded from suggestions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `false`                                                                                                                        |
 | `showClearContextOnPlanAccept`    | Show the "clear context" option on the plan accept screen. Defaults to `false`. Set to `true` to restore the option                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `true`                                                                                                                         |
 | `showThinkingSummaries`           | Show [extended thinking](/en/model-config#extended-thinking) summaries in interactive sessions. When unset or `false` (default in interactive mode), thinking blocks are redacted by the API and shown as a collapsed stub. Redaction only changes what you see, not what the model generates: to reduce thinking spend, [lower the budget or disable thinking](/en/model-config#extended-thinking) instead. This setting has no effect in non-interactive mode (`-p`), the Agent SDK, or IDE extensions such as VS Code                                                                                                                                                                                                                                                   | `true`                                                                                                                         |
@@ -33175,10 +33285,10 @@ Claude Code adds attribution to git commits and pull requests. These are configu
 **Default commit attribution:**
 
 ```text theme={null}
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-   Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 ```
+
+The model name in the trailer reflects the active model for the session.
 
 **Default pull request attribution:**
 
@@ -33843,19 +33953,19 @@ To install Claude Code, use one of the following methods:
   <Tab title="Native Install (Recommended)">
     **macOS, Linux, WSL:**
 
-    ```bash theme={null}
+    ```bash theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null}
     curl -fsSL https://claude.ai/install.sh | bash
     ```
 
     **Windows PowerShell:**
 
-    ```powershell theme={null}
+    ```powershell theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null}
     irm https://claude.ai/install.ps1 | iex
     ```
 
     **Windows CMD:**
 
-    ```batch theme={null}
+    ```batch theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null}
     curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
     ```
 
@@ -33869,7 +33979,7 @@ To install Claude Code, use one of the following methods:
   </Tab>
 
   <Tab title="Homebrew">
-    ```bash theme={null}
+    ```bash theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null}
     brew install --cask claude-code
     ```
 
@@ -33881,7 +33991,7 @@ To install Claude Code, use one of the following methods:
   </Tab>
 
   <Tab title="WinGet">
-    ```powershell theme={null}
+    ```powershell theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null} theme={null}
     winget install Anthropic.ClaudeCode
     ```
 
@@ -34037,6 +34147,8 @@ Add it to your [settings.json file](/docs/en/settings) to pin a floor explicitly
 ```
 
 In [managed settings](/docs/en/permissions#managed-settings), this enforces an organization-wide minimum that user and project settings cannot override.
+
+The `minimumVersion` pin only constrains updates. To make Claude Code refuse to start outside a version range, use the managed settings `requiredMinimumVersion` and `requiredMaximumVersion` instead. Updates also respect the `requiredMaximumVersion` ceiling. See [available settings](/docs/en/settings#available-settings).
 
 ### Disable auto-updates
 
@@ -34681,6 +34793,8 @@ Skills support string substitution for dynamic values in the skill content:
 | `${CLAUDE_SKILL_DIR}`  | The directory containing the skill's `SKILL.md` file. For plugin skills, this is the skill's subdirectory within the plugin, not the plugin root. Use this in bash injection commands to reference scripts or files bundled with the skill, regardless of the current working directory. |
 
 Indexed arguments use shell-style quoting, so wrap multi-word values in quotes to pass them as a single argument. For example, `/my-skill "hello world" second` makes `$0` expand to `hello world` and `$1` to `second`. The `$ARGUMENTS` placeholder always expands to the full argument string as typed.
+
+To include a literal `$` before a digit, `ARGUMENTS`, or a declared argument name, such as `$1.00` in prose, escape it with a backslash: `\$1.00`. A backslash before any other `$` is left unchanged. Only a single backslash directly before the token escapes it; a doubled backslash such as `\\$1` keeps both backslashes and substitutes as before.
 
 **Example using substitutions:**
 
@@ -37255,7 +37369,7 @@ Claude decides whether to run subagents in the foreground or background based on
 
 To disable all background task functionality, set the `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` environment variable to `1`. See [Environment variables](/docs/en/env-vars).
 
-When [`CLAUDE_CODE_FORK_SUBAGENT`](#fork-the-current-conversation) is set, every subagent spawn runs in the background regardless of the `background` field. Forks still surface permission prompts in your terminal as they occur; named subagents auto-deny anything that would prompt, as described above.
+When [`CLAUDE_CODE_FORK_SUBAGENT`](#fork-the-current-conversation) is set to `1`, every subagent spawn runs in the background regardless of the `background` field. Forks still surface permission prompts in your terminal as they occur; named subagents auto-deny anything that would prompt, as described above.
 
 ### Common patterns
 
@@ -37382,12 +37496,12 @@ The `preTokens` value shows how many tokens were used before compaction occurred
 ## Fork the current conversation
 
 <Note>
-  Forked subagents require Claude Code v2.1.117 or later. From v2.1.161 the `/fork` command is enabled by default; on earlier versions it requires setting the [`CLAUDE_CODE_FORK_SUBAGENT`](/docs/en/env-vars) environment variable to `1`. Making forks the model's *default* spawn behavior is experimental and may change in future releases; enable it by setting the same variable. The variable is honored in interactive mode and via the SDK or `claude -p`.
+  Forked subagents require Claude Code v2.1.117 or later. From v2.1.161 the `/fork` command is enabled by default; on earlier versions it requires setting the [`CLAUDE_CODE_FORK_SUBAGENT`](/docs/en/env-vars) environment variable to `1`. Making forks the model's *default* spawn behavior is experimental and may change in future releases; it may also be enabled by default in interactive sessions as part of a staged rollout. Set the same variable to `1` to enable it explicitly, or to `0` to disable it, overriding the rollout. The variable is honored in interactive mode and via the SDK or `claude -p`.
 </Note>
 
 A fork is a subagent that inherits the entire conversation so far instead of starting fresh. This drops the input isolation that subagents otherwise provide: a fork sees the same system prompt, tools, model, and message history as the main session, so you can hand it a side task without re-explaining the situation. The fork's own tool calls still stay out of your conversation and only its final result comes back, so your main context window stays clean. Use a fork when a named subagent would need too much background to be useful, or when you want to try several approaches in parallel from the same starting point.
 
-Setting `CLAUDE_CODE_FORK_SUBAGENT` changes Claude Code in two ways:
+Enabling fork mode changes Claude Code in two ways:
 
 * Claude spawns a fork whenever it would otherwise use the [general-purpose](#built-in-subagents) subagent. Named subagents such as Explore still spawn as before.
 * Every subagent spawn runs in the [background](#run-subagents-in-foreground-or-background), whether it is a fork or a named subagent. Set `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` to `1` to keep spawns synchronous.
@@ -37429,7 +37543,7 @@ When Claude spawns a fork through the Agent tool, it can pass `isolation: "workt
 
 ### Limitations
 
-Setting `CLAUDE_CODE_FORK_SUBAGENT=1` enables fork mode in interactive sessions, [non-interactive mode](/docs/en/headless), and the Agent SDK. A fork cannot spawn further forks.
+Setting `CLAUDE_CODE_FORK_SUBAGENT=1` enables fork mode in interactive sessions, [non-interactive mode](/docs/en/headless), and the Agent SDK; setting it to `0` disables fork mode everywhere, including any server-side rollout. A fork cannot spawn further forks.
 
 ## Example subagents
 
@@ -38188,7 +38302,7 @@ Encourage new users to try Claude Code for codebase Q\&A, or on smaller bug fixe
 
 ### Pin model versions for cloud providers
 
-If you deploy through [Bedrock](/docs/en/amazon-bedrock), [Vertex AI](/docs/en/google-vertex-ai), [Foundry](/docs/en/microsoft-foundry), or [Claude Platform on AWS](/docs/en/claude-platform-on-aws), pin specific model versions using `ANTHROPIC_DEFAULT_OPUS_MODEL`, `ANTHROPIC_DEFAULT_SONNET_MODEL`, and `ANTHROPIC_DEFAULT_HAIKU_MODEL`. Without pinning, model aliases resolve to the latest version, which may not yet be enabled in your account when Anthropic releases an update. Pinning lets you control when your users move to a new model. See [Model configuration](/docs/en/model-config#pin-models-for-third-party-deployments) for what each provider does when the latest version is unavailable.
+If you deploy through [Bedrock](/docs/en/amazon-bedrock), [Vertex AI](/docs/en/google-vertex-ai), [Foundry](/docs/en/microsoft-foundry), or [Claude Platform on AWS](/docs/en/claude-platform-on-aws), pin specific model versions using `ANTHROPIC_DEFAULT_OPUS_MODEL`, `ANTHROPIC_DEFAULT_SONNET_MODEL`, and `ANTHROPIC_DEFAULT_HAIKU_MODEL`. Without pinning, model aliases resolve to Claude Code's built-in default for that provider, which can lag the newest release and may not yet be enabled in your account. Pinning lets you control when your users move to a new model. See [Model configuration](/docs/en/model-config#pin-models-for-third-party-deployments) for what each provider does when the default is unavailable.
 
 ### Configure security policies
 
@@ -38380,7 +38494,8 @@ The LSP tool gives Claude code intelligence from a running language server. Afte
 * Jump to a symbol's definition
 * Find all references to a symbol
 * Get type information at a position
-* List symbols in a file or workspace
+* List symbols in a file
+* Search for a symbol by name across the workspace
 * Find implementations of an interface
 * Trace call hierarchies
 
@@ -38483,7 +38598,9 @@ A few behaviors shape the response Claude receives:
 * Responses are cached for 15 minutes, so repeated fetches of the same URL return quickly.
 * When a URL redirects to a different host, WebFetch returns a text result that names the original URL and the redirect target instead of following it. Claude then fetches the new URL with a second WebFetch call.
 
-In the default and `acceptEdits` permission modes, WebFetch prompts the first time it reaches a new domain. To allow a domain in advance without a prompt, add a permission rule like `WebFetch(domain:example.com)`. The `auto` and `bypassPermissions` [permission modes](/docs/en/permissions#permission-modes) skip the prompt entirely.
+In the default and `acceptEdits` permission modes, WebFetch prompts the first time it reaches a new domain, except for a built-in set of preapproved documentation domains that fetch without a prompt. To allow another domain in advance without a prompt, add a permission rule like `WebFetch(domain:example.com)`. The `auto` and `bypassPermissions` [permission modes](/docs/en/permissions#permission-modes) skip the prompt entirely.
+
+An explicit `WebFetch(domain:...)` rule in `deny`, `ask`, or `allow` takes precedence over the preapproved set, so you can block a preapproved domain or require a prompt for it.
 
 WebFetch sets a `User-Agent` header beginning with `Claude-User`, and an `Accept` header that prefers Markdown over HTML so servers that support content negotiation can return Markdown directly. [Sandbox](/docs/en/sandboxing) network rules are configured separately, so a domain you want a sandboxed process to reach still needs an explicit sandbox permission rule.
 
@@ -38582,6 +38699,8 @@ The installer downloads from `downloads.claude.ai`. Verify you can reach it:
 ```bash theme={null}
 curl -sI https://downloads.claude.ai/claude-code-releases/latest
 ```
+
+In PowerShell, run `curl.exe -sI` instead. PowerShell aliases `curl` to `Invoke-WebRequest`, which rejects the `-sI` flags.
 
 An `HTTP/2 200` line means you reached the server. If you see no output, `Could not resolve host`, or a connection timeout, your network is blocking the connection. Common causes:
 
@@ -40356,10 +40475,24 @@ To uninstall the Claude Code extension:
 2. Search for "Claude Code"
 3. Click **Uninstall**
 
-To also remove extension data and reset all settings:
+To also remove extension data and reset all settings, delete the extension's storage directory for your platform.
+
+On macOS:
 
 ```bash theme={null}
-rm -rf ~/.vscode/globalStorage/anthropic.claude-code
+rm -rf ~/Library/"Application Support"/Code/User/globalStorage/anthropic.claude-code
+```
+
+On Linux:
+
+```bash theme={null}
+rm -rf ~/.config/Code/User/globalStorage/anthropic.claude-code
+```
+
+On Windows, in PowerShell:
+
+```powershell theme={null}
+Remove-Item -Recurse -Force "$env:APPDATA\Code\User\globalStorage\anthropic.claude-code"
 ```
 
 For additional help, see the [troubleshooting guide](/docs/en/troubleshooting).
@@ -49254,6 +49387,15 @@ class ResultMessage:
     uuid: str | None = None
 ```
 
+The `subtype` field determines which other fields are populated. It is one of `"success"`, `"error_during_execution"`, `"error_max_turns"`, `"error_max_budget_usd"`, or `"error_max_structured_output_retries"`. The Python dataclass flattens all variants into one shape, so fields that don't apply to the returned subtype are `None`.
+
+Several fields carry diagnostic detail when the conversation ends on an error:
+
+* `is_error`: `True` when the conversation ended in an error state. Always `True` on the `error_*` subtypes. On `subtype="success"` it is `True` when the final model request failed, meaning the agent loop completed but the last API call returned an error.
+* `api_error_status`: the HTTP status code of the terminating API error. `None` when the turn ended without one. Populated only on `subtype="success"`.
+* `result`: text of the final assistant message on `subtype="success"`, or `None` on the `error_*` subtypes. When `subtype="success"` and `is_error=True`, this holds the API error string if one is available but can be empty, so check `api_error_status` and the preceding `AssistantMessage` content for detail.
+* `errors`: loop-level error strings such as the max-turns message. Populated only on the `error_*` subtypes.
+
 The `usage` dict contains the following keys when present:
 
 | Key                           | Type  | Description                              |
@@ -54325,7 +54467,7 @@ Source: https://code.claude.com/docs/en/agent-sdk/subagents
 Define and invoke subagents to isolate context, run tasks in parallel, and apply specialized instructions in your Claude Agent SDK applications.
 
 Subagents are separate agent instances that your main agent can spawn to handle focused subtasks.
-Use subagents to isolate context for focused subtasks, run multiple analyses in parallel, and apply specialized instructions without bloating the main agent's prompt.
+Use subagents to isolate context for focused subtasks, run multiple analyses in parallel, and apply specialized instructions without adding to the main agent's prompt.
 
 This guide explains how to define and use subagents in the SDK using the `agents` parameter.
 
@@ -54351,9 +54493,9 @@ Each subagent runs in its own fresh conversation. Intermediate tool calls and re
 
 ### Parallelization
 
-Multiple subagents can run concurrently, dramatically speeding up complex workflows.
+Multiple subagents can run concurrently, so independent subtasks finish in the time of the slowest one rather than the sum of all of them.
 
-**Example:** during a code review, you can run `style-checker`, `security-scanner`, and `test-coverage` subagents simultaneously, reducing review time from minutes to seconds.
+**Example:** during a code review, you can run `style-checker`, `security-scanner`, and `test-coverage` subagents simultaneously instead of sequentially.
 
 ### Specialized instructions and knowledge
 
@@ -54487,6 +54629,7 @@ Define subagents directly in your code using the `agents` parameter. This exampl
 | `skills`          | `string[]`                                                  | No       | List of skill names to preload into the agent's context at startup. Unlisted skills remain invocable through the Skill tool                                 |
 | `memory`          | `'user' \| 'project' \| 'local'`                            | No       | Memory source for this agent                                                                                                                                |
 | `mcpServers`      | `(string \| object)[]`                                      | No       | MCP servers available to this agent, by name or inline config                                                                                               |
+| `initialPrompt`   | `string`                                                    | No       | Auto-submitted as the first user turn when this agent runs as the main thread agent                                                                         |
 | `maxTurns`        | `number`                                                    | No       | Maximum number of agentic turns before the agent stops                                                                                                      |
 | `background`      | `boolean`                                                   | No       | Run this agent as a non-blocking background task when invoked                                                                                               |
 | `effort`          | `'low' \| 'medium' \| 'high' \| 'xhigh' \| 'max' \| number` | No       | Reasoning effort level for this agent                                                                                                                       |
@@ -54510,11 +54653,11 @@ You can also define subagents as markdown files in `.claude/agents/` directories
 
 A subagent's context window starts fresh (no parent conversation) but isn't empty. The only channel from parent to subagent is the Agent tool's prompt string, so include any file paths, error messages, or decisions the subagent needs directly in that prompt.
 
-| The subagent receives                                                        | The subagent does not receive                                      |
-| :--------------------------------------------------------------------------- | :----------------------------------------------------------------- |
-| Its own system prompt (`AgentDefinition.prompt`) and the Agent tool's prompt | The parent's conversation history or tool results                  |
-| Project CLAUDE.md (loaded via `settingSources`)                              | Preloaded skill content, unless listed in `AgentDefinition.skills` |
-| Tool definitions (inherited from parent, or the subset in `tools`)           | The parent's system prompt                                         |
+| The subagent receives                                                                                                                 | The subagent does not receive                                      |
+| :------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------- |
+| Its own system prompt (`AgentDefinition.prompt`) and the Agent tool's prompt                                                          | The parent's conversation history or tool results                  |
+| Project CLAUDE.md (loaded via [`settingSources`](/docs/en/agent-sdk/claude-code-features#control-filesystem-settings-with-settingsources)) | Preloaded skill content, unless listed in `AgentDefinition.skills` |
+| Tool definitions (inherited from parent, or the subset in `tools`)                                                                    | The parent's system prompt                                         |
 
 <Note>
   The parent receives the subagent's final message verbatim as the Agent tool result, but may summarize it in its own response. To preserve subagent output verbatim in the user-facing response, include an instruction to do so in the prompt or `systemPrompt` option you pass to the **main** `query()` call.
@@ -54622,11 +54765,9 @@ Subagents are invoked via the Agent tool. To detect when a subagent is invoked, 
   The tool name was renamed from `"Task"` to `"Agent"` in Claude Code v2.1.63. Current SDK releases emit `"Agent"` in `tool_use` blocks but still use `"Task"` in the `system:init` tools list and in `result.permission_denials[].tool_name`. Checking both values in `block.name` ensures compatibility across SDK versions.
 </Note>
 
-This example iterates through streamed messages, logging when a subagent is invoked and when subsequent messages originate from within that subagent's execution context.
+The message structure differs between SDKs. In Python, content blocks are accessed directly via `message.content`. In TypeScript, `SDKAssistantMessage` wraps the Claude API message, so content is accessed via `message.message.content`.
 
-<Note>
-  The message structure differs between SDKs. In Python, content blocks are accessed directly via `message.content`. In TypeScript, `SDKAssistantMessage` wraps the Claude API message, so content is accessed via `message.message.content`.
-</Note>
+This example iterates through streamed messages, logging when a subagent is invoked and when subsequent messages originate from within that subagent's execution context.
 
 <CodeGroup>
   ```python Python theme={null}
@@ -54711,41 +54852,105 @@ This example iterates through streamed messages, logging when a subagent is invo
 
 Subagents can be resumed to continue where they left off. Resumed subagents retain their full conversation history, including all previous tool calls, results, and reasoning. The subagent picks up exactly where it stopped rather than starting fresh.
 
-When a subagent completes, Claude receives its agent ID in the Agent tool result. To resume a subagent programmatically:
+When a subagent completes, the Agent tool result includes a text block containing `agentId: <id>`. The built-in [`Explore` and `Plan` agents](/docs/en/sub-agents#built-in-subagents) are one-shot and omit this trailer, so use a custom agent or `general-purpose` when you need to resume. To resume a subagent programmatically:
 
 1. **Capture the session ID**: Extract `session_id` from messages during the first query
-2. **Extract the agent ID**: Parse `agentId` from the message content
+2. **Extract the agent ID**: Parse `agentId` from the Agent tool result text
 3. **Resume the session**: Pass `resume: sessionId` in the second query's options, and include the agent ID in your prompt
 
 <Note>
   You must resume the same session to access the subagent's transcript. Each `query()` call starts a new session by default, so pass `resume: sessionId` to continue in the same session.
 
-  If you're using a custom agent (not a built-in one), you also need to pass the same agent definition in the `agents` parameter for both queries.
+  When using a custom agent, pass the same agent definition in the `agents` parameter for both queries.
 </Note>
 
-The example below demonstrates this flow: the first query runs a subagent and captures the session ID and agent ID, then the second query resumes the session to ask a follow-up question that requires context from the first analysis.
+The example below defines a custom `endpoint-finder` agent. The first query runs it and captures the session ID and agent ID from the Agent tool result, then the second query resumes the session to ask a follow-up question that requires context from the first analysis.
 
 <CodeGroup>
+  ```python Python theme={null}
+  import asyncio
+  import re
+  from claude_agent_sdk import query, ClaudeAgentOptions, AgentDefinition, ToolResultBlock
+
+  AGENTS = {
+      "endpoint-finder": AgentDefinition(
+          description="Locates and catalogs API endpoints in a codebase.",
+          prompt="You find and document API endpoints. Report each endpoint's path, method, and handler.",
+          tools=["Read", "Grep", "Glob"],
+      )
+  }
+
+
+  def extract_agent_id(block: ToolResultBlock) -> str | None:
+      """Extract agentId from an Agent tool result's text content."""
+      parts = block.content if isinstance(block.content, list) else [{"text": block.content}]
+      for part in parts:
+          if match := re.search(r"agentId:\s*([\w-]+)", part.get("text") or ""):
+              return match.group(1)
+      return None
+
+
+  async def main():
+      agent_id = None
+      session_id = None
+
+      # First invocation - run the endpoint-finder subagent
+      async for message in query(
+          prompt="Use the endpoint-finder agent to find all API endpoints in this codebase",
+          options=ClaudeAgentOptions(allowed_tools=["Read", "Grep", "Glob", "Agent"], agents=AGENTS),
+      ):
+          # Capture session_id from ResultMessage (needed to resume this session)
+          if hasattr(message, "session_id"):
+              session_id = message.session_id
+          # Search tool results for the agentId trailer
+          for block in getattr(message, "content", None) or []:
+              if isinstance(block, ToolResultBlock):
+                  agent_id = extract_agent_id(block) or agent_id
+          # Print the final result
+          if hasattr(message, "result"):
+              print(message.result)
+
+      # Second invocation - resume and ask follow-up
+      if agent_id and session_id:
+          async for message in query(
+              prompt=f"Resume agent {agent_id} and list the top 3 most complex endpoints",
+              options=ClaudeAgentOptions(
+                  allowed_tools=["Read", "Grep", "Glob", "Agent"], agents=AGENTS, resume=session_id
+              ),
+          ):
+              if hasattr(message, "result"):
+                  print(message.result)
+
+
+  asyncio.run(main())
+  ```
+
   ```typescript TypeScript theme={null}
   import { query, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 
-  // Helper to extract agentId from message content
-  // Stringify to avoid traversing different block types (TextBlock, ToolResultBlock, etc.)
+  const agents = {
+    "endpoint-finder": {
+      description: "Locates and catalogs API endpoints in a codebase.",
+      prompt: "You find and document API endpoints. Report each endpoint's path, method, and handler.",
+      tools: ["Read", "Grep", "Glob"]
+    }
+  };
+
+  // Stringify content to search for agentId without traversing nested block types
   function extractAgentId(message: SDKMessage): string | undefined {
     if (message.type !== "assistant" && message.type !== "user") return undefined;
-    // Stringify the content so we can search it without traversing nested blocks
     const content = JSON.stringify(message.message.content);
-    const match = content.match(/agentId:\s*([a-f0-9-]+)/);
+    const match = content.match(/agentId:\s*([\w-]+)/);
     return match?.[1];
   }
 
   let agentId: string | undefined;
   let sessionId: string | undefined;
 
-  // First invocation - use the Explore agent to find API endpoints
+  // First invocation - run the endpoint-finder subagent
   for await (const message of query({
-    prompt: "Use the Explore agent to find all API endpoints in this codebase",
-    options: { allowedTools: ["Read", "Grep", "Glob", "Agent"] }
+    prompt: "Use the endpoint-finder agent to find all API endpoints in this codebase",
+    options: { allowedTools: ["Read", "Grep", "Glob", "Agent"], agents }
   })) {
     // Capture session_id from ResultMessage (needed to resume this session)
     if ("session_id" in message) sessionId = message.session_id;
@@ -54760,62 +54965,11 @@ The example below demonstrates this flow: the first query runs a subagent and ca
   if (agentId && sessionId) {
     for await (const message of query({
       prompt: `Resume agent ${agentId} and list the top 3 most complex endpoints`,
-      options: { allowedTools: ["Read", "Grep", "Glob", "Agent"], resume: sessionId }
+      options: { allowedTools: ["Read", "Grep", "Glob", "Agent"], agents, resume: sessionId }
     })) {
       if ("result" in message) console.log(message.result);
     }
   }
-  ```
-
-  ```python Python theme={null}
-  import asyncio
-  import json
-  import re
-  from claude_agent_sdk import query, ClaudeAgentOptions
-
-
-  def extract_agent_id(text: str) -> str | None:
-      """Extract agentId from Agent tool result text."""
-      match = re.search(r"agentId:\s*([a-f0-9-]+)", text)
-      return match.group(1) if match else None
-
-
-  async def main():
-      agent_id = None
-      session_id = None
-
-      # First invocation - use the Explore agent to find API endpoints
-      async for message in query(
-          prompt="Use the Explore agent to find all API endpoints in this codebase",
-          options=ClaudeAgentOptions(allowed_tools=["Read", "Grep", "Glob", "Agent"]),
-      ):
-          # Capture session_id from ResultMessage (needed to resume this session)
-          if hasattr(message, "session_id"):
-              session_id = message.session_id
-          # Search message content for the agentId (appears in Agent tool results)
-          if hasattr(message, "content"):
-              # Stringify the content so we can search it without traversing nested blocks
-              content_str = json.dumps(message.content, default=str)
-              extracted = extract_agent_id(content_str)
-              if extracted:
-                  agent_id = extracted
-          # Print the final result
-          if hasattr(message, "result"):
-              print(message.result)
-
-      # Second invocation - resume and ask follow-up
-      if agent_id and session_id:
-          async for message in query(
-              prompt=f"Resume agent {agent_id} and list the top 3 most complex endpoints",
-              options=ClaudeAgentOptions(
-                  allowed_tools=["Read", "Grep", "Glob", "Agent"], resume=session_id
-              ),
-          ):
-              if hasattr(message, "result"):
-                  print(message.result)
-
-
-  asyncio.run(main())
   ```
 </CodeGroup>
 
@@ -62176,6 +62330,8 @@ claude plugin list [options]
 | `--json`      | Output as JSON                                                 |         |
 | `--available` | Include available plugins from marketplaces. Requires `--json` |         |
 | `-h, --help`  | Display help for command                                       |         |
+
+Within an interactive session, `/plugin list` prints the same listing inline. The interactive form accepts `--enabled` or `--disabled` to show only plugins in that state, and `ls` as a shorthand for `list`.
 
 ### plugin details
 

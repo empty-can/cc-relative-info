@@ -10089,7 +10089,7 @@ best for your use case.
 ## Client support
 
 <Note>
-  MCP Apps is an extension to the [core MCP specification](/specification). Host support varies by client.
+  MCP Apps is an extension to the [core MCP specification](/specification/latest). Host support varies by client.
 </Note>
 
 MCP Apps are currently supported by [Claude](https://claude.ai),
@@ -11165,7 +11165,7 @@ To return tasks from your server:
 ## Client support
 
 <Note>
-  MCP Tasks is an extension to the [core MCP specification](/specification). Host
+  MCP Tasks is an extension to the [core MCP specification](/specification/latest). Host
   support varies by client.
 </Note>
 
@@ -11347,7 +11347,7 @@ example:
 * Emitting resource subscription notifications requires the server to declare
   subscription support
 * Tool invocation requires the server to declare tool capabilities
-* [Sampling](/specification/2025-11-25/client) requires the client to declare support in its
+* [Sampling](/specification/2025-11-25/client/sampling) requires the client to declare support in its
   capabilities
 
 This capability negotiation ensures clients and servers have a clear understanding of
@@ -20026,119 +20026,6 @@ window must still provide at least ninety days between the feature becoming
 Deprecated and its earliest removal.
 
 
-# File Uploads Charter
-Source: https://modelcontextprotocol.io/community/file-uploads/charter
-
-Charter for the MCP File Uploads Working Group.
-
-## Group Type
-
-**Working Group**
-
-## Mission Statement
-
-The File Uploads Working Group exists to define how MCP tools and elicitation requests declare file
-inputs so that hosts can present native file pickers and pass user-selected file content to servers.
-Today, servers that need a file from the user resort to prose instructions asking for base64 strings
-or local paths, which produces inconsistent UX and pushes encoding details onto end users. This WG
-will specify a minimal, schema-level mechanism for declaring file inputs and the wire format for
-delivering them, anchored on [SEP-2356](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2356).
-
-## Scope
-
-### In Scope
-
-* **Specification Work**: SEPs defining declarative file input descriptors on tool input schemas and
-  elicitation request schemas, the wire encoding for file content, and host-side handling
-  requirements.
-* **Reference Implementations**: SDK types and helpers for `FileInputDescriptor`, data URI encoding,
-  and a sample host flow demonstrating picker invocation and value substitution.
-* **Cross-Cutting Concerns**: Coordination with the MCP Apps WG where embedded UI surfaces present
-  their own file pickers, and with the Security WG on host-side validation requirements.
-* **Documentation**: Specification sections covering file input declaration and a migration guide
-  for servers currently using ad-hoc base64 instructions.
-
-### Out of Scope
-
-* Server-to-client file delivery, which is already covered by Resources and `BlobResourceContents`.
-* Changes to the transport layer or session model.
-
-The WG may evaluate approaches such as streaming, chunked transfer, or presigned upload URLs as part
-of its design work; whether those land in the initial SEP or a follow-up is a WG decision rather
-than a charter constraint.
-
-### Related Groups
-
-* **MCP Apps WG** — embedded app UIs may surface their own file pickers; the descriptor format
-  should be reusable in that context.
-* **Security WG** — host-side validation requirements for user-supplied file content (the SEP
-  references [OWASP ASVS V5](https://owasp.org/www-project-application-security-verification-standard/)
-  for general upload hygiene).
-* **Tool Annotations IG** — file input descriptors are a form of input-parameter metadata and should
-  remain consistent with the broader annotation taxonomy.
-
-## Leadership
-
-| Role | Name           | Organization | GitHub                                   | Term    |
-| ---- | -------------- | ------------ | ---------------------------------------- | ------- |
-| Lead | Den Delimarsky | Anthropic    | [@localden](https://github.com/localden) | Initial |
-
-Sponsored by Den Delimarsky ([@localden](https://github.com/localden)) and Nick Cooper
-([@nickcoai](https://github.com/nickcoai)).
-
-## Authority & Decision Rights
-
-| Decision Type                       | Authority Level                                        |
-| ----------------------------------- | ------------------------------------------------------ |
-| Meeting logistics & scheduling      | WG Leads (autonomous)                                  |
-| Proposal prioritization within WG   | WG Leads (autonomous)                                  |
-| SEP triage & closure (in scope)     | WG Leads (autonomous, with documented rationale)       |
-| Technical design within scope       | WG consensus                                           |
-| Spec changes (additive)             | WG consensus → Core Maintainer approval                |
-| Spec changes (breaking/fundamental) | WG consensus → Core Maintainer approval + wider review |
-| Scope expansion                     | Core Maintainer approval required                      |
-| WG Member approval                  | WG Member sponsors                                     |
-
-## Membership
-
-| Name           | Organization | GitHub                                   | Discord | Level     |
-| -------------- | ------------ | ---------------------------------------- | ------- | --------- |
-| Den Delimarsky | Anthropic    | [@localden](https://github.com/localden) |         | Lead      |
-| Nick Cooper    | OpenAI       | [@nickcoai](https://github.com/nickcoai) |         | WG Member |
-| Olivier Chafik | Anthropic    | [@ochafik](https://github.com/ochafik)   |         | WG Member |
-
-## Operations
-
-| Meeting         | Frequency | Duration | Purpose                               |
-| --------------- | --------- | -------- | ------------------------------------- |
-| Working Session | Biweekly  | 30 min   | Technical discussion, proposal review |
-
-Discord: `#file-uploads-wg`
-
-## Deliverables & Success Metrics
-
-### Active Work Items
-
-| Item                                                                                                        | Status | Target Date | Champion                               |
-| ----------------------------------------------------------------------------------------------------------- | ------ | ----------- | -------------------------------------- |
-| [SEP-2356: Declarative file inputs](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2356) | Draft  | End May     | [@ochafik](https://github.com/ochafik) |
-| TypeScript SDK reference implementation                                                                     | —      | End May     | [@ochafik](https://github.com/ochafik) |
-| Reference implementation in a second Tier-1 SDK                                                             | —      | End June    | TBD                                    |
-
-### Success Criteria
-
-* An accepted SEP defining the file input descriptor and wire encoding.
-* Reference implementations in at least two Tier-1 SDKs.
-* At least one production host rendering a native file picker from the descriptor.
-* Conformance test coverage for the new schema keyword.
-
-## Changelog
-
-| Date       | Change          |
-| ---------- | --------------- |
-| 2026-04-23 | Initial charter |
-
-
 # Governance and Stewardship
 Source: https://modelcontextprotocol.io/community/governance
 
@@ -20267,213 +20154,6 @@ The nomination process, sponsorship requirements, review timeline, and inactivit
 ## Current Maintainers and Working Groups
 
 Refer to [the maintainer list](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/MAINTAINERS.md).
-
-
-# Inspector V2 Working Group Charter
-Source: https://modelcontextprotocol.io/community/inspector-v2/charter
-
-Charter for the Inspector V2 Working Group, a Working Group of the Model Context Protocol community.
-
-## Group Type
-
-Working Group
-
-## Mission Statement
-
-The Inspector V2 Working Group is building Inspector V2, a new web-based MCP inspector redesigned from the ground up for maintainability and reliability. The group delivers a shared Inspector Core architecture that maximizes code reuse across Web, CLI, and TUI implementations, together with a comprehensive testing apparatus. This effort requires cross-maintainer collaboration because it spans UI, protocol tooling, and test infrastructure that no single maintainer owns today.
-
-## Scope
-
-### In Scope
-
-* The `modelcontextprotocol/inspector` repository, including:
-* **Inspector Core** — a new shared-code architecture that provides common MCP and protocol interfaces for all Inspector front-ends.
-* **Web Inspector UI** — browser-based inspector built on Mantine and TypeScript.
-* **CLI Inspector** — command-line interface sharing Inspector Core.
-* **TUI Inspector** — terminal UI sharing Inspector Core.
-* **Testing apparatus** — shared test harnesses, fixtures, and integration tests across all Inspector surfaces.
-* Deprecation and migration of the existing Inspector on `main` to a `v1.x` maintenance branch.
-* Adoption of MCP TypeScript SDK V2 inside Inspector Core once available.
-
-### Out of Scope
-
-* The core MCP specification.
-* MCP SDK maintenance (TypeScript, Python, or any other language SDK).
-* MCP server implementations.
-
-### Related Groups
-
-* **SDK WG** — Inspector Core consumes the TypeScript SDK; coordination required for SDK V2 adoption.
-* **MCP Apps WG** — shared surface area around client/app ergonomics and inspection workflows.
-* **Auth WG** — authentication flows exercised by Inspector when connecting to protected servers.
-* **Registry WG** — discovery and metadata surfaces that Inspector presents to users.
-
-## Leadership
-
-| Role    | Name           | Organization | GitHub                                           | Term    |
-| ------- | -------------- | ------------ | ------------------------------------------------ | ------- |
-| WG Lead | Cliff Hall     | Futurescale  | [@cliffhall](https://github.com/cliffhall)       | Ongoing |
-| WG Lead | Ola Hungerford | Nordstrom    | [@olaservo](https://github.com/olaservo)         | Ongoing |
-| WG Lead | Bob Dickinson  | TeamSpark.ai | [@BobDickinson](https://github.com/BobDickinson) | Ongoing |
-
-## Authority & Decision Rights
-
-| Decision Type                       | Authority Level                                        |
-| ----------------------------------- | ------------------------------------------------------ |
-| Meeting logistics & scheduling      | WG Leads (autonomous)                                  |
-| Proposal prioritization within WG   | WG Leads (autonomous)                                  |
-| SEP triage & closure (in scope)     | WG Leads (autonomous, with documented rationale)       |
-| Technical design within scope       | WG consensus                                           |
-| Spec changes (additive)             | WG consensus → Core Maintainer approval                |
-| Spec changes (breaking/fundamental) | WG consensus → Core Maintainer approval + wider review |
-| Scope expansion                     | Core Maintainer approval required                      |
-| WG Member approval                  | WG Member sponsors                                     |
-
-## Membership
-
-| Name           | Organization | GitHub                                           | Discord     | Level      |
-| -------------- | ------------ | ------------------------------------------------ | ----------- | ---------- |
-| Cliff Hall     | Futurescale  | [@cliffhall](https://github.com/cliffhall)       | seaofarrows | Maintainer |
-| Ola Hungerford | Nordstrom    | [@olaservo](https://github.com/olaservo)         | olaservo    | Maintainer |
-| Bob Dickinson  | TeamSpark.ai | [@BobDickinson](https://github.com/BobDickinson) | rddthree    | Maintainer |
-| Tobin South    | Anthropic    | [@tobinsouth](https://github.com/tobinsouth)     | tobinsouth  | Member     |
-
-## Operations
-
-| Meeting         | Frequency                                  | Duration   | Purpose                               |
-| --------------- | ------------------------------------------ | ---------- | ------------------------------------- |
-| Working Session | Weekly, Wednesdays 11:00 America/New\_York | 60 minutes | Technical discussion, proposal review |
-
-Meetings are held at [meet.modelcontextprotocol.io/tag/inspector-v2-wg](https://meet.modelcontextprotocol.io/tag/inspector-v2-wg). Agendas are posted at least 7 days in advance per current MCP meeting policy. Meeting notes are published to the [Meeting Notes — Inspector V2 WG](https://github.com/modelcontextprotocol/modelcontextprotocol/discussions/categories/meeting-notes-inspector-v2-wg) discussion category in the `modelcontextprotocol/modelcontextprotocol` repository.
-
-**Communication channels**
-
-* Primary channel: `#inspector-v2-wg` on the MCP Discord.
-* Async discussion: GitHub Discussions in `modelcontextprotocol/inspector`.
-* Quarterly updates: posted to the WG's GitHub Discussions category.
-
-## Deliverables & Success Metrics
-
-### Active Work Items
-
-| Work Item                                                                               | Status                       | Owner(s)                   |
-| --------------------------------------------------------------------------------------- | ---------------------------- | -------------------------- |
-| Web Inspector UI (Mantine / TypeScript) — dumb components with real MCP/Core interfaces | In Progress                  | Cliff Hall, Ola Hungerford |
-| Inspector Core shared-code architecture                                                 | In Progress                  | Bob Dickinson              |
-| CLI Inspector and TUI Inspector                                                         | In Progress                  | Bob Dickinson              |
-| Migration of existing Inspector on `main` to `v1.x` maintenance branch                  | Planning                     | WG Leads                   |
-| Testing apparatus across Core, Web, CLI, and TUI                                        | Planning                     | WG Leads                   |
-| Inspector Core adoption of MCP TypeScript SDK V2                                        | Blocked (gated by TS SDK WG) | Bob Dickinson              |
-
-### Success Criteria
-
-1. **End of Q1** — Web UI complete with "dumb" components wired to real MCP/Inspector Core interfaces.
-2. **End of Q1** — Inspector Core architecture finalized.
-3. **End of Q2** — Inspector Core merged to `v2/main` and working end-to-end with the Web UI.
-4. **End of Q2** — CLI and TUI Inspectors merged to `v2/main` and working end-to-end with Inspector Core.
-5. **End of Q2** — Existing Inspector on `main` moved to the `v1.x` branch and officially deprecated.
-6. **End of Q2** — New Inspector family (Web, CLI, TUI) published and generally available.
-7. **End of Q3** — Inspector Core running on MCP TypeScript SDK V2 (gated by the TypeScript SDK WG's delivery schedule).
-
-## Changelog
-
-| Date       | Change                                           | Author               |
-| ---------- | ------------------------------------------------ | -------------------- |
-| 2026-04-11 | Initial charter adopted for SEP-2149 compliance. | Cliff Hall (Co-Lead) |
-
-
-# Interceptors Charter
-Source: https://modelcontextprotocol.io/community/interceptors/charter
-
-Charter for the MCP Interceptors Working Group.
-
-## Group Type
-
-**Working Group**
-
-## Mission Statement
-
-The Interceptors Working Group exists to standardize how context operations are intercepted, validated, and transformed at key points in the agentic lifecycle. This covers MCP-defined operations such as tool invocations, resource access, prompt handling, sampling, and elicitation, as well as any other operation that shapes agent context — including LLM completions and custom application-specific workflows. The ecosystem is developing a sprawling landscape of sidecars, proxies, and gateways for cross-cutting concerns that are largely non-reusable and non-interoperable, creating an M × N integration problem. The WG will produce specification extensions and reference implementations that define interceptors as a new MCP primitive with two types — validators (inspect and return pass/fail decisions) and mutators (transform context payloads) — discoverable and invocable through MCP's existing JSON-RPC patterns across deployment models including in-process, sidecar, and remote service.
-
-## Scope
-
-### In Scope
-
-* **Specification Work**: SEPs defining the interceptor primitive — validator and mutator types, lifecycle event hooks for MCP operations (tool calls, resource reads, prompt gets, sampling, elicitation) and extensible to non-MCP context operations (LLM completions, custom workflows), trust-boundary-aware execution model, priority-based chain ordering, and audit mode semantics.
-* **Reference Implementations**: Multi-language SDK libraries for building interceptors, sample interceptors (PII redaction, schema validation, audit logging), a common interceptor sidecar/proxy runtime, and a CLI client for interceptor invocation and testing.
-* **Cross-Cutting Concerns**: Transport-level interception points, gateway-based deployment patterns, and interplay with routing and policy layers (see Related Groups).
-* **Documentation**: Specification sections covering interceptor authoring, deployment models (in-process, sidecar, remote service), chain configuration, and migration guidance from ad-hoc middleware approaches.
-
-### Out of Scope
-
-* Client-specific hook implementation details (e.g., Claude Code's internal hook execution engine) — the WG standardizes the protocol-level interface, not host internals.
-* Transport-layer wire format or session model changes (owned by the Transports WG).
-* General-purpose middleware or proxy infrastructure beyond what the MCP protocol requires.
-
-### Related Groups
-
-* **Transports WG** — interceptors operate on MCP message flows whose delivery behavior depends on the transport; coordination needed on transport-level interception points.
-* **Gateways IG** — gateways are a key deployment model for interceptors; coordination needed on gateway-based interceptor patterns and shared concerns around routing, policy, and observability.
-
-## Leadership
-
-| Role | Name                     | Organization | GitHub                                       | Term    |
-| ---- | ------------------------ | ------------ | -------------------------------------------- | ------- |
-| Lead | Sambhav Kothari          | Bloomberg    | [@sambhav](https://github.com/sambhav)       | Initial |
-| Lead | Peder Holdgaard Pedersen | Saxo Bank    | [@PederHP](https://github.com/PederHP)       | Initial |
-| Lead | Kurt Degiorgio           | Bloomberg    | [@degiorgio](https://github.com/degiorgio)   | Initial |
-| Lead | Uk-Jae Jeong             | Bloomberg    | [@jeongukjae](https://github.com/jeongukjae) | Initial |
-
-## Authority & Decision Rights
-
-| Decision Type                       | Authority Level                                        |
-| ----------------------------------- | ------------------------------------------------------ |
-| Meeting logistics & scheduling      | WG Leads (autonomous)                                  |
-| Proposal prioritization within WG   | WG Leads (autonomous)                                  |
-| SEP triage & closure (in scope)     | WG Leads (autonomous, with documented rationale)       |
-| Technical design within scope       | WG consensus                                           |
-| Spec changes (additive)             | WG consensus → Core Maintainer approval                |
-| Spec changes (breaking/fundamental) | WG consensus → Core Maintainer approval + wider review |
-| Scope expansion                     | Core Maintainer approval required                      |
-| WG Member approval                  | WG Member sponsors                                     |
-
-## Operations
-
-| Meeting         | Frequency | Duration   | Purpose                               |
-| --------------- | --------- | ---------- | ------------------------------------- |
-| Working Session | Biweekly  | 60 minutes | Technical discussion, proposal review |
-
-## Resources
-
-* Experimental extension repository: [modelcontextprotocol/experimental-ext-interceptors](https://github.com/modelcontextprotocol/experimental-ext-interceptors)
-* Motivation: [SEP-1763](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1763)
-
-## Deliverables & Success Metrics
-
-### Active Work Items
-
-| Item                                                                  | Status      | Target Date | Champion |
-| --------------------------------------------------------------------- | ----------- | ----------- | -------- |
-| SEP-1763: Interceptors                                                | Draft       |             | TBD      |
-| Sample interceptors (PII redaction, schema validation, audit logging) | In Progress |             | TBD      |
-| Common interceptor sidecar runtime                                    | Ideating    |             | TBD      |
-| CLI client for interceptor invocation and testing                     | Ideating    |             | TBD      |
-| Reference implementation in Go SDK                                    | In Progress |             | TBD      |
-| Reference implementation in C# SDK                                    | In Progress |             | TBD      |
-
-### Success Criteria
-
-* An accepted SEP defining the interceptor primitive (validators, mutators), lifecycle event hooks, and trust-boundary-aware chain execution.
-* Reference implementations in at least two Tier-1 SDKs (Go, C#).
-* A common interceptor sidecar runtime enabling platform teams to deploy interceptors without modifying individual MCP servers.
-* CLI tooling for interceptor invocation and testing.
-* Demonstrated interoperability across deployment models (in-process, sidecar, remote service).
-
-## Changelog
-
-| Date       | Change          |
-| ---------- | --------------- |
-| 2026-04-21 | Initial charter |
 
 
 # SDK Tiering System
@@ -36191,6 +35871,326 @@ The IG incubates problems until they are well-scoped, then proposes focused Work
 | Date       | Change          |
 | ---------- | --------------- |
 | 2026-06-02 | Initial charter |
+
+
+# File Uploads Charter
+Source: https://modelcontextprotocol.io/community/file-uploads/charter
+
+Charter for the MCP File Uploads Working Group.
+
+## Group Type
+
+**Working Group**
+
+## Mission Statement
+
+The File Uploads Working Group exists to define how MCP tools and elicitation requests declare file
+inputs so that hosts can present native file pickers and pass user-selected file content to servers.
+Today, servers that need a file from the user resort to prose instructions asking for base64 strings
+or local paths, which produces inconsistent UX and pushes encoding details onto end users. This WG
+will specify a minimal, schema-level mechanism for declaring file inputs and the wire format for
+delivering them, anchored on [SEP-2356](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2356).
+
+## Scope
+
+### In Scope
+
+* **Specification Work**: SEPs defining declarative file input descriptors on tool input schemas and
+  elicitation request schemas, the wire encoding for file content, and host-side handling
+  requirements.
+* **Reference Implementations**: SDK types and helpers for `FileInputDescriptor`, data URI encoding,
+  and a sample host flow demonstrating picker invocation and value substitution.
+* **Cross-Cutting Concerns**: Coordination with the MCP Apps WG where embedded UI surfaces present
+  their own file pickers, and with the Security WG on host-side validation requirements.
+* **Documentation**: Specification sections covering file input declaration and a migration guide
+  for servers currently using ad-hoc base64 instructions.
+
+### Out of Scope
+
+* Server-to-client file delivery, which is already covered by Resources and `BlobResourceContents`.
+* Changes to the transport layer or session model.
+
+The WG may evaluate approaches such as streaming, chunked transfer, or presigned upload URLs as part
+of its design work; whether those land in the initial SEP or a follow-up is a WG decision rather
+than a charter constraint.
+
+### Related Groups
+
+* **MCP Apps WG** — embedded app UIs may surface their own file pickers; the descriptor format
+  should be reusable in that context.
+* **Security WG** — host-side validation requirements for user-supplied file content (the SEP
+  references [OWASP ASVS V5](https://owasp.org/www-project-application-security-verification-standard/)
+  for general upload hygiene).
+* **Tool Annotations IG** — file input descriptors are a form of input-parameter metadata and should
+  remain consistent with the broader annotation taxonomy.
+
+## Leadership
+
+| Role | Name           | Organization | GitHub                                   | Term    |
+| ---- | -------------- | ------------ | ---------------------------------------- | ------- |
+| Lead | Den Delimarsky | Anthropic    | [@localden](https://github.com/localden) | Initial |
+
+Sponsored by Den Delimarsky ([@localden](https://github.com/localden)) and Nick Cooper
+([@nickcoai](https://github.com/nickcoai)).
+
+## Authority & Decision Rights
+
+| Decision Type                       | Authority Level                                        |
+| ----------------------------------- | ------------------------------------------------------ |
+| Meeting logistics & scheduling      | WG Leads (autonomous)                                  |
+| Proposal prioritization within WG   | WG Leads (autonomous)                                  |
+| SEP triage & closure (in scope)     | WG Leads (autonomous, with documented rationale)       |
+| Technical design within scope       | WG consensus                                           |
+| Spec changes (additive)             | WG consensus → Core Maintainer approval                |
+| Spec changes (breaking/fundamental) | WG consensus → Core Maintainer approval + wider review |
+| Scope expansion                     | Core Maintainer approval required                      |
+| WG Member approval                  | WG Member sponsors                                     |
+
+## Membership
+
+| Name           | Organization | GitHub                                   | Discord | Level     |
+| -------------- | ------------ | ---------------------------------------- | ------- | --------- |
+| Den Delimarsky | Anthropic    | [@localden](https://github.com/localden) |         | Lead      |
+| Nick Cooper    | OpenAI       | [@nickcoai](https://github.com/nickcoai) |         | WG Member |
+| Olivier Chafik | Anthropic    | [@ochafik](https://github.com/ochafik)   |         | WG Member |
+
+## Operations
+
+| Meeting         | Frequency | Duration | Purpose                               |
+| --------------- | --------- | -------- | ------------------------------------- |
+| Working Session | Biweekly  | 30 min   | Technical discussion, proposal review |
+
+Discord: `#file-uploads-wg`
+
+## Deliverables & Success Metrics
+
+### Active Work Items
+
+| Item                                                                                                        | Status | Target Date | Champion                               |
+| ----------------------------------------------------------------------------------------------------------- | ------ | ----------- | -------------------------------------- |
+| [SEP-2356: Declarative file inputs](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2356) | Draft  | End May     | [@ochafik](https://github.com/ochafik) |
+| TypeScript SDK reference implementation                                                                     | —      | End May     | [@ochafik](https://github.com/ochafik) |
+| Reference implementation in a second Tier-1 SDK                                                             | —      | End June    | TBD                                    |
+
+### Success Criteria
+
+* An accepted SEP defining the file input descriptor and wire encoding.
+* Reference implementations in at least two Tier-1 SDKs.
+* At least one production host rendering a native file picker from the descriptor.
+* Conformance test coverage for the new schema keyword.
+
+## Changelog
+
+| Date       | Change          |
+| ---------- | --------------- |
+| 2026-04-23 | Initial charter |
+
+
+# Inspector V2 Working Group Charter
+Source: https://modelcontextprotocol.io/community/inspector-v2/charter
+
+Charter for the Inspector V2 Working Group, a Working Group of the Model Context Protocol community.
+
+## Group Type
+
+Working Group
+
+## Mission Statement
+
+The Inspector V2 Working Group is building Inspector V2, a new web-based MCP inspector redesigned from the ground up for maintainability and reliability. The group delivers a shared Inspector Core architecture that maximizes code reuse across Web, CLI, and TUI implementations, together with a comprehensive testing apparatus. This effort requires cross-maintainer collaboration because it spans UI, protocol tooling, and test infrastructure that no single maintainer owns today.
+
+## Scope
+
+### In Scope
+
+* The `modelcontextprotocol/inspector` repository, including:
+* **Inspector Core** — a new shared-code architecture that provides common MCP and protocol interfaces for all Inspector front-ends.
+* **Web Inspector UI** — browser-based inspector built on Mantine and TypeScript.
+* **CLI Inspector** — command-line interface sharing Inspector Core.
+* **TUI Inspector** — terminal UI sharing Inspector Core.
+* **Testing apparatus** — shared test harnesses, fixtures, and integration tests across all Inspector surfaces.
+* Deprecation and migration of the existing Inspector on `main` to a `v1.x` maintenance branch.
+* Adoption of MCP TypeScript SDK V2 inside Inspector Core once available.
+
+### Out of Scope
+
+* The core MCP specification.
+* MCP SDK maintenance (TypeScript, Python, or any other language SDK).
+* MCP server implementations.
+
+### Related Groups
+
+* **SDK WG** — Inspector Core consumes the TypeScript SDK; coordination required for SDK V2 adoption.
+* **MCP Apps WG** — shared surface area around client/app ergonomics and inspection workflows.
+* **Auth WG** — authentication flows exercised by Inspector when connecting to protected servers.
+* **Registry WG** — discovery and metadata surfaces that Inspector presents to users.
+
+## Leadership
+
+| Role    | Name           | Organization | GitHub                                           | Term    |
+| ------- | -------------- | ------------ | ------------------------------------------------ | ------- |
+| WG Lead | Cliff Hall     | Futurescale  | [@cliffhall](https://github.com/cliffhall)       | Ongoing |
+| WG Lead | Ola Hungerford | Nordstrom    | [@olaservo](https://github.com/olaservo)         | Ongoing |
+| WG Lead | Bob Dickinson  | TeamSpark.ai | [@BobDickinson](https://github.com/BobDickinson) | Ongoing |
+
+## Authority & Decision Rights
+
+| Decision Type                       | Authority Level                                        |
+| ----------------------------------- | ------------------------------------------------------ |
+| Meeting logistics & scheduling      | WG Leads (autonomous)                                  |
+| Proposal prioritization within WG   | WG Leads (autonomous)                                  |
+| SEP triage & closure (in scope)     | WG Leads (autonomous, with documented rationale)       |
+| Technical design within scope       | WG consensus                                           |
+| Spec changes (additive)             | WG consensus → Core Maintainer approval                |
+| Spec changes (breaking/fundamental) | WG consensus → Core Maintainer approval + wider review |
+| Scope expansion                     | Core Maintainer approval required                      |
+| WG Member approval                  | WG Member sponsors                                     |
+
+## Membership
+
+| Name           | Organization | GitHub                                           | Discord     | Level      |
+| -------------- | ------------ | ------------------------------------------------ | ----------- | ---------- |
+| Cliff Hall     | Futurescale  | [@cliffhall](https://github.com/cliffhall)       | seaofarrows | Maintainer |
+| Ola Hungerford | Nordstrom    | [@olaservo](https://github.com/olaservo)         | olaservo    | Maintainer |
+| Bob Dickinson  | TeamSpark.ai | [@BobDickinson](https://github.com/BobDickinson) | rddthree    | Maintainer |
+| Tobin South    | Anthropic    | [@tobinsouth](https://github.com/tobinsouth)     | tobinsouth  | Member     |
+
+## Operations
+
+| Meeting         | Frequency                                  | Duration   | Purpose                               |
+| --------------- | ------------------------------------------ | ---------- | ------------------------------------- |
+| Working Session | Weekly, Wednesdays 11:00 America/New\_York | 60 minutes | Technical discussion, proposal review |
+
+Meetings are held at [meet.modelcontextprotocol.io/tag/inspector-v2-wg](https://meet.modelcontextprotocol.io/tag/inspector-v2-wg). Agendas are posted at least 7 days in advance per current MCP meeting policy. Meeting notes are published to the [Meeting Notes — Inspector V2 WG](https://github.com/modelcontextprotocol/modelcontextprotocol/discussions/categories/meeting-notes-inspector-v2-wg) discussion category in the `modelcontextprotocol/modelcontextprotocol` repository.
+
+**Communication channels**
+
+* Primary channel: `#inspector-v2-wg` on the MCP Discord.
+* Async discussion: GitHub Discussions in `modelcontextprotocol/inspector`.
+* Quarterly updates: posted to the WG's GitHub Discussions category.
+
+## Deliverables & Success Metrics
+
+### Active Work Items
+
+| Work Item                                                                               | Status                       | Owner(s)                   |
+| --------------------------------------------------------------------------------------- | ---------------------------- | -------------------------- |
+| Web Inspector UI (Mantine / TypeScript) — dumb components with real MCP/Core interfaces | In Progress                  | Cliff Hall, Ola Hungerford |
+| Inspector Core shared-code architecture                                                 | In Progress                  | Bob Dickinson              |
+| CLI Inspector and TUI Inspector                                                         | In Progress                  | Bob Dickinson              |
+| Migration of existing Inspector on `main` to `v1.x` maintenance branch                  | Planning                     | WG Leads                   |
+| Testing apparatus across Core, Web, CLI, and TUI                                        | Planning                     | WG Leads                   |
+| Inspector Core adoption of MCP TypeScript SDK V2                                        | Blocked (gated by TS SDK WG) | Bob Dickinson              |
+
+### Success Criteria
+
+1. **End of Q1** — Web UI complete with "dumb" components wired to real MCP/Inspector Core interfaces.
+2. **End of Q1** — Inspector Core architecture finalized.
+3. **End of Q2** — Inspector Core merged to `v2/main` and working end-to-end with the Web UI.
+4. **End of Q2** — CLI and TUI Inspectors merged to `v2/main` and working end-to-end with Inspector Core.
+5. **End of Q2** — Existing Inspector on `main` moved to the `v1.x` branch and officially deprecated.
+6. **End of Q2** — New Inspector family (Web, CLI, TUI) published and generally available.
+7. **End of Q3** — Inspector Core running on MCP TypeScript SDK V2 (gated by the TypeScript SDK WG's delivery schedule).
+
+## Changelog
+
+| Date       | Change                                           | Author               |
+| ---------- | ------------------------------------------------ | -------------------- |
+| 2026-04-11 | Initial charter adopted for SEP-2149 compliance. | Cliff Hall (Co-Lead) |
+
+
+# Interceptors Charter
+Source: https://modelcontextprotocol.io/community/interceptors/charter
+
+Charter for the MCP Interceptors Working Group.
+
+## Group Type
+
+**Working Group**
+
+## Mission Statement
+
+The Interceptors Working Group exists to standardize how context operations are intercepted, validated, and transformed at key points in the agentic lifecycle. This covers MCP-defined operations such as tool invocations, resource access, prompt handling, sampling, and elicitation, as well as any other operation that shapes agent context — including LLM completions and custom application-specific workflows. The ecosystem is developing a sprawling landscape of sidecars, proxies, and gateways for cross-cutting concerns that are largely non-reusable and non-interoperable, creating an M × N integration problem. The WG will produce specification extensions and reference implementations that define interceptors as a new MCP primitive with two types — validators (inspect and return pass/fail decisions) and mutators (transform context payloads) — discoverable and invocable through MCP's existing JSON-RPC patterns across deployment models including in-process, sidecar, and remote service.
+
+## Scope
+
+### In Scope
+
+* **Specification Work**: SEPs defining the interceptor primitive — validator and mutator types, lifecycle event hooks for MCP operations (tool calls, resource reads, prompt gets, sampling, elicitation) and extensible to non-MCP context operations (LLM completions, custom workflows), trust-boundary-aware execution model, priority-based chain ordering, and audit mode semantics.
+* **Reference Implementations**: Multi-language SDK libraries for building interceptors, sample interceptors (PII redaction, schema validation, audit logging), a common interceptor sidecar/proxy runtime, and a CLI client for interceptor invocation and testing.
+* **Cross-Cutting Concerns**: Transport-level interception points, gateway-based deployment patterns, and interplay with routing and policy layers (see Related Groups).
+* **Documentation**: Specification sections covering interceptor authoring, deployment models (in-process, sidecar, remote service), chain configuration, and migration guidance from ad-hoc middleware approaches.
+
+### Out of Scope
+
+* Client-specific hook implementation details (e.g., Claude Code's internal hook execution engine) — the WG standardizes the protocol-level interface, not host internals.
+* Transport-layer wire format or session model changes (owned by the Transports WG).
+* General-purpose middleware or proxy infrastructure beyond what the MCP protocol requires.
+
+### Related Groups
+
+* **Transports WG** — interceptors operate on MCP message flows whose delivery behavior depends on the transport; coordination needed on transport-level interception points.
+* **Gateways IG** — gateways are a key deployment model for interceptors; coordination needed on gateway-based interceptor patterns and shared concerns around routing, policy, and observability.
+
+## Leadership
+
+| Role | Name                     | Organization | GitHub                                       | Term    |
+| ---- | ------------------------ | ------------ | -------------------------------------------- | ------- |
+| Lead | Sambhav Kothari          | Bloomberg    | [@sambhav](https://github.com/sambhav)       | Initial |
+| Lead | Peder Holdgaard Pedersen | Saxo Bank    | [@PederHP](https://github.com/PederHP)       | Initial |
+| Lead | Kurt Degiorgio           | Bloomberg    | [@degiorgio](https://github.com/degiorgio)   | Initial |
+| Lead | Uk-Jae Jeong             | Bloomberg    | [@jeongukjae](https://github.com/jeongukjae) | Initial |
+
+## Authority & Decision Rights
+
+| Decision Type                       | Authority Level                                        |
+| ----------------------------------- | ------------------------------------------------------ |
+| Meeting logistics & scheduling      | WG Leads (autonomous)                                  |
+| Proposal prioritization within WG   | WG Leads (autonomous)                                  |
+| SEP triage & closure (in scope)     | WG Leads (autonomous, with documented rationale)       |
+| Technical design within scope       | WG consensus                                           |
+| Spec changes (additive)             | WG consensus → Core Maintainer approval                |
+| Spec changes (breaking/fundamental) | WG consensus → Core Maintainer approval + wider review |
+| Scope expansion                     | Core Maintainer approval required                      |
+| WG Member approval                  | WG Member sponsors                                     |
+
+## Operations
+
+| Meeting         | Frequency | Duration   | Purpose                               |
+| --------------- | --------- | ---------- | ------------------------------------- |
+| Working Session | Biweekly  | 60 minutes | Technical discussion, proposal review |
+
+## Resources
+
+* Experimental extension repository: [modelcontextprotocol/experimental-ext-interceptors](https://github.com/modelcontextprotocol/experimental-ext-interceptors)
+* Motivation: [SEP-1763](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1763)
+
+## Deliverables & Success Metrics
+
+### Active Work Items
+
+| Item                                                                  | Status      | Target Date | Champion |
+| --------------------------------------------------------------------- | ----------- | ----------- | -------- |
+| SEP-1763: Interceptors                                                | Draft       |             | TBD      |
+| Sample interceptors (PII redaction, schema validation, audit logging) | In Progress |             | TBD      |
+| Common interceptor sidecar runtime                                    | Ideating    |             | TBD      |
+| CLI client for interceptor invocation and testing                     | Ideating    |             | TBD      |
+| Reference implementation in Go SDK                                    | In Progress |             | TBD      |
+| Reference implementation in C# SDK                                    | In Progress |             | TBD      |
+
+### Success Criteria
+
+* An accepted SEP defining the interceptor primitive (validators, mutators), lifecycle event hooks, and trust-boundary-aware chain execution.
+* Reference implementations in at least two Tier-1 SDKs (Go, C#).
+* A common interceptor sidecar runtime enabling platform teams to deploy interceptors without modifying individual MCP servers.
+* CLI tooling for interceptor invocation and testing.
+* Demonstrated interoperability across deployment models (in-process, sidecar, remote service).
+
+## Changelog
+
+| Date       | Change          |
+| ---------- | --------------- |
+| 2026-04-21 | Initial charter |
 
 
 # Registry Charter
