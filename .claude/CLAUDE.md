@@ -39,7 +39,7 @@
 | `5-whys` | description トリガで自動起動可（モデル発動型） | 体系的な root cause 分析。Why Chain → 根本原因 → 対策の 5 フェーズ |
 | `commit-and-pr` | `/commit-and-pr`（`disable-model-invocation: true`） | ステージング差分を単一コミット → push → `gh pr create` まで一気通貫 |
 | `orchestrate` | `/orchestrate`（`disable-model-invocation: true`） | パターン A 並列調査 / B 段階的処理 / C 役割分担。**Subagents cannot spawn other subagents** の仕様制約があるため、Skill としてメインセッションで実行する設計 |
-| `pre-compact` | `/pre-compact` | `/compact` 実行前の事前準備。メモリ最新化 → 未コミット確認 → 継続ポイント収集 → `/compact <指示>` コメント案を提示。ステップ 1・3 は完全 silent 出力禁止 |
+| `pre-compact` | `/pre-compact` | `/compact` または `/clear` 実行前の事前準備。メモリ最新化 → 未コミット確認 → 継続ポイント収集 → 終了方式判定（`/compact` コメント案 / `/clear` 用に MEMORY.md フック行を再開キーへ更新）。ステップ 1・3 は完全 silent 出力禁止 |
 | `read-prompt-file` | `/read-prompt-file` | ルート CLAUDE.md「ブランチ運用ルール」で決定される活動フォルダ配下の `.claude/work/prompt.txt` を読み込む |
 | `request-new-skill` | `/request-new-skill <概要>` | 新規 Skill 作成依頼書を `.claude/workspace/skill-request/<kebab-case>/` に配置 |
 | `review-skill-request` | `/review-skill-request [フォルダ名]` | 記入済み依頼書をレビューし、`skill-cc-response.md` に確認事項・指摘・提案・既存 Skill 調査結果を書き込む |
