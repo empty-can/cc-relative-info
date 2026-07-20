@@ -1,0 +1,75 @@
+# CLAUDE.md — ポータブルな `.claude` チーム共有・統制の調査
+
+> **本フォルダは完成版ドキュメントの正規マスタ（正本）**。`cc-relative-info` のコンテンツ整備テーマ `claude-dir-sharing-governance/` として、調査・検討用ワークスペース `research-by-cc`（`research-for-claude-dir-sharing-governance/`）から移管したもの。今後の完成版ドキュメントの更新は本リポジトリを正とし、`research-by-cc` 側は調査の作業スナップショットとして扱う（二重管理を避ける）。
+>
+> このテーマは `.claude/` を Marketplace 的にチーム共有・統制する仕組みの調査・設計・運用手順をまとめる。実体の配布キットは別リポジトリ `base-dev-kit-for-cc`（供給元）／`basic_dot_claude`（配布本体）／`basic_cc_project`（雛型ハブ）で、本フォルダはそれらの設計・手順・レビューの知見を保持する。**運用手順書（§6/§7 等）が記述する `publish-share`/`check-assets` の実体は `base-dev-kit-for-cc/scripts/` にあるため、スクリプト改修時は手順書との乖離に注意する**（過去に v1.7 で乖離修正の実績あり）。
+
+## 調査の目的・背景
+
+- **問い**:
+  1. `<Prjルート>\.claude` を Marketplace の仕組みで配布できるか。
+  2. 特定リポジトリ向けにチューニングされていない、ゼロから作ったリポジトリでも使える **最低限の資産だけのシンプルな `.claude/`** を、Marketplace のように Skill 等を配布する形でチーム共有するベストプラクティスは存在するか。無ければ最適な仕組みを設計せよ。
+- **想定読者**: Claude Code を活用するチームのガバナンス担当者。
+- **核心結論**: `.claude/` 全体を単一手段で配る方法は無く、**3 配布チャネル**（層1 Git commit／層2 Plugin・Marketplace／層3 Managed settings）の組み合わせで設計する。`--add-dir` は補助参照。資産×配布チャネル マトリクスが報告書の中核。
+
+## 成果物
+
+| 成果物 | 所在 |
+|---|---|
+| 結論・構成案（**確定版 v1.2**） | `reports/01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md` |
+| クロスレビュー報告書（3観点・各1.0版） | `reports/01.配布・統制方針調査/レビュー/`（論理整合性／実用性＋出典照合／作業指示者＋人間読み手） |
+| 層2 配布物の開発・テスト 調査結果 | `reports/02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin・Marketplace配布物の開発・テスト_調査結果.md` |
+| Plugin 開発・テスト手順書 | `reports/02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin開発・テスト_手順書.md` |
+| Marketplace 外資産の開発・テスト 調査結果 | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産の開発・テスト_調査結果.md` |
+| Marketplace 外資産 開発・テスト手順書 | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産_開発・テスト_手順書.md` |
+| 開発・テスト補助スクリプト（clean-test-env / check-assets / publish-share・bash+PowerShell） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/scripts/` |
+| 実装テンプレート（層1+2・3チャネル構成の雛形） | `reports/03.実装テンプレート（層1+2）/`（README ＋ `layer1-repo-template/` ＋ `layer2-plugin/`） |
+| ランチャースクリプト構成設計・実装計画 | `reports/04.資産インベントリ・統合/04.ランチャースクリプト実装/`（**実体スクリプトおよび設計書2点は C-BDK `docs/launcher/` が正本**。本フォルダの2点は 2026-07-05 時点の**凍結スナップショット**。⚠ スナップショット本文の「秘匿は custom.env」は撤回済み） |
+| **配布・リリース設計確定（レーンA）** ＝ **リリース工程の正本** | 同上 `配布・リリース設計確定_レーンA.md`（CR-1 搬送方式／CR-2 リリース前提条件／案X／**フェーズ表 Phase 0〜5b**。マージ方式は **merge commit・squash 禁止**） |
+| クロスレビュー報告書（Round 1〜3 ＋ マージ前セルフレビュー ＋ PR#3） | 同上 `レビュー/`（`Fableクロスレビュー統合_2026-07-07.md`＝PR#2 初回／`_PR1配布キット_`＝PR#1 初回／`_PR1PR2_Round2_`／`_PR1PR2_Round3_`／`横断セルフレビュー_マージ前_`／**`_PR3_2026-07-13.md`**＝Phase 3・種別別 3 レーン） |
+| 公開 README（GitHub 閲覧者向け・CLAUDE.md 派生） | `README.md` |
+
+> 各成果物の版は各ファイル末尾の変更履歴を参照（索引には版番号を持たせない）。
+
+## 参照リソース
+
+- **本文の根拠**: Claude Code 公式ドキュメント `cc-relative-info\LLMs\official-llms-txts\code.claude.com\docs\llms-full.txt`（CLI v2.1.165 相当。報告書の出典一覧の行番号はこのファイルの絶対行番号）。
+- **精読の根拠**（中間成果物・workspace 保管）: `.claude/workspace/portable-claude-dir-sharing/intermediate-reports/01〜07-*.md`（7 Agent によるページ別精読結果）。
+- **改訂経緯の凍結スナップショット**（workspace 保管）: `.claude/workspace/portable-claude-dir-sharing/結論・構成案_…_v2.0〜v2.6.md`（reports/ 昇格前の版。Git 履歴と併せて経緯を追える）。
+
+## 版管理運用（本フォルダ固有）
+
+- reports/ 配下の確定版は **単一ファイル＋ファイル内変更履歴** で版を表現（ルート `CLAUDE.md` 原則に準拠）。
+- reports/ 昇格時に workspace の **v2.6 を v1.0 として再採番**した。workspace の版数（v1.0〜v2.6）は調査過程の試行錯誤の記録であり、reports/ では新たな成果物ライフサイクルとして **v1.0 から開始**する。
+- 詳細な改訂経緯は **Git 履歴**へ委譲し、確定版の変更履歴は要点のみ保持する（v2.0〜v2.6 の逐次経緯は workspace 凍結版を参照）。
+
+## タスク進行状況
+
+- [x] 公式ドキュメント精読（7 Agent ページ別）→ 結論・構成案 初版〜v2.6（workspace）
+- [x] 3 観点クロスレビュー（論理整合性 Opus／実用性＋出典照合 Sonnet／作業指示者ペルソナ Opus）→ v2.6 反映・アンカー検証パス（REFS=DEFS=72）
+- [x] reports/ 昇格・**v1.0 再採番**（2026-06-07）
+- [x] 層2（Plugin/Marketplace）配布物の開発・テスト調査 → 調査結果 v1.0 ＋ 手順書 v1.0（2026-06-21・タスク02）
+- [x] 層2 成果物の Sonnet 動作検証（実機 `claude plugin validate` v2.1.185・2026-06-21）→ 指摘反映（7df3c0b）。副産物で v1.2 マトリクスの `--add-dir`×agents 誤記を発見・訂正（5063ded）。※後続の実機検証で**本訂正自体が v2.1.178 版依存**と判明し再訂正（225dda9・下記参照）
+- [x] Marketplace 外資産（CLAUDE.md/rules/settings 等）の開発・テスト調査 → 調査結果 v1.0 ＋ 手順書 v1.0（2026-06-21・タスク02 第2フェーズ `02.Marketplace外資産編`）
+- [x] 02.Marketplace外資産編 の Sonnet 動作検証（2026-06-22・実機）→ **重大検出: subagents×`--add-dir` は v2.1.178 版依存**（v2.1.165=非ロード／v2.1.178+=ロード）。現行✅＋版境界注記へ v1.2 errata 再訂正・出典 [75] 追加（225dda9）。対話実機で **#1 `/memory`＝`<Share>/.claude/CLAUDE.md` ロード確認（案1 生命線）／#2 `/agents`＝`--add-dir` 経由 subagent ロードを一意プローブで立証**。check-assets を案1（Git 追跡基準）へ改修も併施（75cc12d）。実 `<Share>`＝`base-dev-kit-for-cc` を grooming（PR #1）
+- [x] item3 残検証 **C7/C10/C12 を実機確認**（2026-06-22・`--debug-file` の設定ロードログ＝非対話の権威ある証跡）。C7=クリーン隔離で個人/project/local 排除・managed 残存・auth 非継承を実証／C10=`--settings` は `flagSettings`（command-line 層）として各スコープと別 destination で併存／C12=project の `defaultMode:"auto"` 無視を WARN で実観測＋付与可能スコープ＝policy/user/flag を判明。調査結果 v1.3・手順書 v1.3 に反映。item3 完全クローズ
+- [x] 実装スコープ決定（**層1+2＝テスト可能なコア**を採用・作業指示者選択）と 3 チャネル構成のテンプレート雛形作成 → `reports/03.実装テンプレート（層1+2）/`（2026-06-22）。base-dev-kit 資産を層1（ガバナンス＋起動装置）／層2（plugin: skills/agent/output-style/hook）へ振り分け。`claude plugin validate`（`--strict`）・marketplace validate ともにパス。**層3 は通常マシンで実機検証不可のため雛形は作らずレポート §解決案 層3系・付録A の記述に委譲**
+- [x] 公開 `README.md` 作成（CLAUDE.md からの派生・GitHub 閲覧者向け・コミット済 d3c766d）
+- [x] 成果物群の公式 docs 最新版（v2.1.195・2026-06-28）照合と横断整合性レビュー（2026-06-29・各5観点 SubAgent 並列）→ テンプレ/手順書/調査結果/v1.2/索引の陳腐化・不整合を修正（settings.local.json 2キー例外の伝播・subagents 版境界の統一・`<D>`→`<Share>`・`sub-agents`→`subagents`・MCP ポリシー一本化・テンプレ誤誘導の是正 等）
+- [x] `--add-dir` 例外ロード表の**正本一元化**（J1・2026-06-29）→ v1.2 付録B に「`--add-dir` 例外ロード一覧（正本）」を新設（anchor `adddir-exceptions`）。01編§4・02編§2・02手順書§3 の早見表は本表を正本とする参照注記へ寄せ、版依存事実の片側更新漏れ（F1/F2 で顕在化）を構造的に抑止
+- [x] 全マシン横断の配布可能資産インベントリ・Plugin配布可否分類・リポジトリ割当計画・全ブランチ横断資産マップ（2026-06-30、tmp/asset-inventory ブランチ）→ `reports/04.資産インベントリ・統合/`
+- [x] ランチャースクリプト実装（env・起動オプションの4分類判定木、sh/ps1両対応・UTF-8 BOM+CRLF、exhaustive オプションテンプレ）→ `reports/04.資産インベントリ・統合/04.ランチャースクリプト実装/`（2026-07-05）。実体スクリプトは C-BDK（`base-dev-kit-for-cc`）が正本、PR #2（base=develop）で提出
+- [x] レーンA（設計確定）→ `配布・リリース設計確定_レーンA.md`（2026-07-07）。CR-1（配布先の統制ファイルを payload に同乗）／**CR-2＝PR #1（grooming）をリリースの前提条件に格上げ**（未 grooming な ref を publish すると内部レポートが公開リポへ流出し、配布先の CLAUDE.md が消える）／案X（root `CLAUDE.md` は開発リポ専用に純化）／リリースフェーズ計画 Phase 0〜5b
+- [x] レーンB（実装）→ C-BDK の 2 本の PR に反映。**PR #1 `chore/groom-as-share`**（配布キットの grooming ＋ `scripts/` の配布ゲート）と **PR #2 `feat/launcher-scripts`**（ランチャー）。**両者は相互依存**（PR#1 の publish-share が PR#2 の CR-1 を有効化し、PR#1 の check-assets が PR#2 の資産を検査する）ため、統合状態で評価する
+- [x] クロスレビュー 3 巡（いずれも **Fable 5 × 3 観点**へ委任。メインは実装者ゆえ第三者たり得ない）→ `レビュー/`。**Round 1**: CRITICAL 4（publish ゲートが機能せず**内部レポートが公開リポへ流出する状態**だった 等）／**Round 2**: CRITICAL 3（**すべて Round 1 の修正が生んだ欠陥**。glob と正規表現の混同・fail-closed の片肺実装・自分の変更で無効になった検証結果の使い回し）／**Round 3**: CRITICAL 0（Round 2 の指摘は全件解消を実測確認。新規は「ゲートが環境依存で fail-open する」クラス）
+- [x] マージ前の資材横断セルフレビュー（2026-07-12）→ `レビュー/横断セルフレビュー_マージ前_2026-07-12.md`。PR 差分でなく**統合後ツリー全量**（46 ファイル / payload 26）を対象。CRITICAL 0 / IMPORTANT 8 / SUGGESTION 4 / 取り下げ 1。**差分に現れない資材が 3 巡の死角だった**（公開配布物へのマシン固有パス混入・誤配置ガードの非対称・README のコピーリスト欠落 等）。全件修正済み
+- [x] **PR #1 → PR #2 のマージ**（2026-07-13・**merge commit**。`400c904`＝PR#1 / `9458ed3`＝PR#2。squash していないため両ブランチの個別コミットを辿れる）。統合後 `develop` を実測 ―― reports 追跡 0 件／check-assets が作業ツリー・payload とも **exit 0 / FAIL 0**／payload 26 ファイル／`CLAUDE.md`・`.sh`＝LF・`.ps1`＝CRLF+BOM
+- [x] **PR#3 の第三者クロスレビュー**（2026-07-13・**Fable 5 × 3 レーン**＝Python hook／シェル・PowerShell／設定・文書。**成果物の種別ごとに担当を分けた**）→ **CRITICAL 4 件**（**素の cp932 環境で fail-closed が fail-open になる**＝開発機の `PYTHONIOENCODING=utf-8` が症状を隠していた／**`.origin` サイドカー経由の任意パス書き込み**で hook 自身が `permissions.deny` の迂回路になっていた／**ミラー段だけ fail-open で壊れた plugin が push される**／**配布 3 文書の「`.ini` は deny で保護」が虚偽**）。**全件修正・修正後に再検証**（`cafb9bc`）。報告書は `レビュー/Fableクロスレビュー統合_PR3_2026-07-13.md`
+- [x] **Phase 3 実装 → PR#3（`feat/phase3-win-file-policy` → develop）をマージ**（提出 2026-07-13 → **マージ 2026-07-14・merge commit `aac3378`**）。Windows ファイル方針の確定（**一律 UTF-8・CP932 は `.bat` だけの例外**。一律 CP932 は PS7 が CP932 を読めず成立しない）／`.bat` の CP932 ガード（**原本は常に CP932・Claude には UTF-8 の影を見せる**・fail-closed 書き戻し・`permissions.deny` を硬いガードに）／`.gitattributes` の拡張子ベース化／`.ps1` の BOM+CRLF 検査 hook（**Write ツールは BOM も CRLF も保持しない**ことを実測）／root `CLAUDE.md` 書き起こし（案X）／R2-IM-8（`clean-test-env.ps1` の env 復元）／R2-IM-9（`publish-plugin` は防御 7 点を**すべて**欠いていた）／改行検証の数値訂正。R2-IM-11 は PR#1 のセルフレビューで完了済みだった
+- [x] **Phase 4（develop → main ＋ 版 tag）**（2026-07-14）。**merge commit `bb4e2e1`**・annotated tag **`v1.0.0-RC1`**。統合後の main を実測 ―― reports/plans 追跡 0／check-assets が作業ツリー・payload とも **exit 0 / FAIL 0**／payload **28 ファイル**／統制ファイル（`.claude/.gitignore`・`.gitattributes`・`CLAUDE.md`・`hooks/`）が全て payload に同乗。**版数を `v1.0.0` でも `v0.9.0` でもなく RC にした理由**: 残作業は Phase 5a（配線）と Phase 5b（検収）だけで**機能は出揃っており**、「この成果物を 1.0.0 の候補として受入テストにかける」という RC の語義に一致する。受入検証が通れば `v1.0.0` へ昇格、落ちれば RC2
+- [x] **Phase 5a（ルート配布レールの整備・雛型の移管）**（2026-07-14）。C-BCP `aa8389d`＝`start_claude_code.{sh,ps1}`・ルート `.gitattributes`・`CLAUDE.md.sample`・README 更新／C-BDK `a9692d3`（→ main `b4595f1`）＝`CLAUDE.md.example` 削除・README 方法A の張り替え。**雛型を 2 か所に置かない**（片方が必ず陳腐化する）。**受入検証を先取りで実施** ―― `git clone -c core.autocrlf=true` した C-BCP で `.sh`=0 CR・`.ps1`=CRLF+BOM・`bash -n` OK。**対照実験（`.gitattributes` 導入前のコミットは CR 46）で「autocrlf=true が本当に効いている」ことを立証**し、空証明でないことを担保した（確定書 §10-bis）
+- [x] **Phase 5b（公開）＋ Phase 6（v1.0.0 昇格）**（2026-07-14〜15）＝ **リリース完了**。Skills 表同期で payload が変わり **RC2 を切り直して publish**（RC1 では不可）。`/security-review` は W-RBC 差分・C-BDK payload の双方で HIGH/MEDIUM **0 件**。`publish-share --ref v1.0.0-RC2` で C-BDC `8755ec8`（16 ファイル追加・削除 0）→ C-BCP submodule bump `416f588`。**受入検証**（fresh clone `-c core.autocrlf=true --recurse-submodules`）: 対照で autocrlf 実効性を担保（導入前 CR 46）・ルート `.sh`=LF/`.ps1`=CRLF+BOM・submodule payload の hooks 実在・両シェル構文 OK。**C-BDC README を実態同期**（`ad4264e`・keep-list 保護のため直コミット）。受入 pass により **`v1.0.0` を `d9dbd11` へ付与・push**（payload は RC2 と同一＝再 publish 不要）。**3リポ公開: C-BDK `v1.0.0`／C-BDC `ad4264e`／C-BCP `416f588`**
+- [x] **SUGGESTION 級 3 件を解消 → v1.0.1 として配布**（2026-07-20）。R2-S-2（`Write-Error` 自家撞着＝EAP=Stop 下で `exit` 未到達 → `[Console]::Error.WriteLine`+`exit`・**対照実験で旧 `exit 3` が 1 に潰れる未到達を実証**）／R3-S-1（`custom.env` 空値の sh/ps1 非対称を明示警告してスキップ）／R3-S-2（`Get-Content -Encoding UTF8` で PS 5.1 の BOM 無し UTF-8 誤読を**恒久修正**・BOM 無し日本語値の往復をバイト一致で検証）。develop→main `1800601`・tag **`v1.0.1`**・`/security-review` 0 件・`publish-share --ref v1.0.1`→C-BDC `24542c1`・C-BCP は `start_claude_code.ps1` 直コミット＋submodule bump（`a78738b`）・受入検証 pass。**3リポ v1.0.1: C-BDK `v1.0.1`(1800601)／C-BDC `24542c1`／C-BCP `a78738b`(submodule=24542c1)**
+- [x] **§6・§7 の Sonnet 動作検証**（2026-07-20）。Marketplace外資産編 手順書 §6/§7 を Sonnet subagent に実スクリプト・実リポと読み合わせさせ、Opus が独立に裏取りして**文書と実装の乖離 4 件を修正**（手順書 v1.7）: (1) `publish-share` の `--ref` は必須（既定 main は CR-A を機に廃止）・`--share` は任意で、旧版は必須/任意が逆＝過去の CRITICAL 再発を招く記述だった／(2) `<Share.claude>` へ直接 `check-assets` をかけると実在ファイルを誤 FAIL（`.claude` 入れ子なし・実機確認）→ `<Dev>` の payload 経路で担保／(3) §6.2 の 🛠 自動判定を実装に追随（内部成果物混入＝CR-A 対応の中核 等 7 項目追記）／(4) パターンB の `/security-review` は `<Dev>` の publish 対象 ref で実行する旨を補記。なお §6.2 の 🧑（人手目視）列は定義上「Sonnet」検証の対象外で、v1.0.0/v1.0.1 の実リリースと item3 実機検証で既に踏んでいる
+
+> ⚠ **Round 3 の改行検証で使った計測手段が壊れていた**（2026-07-13 発覚・訂正済み）。Git Bash（MSYS）の `grep` / `awk` は CR を数えられず、**間違い方が 2 通りあってどちらも“それらしい値”を返す** ―― `grep -c $'\r'` は**パターンが空になり全行にマッチして総行数**を返し、実 CR をパターンにすると今度は grep が**入力の CR を剥がして常に 0** を返す（`awk '/\r$/'` も同様に 0）。**「大きい数」と「0」の両方が誤りになりうる**ため、before/after を別の書き方で測ると**壊れた計測どうしが「修正が効いた」ように見える**（Round 3 の「CR 50 → 0」がまさにそれ）。**正しいのは `tr -cd '\r' | wc -c` または `git ls-files --eol`**（`grep -U` でも可）。結論（`.sh`=LF / `.ps1`=CRLF+BOM）は再測定で追認済み。詳細は確定書 §10。

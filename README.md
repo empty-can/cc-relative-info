@@ -1,6 +1,6 @@
 # cc-relative-info
 
-Claude Code の利用に役立つ情報を収集・整備するリポジトリ。現在は **LLM 関連情報収集**（公式 `llms.txt` の取り込み・生成）と **Claude Code 拡張の整備** を進めている。
+Claude Code の利用に役立つ情報を収集・整備するリポジトリ。現在は **LLM 関連情報収集**（公式 `llms.txt` の取り込み・生成）、**Claude Code 拡張の整備**、および **`.claude/` チーム共有・統制の調査/設計/運用手順**（`claude-dir-sharing-governance/`）を進めている。
 
 ## 📰 公式ドキュメント更新サマリ
 
@@ -24,9 +24,10 @@ Claude Code の利用に役立つ情報を収集・整備するリポジトリ�
 ## リポジトリ構成
 
 ```
-LLMs/          # LLM 関連情報収集（llms.txt の定期取り込み・生成、更新サマリ）
-Extensions/    # Claude Code 拡張（Skill / Rule / Plugin）のインデックス整備
-.claude/       # 運用設定資産（Skill / Rule / Agent / テンプレート等）
+LLMs/                          # LLM 関連情報収集（llms.txt の定期取り込み・生成、更新サマリ）
+Extensions/                    # Claude Code 拡張（Skill / Rule / Plugin）のインデックス整備
+claude-dir-sharing-governance/ # .claude チーム共有・統制の調査/設計/運用手順（完成版マスタ）
+.claude/                       # 運用設定資産（Skill / Rule / Agent / テンプレート等）
 ```
 
 各フォルダの詳細は配下の `CLAUDE.md` / `README.md` を参照してください。

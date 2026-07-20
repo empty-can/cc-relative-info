@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 リポジトリ名は `cc-relative-info`。リモート `https://github.com/empty-can/cc-relative-info.git`。`develop` ブランチに初回コミット済み。`main` ブランチにはまだコミットなし（`main` への git log 系の調査は空が返る）。
 
-ソースコードを伴う通常のプロジェクトではなく、**`.claude/` 配下の運用設定資産を別リポジトリ `base-dev-kit-for-cc` から純粋に流用した状態のリポジトリ**。よってビルド・テスト・lint コマンドは存在しない。本リポジトリでは現時点で 2 つのコンテンツ整備テーマ（`LLMs/` と `Extensions/`）に着手する方針。各テーマの詳細は各フォルダの `CLAUDE.md` / `README.md` 参照。
+ソースコードを伴う通常のプロジェクトではなく、**`.claude/` 配下の運用設定資産を別リポジトリ `base-dev-kit-for-cc` から純粋に流用した状態のリポジトリ**。よってビルド・テスト・lint コマンドは存在しない。本リポジトリでは現時点で 3 つのコンテンツ整備テーマ（`LLMs/`・`Extensions/`・`claude-dir-sharing-governance/`）に着手する方針。各テーマの詳細は各フォルダの `CLAUDE.md` / `README.md` 参照。`claude-dir-sharing-governance/` は調査用ワークスペース `research-by-cc` から移管した完成版ドキュメントの正本。
 
 ## ブランチ運用ルール（本リポジトリ固有）
 
@@ -45,9 +45,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## トップレベル構造
 
 ```
-.claude/        # 運用設定資産（流用元から流用）。内部構造・詳細は .claude/CLAUDE.md
-Extensions/    # Claude Code 拡張（Skill/Rule/Plugin）のインデックス集約と既存確認の仕組み。詳細は Extensions/CLAUDE.md
-LLMs/          # LLM 関連情報収集（llms.txt 定期取り込み・llms.txt 生成）。詳細は LLMs/CLAUDE.md
+.claude/                        # 運用設定資産（流用元から流用）。内部構造・詳細は .claude/CLAUDE.md
+Extensions/                     # Claude Code 拡張（Skill/Rule/Plugin）のインデックス集約と既存確認の仕組み。詳細は Extensions/CLAUDE.md
+LLMs/                           # LLM 関連情報収集（llms.txt 定期取り込み・llms.txt 生成）。詳細は LLMs/CLAUDE.md
+claude-dir-sharing-governance/  # .claude チーム共有・統制の調査/設計/運用手順の正本（research-by-cc から移管）。詳細は同フォルダ CLAUDE.md
 ```
 
 ## このリポジトリで作業する際の注意
