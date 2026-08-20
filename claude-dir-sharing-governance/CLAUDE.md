@@ -41,7 +41,10 @@
 
 ## 参照リソース
 
-- **本文の根拠**: Claude Code 公式ドキュメント `cc-relative-info\LLMs\official-llms-txts\code.claude.com\docs\llms-full.txt`（CLI v2.1.165 相当。報告書の出典一覧の行番号はこのファイルの絶対行番号）。
+- **本文の根拠（2 つの版が混在。2026-08-20 更新）**:
+  - **出典 `[1]`〜`[75]`（据え置き）**: `cc-relative-info\LLMs\official-llms-txts\code.claude.com\docs\llms-full.txt`（**CLI v2.1.165 相当・2026-06-05 取込で凍結**。報告書の出典一覧の行番号はこのファイルの絶対行番号）。⚠ **このパスは更新が止まっている**（LLMs 資産の定期取り込みは別リポジトリへ移管済み）。**行番号の照合をやり直すときはこの凍結コピーを使う**。
+  - **出典 `[76]`〜（2026-08-20 の最新化で追加）**: `C:\cc-workspace\LLMs\official-llms-txts\code.claude.com\docs\llms-full.txt`（**CLI v2.1.235 相当・2026-08-19 取込**＝**定期取り込みが継続している現行の正**）。**行番号ではなくページ名＋セクション見出しで参照**する（行番号は次回取り込みでズレるため）。
+  - **次に最新化するときも、比較基準は `C:\cc-workspace\LLMs\` 側の最新取込を使うこと**（`cc-relative-info\LLMs\` 側ではない）。
 - **精読の根拠**（中間成果物・workspace 保管）: `.claude/workspace/portable-claude-dir-sharing/intermediate-reports/01〜07-*.md`（7 Agent によるページ別精読結果）。
 - **改訂経緯の凍結スナップショット**（workspace 保管）: `.claude/workspace/portable-claude-dir-sharing/結論・構成案_…_v2.0〜v2.6.md`（reports/ 昇格前の版。Git 履歴と併せて経緯を追える）。
 
@@ -79,5 +82,16 @@
 - [x] **Phase 5b（公開）＋ Phase 6（v1.0.0 昇格）**（2026-07-14〜15）＝ **リリース完了**。Skills 表同期で payload が変わり **RC2 を切り直して publish**（RC1 では不可）。`/security-review` は W-RBC 差分・C-BDK payload の双方で HIGH/MEDIUM **0 件**。`publish-share --ref v1.0.0-RC2` で C-BDC `8755ec8`（16 ファイル追加・削除 0）→ C-BCP submodule bump `416f588`。**受入検証**（fresh clone `-c core.autocrlf=true --recurse-submodules`）: 対照で autocrlf 実効性を担保（導入前 CR 46）・ルート `.sh`=LF/`.ps1`=CRLF+BOM・submodule payload の hooks 実在・両シェル構文 OK。**C-BDC README を実態同期**（`ad4264e`・keep-list 保護のため直コミット）。受入 pass により **`v1.0.0` を `d9dbd11` へ付与・push**（payload は RC2 と同一＝再 publish 不要）。**3リポ公開: C-BDK `v1.0.0`／C-BDC `ad4264e`／C-BCP `416f588`**
 - [x] **SUGGESTION 級 3 件を解消 → v1.0.1 として配布**（2026-07-20）。R2-S-2（`Write-Error` 自家撞着＝EAP=Stop 下で `exit` 未到達 → `[Console]::Error.WriteLine`+`exit`・**対照実験で旧 `exit 3` が 1 に潰れる未到達を実証**）／R3-S-1（`custom.env` 空値の sh/ps1 非対称を明示警告してスキップ）／R3-S-2（`Get-Content -Encoding UTF8` で PS 5.1 の BOM 無し UTF-8 誤読を**恒久修正**・BOM 無し日本語値の往復をバイト一致で検証）。develop→main `1800601`・tag **`v1.0.1`**・`/security-review` 0 件・`publish-share --ref v1.0.1`→C-BDC `24542c1`・C-BCP は `start_claude_code.ps1` 直コミット＋submodule bump（`a78738b`）・受入検証 pass。**3リポ v1.0.1: C-BDK `v1.0.1`(1800601)／C-BDC `24542c1`／C-BCP `a78738b`(submodule=24542c1)**
 - [x] **§6・§7 の Sonnet 動作検証**（2026-07-20）。Marketplace外資産編 手順書 §6/§7 を Sonnet subagent に実スクリプト・実リポと読み合わせさせ、Opus が独立に裏取りして**文書と実装の乖離 4 件を修正**（手順書 v1.7）: (1) `publish-share` の `--ref` は必須（既定 main は CR-A を機に廃止）・`--share` は任意で、旧版は必須/任意が逆＝過去の CRITICAL 再発を招く記述だった／(2) `<Share.claude>` へ直接 `check-assets` をかけると実在ファイルを誤 FAIL（`.claude` 入れ子なし・実機確認）→ `<Dev>` の payload 経路で担保／(3) §6.2 の 🛠 自動判定を実装に追随（内部成果物混入＝CR-A 対応の中核 等 7 項目追記）／(4) パターンB の `/security-review` は `<Dev>` の publish 対象 ref で実行する旨を補記。なお §6.2 の 🧑（人手目視）列は定義上「Sonnet」検証の対象外で、v1.0.0/v1.0.1 の実リリースと item3 実機検証で既に踏んでいる
+
+- [x] **公式ドキュメント最新版（CLI v2.1.235 相当・2026-08-19 取込）との全面照合・最新化**（2026-08-20）。前回の全面照合（2026-06-29・v2.1.195）以降の差分が対象。**Opus/Sonnet の SubAgent を「観点内包・文書群別」で 6 体並列**（変更インベントリ作成／v1.2＝Opus／02.Plugin編／02.Marketplace外資産編／03 テンプレート／04 インベントリ群／横断改善提案＝Opus）＋適用 3 体。**検出 80 件**。主な結果:
+  - **層3 が 2 系統 → 3 系統に**: 自ホスト型 **Claude apps gateway** が remote managed-settings の同等配信として公式化され、**「Bedrock 等の第三者プロバイダは endpoint-managed 一択」という v1.0 以来の結論を撤回**（ブートストラップのみ endpoint-managed に残る形へ訂正）
+  - **`--add-dir` の例外ロードに `commands/` が追加**。J1 で作った「正本一元化」が設計どおり機能し、**正本（v1.2 付録B）1 箇所の更新を 4 文書へ同期**できた
+  - **`workflows/` が plugin の正規コンポーネントへ昇格** → マトリクス④「層1 でのみ配布できる資産」は `agent-memory/` のみに縮小
+  - **v2.1.195 で commit 配布の挙動が変化**（marketplace は無プロンプト追加・外部ソース plugin は install を促されず「未インストール」報告のみ）→ 案B の前提が崩れていた
+  - **付録A のキー名に実害のある誤り**（`filesystem.allowManagedReadPathsOnly` は `sandbox.` 接頭辞が正）を訂正し、「全件一覧」という宣言を撤回
+  - **⚠ 実装テンプレート（層1+2）に CRITICAL な構造不整合**: `marketplace/.claude-plugin/` と `plugins/` を兄弟に置いていたため相対 `source` が解決できず、**コピーして公開すると `/plugin install` が失敗する**状態だった。`.claude-plugin/` を `layer2-plugin/` 直下へ移して修正。**`claude plugin validate`（`--strict` 含む）はこの欠陥を検出しない**ことを対照実験で実測——**下記のタスク進行状況にある「marketplace validate ともにパス」（2026-06-22）は空証明だった**。以後、相対パス `source` の検証は `marketplace add` → `install` まで通すこと
+  - **`tools: Bash(git status:*)` 形式は subagent では効かない**（`tools` は厳密なツール名か `mcp__` パターンのみ解釈）。テンプレの `code-reviewer` を修正。**本リポジトリ `.claude/agents/code-reviewer.md` も同じ書き方なので要見直し**（本テーマのスコープ外）
+  - **出典の版が混在する形式へ移行**: 既存 `[1]`〜`[75]` は v2.1.165 版の行番号のまま据え置き、新規 `[76]`〜`[97]` は **v2.1.235 版のページ名＋セクション見出し**で付番（行番号は次回取り込みでズレるため）
+  - **⚠ 作業中に LF→CRLF の退行を 1 件出した**（Python の text mode で一括置換した README。`tr -cd '\r' | wc -c` で検出し LF へ戻し、`git ls-files --eol` で全 45 ファイル `i/lf w/lf` を確認）。**確定書 §10 の教訓がそのまま再現した**——一括置換にはバイトモードを使うこと
 
 > ⚠ **Round 3 の改行検証で使った計測手段が壊れていた**（2026-07-13 発覚・訂正済み）。Git Bash（MSYS）の `grep` / `awk` は CR を数えられず、**間違い方が 2 通りあってどちらも“それらしい値”を返す** ―― `grep -c $'\r'` は**パターンが空になり全行にマッチして総行数**を返し、実 CR をパターンにすると今度は grep が**入力の CR を剥がして常に 0** を返す（`awk '/\r$/'` も同様に 0）。**「大きい数」と「0」の両方が誤りになりうる**ため、before/after を別の書き方で測ると**壊れた計測どうしが「修正が効いた」ように見える**（Round 3 の「CR 50 → 0」がまさにそれ）。**正しいのは `tr -cd '\r' | wc -c` または `git ls-files --eol`**（`grep -U` でも可）。結論（`.sh`=LF / `.ps1`=CRLF+BOM）は再測定で追認済み。詳細は確定書 §10。

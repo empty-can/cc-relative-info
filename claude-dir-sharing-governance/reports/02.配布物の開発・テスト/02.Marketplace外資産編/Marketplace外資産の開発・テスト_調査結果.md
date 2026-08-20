@@ -1,4 +1,4 @@
-# Marketplace 外資産（CLAUDE.md / rules / settings 等）の開発・テスト — 調査結果（v1.0）
+# Marketplace 外資産（CLAUDE.md / rules / settings 等）の開発・テスト — 調査結果（v1.6）
 
 > - **想定読者**: Marketplace（層2）で配れない config 資産（`CLAUDE.md` / `.claude/rules/` / `settings.json` / skills / agents）を、config・テンプレートリポジトリ（層1）や managed settings（層3）でチームへ配るチームの開発担当者。「これら資産をどこで・どう開発・テストするか」を知りたい読み手。
 > - **位置づけ**: 「ポータブルな `.claude/` のチーム共有・統制」調査の **タスク02（配布物の開発・テスト）第2フェーズ**。第1フェーズ（[Plugin・Marketplace 編](../01.Plugin・Marketplace編/Plugin・Marketplace配布物の開発・テスト_調査結果.md)）の続編で、**層2 で運べない資産**側を扱う。配布メカニズム自体は [v1.2 §解決案 案A/C/D](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md) が確定済みで、本書はその**開発・テスト方法**に絞る。
@@ -17,8 +17,8 @@
 
 - **開発** = config・テンプレートリポジトリ（ローカル）に資産を**素直に書く**だけ。「plugin 化」のような変換工程は無い。
 - **テスト** = 2通り。
-  - **(A) ネイティブ確認（スモーク）**: `<Share>`（開発中は `<Dev>`）で Claude Code を起動し、`/memory`・`/context`・`/status`・`/doctor` で「**ロードされたか・発火するか**」を確認する。ただし `<Share>` には操作対象の実ファイルが無いため**機能の正否までは検証できない**（`--add-dir` で結合できない `commands`/`output-styles`/`hooks` の唯一の検証手段ではある）。
-  - **(B) 結合テスト（公開前の正式機能検証の本命）**: 作業リポ `<Other>` と**結合**し、実コード・ファイルに対して資産を働かせる。手段は資産で割れる——skills/agents は `--add-dir`、`CLAUDE.md`/`rules` は `--add-dir` ＋環境変数、`settings.json` は `--settings`（[§2](#combine)）。**`<Other>` 自身の `.claude` も混ざる**ため、`/memory`・`/skills`・`/agents` で何がどこから読まれたか目視する（混入を断つには `.claude` の無い空作業 dir から `--add-dir`＝クリーン隔離 [§4](#clean)）。
+  - **(A) ネイティブ確認（スモーク）**: `<Share>`（開発中は `<Dev>`）で Claude Code を起動し、`/memory`・`/context`・`/status`・`/doctor` で「**ロードされたか・発火するか**」を確認する。ただし `<Share>` には操作対象の実ファイルが無いため**機能の正否までは検証できない**（`--add-dir` で結合できない `output-styles`/`hooks` の唯一の検証手段ではある。`commands` は **v2.1.235 版(2026-08-19)** から `--add-dir` で結合可能になったためこのグループから外れた／後述）。
+  - **(B) 結合テスト（公開前の正式機能検証の本命）**: 作業リポ `<Other>` と**結合**し、実コード・ファイルに対して資産を働かせる。手段は資産で割れる——skills/agents は `--add-dir`、`CLAUDE.md`/`rules` は `--add-dir` ＋環境変数、`settings.json` は `--settings`（[§2](#combine)）。**`<Other>` 自身の `.claude` も混ざる**ため、`/memory`・`/skills`・`/context` で何がどこから読まれたか目視する（**v2.1.198 以降 `/agents` は subagent 一覧を表示しなくなった**ため、custom subagents をロード元パス付きで表示する `/context` が代わりの目視手段になる。混入を断つには `.claude` の無い空作業 dir から `--add-dir`＝クリーン隔離 [§4](#clean)）。
 - **隔離** = 自分の通常設定の影響を切るには `CLAUDE_CONFIG_DIR` を空ディレクトリに向けた**クリーンセッション**で検証する（[§4](#clean)）。
 
 「公開の配布用リポジトリと開発・テストリポジトリは別（後者はローカル）／テストは `--add-dir` 等で結合して実施」という当初の作業仮説は、**skills・subagents・CLAUDE.md・rules については正しい**。一方 `settings.json`（permissions/hooks 等）は `--add-dir` では結合されず `--settings` という別経路になる点が、plugin 編との最大の差である。
@@ -62,13 +62,14 @@
 | `settings.json` / `settings.local.json` の `enabledPlugins` / `extraKnownMarketplaces` | **`--add-dir <Share>`** | **この2キーのみ**読まれる |
 | `CLAUDE.md` / `.claude/rules/` / `CLAUDE.local.md` | **`--add-dir <Share>` ＋ `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1`** | 環境変数が `1` の時のみ。`CLAUDE.local.md` は `local` setting source（既定有効）も条件 |
 | `settings.json`（permissions / hooks / env 等のその他キー） | **`--settings <Share>/.claude/settings.json`** | `--add-dir` では読まれない。command-line precedence でマージ（[§優先順位](#precedence)） |
-| `commands/` / `output-styles/` / `hooks`（settings 内） | **結合不可** | `--add-dir` 先からはロードされない。物理配置か `<Share>` で直接起動する |
+| `commands/`（`.claude/commands/`） | **`--add-dir <Share>`** | **v2.1.235 版(2026-08-19) で新規に例外ロード対象へ追加**（live reload なし・再起動が要る）。`<Share>` と `<Other>` の両方に同名コマンドがある場合は **`<Other>`（参照元プロジェクト）側が優先**される |
+| `output-styles/` / `hooks`（settings 内） | **結合不可** | `--add-dir` 先からはロードされない。物理配置か `<Share>` で直接起動する |
 
 > **正本**: 版依存の事実（subagents の版境界・`settings.local.json` を含む2キー例外）は [v1.2 付録B『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions) を正とする（本表は運用早見）。
 
 > **`--add-dir` フラグ／`/add-dir` コマンド限定**。`permissions.additionalDirectories` 設定経由では**ファイルアクセス付与のみ**で、上記の自動ロードは一切起きない（`docs/permissions`）。
 >
-> **plugin 編との最大差**: plugin のテストは `--plugin-dir` 一本で完結したが、config 資産は **skills/agents（`--add-dir`）・CLAUDE.md/rules（`--add-dir`＋環境変数）・settings.json（`--settings`）の3経路**を使い分ける。`commands`/`output-styles`/`hooks` は結合手段が無く、テストするなら `<Share>` で直接起動するのが確実。
+> **plugin 編との最大差**: plugin のテストは `--plugin-dir` 一本で完結したが、config 資産は **skills/agents/commands（`--add-dir`）・CLAUDE.md/rules（`--add-dir`＋環境変数）・settings.json（`--settings`）の3経路**を使い分ける。`output-styles`/`hooks` は結合手段が無く、テストするなら `<Share>` で直接起動するのが確実。
 
 <a id="adddir-memory-range"></a>
 
@@ -107,22 +108,24 @@ config 資産が**実際にロード・適用されたか**を確認する公式
 
 | 手段 | 何を確認できるか | 出典ページ |
 |---|---|---|
-| **`/memory`** | 現在ロードされている `CLAUDE.md` / `CLAUDE.local.md` / rules ファイルの一覧＋auto memory。auto memory のトグルも | `docs/memory` / `docs/debug-your-config` |
-| **`/context`** | コンテキストウィンドウの内訳（system prompt・memory files・skills・MCP tools・会話）。**CLAUDE.md/rules/skill description が"そもそも入っているか"を最初に確認**するのに最適 | `docs/debug-your-config` |
+| **`/memory`**（⚠v2.1.235 版(2026-08-19)で仕様変更） | **「ロード済み一覧」ではなく「置き場所一覧」**——user/project スコープの CLAUDE.md・CLAUDE.local.md・rules 等の所在を、**未作成のファイルも含めて**列挙し編集導線を提供する。auto memory のトグルも。**実際にセッションへロードされたかの確認は `/context` が正** | `docs/memory` / `docs/debug-your-config` |
+| **`/context`** | コンテキストウィンドウの内訳（system prompt・system tools・MCP tools・**custom subagents（ロード元パス付き）**・memory files・skills・会話）。**CLAUDE.md/rules/skill description が"そもそも入っているか"を最初に確認**するのに最適。**ロードされた subagent とその読込元パスの確認手段としても使う**（`/agents` の代替・後述） | `docs/debug-your-config` |
 | **`/status`**（Status タブ） | `Setting sources` 行＝ロードされた settings レイヤ一覧（`User settings`・`Project local settings` 等）。managed は配信チャネルを括弧表示（`(remote)`/`(plist)`/`(HKLM)`/`(HKCU)`/`(file)`）。**設定ファイルのエラーも報告**。※どのレイヤが個別キーを供給したかは出ない | `docs/settings` |
-| **`/doctor`**（`claude doctor` CLI も） | 設定ファイルを**バリデーション**し、無効キー・schema エラーを表面化。`f` キーで Claude に修正させられる | `docs/debug-your-config` / `docs/setup` |
+| **`/doctor`**（`claude doctor` CLI も） | 設定ファイルを**バリデーション**し、無効キー・schema エラーを表面化。検出結果を提示したうえで、修正内容を確認してから適用（**Before v2.1.205 は `f` キーで Claude に送信する方式だったが、現行は廃止済み**）。あわせて**同一ディレクトリ内の同名 subagent 定義**を検出し、リネーム/削除を提案する | `docs/debug-your-config` / `docs/setup` / `docs/sub-agents` |
 | **`/skills`** | 利用可能 skill 一覧（project/user/plugin ソース）。バッジで `user-only` 等を識別。`t` でトークン数ソート | `docs/debug-your-config` / `docs/commands` |
-| **`/agents`** | 構成済み subagent 一覧と設定 | `docs/debug-your-config` |
+| **`/agents`**（⚠v2.1.198+で仕様変更） | **v2.1.197 以前**は構成済み subagent 一覧と設定を表示。**v2.1.198 以降は一覧を表示せず**、`.claude/agents/` を直接編集するよう促すリマインダーのみを表示する。**ロード済み subagent と読込元パスの確認は `/context`（custom subagents をソース付きで表示）を使う** | `docs/debug-your-config` / `docs/sub-agents` |
 | **`InstructionsLoaded` hook** | **どの指示ファイルが・いつ・なぜロードされたかをログ**。path-specific rules やサブディレクトリの遅延ロード `CLAUDE.md` のデバッグに有用 | `docs/memory` / `docs/hooks` |
 | **`ConfigChange` hook** | settings 再読込のたびに発火（変更検出のフック） | `docs/settings` / `docs/hooks` |
 
-> **スコープ可視性の限界**: `/memory` はロード済みファイルを一覧するがスコープ"ラベル"は明示されない（パスから間接判断）。`/status` の `Setting sources` は"どのレイヤが読まれたか"は示すが"どのキーをどのレイヤが供給したか"は示さない。個別キーの出所を厳密に追うなら `InstructionsLoaded`/`ConfigChange` hook でログを取る。
+> **スコープ可視性の限界**: `/memory` は置き場所を一覧するがスコープ"ラベル"は明示されない（パスから間接判断）。`/status` の `Setting sources` は"どのレイヤが読まれたか"は示すが"どのキーをどのレイヤが供給したか"は示さない。個別キーの出所を厳密に追うなら `InstructionsLoaded`/`ConfigChange` hook でログを取る。
 
 ---
 
 <a id="clean"></a>
 
 ## 4. クリーン設定での隔離テスト
+
+> **一次切り分け（v2.1.235 版(2026-08-19) で新設）**: 新設の `claude --safe-mode`（全カスタマイズ無効化・managed settings は適用継続）を先に試し、`<Share>` 側の問題を疑う場合のみ本節の `CLAUDE_CONFIG_DIR` 手順に進むと検証が速い。詳細は本節末尾を参照。
 
 自分の通常の `~/.claude` / project 設定の影響を切り離して「**配る資産だけ**」を検証する公式手順（`docs/debug-your-config`）:
 
@@ -135,6 +138,14 @@ cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean claude
 - **注意点**: (1) **managed settings は system パスにあるため、クリーンセッションでも適用され続ける**。(2) Linux/Windows は認証情報が config dir 配下のため**再ログインが要る**。(3) macOS は Keychain 保管で引き継がれる。
 
 > 配布する `<Share>` の検証は、**クリーンな `CLAUDE_CONFIG_DIR` ＋ `<Share>` から起動（または `--add-dir`/`--settings` で結合）**すると、「自分の個人設定が混ざって誤って動いて見える」事故を避けられる。手順書 `scripts/clean-test-env.{sh,ps1}` が自動化する。
+
+### `--safe-mode` による一次切り分け（一段構え目）
+
+`claude --safe-mode` は、CLAUDE.md・skills・plugins・hooks・MCP サーバー・custom commands/agents・output styles・workflows・custom themes・custom keybindings・status line/file-suggestion コマンド・LSP サーバー・auto memory を**すべて無効化**して起動する（認証・モデル選択・組み込みツール・permissions は通常通り動作）。**managed settings のポリシー（managed hooks・status line 等）は適用され続け**、managed plugins/skills/CLAUDE.md/MCP のみ無効化される。
+
+- `--safe-mode` は「セッションの全カスタマイズを切る」だけで、**`<Other>` や `~/.claude` からの完全分離はしない**（`CLAUDE_CONFIG_DIR` のように別ディレクトリへ切り替えるわけではなく、同一セッション内でロードを止めるだけ）。したがって `<Share>` 由来かどうかの**手早い一次切り分け**には向くが、`CLAUDE_CONFIG_DIR` クリーンセッションの完全な代替にはならない。
+- 二段構えの運用: **まず `--safe-mode`** で「何らかのカスタマイズが悪さをしていないか」を素早く確認し、**それでも切り分かなければ `CLAUDE_CONFIG_DIR` の完全クリーンセッション**（本節の手順）に進む。
+- 出典: `docs/cli-reference`「`--safe-mode`」行 ／ `docs/debug-your-config`「Test against a clean configuration」節（**v2.1.235 版(2026-08-19)**）。
 
 ---
 
@@ -164,11 +175,12 @@ config 資産をテストする際、**「リポに commit したのに効かな
   - `skipDangerousModePermissionPrompt` … project settings で無視
   - `autoMode` / `useAutoModeDuringPlan` … shared project settings からは読まれない
   （出典: `docs/settings` / `docs/permission-modes`）
-- **`--add-dir` の非カバー**: `commands`/`output-styles`/`hooks`/`settings.json` の大半は `--add-dir` 先から読まれない（[§2](#combine)）。これらを「`--add-dir` で結合したのに動かない」と誤解しないこと。テストは `<Share>` で直接起動するか物理配置で。
+- **`--add-dir` の非カバー**: `output-styles`/`hooks`/`settings.json` の大半は `--add-dir` 先から読まれない（[§2](#combine)）。これらを「`--add-dir` で結合したのに動かない」と誤解しないこと。テストは `<Share>` で直接起動するか物理配置で。**`commands` は v2.1.235 版(2026-08-19) から `--add-dir` の例外ロード対象に加わった**（live reload なし）ため、このグループからは外れる（[§2](#combine)）。
 - **`permissions.additionalDirectories` 経由は自動ロードしない**: 同じ追加ディレクトリでも、`--add-dir` フラグ／`/add-dir` コマンドなら skills 等を読むが、`additionalDirectories` 設定値経由ではファイルアクセス付与のみ。
 - **`settings.local.json` を共有資産にしない**: project 個人・gitignore 専用（`--add-dir` で読まれるのは `enabledPlugins`/`extraKnownMarketplaces` の2キーのみで、それ以外は読まれない）。配布 clone（`<Share>`）に置かない（`CLAUDE.local.md` と同じアンチパターン）。共有したい設定は `settings.json` へ。
   - **配布されるのは Git 追跡分のみ**: `<Share>` が git リポジトリなら、漏洩可否を分けるのは「ローカルに実在するか」ではなく「**Git 追跡されているか**」。gitignore 済みで未追跡の個人ファイル（`settings.local.json`/`CLAUDE.local.md`）は、作業ツリーに実在しても clone には乗らない＝参照側へ漏れない（ただし掃除は推奨）。逆に**誤って追跡してしまった個人ファイルは漏れる**ため `git rm --cached` ＋ `.gitignore` で外す。`check-assets`（`scripts/`・手順書 §6）はこの**追跡基準**で判定する（追跡＝FAIL／未追跡で実在＝WARN／不在＝PASS。非 git の素ディレクトリのみ実在＝FAIL）。
-- **同名衝突は警告なく解決される**: 方法B では `<Other>` 自身の `.claude` も同時にロードされ、`<Share>` の資産と混ざる。同一スコープに同名の subagent/skill があると Claude Code は**警告・プロンプトなしで片方を残し他方を破棄**する（`docs/sub-agents`）。混入はエラー検知に頼れないので、`/memory`・`/skills`・`/agents`・`/context` で**何がどのパスから読まれたかを目視**する。`<Share>` 単独で検証したいなら `.claude` の無い空作業 dir から `--add-dir`（クリーン隔離 [§4](#clean)）。
+- **同名衝突は警告なく解決される**: 方法B では `<Other>` 自身の `.claude` も同時にロードされ、`<Share>` の資産と混ざる。同一スコープに同名の subagent/skill があると Claude Code は**警告・プロンプトなしで片方を残し他方を破棄**する（`docs/sub-agents`）。混入はエラー検知に頼れないので、`/memory`・`/skills`・`/context` で**何がどのパスから読まれたかを目視**する（**v2.1.198 以降 `/agents` は subagent 一覧を表示しないため、ロード元パス付きで custom subagents を表示する `/context` を使う**）。`<Share>` 単独で検証したいなら `.claude` の無い空作業 dir から `--add-dir`（クリーン隔離 [§4](#clean)）。
+  - **v2.1.235 版(2026-08-19) での部分自動化**: 現行の `/doctor` は**同一ディレクトリ内**の同名 subagent 定義を検出し、リネーム/削除を提案するようになった（`docs/sub-agents`）。ただし検出範囲は同一ディレクトリ内に限られ、`<Other>/.claude/agents/` と `--add-dir <Share>/.claude/agents/` のような**スコープをまたぐ衝突は対象外**。したがって上記の `/context` 目視確認は引き続き必要。
 
 ---
 
@@ -180,7 +192,7 @@ config 資産をテストする際、**「リポに commit したのに効かな
 
 - **配信チャネルの確認**: `/status` の `Setting sources` 行に `Enterprise managed settings (remote)`/`(plist)`/`(HKLM)`/`(HKCU)`/`(file)` と表示され、**どの方式で managed settings が届いているか**を確認できる（`docs/settings` / `docs/admin-setup`）。
 - **クリーンセッションでも適用される**: managed settings は system パスにあるため `CLAUDE_CONFIG_DIR` で隔離しても残る（[§4](#clean)）。テスト時はこれを織り込む。
-- **server-managed の承認ダイアログ**: shell コマンド系設定・未知の環境変数・hook 定義を含む managed settings は、適用前に**ユーザー承認ダイアログ**が出る（拒否すると Claude Code は終了）。`-p`（非対話）では**ダイアログをスキップして承認なしで適用**される（`docs/server-managed-settings`）。
+- **server-managed の承認ダイアログ**: shell コマンド系設定・未知の環境変数・hook 定義を含む managed settings は、適用前に**ユーザー承認ダイアログ**が出る（拒否すると Claude Code は終了）。`-p`（非対話）では**ダイアログをスキップし、その実行限りで適用**される。**v2.1.207 以降は承認として記録・キャッシュされないため、次の対話セッションでは改めてダイアログが出る**（v2.1.207 より前は非対話実行が承認として保存され、以後の対話セッションでダイアログが出なくなっていた）。**CI の `-p` 実行で対話側の承認を代替することはできない**点に注意（`docs/server-managed-settings`「Approval memory」節）。
 - **auto mode ルールの確認**: `claude auto-mode config`（展開後の適用ルールを JSON 出力）／`claude auto-mode defaults`／`claude auto-mode critique`（カスタムルールのレビュー）。
 
 ---
@@ -191,7 +203,7 @@ config 資産をテストする際、**「リポに commit したのに効かな
 
 - 本書は v1.2 §解決案 **案A（層1 commit/テンプレート）・案C（`--add-dir`）** の**開発・テスト運用面**を埋めるもの。v1.2 案A パターン2（共通リポ `<Share>` を clone ＋起動オプションで読込）が、そのまま本書の**結合テスト構成**に対応する（テスト用の結合＝そのまま配布運用にも使える）。
 - 第1フェーズ（plugin）との統合像: **「機能・拡張資産は plugin 化して `--plugin-dir` でテスト」「config/ガバナンス資産はネイティブロードで `/memory`・`/status`・`/doctor` で検証」**——資産特性で開発・テストの型が分かれる。両者をまたぐ skills/agents は、plugin 同梱なら `--plugin-dir`、層1 単体なら `--add-dir`、と配布チャネルに応じてテスト手段も変わる。
-- **作業仮説の確定**: 「配布用リポと開発・テストリポは別（後者ローカル）／`--add-dir` で結合してテスト」は、**skills・subagents・CLAUDE.md・rules で成立**。`settings.json` は `--settings`、`commands`/`output-styles`/`hooks` は結合不可で直接起動、という差を本書で確定した。
+- **作業仮説の確定**: 「配布用リポと開発・テストリポは別（後者ローカル）／`--add-dir` で結合してテスト」は、**skills・subagents・CLAUDE.md・rules で成立**。`settings.json` は `--settings`、`output-styles`/`hooks` は結合不可で直接起動、という差を本書で確定した（`commands` は v2.1.235 版(2026-08-19) から `--add-dir` の例外ロード対象に加わったため、この「結合不可」グループからは外れた。[§2](#combine)）。
 
 ---
 
@@ -224,7 +236,7 @@ config 資産をテストする際、**「リポに commit したのに効かな
 
 - リポ固有情報を `README.md` に隔離 → `--add-dir <Share>`＋環境変数でも**共通ルールだけ**が `<Other>` に届く（[§memory ロード範囲](#adddir-memory-range)）。
 - `<Other>` の起動ランチャーに `--add-dir <Share>` ・ `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` ・必要なら `--settings <Share>/.claude/settings.json` を仕込む（v1.2 案A パターン2 / 案C）。
-- 公開前検証は `<Other>` 側で `/memory`・`/context`・`/status` を見て、`<Share>` 由来のファイル・レイヤがロードされているか確認（[§3](#verify)）。`commands`/`output-styles`/`hooks` は `--add-dir` で届かないため、それらは `<Share>` で直接起動して検証。
+- 公開前検証は `<Other>` 側で `/memory`・`/context`・`/status` を見て、`<Share>` 由来のファイル・レイヤがロードされているか確認（[§3](#verify)）。`output-styles`/`hooks` は `--add-dir` で届かないため、それらは `<Share>` で直接起動して検証（`commands` は v2.1.235 版(2026-08-19) から `--add-dir` で届くようになった）。
 - **公開前の必須ゲート（衛生＋脆弱性）**: push 前に **`check-assets`（衛生・シェル/CI）と `/security-review`（脆弱性・Claude セッション内）の両方を必須**で通す。`/security-review` は「現在ブランチの差分への read-only なセキュリティパス」（`docs/security-guidance` のレイヤ表 "On demand"）で、**コードを含まない資産に走らせても read-only・findings ゼロで弊害が無い**ため、実行漏れ防止のため常に実行する。効きが高いのは同梱スクリプト・hooks（実行コード）。check-assets（衛生）とは役割が別の補完。
 
 ---
@@ -237,24 +249,34 @@ config 資産をテストする際、**「リポに commit したのに効かな
 
 | # | 主張 | ページ |
 |---|---|---|
-| C1 | `/memory`＝ロード済み CLAUDE.md/CLAUDE.local.md/rules 一覧＋auto memory トグル | `docs/memory` / `docs/debug-your-config` |
-| C2 | `/context`＝コンテキスト内訳（system prompt/memory/skills/MCP/会話） | `docs/debug-your-config` |
+| C1 | `/memory`＝ロード済み CLAUDE.md/CLAUDE.local.md/rules 一覧＋auto memory トグル ／ **v2.1.235 版(2026-08-19)**: `/memory` は「ロード済み一覧」ではなく**未作成ファイルも含む置き場所一覧**（＋編集導線）に変化。実際にロードされたかの確認は `/context` が正 | `docs/memory`「View and edit with /memory」節 / `docs/debug-your-config`「See what loaded into context」節 |
+| C2 | `/context`＝コンテキスト内訳（system prompt/memory/skills/MCP/会話） ／ **v2.1.235 版(2026-08-19)**: custom subagents をロード元パス付きで表示する項目が追加された | `docs/debug-your-config`「See what loaded into context」節 |
 | C3 | `/status` の `Setting sources` 行＝ロード済み settings レイヤ＋managed 配信チャネル表示。個別キーの出所は非表示 | `docs/settings` / `docs/admin-setup` |
-| C4 | `/doctor`（`claude doctor`）＝設定ファイルの schema/無効キー検査・`f` で修正 | `docs/debug-your-config` / `docs/setup` |
-| C5 | `/skills`（バッジで user-only 等）・`/agents`・`/help`・`/` フィルタ | `docs/debug-your-config` / `docs/commands` |
+| C4 | `/doctor`（`claude doctor`）＝設定ファイルの schema/無効キー検査・`f` で修正 ／ **v2.1.235 版(2026-08-19)**: `f` キー方式は Before v2.1.205 の廃止済み挙動と明記。現行は検出結果を提示→確認のうえ適用。あわせて同一ディレクトリ内の同名 subagent 定義を検出しリネーム/削除を提案する機能が追加 | `docs/debug-your-config` / `docs/setup` / `docs/commands`「All commands」`/doctor` 行 / `docs/sub-agents`「Manage subagents」節 |
+| C5 | `/skills`（バッジで user-only 等）・`/agents`・`/help`・`/` フィルタ ／ **v2.1.235 版(2026-08-19)**: `/agents` は v2.1.198 以降、一覧表示をやめ `.claude/agents/` の直接編集を促すリマインダーのみを表示するよう変更された。ロード元パス付きの subagent 確認は `/context` を使う | `docs/debug-your-config` / `docs/commands` / `docs/sub-agents`「Manage subagents」節 |
 | C6 | `InstructionsLoaded` hook＝どの指示ファイルが・いつ・なぜロードされたかログ。`ConfigChange` hook＝settings 再読込で発火 | `docs/memory` / `docs/hooks` / `docs/settings` |
 | C7 | クリーンテスト＝`CLAUDE_CONFIG_DIR` を空 dir に向け `.claude` 無し dir から起動。managed は残る・Linux/Win 再ログイン・mac は Keychain 継承 ／ **実機確認 v1.3**: `--debug-file` でクリーン起動の watch 対象は空 config の `settings.json` **のみ**＝個人 `~/.claude`・project・local を排除を実証。`C:\Program Files\ClaudeCode\managed-settings.json` は継続探索（managed 残存）。auth 非継承で `Not logged in`＝Win 再ログイン要を裏取り | `docs/debug-your-config` / `docs/env-vars` |
 | C8 | settings はファイル監視で即時反映（brief delay）／`model`・`outputStyle` は再起動側／環境変数は起動時のみ／skills ホットリロード・`/reload-skills` | `docs/settings` / `docs/env-vars` / `docs/commands` |
-| C9 | `--add-dir` 例外ロード表（skills/subagents〔**v2.1.178+**。v2.1.165 までは非ロード〕/`enabledPlugins`・`extraKnownMarketplaces`/環境変数で CLAUDE.md・rules）。`additionalDirectories` 設定経由はファイルアクセスのみ | `docs/permissions` / `docs/sub-agents` |
+| C9 | `--add-dir` 例外ロード表（skills/subagents〔**v2.1.178+**。v2.1.165 までは非ロード〕/`enabledPlugins`・`extraKnownMarketplaces`/環境変数で CLAUDE.md・rules）。`additionalDirectories` 設定経由はファイルアクセスのみ ／ **v2.1.235 版(2026-08-19)**: `commands/`（`.claude/commands/`）が例外ロード対象に新規追加（live reload なし。`<Share>` と参照元プロジェクトの両方に同名コマンドがある場合は参照元プロジェクト側が優先）。正本は [v1.2 付録B『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions) | `docs/permissions`「Additional directories grant file access, not configuration」表 / `docs/sub-agents` |
 | C10 | `--settings` の優先順位（managed>command-line>local>project>user）・マージ規則・deny>ask>allow ／ **実機確認 v1.3**: `--debug-file` で各スコープが別 destination として併存——`--settings` 由来は **`flagSettings`（＝command-line 層）**、他は `userSettings`/`projectSettings`/`localSettings`（managed は本検証では不在のため未出現だが、C12 の WARN が "policy" 層として言及）。tier 名がそのまま precedence（policy>flag>local>project>user）に対応 | `docs/settings` / `docs/permissions` |
 | C11 | `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` で `--add-dir` 先の CLAUDE.md/rules/CLAUDE.local.md をロード | `docs/permissions` |
 | C12 | project/local で無視される security キー（`defaultMode:auto`・`skipDangerousModePermissionPrompt`・`autoMode`・`useAutoModeDuringPlan`） ／ **実機確認 v1.3**: project に `defaultMode:"auto"` を仕込み `--debug-file` 起動で `[WARN] settings defaultMode "auto" ignored — only policy/user/flag settings may grant auto mode (projectSettings and localSettings are repo-controllable)` を実観測＝無視を実証。**付与可能スコープは policy(managed)/user(`~/.claude`)/flag(`--settings`)**＝従来記載「効かせるなら `~/.claude`」を精密化（`--settings`・managed でも付与可） | `docs/settings` / `docs/permission-modes` |
 | C13 | trust dialog の影響（`autoMemoryDirectory` は trust 後・`extraKnownMarketplaces` install prompt は trust 後・`strictKnownMarketplaces` は trust 前から強制） | `docs/settings` |
-| C14 | server-managed の承認ダイアログ（shell/env/hook 設定）・拒否で終了・`-p` でスキップ／`claude auto-mode config|defaults|critique` | `docs/server-managed-settings` / `docs/auto-mode-config` |
+| C14 | server-managed の承認ダイアログ（shell/env/hook 設定）・拒否で終了・`-p` でスキップ／`claude auto-mode config|defaults|critique` ／ **v2.1.235 版(2026-08-19)**: `-p` 非対話での適用は**その実行限り**（承認として記録・キャッシュされない）。v2.1.207 以降、次の対話セッションでは改めてダイアログが出る（v2.1.207 より前は非対話実行が承認として保存され、以後の対話セッションでダイアログが出なくなっていた） | `docs/server-managed-settings`「Approval memory」節 / `docs/auto-mode-config` |
 | C15 | `/security-review`＝現在ブランチ差分への read-only セキュリティパス（"On demand" レイヤ）。security-guidance プラグイン（in-session）・Code Review（PR）と多層 | `docs/security-guidance` / `docs/commands` |
+| C16 | `claude --safe-mode`（**v2.1.235 版(2026-08-19) で新設**）＝CLAUDE.md/skills/plugins/hooks/MCP/custom commands・agents/output styles 等の全カスタマイズを無効化して起動する一次切り分け手段。managed settings のポリシーは適用継続。`<Other>`/`~/.claude` からの完全分離はしないため `CLAUDE_CONFIG_DIR` クリーンセッションの代替にはならない | `docs/cli-reference`「--safe-mode」行 / `docs/debug-your-config`「Test against a clean configuration」節 |
 
 ## 変更履歴
 
+- **v1.6（2026-08-20）**: 公式ドキュメント最新版（**CLI v2.1.235 相当・2026-08-19 取込**）との照合で検出した本書対象の指摘 6 件（陳腐化 4 件・改善機会 2 件）を反映し、加えて対の手順書側の指摘 1 件を整合のため本書にも反映。**版番号は v1.4 が既に存在していたため、タスク指示の「v1.3→v1.4」から繰り上げて v1.6 とした**（H1 の版表記も同時に v1.0 の据え置き漏れを解消し v1.6 へ更新）。
+  - **【CRITICAL】`/agents` の仕様変更**（§3・§6・§エグゼクティブサマリ・出典 C5）: v2.1.198 以降 `/agents` は subagent 一覧を表示せず `.claude/agents/` 直接編集を促すリマインダーのみになった。同名衝突の目視確認手段を `/context`（custom subagents をロード元パス付きで表示）へ差し替え。
+  - **【IMPORTANT】`/memory` の仕様変更**（§3・出典 C1）: 「ロード済み一覧」から「置き場所一覧（未作成ファイル含む）」へ変化。実際のロード確認は `/context` が正である旨を明記。
+  - **【IMPORTANT】`/doctor` の `f` キー廃止**（§3・出典 C4）: `f` キー方式は Before v2.1.205 の廃止済み挙動と明記し、現行の「提示→確認→適用」フローに更新。
+  - **【IMPORTANT】`commands/` の `--add-dir` 対応**（§2・§6・§8・§9・出典 C9）: v2.1.235 版で `.claude/commands/` が `--add-dir` 例外ロード対象に追加された（live reload なし・同名は参照元プロジェクト優先）。結合手段表を `output-styles`/`hooks`（結合不可）と `commands`（結合可）に分割し、正本（[v1.2 付録B](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions)）と整合させた。
+  - **【SUGGESTION】`--safe-mode` を一次切り分けとして追加**（§4・出典 C16）: 新設の `claude --safe-mode` を、既存の `CLAUDE_CONFIG_DIR` クリーンセッション手順の**前段**（一次切り分け）として追記。`<Other>`/`~/.claude` からの完全分離はしない点を明記し、既存手順を置き換えないことを明確化。
+  - **【SUGGESTION】`/doctor` の同名 subagent 自動検出**（§6・§3・出典 C4）: 現行の `/doctor` が同一ディレクトリ内の同名 subagent を検出する機能を追記。検出範囲は同一ディレクトリ内限定でスコープをまたぐ衝突は対象外のため、`/context` 目視確認は引き続き必要と明記。
+  - **【一貫性維持】server-managed の `-p` 承認スコープ**（§7・出典 C14）: 対の手順書側 v1.8 で追記した「`-p` 実行はその実行限りの適用（v2.1.207 以降、承認として記録・キャッシュされない）」を本書 §7・出典表にも反映し、2 文書間の矛盾を防止した。
+  - **適用しなかった指摘**: なし（G3 一覧 13 件すべて適用。うち `/claude-security` プラグイン新設の追記は対の手順書側の変更で、本書は §9 の必須ゲート記述と矛盾しないため変更不要と判断）。
 - **v1.5（2026-06-29）**: 横断整合性レビュー J1 反映。§2 結合表に版依存事実の**正本＝[v1.2 付録B『--add-dir 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions)** への参照注記を追加（本表は運用早見）。
 - **v1.4（2026-06-29）**: 横断整合性レビュー反映。`settings.local.json` も `enabledPlugins`/`extraKnownMarketplaces` の2キーに限り `settings.json` 同様 `--add-dir` で読まれる事実（docs「Additional directories」表・v2.1.195）に合わせ、§2 結合表・§優先順位注記・§6 落とし穴の「`settings.local.json` は `--add-dir` でも読まれない」を**2キー例外あり**に精密化（対の手順書 v1.4 と一致）。共有用途に使わない実務指針は不変。
 - **v1.3（2026-06-22）**: item3 残検証 **C7 / C10 / C12 を実機確認**（`claude -p … --debug-file` の設定ロードログ＝LLM 自己申告でない権威ある証跡で実証）。(C7) クリーン起動（`CLAUDE_CONFIG_DIR`=空 dir ＋ `.claude` 無し作業 dir）で watch 対象は空 config の `settings.json` のみ＝個人/project/local を排除・managed パスは継続探索・auth 非継承（`Not logged in`）を確認。(C10) `--settings` 由来が destination **`flagSettings`（command-line 層）**として `userSettings`/`projectSettings`/`localSettings` と別 destination で併存することを確認。(C12) project の `defaultMode:"auto"` に対し `[WARN] settings defaultMode "auto" ignored — only policy/user/flag settings may grant auto mode` を実観測＝無視を実証し、**付与可能スコープが policy/user/flag**（managed・`~/.claude`・`--settings`）であると判明（従来「効かせるなら `~/.claude`」を精密化）。検証用 fixture と個人ルールを含む debug ログは検証後に削除。

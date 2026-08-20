@@ -9,7 +9,9 @@
 公式 docs で確認済みの type-level の可否（本計画の前提）。
 
 ### Plugin で配布**できる**（層2 コンポーネント）
-`skills/`（SKILL.md＋reference/examples/scripts 等のサポートファイル同梱可）／`commands/`（レガシー・新規は skills 推奨）／`agents/`（**`hooks`・`mcpServers`・`permissionMode` フロントマターキーは利用不可**）／`hooks/hooks.json`（参照スクリプトは `${CLAUDE_PLUGIN_ROOT}` で同梱）／`.mcp.json`／`output-styles/`／`.lsp.json`／`monitors/`(v2.1.105+)／`themes/`(experimental)／`bin/`／`settings.json`（**`agent` と `subagentStatusLine` キーのみ**・他は silently ignored）
+`skills/`（SKILL.md＋reference/examples/scripts 等のサポートファイル同梱可）／`commands/`（レガシー・新規は skills 推奨）／`agents/`（**`hooks`・`mcpServers`・`permissionMode` フロントマターキーは利用不可**）／`hooks/hooks.json`（参照スクリプトは `${CLAUDE_PLUGIN_ROOT}` で同梱）／`.mcp.json`／`output-styles/`／`.lsp.json`／`monitors/`(v2.1.105+)／`themes/`(experimental)／`bin/`／`settings.json`（**`agent` と `subagentStatusLine` キーのみ**・他は silently ignored）／**`workflows/`**（v2.1.235 版(2026-08-19) で plugin の正規コンポーネントに追加。plugin.json の `workflows` フィールドで既定 `workflows/` を上書き可）
+
+> ⚠ **追記（2026-08-20・G5-003）**: `workflows/` は本計画の初版（2026-06-29）時点では plugin コンポーネントとして未定義だったため一覧から漏れていた。現行仕様での位置づけの正本は [v1.2 §核心マトリクス](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#matrix) ①（機能・拡張資産）に集約されている（v1.0〜v1.2 では④「層1 でのみ配布できる資産」に属していたが、v2.1.235 版で層2 へ移設済み）。本計画は v1.2 と矛盾しない形に追記したのみで、可否判定そのものは v1.2 を正とする。
 
 ### Plugin で配布**できない**（→ 層1 Git / 層3 Managed / `--add-dir`）
 | 資産 | 理由 | 代替配布手段 |
@@ -33,7 +35,7 @@
 | `skills/request-new-skill` | C-BDC | **依頼書テンプレを skill サポートファイルへ同梱**（standalone templates/ は不可） |
 | `skills/review-skill-request` | C-BDC | 同上（`skill-request/` の2テンプレを内包） |
 | `skills/5-whys`（+examples/references） | C-CRI/C-RBC/W-RBC（一致） | サポートファイル同梱は plugin 正式対応 |
-| `skills/check-model` | C-CRI/C-RBC | そのまま |
+| `skills/check-model` | **C-CRI のみ**（⚠訂正・2026-08-20: 旧記載「C-CRI/C-RBC」は誤り。C-RBC/W-RBC 全ブランチに不在。01 全ブランチ走査で訂正済み） | そのまま |
 | `skills/read-prompt-file`（+README+sh） | C-CRI/C-RBC | スクリプトは plugin 内へ |
 | `skills/pre-compact` | **C-CRI(122)** | ⚠️96版でなく122版。`references/decision-flow.md` 同梱 |
 | `agents/code-reviewer` | C-BDC（=多数一致） | `hooks`/`mcpServers`/`permissionMode` 不使用＝plugin 可 |
@@ -58,7 +60,7 @@
 | `rules/agent-permission-runtime.md` / `cross-review-runtime.md` / `skill-creation-guide.md` | C-CRI/C-RBC/W-RBC | 層1 Git body（path-scoped） |
 | `templates/cross-review/` | **W-RBC(v3.0α-r2)** | 層1 Git body（または将来 cross-review skill のサポートファイル化） |
 | `templates/inter-claude-communication/` | 一致 | 層1 Git body |
-| `statusline`（メインセッション） | **C-RBC(162)+U-USR(145)** | 層1 Git／ユーザ settings（plugin 不可） |
+| `statusline`（メインセッション） | **C-RBC(162)+U-USR(145)**（⚠暫定・2026-08-20: 01 §6-5 参照。`tmp/ng_analyzing_optimize` の未push・199行改変が要現物確認のため正本確定は保留） | 層1 Git／ユーザ settings（plugin 不可） |
 
 > **重要な含意**: 共有 `.claude` の中身は **2トラックに分かれる**。機能資産（skills/agents/output-styles/hooks）は Plugin 化できるが、ガバナンス資産（CLAUDE.md/rules/settings permissions/templates/statusline）は Plugin 化できず層1 Git（C-BDC body）が主経路。**Plugin だけでは共有 `.claude` を再現できない**——これは v1.2 の「単一手段では配れない／3チャネル併用」結論の再確認。
 
@@ -107,6 +109,7 @@
 |---|---|---|
 | 1 | 機能資産（skills/agents/output-styles/hooks）のチャネル | **dual** — C-BDC body は完全 standalone を維持（`--add-dir`/コピー展開で plugin 無しでも動く）しつつ、marketplace 派向けに plugin も併発行。v1.2「3チャネル併用」と整合 |
 | 2 | Plugin 開発リポジトリのトポロジ | **multi-repo** — C-BDK（`<Dev>`）で開発・validate → C-MKT は marketplace.json で参照する薄い配布リポ |
+| | ⚠ 注記（2026-08-20・G5-006・確信度medium） | `.claude/skills/<name>/.claude-plugin/plugin.json` を置くだけで marketplace 無しに project-scope plugin として自動ロードされる「**skills-directory plugins**」機構があり、**C-BDC を直接 clone/submodule 化する利用者**に対しては層1 body 自体が project-scope plugin としても機能しうる（C-MKT 経由の marketplace 派には非適用）。層1/層2 の境界を一部の利用形態で単純化できる可能性があるという補足的な検討材料であり、本表の multi-repo 確定を覆すものではない。 |
 | 3 | テーマ特化資産（2-B） | **据え置き** — C-LLM(docs)/W-RBC(cc-docs)/C-CRI(generate-llms-txt) に残置。将来必要時に別 plugin 化を再検討 |
 | 4 | rules / templates の plugin 化 | **当面 層1 Git body のまま**（`--add-dir`+env 経路あり）。主要 rule の skill `paths:` 化は将来オプション |
 | 5 | pre-compact の正本 | **C-CRI 122版**を配布採用（W-RBC 96版・未追跡は破棄） |
@@ -117,6 +120,7 @@
 
 1. **層1 body の統合・清書**（C-BDK）: rules 群・cross-review テンプレ(W-RBC正本)・CLAUDE.md・settings(+show/blame)・statusline を C-BDK `.claude/` に取り込み清書 → clean-test-env/check-assets → publish-share で C-BDC へ。
 2. **層2 plugin の組成**（C-BDK）: layer2-plugin テンプレに汎用 skills（pre-compact=122版・request/review はテンプレ同梱）＋code-reviewer＋code-review＋hooks を実装 → `plugin validate --strict` → C-MKT へ push。
+   - （オプション・2026-08-20追記・G5-005）テーマ特化資産（2-B）を独立 plugin 化した上で、`name`＋`dependencies` のみで構成する **bundle plugin**（例: `cc-full-toolkit`）を C-MKT に併設し、汎用 plugin とテーマ特化 plugin を「1 install でまとめて導入」できないか検討の余地がある。§4 #3「据え置き」と §4 #1「dual 採用」の間で妥協していた設計を緩められる可能性があるが、**今回は方針決定までは行わず、将来の再検討トリガーとして記録するに留める**（確信度: medium）。
 3. **C-MKT marketplace.json 整備**（greenfield からの新規構築）。
 4. テーマ特化資産は据え置き（必要時に別 plugin 化を再検討）。
 
@@ -125,3 +129,4 @@
 ## 変更履歴
 
 - 初版（2026-06-29）: Plugin 配布可否（公式docs v2.1.195＋v1.2 マトリクス照合で確定）を本インベントリ資産に適用。汎用共有/テーマ特化を区別し、層1 Git body（C-BDK→C-BDC）と層2 Plugin（C-BDK→C-MKT）の2トラックで統合・清書・テスト・配布のリポジトリを割当。判断点5件と実行順序を提示。
+- 横断整合性レビュー反映（2026-08-20・v2.1.235 版(2026-08-19) 照合）: G5-001（statusline 行に「⚠暫定・正本確定前に要現物確認」注記を追加。01 §6-5 と足並みを揃える）／G5-002（`skills/check-model` の所在を「C-CRI/C-RBC」→「C-CRI のみ」に訂正。01・03 の全ブランチ走査結果に合わせる。旧記載は据え置きのまま更新漏れていた）／G5-003（§1「Plugin で配布できる」列挙に `workflows/` を追加。v2.1.235 版(2026-08-19) で plugin の正規コンポーネントに追加されたため。正本は v1.2 §核心マトリクスとし本計画はそれに矛盾しない形で追記）／G5-005（§5 手順2に bundle plugin（`name`+`dependencies`のみ）によるロール別一括導入のオプション検討を追記・将来の再検討トリガーとして記録）／G5-006（§4 #2 に skills-directory plugin 機構と層1/層2 境界の部分的重複を注記・multi-repo 確定は維持）。G5-004（claude-security）は本書スコープ外のためレーンA確定書側で処理（重複回避のため本書には転記しない）。
