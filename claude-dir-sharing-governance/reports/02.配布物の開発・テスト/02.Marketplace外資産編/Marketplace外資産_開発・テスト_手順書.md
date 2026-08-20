@@ -1,7 +1,7 @@
 # Marketplace 外資産（CLAUDE.md / rules / settings）開発・テスト手順書（v1.8）
 
 > - **目的**: Marketplace（層2）で配れない config 資産（`CLAUDE.md` / `.claude/rules/` / `settings.json` / skills / agents）を、config・テンプレートリポジトリで開発・テストする実務手順。全体像・結合手段・ロード検証コマンド・落とし穴を手を動かす順に把握できる。
-> - **位置づけ**: [調査結果報告書](./Marketplace外資産の開発・テスト_調査結果.md) の派生（実務オペレーション版）。根拠・出典は報告書側にあり、本書は手順に絞る。第1フェーズ [Plugin 開発・テスト手順書](../01.Plugin・Marketplace編/Plugin開発・テスト_手順書.md) の config 資産版。
+> - **位置づけ**: [調査結果報告書](./Marketplace外資産の開発・テスト_調査結果.md) の派生（実務オペレーション版）。根拠・出典は報告書側にあり、本書は手順に絞る。第1フェーズ [Plugin / Skill 開発・テスト手順書](../01.Plugin・Marketplace編/Plugin開発・テスト_手順書.md) の config 資産版。
 > - **前提環境**: Claude Code CLI。コマンドは PowerShell / bash いずれでも同形。リポジトリ記号は §0 の **`<Dev>`（資産を開発）／`<Share>`（配布物＝雛型リポジトリ）／`<Share.claude>`（パターンB のみ・`.claude` 本体の独立リポ）／`<Other>`（日常作業リポ）** に統一する。
 > - **作成日**: 2026-06-21
 
