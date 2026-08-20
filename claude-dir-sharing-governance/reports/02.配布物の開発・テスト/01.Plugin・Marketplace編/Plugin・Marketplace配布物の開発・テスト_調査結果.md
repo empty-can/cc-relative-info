@@ -1,4 +1,4 @@
-# Plugin・Marketplace 配布物の開発・テスト — 調査結果（v1.4）
+# Plugin・Marketplace 配布物の開発・テスト — 調査結果（v1.5）
 
 > - **想定読者**: 層2（Plugin / Marketplace）で資産を配布するチームの開発担当者。「配布専用リポジトリに載せる plugin / skill を、どこで・どうやって開発しテストするのが Claude Code の標準/推奨なのか」を知りたい読み手。
 > - **位置づけ**: 「ポータブルな `.claude/` のチーム共有・統制」調査（[結論・構成案 v1.2](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md)）の **層2（Plugin / Marketplace）実務続編**。v1.2 が「**何を**どのチャネルで配れるか（資産×チャネル マトリクス）」を確定したのに対し、本書は「層2 で配ると決めた資産を **どこで・どう開発しテストするか**」を扱う。
@@ -223,7 +223,7 @@ skill は plugin に同梱せず `.claude/skills/` 単体でも配布できる�
 
 ## 7. plugin 配布時のパス解決・可変状態・同梱物アクセス（実装制約）
 
-> 本節は §3(2) のキャッシュコピー挙動を **skill 同梱の補助ファイル（references/・templates/・scripts/・README）** へ敷衍し、**「フォルダごと配布可」でも構成要素ごとに cache 先で使えない／書けない／ユーザに見えない制約がある**ことを原文照合で確定する。実 skill の plugin 化テストで顕在化した論点で、[手順書 §6](./Plugin開発・テスト_手順書.md) の根拠。出典はページ名＋セクション主体（行番号は現行 snapshot の参考値・[§出典](#sources) S16〜S20）。
+> 本節は §3(2) のキャッシュコピー挙動を **skill 同梱の補助ファイル（references/・templates/・scripts/・README）** へ敷衍し、**「フォルダごと配布可」でも構成要素ごとに cache 先で使えない／書けない／ユーザに見えない制約がある**ことを原文照合で確定する。実 skill の plugin 化テストで顕在化した論点で、[手順書 §8](./Plugin開発・テスト_手順書.md#impl-rules) の根拠。出典はページ名＋セクション主体（行番号は現行 snapshot の参考値・[§出典](#sources) S16〜S20）。
 
 ### (1) パス解決 — `${CLAUDE_SKILL_DIR}` / `${CLAUDE_PLUGIN_ROOT}`
 
@@ -270,6 +270,73 @@ plugin ディレクトリ全体が cache にコピーされるため、`skills/<
 
 ---
 
+<a id="single-entity"></a>
+
+## 9. 実測: 資産形態 × 消費チャネルのロード挙動 ―― 層1 body と plugin を単一実体に畳めるか（2026-08-20）
+
+> **問い**: v1.2 [§推奨](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md) の 2026-08-20 追記が提起した「**層1 に body を commit しつつ同じ資産を plugin としても発行する二重管理を、単一の実体に畳めるか**」（[公式ドキュメント最新化レポート](../../01.配布・統制方針調査/レビュー/公式ドキュメント最新化レポート_2026-08-20.md) の判断事項 D-4）を、推論ではなく**実測**で確定する。あわせて同レポート D-2（実体リポの導線が実際に通るか）も本節の手法で検証した（→ (5)）。
+>
+> **手法**: CLI **v2.1.237**。`CLAUDE_CONFIG_DIR` を作業用ディレクトリへ向けて個人設定から隔離した（実行後に実 `~/.claude` が無汚染であることを確認済み）。証跡は **モデル出力に依存しないもの**だけを使う ―― plugin 側は `claude plugin list --json` / `claude plugin details`、skill 側は `claude -p … --debug` の**起動ログ**。**設定・plugin・skill のロードは認証より前に走るため、隔離環境が `Not logged in` で終了しても起動ログは完全に残り、API 呼び出しは発生しない**（非対話で取れる権威ある証跡）。
+>
+> project scope の trust ゲートは対話必須なので、公式が案内する手動 trust（`~/.claude.json` の `projects["<リポジトリルート>"].hasTrustDialogAccepted` を `true` にする。出典 [S29](#sources)）で pre-seed した。**未 trust のセルを対照に残し、pre-seed の前後で挙動が変わることを positive control として確認**している（[レーンA確定書 §10-bis](../../04.資産インベントリ・統合/04.ランチャースクリプト実装/配布・リリース設計確定_レーンA.md)「守れたを主張する検査には対照実験を付ける」に従う）。
+
+<a id="three-forms"></a>
+
+### (1) 資産の 3 形態
+
+| 形態 | 実体 | 備考 |
+|---|---|---|
+| **素の skill** | `<skills-dir>/<name>/SKILL.md` | 層1 でそのまま配る形。呼び名は `/<name>` |
+| **案B''（`@skills-dir`）** | 上に `.claude-plugin/plugin.json` を**足しただけ** | ディレクトリは移動しない。`<name>@skills-dir` として **marketplace も install もネットワークも不要**でロードされる |
+| **plugin ツリー** | 独立した `<plugin>/` に `skills/` `agents/` `hooks/` 等を持つ | 従来の層2 の形。marketplace / `--plugin-dir` で配る |
+
+### (2) ロード挙動マトリクス（実測・CLI v2.1.237）
+
+| # | 資産形態 | 消費チャネル | 実測結果 |
+|---|---|---|---|
+| 1 | 素の skill | project（cwd 直下の `.claude/skills/`） | 素の skill としてロード（`project: 1`）。呼び名 `/<name>` |
+| 2 | 素の skill | `--add-dir` | 素の skill としてロード（`additional: N`） |
+| 3 | **案B''** | project・**未 trust** | **plugin としてロードされない**。`claude plugin list` は `(suppressed)@skills-dir` / `enabled:false` と、trust 受諾後に `/reload-plugins` せよという明示 note を返す |
+| 4 | **案B''** | project・**trust 済** | `<name>@skills-dir` が `enabled:true`。`installPath` は**現物のパス**（cache へコピーされず **in place** で読まれる）。**同時に SKILL.md は素の project skill としてもロードされる**（`project: 2`）＝**呼び名 `/<name>` は変わらない** |
+| 5 | **案B''** | `--add-dir` | **plugin としてはロードされない**（`Found 0 plugins`）。一方 SKILL.md は `additional` として**素の skill のままロードされる** ＝ **manifest の追加は `--add-dir` 経路を壊さない（非破壊）** |
+| 6 | **案B''** | `--plugin-dir <そのフォルダ>` | plugin としてロード（開発ループはそのまま使える） |
+| 7 | **案B''** | marketplace install（`git-subdir` で `<repo>/.claude/skills/<name>` を直接参照） | **成功**。cache には sparse clone で**その サブディレクトリだけ**が入る（`.claude-plugin/plugin.json` と `SKILL.md` のみ）。version は `plugin.json` の値 |
+| 8 | manifest 無しのフォルダ | marketplace install（`git-subdir`） | **install 自体は成功する**が **version を持たない**（cache パスが commit SHA 由来の `<sha>-<hash>` になる）→ `claude plugin tag` による版管理レールに乗らない |
+| 9 | **案B''** | `.claude` が**ネストした git リポジトリ**（＝ C-BDC を submodule にした利用形態） | **外側リポジトリの trust だけで project scope としてロードされる**（`enabled:true`）。submodule 用の別 trust は要らなかった |
+| 10 | **案B''** | 層1（リポジトリを checkout）と層2（同名 plugin を install）を**同時に**持つ | `@skills-dir` 側が **`enabled:false` に自動抑止される**（同名衝突）。**ただし素の project skill は残る**ため、`/<name>`（素）と `/<name>:<skill>`（plugin）が**同じ内容で二重に context へ載る** |
+
+### (3) D-4 の結論 ―― 「単一実体には畳める。単一の消費形態にはならない」
+
+- ✅ **物理的な二重化は解消できる**。`.claude/skills/<name>/` に `plugin.json` を 1 個足し、marketplace 側は `git-subdir`（出典 [S27](#sources)）でその**サブディレクトリを直接指す**ことで、**plugin ツリーへのコピーも、別リポジトリへの publish も不要**になる（セル 7）。同じ 1 ディレクトリが層1 body・`@skills-dir` plugin・marketplace plugin の**3 通りに消費される**。
+- ✅ **既存利用者に対して非破壊**。`plugin.json` の追加後も、素の skill としての呼び名 `/<name>` は project 経路でも `--add-dir` 経路でも変わらない（セル 4・5）。**ランチャー（パターン2）の `--add-dir` レールは壊れない**。
+- ⚠ **`@skills-dir` としての恩恵は「trust 済みの project」でしか得られない**（セル 3）。未 trust では plugin 扱いにならず、`--add-dir` 経由では plugin にならない（セル 5）。したがって **B'' は「素の skill の上位互換」であって「素の skill の置き換え」ではない**。
+- ⚠ **層1 と層2 を同時に入れさせてはならない**（セル 10）。plugin 同士の衝突は CLI が抑止するが、**素の project skill と plugin skill は共存してしまう**。公式も「plugin へ移行したら `.claude/` 側の原本は消せ」と明記している（出典 [S30](#sources)）。**配布側は「層1 で使うか層2 で使うか」を利用者に一つ選ばせる設計にする**。
+- ⚠ **呼び名は消費形態で変わる**。層1 なら `/<name>`、marketplace 経由なら `/<plugin>:<skill>`（frontmatter の `name` が最終セグメントになり、衝突が無ければ bare 形も併用できる。出典 [S28](#sources)）。ドキュメント・教育資料は**両方の呼び名を併記**する必要がある。
+
+> **含意（dual 判断への影響）**: [配布計画 §4 判断 #1](../../04.資産インベントリ・統合/02.配布計画/配布計画_Plugin可否とリポジトリ割当.md) の **dual（body と plugin の両方に存在させる）は維持できるが、「両方に**実体**を置く」必要はなくなった**。実体は 1 つ、参照が 2 通り、という形に畳める。
+
+### (4) `git-subdir` が変えるトポロジ
+
+- `git-subdir`（出典 [S27](#sources)）は **任意の git リポジトリの任意のサブディレクトリ**を plugin として参照でき、sparse・partial clone でその部分だけを取得する。つまり **「plugin がどのリポジトリに住むか」と「どの marketplace から配るか」が完全に分離**される。
+- 結果として、**配布専用 marketplace リポジトリは `.claude-plugin/marketplace.json` 1 ファイルだけでも成立する**（`plugins/` の実体を持たなくてよい）。[配布計画 §4 判断 #2](../../04.資産インベントリ・統合/02.配布計画/配布計画_Plugin可否とリポジトリ割当.md) の「C-MKT は薄い配布リポ」という確定を、**コピーを一切伴わない形で**実現できる。
+- **plugin の引っ越しコストが下がる**点も重要。資産が育って独立リポジトリへ移したくなったら、marketplace エントリの `url` / `path` を書き換えるだけで済み、利用者側の `plugin install` 名は変わらない。**「どのリポジトリで開発するか」の判断を後から取り消せる**ということで、初期の選択を軽くする。
+
+### (5) D-2 の実測 ―― 実体リポジトリの層2 レールは「まだ通っていない」
+
+同じ隔離環境で、**実体リポジトリの現物**（`base-dev-kit-for-cc` の `scripts/publish-plugin.sh` と `marketplace-for-cc`）を対象に導線を通した。**push 先は作業用の bare クローンで、実リポジトリと GitHub には一切触れていない。**
+
+| 検証 | 結果 |
+|---|---|
+| 素の C-MKT に `marketplace add` | **失敗**。`Marketplace file not found at …\.claude-plugin\marketplace.json` ＝ **C-MKT はまだ marketplace として成立していない**（骨格のみ・greenfield という [インベントリ §0](../../04.資産インベントリ・統合/01.全マシン資産インベントリ/配布可能資産インベントリ.md) の記述と一致） |
+| `publish-plugin.sh --plugin .claude/skills/commit-and-pr` | **中止**。`plugin.json が無い（plugin ではない?）` ＝ **現行の skills は publish-plugin にそのままでは乗らない**。`plugin.json` の付与（＝**案B'' 形状**）が前提になる |
+| `plugin.json` を付与した ref で再実行 | `validate --strict` パス → ミラー → commit → push まで**完走**（7 点の防御は現状のまま機能した） |
+| ただし非対話実行 | **ハングする**。§4 の `read -r -p "→ … /security-review を実行済みなら y で続行: "` が対話必須で、CI・ヘッドレスでは stdin に `y` を流さない限り止まる |
+| `marketplace.json`（相対 source `./plugins/commit-and-pr`）を置いて再試行 | `marketplace add` → `install commit-and-pr@<mp>`（version 1.0.1）まで**成功** |
+
+> **結論**: 実体リポジトリに [§3(3)](#repo-relation) と同型の**構造欠陥（相対 `source` の解決失敗）は無かった**が、そもそも **C-MKT に `marketplace.json` が無く層2 レールは未開通**であり、**現行 skills は plugin.json を持たないため copy 型レール（`publish-plugin`）にも乗らない**。C-MKT の立ち上げは [配布計画 §5 手順3](../../04.資産インベントリ・統合/02.配布計画/配布計画_Plugin可否とリポジトリ割当.md) の作業として残る。`publish-plugin.sh` の非対話ハングは**本テーマのスコープ外の実装課題**として記録に留める（本タスクでは C-BDK のスクリプトを変更していない）。
+
+---
+
 <a id="sources"></a>
 
 ## 出典
@@ -304,6 +371,11 @@ plugin ディレクトリ全体が cache にコピーされるため、`skills/<
 | S24 | marketplace 経由 install の plugin は、`package.json` ＋対応ロックファイル（`bun.lock`/`bun.lockb`/`npm-shrinkwrap.json`/`package-lock.json`）があれば cache 配置時に Claude Code が自動で `--ignore-scripts` install する（yarn/pnpm ロックファイル・lifecycle script 必須の依存・Python 依存は対象外） | `docs/plugins-reference`「Node.js package dependencies」 | **v2.1.235 版(2026-08-19)**（ページ＋見出し参照。行番号なし） |
 | S25 | marketplace の相対path `source` は git 経由の追加とローカルディレクトリとしての追加の両方で機能し、直接 URL 追加では不可。非git配布の新 source 種別として `archive`（zip HTTPS配信・v2.1.224+）と `command`（ローカルコマンド生成・v2.1.229+）が追加された | `docs/plugin-marketplaces`「Relative paths」／「Zip archives」／「Command sources」 | **v2.1.235 版(2026-08-19)**（ページ＋見出し参照。行番号なし） |
 | S26 | plugin manifest は `name` と `dependencies` 配列のみでも成立し、複数 plugin を1回の install にまとめる「バンドル plugin」を作れる | `docs/plugin-dependencies`「Bundle plugins for a team」 | **v2.1.235 版(2026-08-19)**（ページ＋見出し参照。行番号なし） |
+| S27 | `git-subdir` source は git リポジトリの**サブディレクトリ**を plugin として参照する。`url`（GitHub `owner/repo` 短縮形・SSH 可）と `path` が必須、`ref`/`sha` で固定可。取得は sparse・partial clone でそのサブディレクトリのみ | `docs/plugin-marketplaces`「Git subdirectories」 | **v2.1.235 版(2026-08-19)**（ページ＋見出し参照。行番号なし） |
+| S28 | skill の呼び名の決まり方 ―― personal/project の skill は**ディレクトリ名**、plugin の `skills/<dir>/SKILL.md` は frontmatter `name` かディレクトリ名を **plugin 名で名前空間化**、**plugin ルート直下の `SKILL.md`** は frontmatter `name`（無ければ plugin ディレクトリ名）が最終セグメントになる。plugin skill は名前空間形に加え、他コマンドと衝突しない限り bare 形でも呼べる（v2.1.216 で挙動変更） | `docs/skills`「How a skill gets its command name」 | **v2.1.235 版(2026-08-19)**（ページ＋見出し参照。行番号なし） |
+| S29 | project scope の `@skills-dir` plugin・project subagent の frontmatter hooks・リポジトリや `--add-dir` 由来の `extraKnownMarketplaces` は、**親フォルダの trust では使われず、trust ダイアログも出ない**。対処は `~/.claude.json` の `projects["<パス>"].hasTrustDialogAccepted` を手動で `true` にすること | `docs/permissions`「What runs before you trust a folder」 | **v2.1.235 版(2026-08-19)**（ページ＋見出し参照。行番号なし） |
+| S30 | plugin skill は `/plugin-name:skill-name` に名前空間化されるため、**元の `/skill-name` と plugin 版が両方残る**（片方が上書きしない）。移行後は重複を避けるため `.claude/` 側の原本を削除せよ | `docs/plugins`「Migrate existing configurations」 | **v2.1.235 版(2026-08-19)**（ページ＋見出し参照。行番号なし） |
+| S31 | `claude plugin tag` は `{name}--v{version}` の git tag を作り、**`plugin.json` と marketplace エントリの版が一致しているかを検証**する（`--dry-run`／`--push`／`--remote` あり） | `claude plugin tag --help`（CLI v2.1.237 実機） | 実機（docs 未確認） |
 
 > **`plugin-dev` の機能詳細の出所**: 上記 S15 は docs 側の「言及」のみ。7 skill・`/plugin-dev:create-plugin` の 8 フェーズ・3 agent・6 検証スクリプトといった機能詳細は docs に無く、根拠は plugin 同梱の `README.md` および `commands/create-plugin.md` / `agents/*.md` / `.claude-plugin/plugin.json`（`anthropics/claude-plugins-official` の `plugins/plugin-dev/`、GitHub MCP で取得・精読）。
 
@@ -311,6 +383,12 @@ plugin ディレクトリ全体が cache にコピーされるため、`skills/<
 
 ## 変更履歴
 
+- **v1.5（2026-08-20）**: **[§9](#single-entity)「実測: 資産形態 × 消費チャネルのロード挙動」を新設**。[手順書 v2.0](./Plugin開発・テスト_手順書.md) の刷新（開発シナリオ 2 パターン化）の根拠として、CLI v2.1.237 の実機で 10 セルのロード挙動マトリクスを取得した。主な確定事項:
+  - **案B''（`.claude/skills/<name>/` に `plugin.json` を足す）は既存利用者に非破壊** ―― 追加後も素の skill としての呼び名 `/<name>` は project 経路でも `--add-dir` 経路でも変わらない。`--add-dir` 経由では plugin にはならず素の skill のままロードされる。
+  - **`git-subdir` により、層1 body と層2 plugin を「実体 1 つ・参照 2 通り」に畳める**（コピー不要・publish 不要）。配布計画 §4 判断 #1 の dual は「両方に実体を置く」必要が無くなった。
+  - **層1 と層2 を同時に入れると素の project skill と plugin skill が二重に載る**（plugin 同士の衝突は CLI が抑止するが、素の skill は残る）。公式も移行後の原本削除を明記（[S30](#sources)）。
+  - **D-2 の実測**: 実体 C-MKT は `.claude-plugin/marketplace.json` 不在で `marketplace add` に失敗し、**層2 レールは未開通**。実 `publish-plugin.sh` は現行 skills をそのままでは publish できず（`plugin.json` 必須）、また非対話では `read` プロンプトでハングする。
+  - 出典 [S27](#sources)〜[S31](#sources) を追加（`git-subdir` / skill 呼び名の決まり方 / trust の手動受諾 / 移行時の重複 / `claude plugin tag`）。
 - **v1.4（2026-08-20）**: 公式ドキュメント最新版（CLI v2.1.235 相当・2026-08-19 取込）との横断整合性照合（検出タスク G2・本書＋[手順書](./Plugin開発・テスト_手順書.md)の2文書で計17件検出）を反映。本書側の適用は7件（G2-001, G2-003, G2-006, G2-008, G2-011, G2-014, G2-017）。**あわせて H1 の版番号が v1.1〜v1.3 の間 "v1.0" のまま更新されていなかった不備を本版で訂正**（変更履歴は進んでいたが見出しが追随していなかった）。主な変更:
   - **【CRITICAL 訂正】§5 検証・デバッグ表 `claude --debug` の検出内容**: カテゴリを絞るには **`=` 結合形が必須**（例: `--debug='mcp,startup'`）で、スペース区切り（`--debug mcp` 等）はフィルタとして機能せずデバッグモードを有効化するだけと訂正。hook 評価の粒度は `CLAUDE_CODE_DEBUG_LOG_LEVEL=verbose` で上げる旨を追記（出典 [S22](#sources)。旧記述のまま実行すると意図した絞り込みができない CRITICAL 案件）。
   - **§7(2) plugin cache の旧バージョン dir 削除猶予を約7日→約14日に訂正**。加えて「最後の plugin をアンインストールすると掃除処理自体が止まり、次に plugin を入れるまで残り続ける」という新条件を追記。S18 に転送注記を追加し、新事実は行番号でなくページ＋見出しで参照する [S21](#sources) として追加（S18 自体の行番号は据え置き）。
@@ -322,5 +400,5 @@ plugin ディレクトリ全体が cache にコピーされるため、`skills/<
   - 出典を S20→S26 まで拡張。新規 S21〜S26 は snapshot 依存の行番号でなく**ページ名＋セクション見出し＋版タグ**で参照する方式に統一（既存 S1〜S20 の行番号は据え置き）。
 - **v1.3（2026-06-29）**: 横断整合性レビュー J1 反映。§4 `--add-dir` 例外表に、版依存事実の**正本＝[v1.2 付録B『--add-dir 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions)** への参照注記を追加（本表は運用早見と位置づけ）。
 - **v1.2（2026-06-29）**: 横断整合性レビュー反映。§4 表の subagents×`--add-dir` を **「✅（v2.1.178+。v2.1.165 までは非ロード）」** と版境界付きに統一（v1.2 報告書 errata [75]・Marketplace外資産編 C9 と整合）。従来は本編のみ無条件 ✅ で版境界が欠落し、版を跨ぐ読者に「常時ロード」と誤読される恐れがあった。
-- **v1.1（2026-06-25）**: §7「plugin 配布時のパス解決・可変状態・同梱物アクセス（実装制約）」を新設（実 skill の plugin 化テストで顕在化）。`${CLAUDE_SKILL_DIR}`／`${CLAUDE_PLUGIN_ROOT}` の置換範囲と env export、cache の ephemeral 性（書込禁止・約7日 orphan）と `${CLAUDE_PLUGIN_DATA}` への可変状態退避、README/references のユーザアクセス制約（UI 非閲覧→`homepage`）、`skills/<name>/` 構成要素別挙動を原文照合で確定。§出典に S16〜S20 を追加。[手順書 v1.1 §6](./Plugin開発・テスト_手順書.md) の根拠。旧§7「v1.2との接続・含意」は §8 へ繰り下げ。原文照合は `cc-docs-plugins-marketplace-expert` agent。
+- **v1.1（2026-06-25）**: §7「plugin 配布時のパス解決・可変状態・同梱物アクセス（実装制約）」を新設（実 skill の plugin 化テストで顕在化）。`${CLAUDE_SKILL_DIR}`／`${CLAUDE_PLUGIN_ROOT}` の置換範囲と env export、cache の ephemeral 性（書込禁止・約7日 orphan）と `${CLAUDE_PLUGIN_DATA}` への可変状態退避、README/references のユーザアクセス制約（UI 非閲覧→`homepage`）、`skills/<name>/` 構成要素別挙動を原文照合で確定。§出典に S16〜S20 を追加。[手順書 §8（当時 v1.1 §6）](./Plugin開発・テスト_手順書.md#impl-rules) の根拠。旧§7「v1.2との接続・含意」は §8 へ繰り下げ。原文照合は `cc-docs-plugins-marketplace-expert` agent。
 - **v1.0（2026-06-21）**: 初版。公式 docs（plugins / plugin-marketplaces / plugins-reference / skills）の原文照合に基づき、層2 配布物の開発・テストフロー・手段・制約・検証を整理。レビュー指摘反映として `--debug` の実行時カバー範囲、`validate` の必須/推奨条件、`skill-creator` の機能詳細・公開 URL を補強。純正 `plugin-dev` を README＋`create-plugin.md`／agent 定義／manifest の精読で裏取りし [§6](#plugin-dev) を追加（8 フェーズ詳細・3 agent・6 スクリプト・`commands/` レガシー指針・docs カタログ掲載の確認を含む）。**Sonnet 動作検証（実機 `claude plugin validate` v2.1.185）の反映**: `plugin.json` の `author` ＝オブジェクト型・`marketplace.json` の `owner` ＝必須、`--add-dir` は skills だけでなく **subagents（`.claude/agents/`）も自動ロード**（§4 訂正）、`--debug` 出力先 `~/.claude/debug/<session-id>.txt`、`validate --strict`。

@@ -69,6 +69,7 @@
 ### 3-1. 集約先（統合・清書を行う場所）
 - **汎用共有資産は C-BDK（base-dev-kit-for-cc／`<Dev>`）に一元集約**する。C-BDK は既存 dev-flow の開発源（`.claude/` body ＋ `scripts/` 配布運用ツールを保持）。散在する正本（C-CRI/C-RBC/W-RBC 由来の 5-whys・check-model・read-prompt-file・rules・cross-review テンプレ・pre-compact等）を C-BDK へ取り込み・清書する。
 - **テーマ特化資産（2-B）は各ホーム据え置き**（C-LLM=docs パイプライン、W-RBC=cc-docs-expert）。汎用配布に混ぜない。
+- **（2026-08-20 追加）「公開前提で新規に作る単発・独立資産」の置き場所**: 全員に配る性格を持たない単発資産は、C-BDK の **`.claude/` の外**（例: `<C-BDK>/plugins/<name>/`）に開発エリアを置く。`publish-share` の payload は `.claude/` 配下だけなので、**層1（C-BDC→C-BCP）へは流れず、層2（C-MKT）だけで配れる**。`publish-plugin.{sh,ps1}` の既定 `--plugin plugin` はこの形を想定した既定値である。判断フロー（チーム共通資産か／単発独立か／専用リポジトリ新設か）は [Plugin/Skill 手順書 §2-1](../../02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin開発・テスト_手順書.md#b1) を正とする。
 
 ### 3-2. 2トラックの開発→テスト→配布
 
@@ -108,8 +109,10 @@
 | # | 論点 | 確定 |
 |---|---|---|
 | 1 | 機能資産（skills/agents/output-styles/hooks）のチャネル | **dual** — C-BDC body は完全 standalone を維持（`--add-dir`/コピー展開で plugin 無しでも動く）しつつ、marketplace 派向けに plugin も併発行。v1.2「3チャネル併用」と整合 |
+| | ⚠ 更新（2026-08-20・実測・CLI v2.1.237） | **dual は維持するが「両方に*実体*を置く」必要はなくなった**。`.claude/skills/<name>/` に `plugin.json` を足し（案B''）、marketplace からは **`git-subdir`** でそのサブディレクトリを直接参照すれば、**実体 1 つ・参照 2 通り**に畳める（コピーも publish も不要）。`plugin.json` の付与は**既存利用者に非破壊**（素の skill としての呼び名 `/<name>` は project でも `--add-dir` でも不変）。**ただし層1 と層2 を同じ利用者に両方入れさせてはならない** ―― plugin どうしの衝突は CLI が抑止するが素の project skill は残り、同じ内容が二重に context へ載る。証跡は [Plugin編 調査結果 §9](../../02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin・Marketplace配布物の開発・テスト_調査結果.md#single-entity)、実務手順は [手順書 §4](../../02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin開発・テスト_手順書.md#publish-forms) |
 | 2 | Plugin 開発リポジトリのトポロジ | **multi-repo** — C-BDK（`<Dev>`）で開発・validate → C-MKT は marketplace.json で参照する薄い配布リポ |
 | | ⚠ 注記（2026-08-20・G5-006・確信度medium） | `.claude/skills/<name>/.claude-plugin/plugin.json` を置くだけで marketplace 無しに project-scope plugin として自動ロードされる「**skills-directory plugins**」機構があり、**C-BDC を直接 clone/submodule 化する利用者**に対しては層1 body 自体が project-scope plugin としても機能しうる（C-MKT 経由の marketplace 派には非適用）。層1/層2 の境界を一部の利用形態で単純化できる可能性があるという補足的な検討材料であり、本表の multi-repo 確定を覆すものではない。 |
+| | ⚠ 更新（2026-08-20・実測） | **multi-repo 確定は維持され、むしろ強化された**。`git-subdir` により **C-MKT は `.claude-plugin/marketplace.json` 1 ファイルだけで成立**し、plugin の実体を持つ必要がない（「薄い配布リポ」を文字どおり薄くできる）。さらに **plugin の引っ越しコストが下がる** ―― 資産を独立リポジトリへ移しても marketplace エントリの `url`/`path` を書き換えるだけで済み、利用者の `plugin install <name>@<mp>` は変わらないため、**「どのリポジトリで開発するか」の初期判断を後から取り消せる**。 |
 | 3 | テーマ特化資産（2-B） | **据え置き** — C-LLM(docs)/W-RBC(cc-docs)/C-CRI(generate-llms-txt) に残置。将来必要時に別 plugin 化を再検討 |
 | 4 | rules / templates の plugin 化 | **当面 層1 Git body のまま**（`--add-dir`+env 経路あり）。主要 rule の skill `paths:` 化は将来オプション |
 | 5 | pre-compact の正本 | **C-CRI 122版**を配布採用（W-RBC 96版・未追跡は破棄） |
@@ -122,6 +125,8 @@
 2. **層2 plugin の組成**（C-BDK）: layer2-plugin テンプレに汎用 skills（pre-compact=122版・request/review はテンプレ同梱）＋code-reviewer＋code-review＋hooks を実装 → `plugin validate --strict` → C-MKT へ push。
    - （オプション・2026-08-20追記・G5-005）テーマ特化資産（2-B）を独立 plugin 化した上で、`name`＋`dependencies` のみで構成する **bundle plugin**（例: `cc-full-toolkit`）を C-MKT に併設し、汎用 plugin とテーマ特化 plugin を「1 install でまとめて導入」できないか検討の余地がある。§4 #3「据え置き」と §4 #1「dual 採用」の間で妥協していた設計を緩められる可能性があるが、**今回は方針決定までは行わず、将来の再検討トリガーとして記録するに留める**（確信度: medium）。
 3. **C-MKT marketplace.json 整備**（greenfield からの新規構築）。
+   - **（2026-08-20 実測）現状の確認結果**: 素の C-MKT に `claude plugin marketplace add` を実行すると `Marketplace file not found at …\.claude-plugin\marketplace.json` で失敗する ―― **層2 レールはまだ 1 度も通っていない**。また実 `publish-plugin.sh` は `.claude/skills/<name>` をそのまま指定すると `plugin.json が無い` で中止するため、**現行 skills を層2 に乗せるには `plugin.json` の付与（案B'' 形状）が前提**になる。`plugin.json` を付けた ref では `validate --strict` → ミラー → commit → push まで完走し、`marketplace.json` を置けば `marketplace add` → `install` まで通ることを作業用クローンで確認済み（実リポジトリ・GitHub には未接触）。詳細は [Plugin編 調査結果 §9(5)](../../02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin・Marketplace配布物の開発・テスト_調査結果.md#single-entity)。
+   - **⚠ 併せて記録（本テーマのスコープ外）**: `publish-plugin.sh` は `/security-review` 実行確認の `read -r -p` を持つため、**非対話（CI・ヘッドレス）ではそこでハングする**。C-BDK 側の実装課題として残す。
 4. テーマ特化資産は据え置き（必要時に別 plugin 化を再検討）。
 
 ---
@@ -129,4 +134,5 @@
 ## 変更履歴
 
 - 初版（2026-06-29）: Plugin 配布可否（公式docs v2.1.195＋v1.2 マトリクス照合で確定）を本インベントリ資産に適用。汎用共有/テーマ特化を区別し、層1 Git body（C-BDK→C-BDC）と層2 Plugin（C-BDK→C-MKT）の2トラックで統合・清書・テスト・配布のリポジトリを割当。判断点5件と実行順序を提示。
+- **層2 レールの実測反映（2026-08-20・CLI v2.1.237 実機）**: [Plugin/Skill 手順書 v2.0](../../02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin開発・テスト_手順書.md) の刷新に伴い、§3-1 に「公開前提の単発・独立資産の置き場所（C-BDK の `.claude/` 外の開発エリア）」を追加。§4 #1（dual）に「**両方に実体を置く必要はない** ―― 案B''＋`git-subdir` で実体 1 つ・参照 2 通りに畳める。ただし層1 と層2 を同じ利用者に両方入れさせない」を追記。§4 #2（multi-repo）に「`git-subdir` により C-MKT は `marketplace.json` 1 ファイルで成立し、plugin の引っ越しコストが下がる＝初期のリポジトリ選択を後から取り消せる」を追記。§5 手順3 に **C-MKT が現在も `marketplace.json` 不在で層2 レール未開通**であること、**現行 skills は `plugin.json` 無しでは `publish-plugin` に乗らない**こと、`publish-plugin.sh` が非対話でハングすること（スコープ外の実装課題）を実測結果として追記。
 - 横断整合性レビュー反映（2026-08-20・v2.1.235 版(2026-08-19) 照合）: G5-001（statusline 行に「⚠暫定・正本確定前に要現物確認」注記を追加。01 §6-5 と足並みを揃える）／G5-002（`skills/check-model` の所在を「C-CRI/C-RBC」→「C-CRI のみ」に訂正。01・03 の全ブランチ走査結果に合わせる。旧記載は据え置きのまま更新漏れていた）／G5-003（§1「Plugin で配布できる」列挙に `workflows/` を追加。v2.1.235 版(2026-08-19) で plugin の正規コンポーネントに追加されたため。正本は v1.2 §核心マトリクスとし本計画はそれに矛盾しない形で追記）／G5-005（§5 手順2に bundle plugin（`name`+`dependencies`のみ）によるロール別一括導入のオプション検討を追記・将来の再検討トリガーとして記録）／G5-006（§4 #2 に skills-directory plugin 機構と層1/層2 境界の部分的重複を注記・multi-repo 確定は維持）。G5-004（claude-security）は本書スコープ外のためレーンA確定書側で処理（重複回避のため本書には転記しない）。
