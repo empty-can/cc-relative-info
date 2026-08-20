@@ -23,7 +23,7 @@
 | base-dev-kit の資産 | 寄せる先 | 雛形での所在 | 根拠（レポート） |
 |---|---|---|---|
 | skills（commit-and-pr / orchestrate / request-new-skill / review-skill-request） | **層2** | `layer2-plugin/plugins/base-dev-kit/skills/`（形式雛形 `example-skill/` のみ同梱・実 skill は配布時に追加） | 一元更新・版管理（マトリクス①） |
-| `code-reviewer` sub-agent | **層2** | `layer2-plugin/plugins/base-dev-kit/agents/` | plugin 経由可（hooks/mcpServers/permissionMode 不使用＝①△に非該当） |
+| `code-reviewer` subagent | **層2** | `layer2-plugin/plugins/base-dev-kit/agents/` | plugin 経由可（hooks/mcpServers/permissionMode 不使用＝①△に非該当） |
 | `code-review` output-style | **層2** | `layer2-plugin/plugins/base-dev-kit/output-styles/` | 機能資産（マトリクス①） |
 | SessionStart hook（`git status --short`） | **層2** | `layer2-plugin/plugins/base-dev-kit/hooks/hooks.json` | hooks は plugin で自己完結（①）。本例はインラインコマンドのみで同梱スクリプト不要。スクリプトを同梱する hook は `${CLAUDE_PLUGIN_ROOT}/...` で参照する |
 | `CLAUDE.md`（共通ガバナンス） | **層1** | `layer1-repo-template/.claude/CLAUDE.md` | plugin で運べない（マトリクス②） |
@@ -32,8 +32,8 @@
 | **層2 起動装置**（extraKnownMarketplaces / enabledPlugins） | **層1** | `layer1-repo-template/.claude/settings.json` | 層2 有効化の前提・project commit（②） |
 | README（リポ固有情報） | 層1（隔離先） | `layer1-repo-template/README.md.example` | README 隔離方式（README は memory ファイルでなく `--add-dir`+env でも非ロード） |
 
-> **△回避の注記**: `hooks` / `mcpServers` / `permissionMode` を使う sub-agent は plugin 経由だと
-> 当該設定が無視される（マトリクス①△）。そうした sub-agent は層1 commit か層3 managed へ。
+> **△回避の注記**: `hooks` / `mcpServers` / `permissionMode` を使う subagent は plugin 経由だと
+> 当該設定が無視される（マトリクス①△）。そうした subagent は層1 commit か層3 managed へ。
 > 本雛形の `code-reviewer` はこれらを使わないため層2 で問題ない。
 
 ## 起動装置が「のり」
@@ -67,9 +67,9 @@
 │   ├── CLAUDE.md.example             # 方法A コピー展開用のリポ固有 CLAUDE.md 雛形
 │   └── README.md.example             # リポ固有情報の隔離先 雛形
 └── layer2-plugin/                     # 層2: plugin + marketplace 骨格
-    ├── marketplace/
-    │   └── .claude-plugin/
-    │       └── marketplace.json      # Marketplace 定義（plugin の所在を列挙）
+    │                                  #   ★このディレクトリ自体が「Marketplace ルート」
+    ├── .claude-plugin/
+    │   └── marketplace.json          # Marketplace 定義（plugin の所在を列挙）
     └── plugins/
         └── base-dev-kit/
             ├── .claude-plugin/
@@ -84,21 +84,69 @@
 > Marketplace を独立リポジトリにして複数 plugin を集約する構成も採れる
 > （レポート §解決案 層2系・案B/B'）。
 
+> **⚠ `.claude-plugin/` の位置は「Marketplace ルート」を決める（2026-08-20 修正）**
+>
+> 公式仕様では **相対パスの `source` は「`.claude-plugin/` を含むディレクトリ」＝ Marketplace ルートを基準に解決**され、
+> **`../` でルート外を参照することは禁止**されている（`plugin-marketplaces` §Relative paths・v2.1.235 版 2026-08-19）。
+> 本雛形は当初 `layer2-plugin/marketplace/.claude-plugin/marketplace.json` と `layer2-plugin/plugins/` を**兄弟**に置いていたため、
+> `"source": "./plugins/base-dev-kit"` が `layer2-plugin/marketplace/plugins/base-dev-kit`（実在しない）へ解決され、
+> **そのままコピーして公開すると `/plugin install` が失敗する**状態だった。`.claude-plugin/` を `layer2-plugin/` 直下へ移して修正済み。
+>
+> **⚠ `claude plugin validate` はこの欠陥を検出しない**（実測）。修正前後の対照実験:
+>
+> | 検査 | 修正前（兄弟配置） | 修正後（現行） |
+> |---|---|---|
+> | `claude plugin validate .` | ✔ Validation passed（**見逃す**） | ✔ Validation passed |
+> | `claude plugin validate . --strict` | ✔ Validation passed（**見逃す**） | ✔ Validation passed |
+> | `claude plugin marketplace add` → `claude plugin install` | ✘ `Source path does not exist: …\plugins\base-dev-kit` | ✔ Successfully installed |
+>
+> したがって **相対パス `source` を使う Marketplace の検証は `validate` では足りず、`marketplace add` → `install` まで実際に通すこと**。
+> （実測環境: CLI v2.1.237 / 2026-08-20。個人設定を汚さないよう `CLAUDE_CONFIG_DIR` を一時ディレクトリへ向けて実行した。
+> 「守れた」を主張する検査には対照実験を付けるという方針は
+> [レーンA 確定書 §10-bis](../04.資産インベントリ・統合/04.ランチャースクリプト実装/配布・リリース設計確定_レーンA.md) と同じ。）
+
 ## テスト手順への導線
 
 本雛形の開発・テスト手順は既存の成果物に詳述済み。重複させず参照する:
 
 - **層2（plugin）の開発・テスト**: `reports/02.配布物の開発・テスト/01.Plugin・Marketplace編/`
   - ローカルテスト = `claude --plugin-dir layer2-plugin/plugins/base-dev-kit`
-  - 構造検証 = `claude plugin validate layer2-plugin/plugins/base-dev-kit`
+  - 構造検証 = `claude plugin validate layer2-plugin/plugins/base-dev-kit`（＋ marketplace 側は `cd layer2-plugin && claude plugin validate .`）
+  - **導線検証（必須・上記の ⚠ 参照）** = `claude plugin marketplace add layer2-plugin` → `claude plugin install base-dev-kit@base-dev-kit-marketplace`。
+    **`validate` は相対パス `source` の解決失敗を検出しない**ため、install まで通して初めて「配れる」と言える
 - **層1（Marketplace 外資産）の開発・テスト**: `reports/02.配布物の開発・テスト/02.Marketplace外資産編/`
   - ネイティブ起動スモーク（方法A）／`--add-dir` + env + `--settings` 結合検証（方法B）
   - 公開前ゲート = `check-assets`（衛生）＋ `/security-review`（脆弱性）
-  - 検証コマンド = `/memory`・`/context`・`/status`・`/doctor`・`/skills`・`/agents`・`/plugin`
+  - 検証コマンド = **`/context`（何が実際にロードされたかの正）**・`/memory`（置き場所の一覧）・`/status`・`/doctor`・`/skills`・`/plugin`
+    - ⚠ **`/agents` は v2.1.198 以降 subagent の一覧を表示しない**（案内文言のみ）。subagent がロードされたかは **`/context`** で確認する（ロード元も併記される）。同様に **`/memory` は「ロード済み」ではなく「置き場所（未作成含む）」の一覧**に変わっている
 
 ## スコープ外（層3）
 
 層3（Managed settings）はガバナンス資産の**強制**チャネルだが、server-managed は
 Claude for Teams/Enterprise 契約、endpoint-managed は MDM／OS 管理者権限が前提で、
 通常の開発マシンでは雛形を実機検証できない。設定キー・配置パス・選択軸（server-managed vs
-endpoint-managed）はレポート **§解決案 層3系・案D** と **付録A** に整理済み。本雛形では扱わない。
+gateway-managed vs endpoint-managed）はレポート **§解決案 層3系・案D** と **付録A** に整理済み。本雛形では扱わない。
+
+---
+
+## 変更履歴
+
+- **2026-08-20（公式ドキュメント最新版 CLI v2.1.235 相当・2026-08-19 取込 との照合による最新化）**
+  - **【CRITICAL 修正】`layer2-plugin/` のディレクトリ構成を変更** —— `marketplace/.claude-plugin/marketplace.json` を
+    **`layer2-plugin/.claude-plugin/marketplace.json` へ移動**（`git mv`）し、空になった `marketplace/` を削除。
+    相対パス `source` は「`.claude-plugin/` を含むディレクトリ」を基準に解決されるため、従来の兄弟配置では
+    `"./plugins/base-dev-kit"` が実在しないパスへ解決され、**コピーして公開すると `/plugin install` が失敗する**状態だった。
+    **`claude plugin validate`（`--strict` 含む）はこの欠陥を検出しない**ことを対照実験で実測し、
+    §ディレクトリ構成に警告と検証手順（install まで通すこと）を追記した。
+  - **`agents/code-reviewer.md` の `tools` を修正** —— `Bash(git status:*), Bash(git diff:*)` は subagent の `tools` では
+    解釈されない（受け付けるのは厳密なツール名か `mcp__` パターンのみ）。`Bash` に直し、
+    引数レベルで絞る正しい手段（`permissions.deny`／`PreToolUse` hook。**plugin 配布時は frontmatter の `hooks` が無視される**点も）を
+    コメントで明記した。
+  - **`rules/coding-standards.md` の `paths:` 14 行をブレース展開 1 行に集約**（展開後のパターン数上限にも言及）。
+  - **用語を公式表記に統一** —— `sub-agent` → `subagent`（3 箇所）。
+  - **検証コマンドの導線を更新** —— `/agents` は v2.1.198 以降 subagent 一覧を表示しないため **`/context`** を正とし、
+    `/memory` の意味変化（ロード済み → 置き場所一覧）も注記。
+  - **層3 の系統名を 3 系統へ更新**（server-managed / gateway-managed / endpoint-managed）。
+  - なお `layer1-repo-template/.env.example` は本セッションの権限設定（`Read(./.env.*)` の deny）により読み取れず、
+    **private Marketplace 認証コメントの記述（トークンだけでは自動更新の認証にならず credential helper か URL 書き換えが要る）は未反映**。
+    別途対応が要る。

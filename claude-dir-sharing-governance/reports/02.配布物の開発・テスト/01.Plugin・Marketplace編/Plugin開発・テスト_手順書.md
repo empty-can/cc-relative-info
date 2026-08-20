@@ -1,8 +1,8 @@
-# Plugin 開発・テスト手順書（v1.0）
+# Plugin 開発・テスト手順書（v1.3）
 
 > - **目的**: Claude Code で Marketplace 配布する plugin / skill を開発・テストする際の **全体フロー・起動オプション・コマンド例**を、手を動かす順に把握できる実務手順書。
 > - **位置づけ**: [調査結果報告書](./Plugin・Marketplace配布物の開発・テスト_調査結果.md) の派生（実務オペレーション版）。**根拠・出典・制約の理由は報告書側**にあり、本書は手順に絞る（二重管理を避ける）。
-> - **前提環境**: Claude Code CLI（`--plugin-dir` の `.zip` 対応は v2.1.128 以降）。コマンドは PowerShell / bash いずれでも同形。
+> - **前提環境**: Claude Code CLI（`--plugin-dir` の `.zip` 対応は v2.1.128 以降と記載されていたが、**v2.1.235 版(2026-08-19) の docs では版注記が見当たらず**現行は標準機能として記載されている。極端に古い CLI を使っている場合のみ留意）。コマンドは PowerShell / bash いずれでも同形。
 > - **作成日**: 2026-06-21
 
 ---
@@ -89,6 +89,8 @@ my-plugin/
 └── hooks/hooks.json         # 必要なら（スクリプト本体は ${CLAUDE_PLUGIN_ROOT} 参照で同梱）
 ```
 
+> 補足（**v2.1.235 版(2026-08-19)**）: skill が1つだけの plugin なら、`skills/<name>/SKILL.md` を作らず `SKILL.md` を plugin ルート直下に置くだけでもよい（frontmatter の `name` が呼び出し名になる。`docs/plugins`「Plugin structure overview」）。また、`hooks/hooks.json` と並ぶ正式なコンポーネントとして `workflows/`（バックグラウンドで動く dynamic workflow のスクリプト置き場）も plugin root 直下に置ける（`docs/plugins-reference`）。
+
 `plugin.json` の最小例（**`author` はオブジェクト型**で書く点に注意。文字列だと `claude plugin validate` が `expected object, received string` で失敗する）:
 
 ```json
@@ -125,7 +127,7 @@ claude --plugin-dir ./my-plugin
 # 複数同時
 claude --plugin-dir ./plugin-one --plugin-dir ./plugin-two
 
-# .zip アーカイブ（v2.1.128+）
+# .zip アーカイブ（v2.1.128+と記載されていたが、v2.1.235 版の docs では版注記が見当たらず現行は標準機能）
 claude --plugin-dir ./my-plugin.zip
 
 # CI ビルド成果物などの URL から
@@ -133,7 +135,8 @@ claude --plugin-url https://example.com/builds/my-plugin.zip
 ```
 
 - インストール済みの同名 plugin があっても、**`--plugin-dir` のローカルコピーがそのセッションで優先**される（アンインストール不要で変更をテストできる）。
-- 起動後、`/plugin-name:skill-name` や `/agents` で動作確認する。
+- 起動後、`/plugin-name:skill-name` で skill を試す、`/context` の Custom Agents 欄で agent が登録されているか確認する（または `@plugin-name:agent-name` で明示的にメンションする）、hook は対象イベントを実際に発火させて効果を確認する（`claude --debug` の記録と合わせて確認）。
+  > ⚠️ **`/agents` は動作確認に使えない（v2.1.235 版(2026-08-19)）**: v2.1.198 以降、`/agents` は subagent の一覧・管理インタフェースではなく、単なる案内メッセージを表示するだけになった（`docs/commands`「All commands」）。plugin agent のロード確認は上記の `/context` か @-mention を使う。
 
 #### 副: ローカル marketplace（配布形態ごと検証）
 
@@ -167,7 +170,7 @@ claude plugin install my-plugin@my-mp
 /plugin install my-plugin@my-mp
 ```
 
-> `source: "./..."` の相対参照は **git 経由配布でのみ**機能する（URL-based marketplace では不可）。ローカルテストでは効くが、公開時の source 種別に注意。
+> `source: "./..."` の相対参照は**git 経由の追加**または**ローカルディレクトリとしての追加**でのみ機能する（直接 URL で `marketplace.json` を追加する URL-based marketplace では不可）。**v2.1.235 版(2026-08-19)**: 非git配布の新しい source 種別 `archive`（v2.1.224+）・`command`（v2.1.229+）も追加された。詳細は[調査結果報告書 §3(3)](./Plugin・Marketplace配布物の開発・テスト_調査結果.md#repo-relation)を参照。
 
 #### 反映（編集 → 確認のループ）
 
@@ -176,6 +179,8 @@ claude plugin install my-plugin@my-mp
 | skill の `SKILL.md` | **即時**（操作不要） |
 | plugin の hooks / `.mcp.json` / agents / output-styles | `/reload-plugins` |
 | plugin / skill / agent / hook / MCP / LSP 全般 | `/reload-plugins`（再起動不要で全再読込） |
+
+> ⚠️ **既知の表示上の癖（v2.1.235 版(2026-08-19)）**: `/reload-plugins` 実行後のサマリに出る「skills」件数は plugin の `commands/` ディレクトリのみをカウントしており、`skills/` ディレクトリの再読込結果を反映しない（`docs/plugins`「Create your first plugin」）。そのため `skills/` だけで作った skill しか無い plugin では、実際は再読込に成功していても `0 skills` と表示されることがある。件数表示だけで「反映されていない」と誤診断せず、実際に `/plugin-name:skill-name` を呼んで動作確認すること。
 
 ### ④ 公開前バリデーション
 
@@ -195,13 +200,13 @@ claude plugin validate ./my-plugin --strict
 - ロードがうまくいかない時のデバッグ:
 
 ```bash
-claude --debug            # デバッグログ（ファイル出力）。plugin のロード詳細・manifest エラーに加え、
-                          # ロード後の実行時イベントも対象（後述の早見表参照）。
-                          # 出力先は ~/.claude/debug/<session-id>.txt（セッション単位のファイル）
-claude --debug mcp        # MCP サーバの stderr を確認したい時
-claude --debug hooks      # hook の評価をツール実行ごとにライブ記録したい時
+claude --debug                  # デバッグログ（ファイル出力）。出力先は ~/.claude/debug/<session-id>.txt
+claude --debug='mcp,startup'    # カテゴリを絞る場合は = 結合＋カンマ区切りが必須（スペース区切りはフィルタとして機能しない）
+# hook の評価を詳しく見たい場合は CLAUDE_CODE_DEBUG_LOG_LEVEL=verbose を併用
 # /plugin の Errors タブでも LSP パスエラー等を確認できる
 ```
+
+> ⚠️ **v2.1.235 版(2026-08-19)**: `--debug` のカテゴリフィルタは `=` で結合した形（例: `--debug='mcp,startup'`）のときだけ機能し、`claude --debug mcp` のようにスペース区切りで渡すとフィルタとして機能せず単にデバッグモードを有効化するだけになる（`docs/cli-reference`「CLI flags」）。`hooks` という専用カテゴリの案内は現行 docs には無く、hook 評価の詳細は `CLAUDE_CODE_DEBUG_LOG_LEVEL=verbose` で粒度を上げて確認する。
 
 ### ⑤ 配布専用リポジトリ（Marketplace）へ公開
 
@@ -223,10 +228,11 @@ claude --debug hooks      # hook の評価をツール実行ごとにライブ�
 | `--plugin-dir <path>` | plugin を marketplace 登録なしで直接ロード（**開発の主手段**）。`.zip` 可・反復指定で複数 |
 | `--plugin-url <url>` | URL（CI 成果物等）から plugin をロード |
 | `--add-dir <dir>` | 追加ディレクトリのファイルアクセスを付与。**`<dir>/.claude/skills/` は自動ロードされる**（skill テストの結合に有用） |
-| `--debug` | **汎用デバッグログ（`~/.claude/debug/<session-id>.txt` にセッション単位で出力）**。plugin の場合はロード詳細・manifest エラーを見られるが、**ロード時専用ではない**——`--debug hooks`（hook 評価をツール実行ごとにライブ記録）・`--debug mcp`（MCP サーバの stderr）のように**ロード後の実行時イベントも対象**。サブチャネル（`hooks`/`mcp`）で対象を絞れる（旧 `--mcp-debug` は非推奨・`--debug mcp` を使う） |
+| `--debug` | **汎用デバッグログ（`~/.claude/debug/<session-id>.txt` にセッション単位で出力）**。plugin の場合はロード詳細・manifest エラーを見られるが、**ロード時専用ではない**——ロード後の実行時イベントも対象。**v2.1.235 版(2026-08-19)**: カテゴリを絞る場合は**`=` 結合＋カンマ区切りが必須**（例: `--debug='mcp,startup'`）。スペース区切り（例: `--debug mcp`）は**フィルタとして機能せず**、単にデバッグモードを有効化するだけ。hook 評価の詳細確認は `CLAUDE_CODE_DEBUG_LOG_LEVEL=verbose` を併用する |
 
 > `--add-dir` で渡すのは「`.claude/` を内包する親フォルダ」。フォルダ名自体を `.claude` にすると `<dir>/.claude/.claude/` を探して読まれないので注意。
-> **`--add-dir`（フラグ／`/add-dir`）で `<dir>/.claude/` から自動ロードされる設定**（公式 `docs/permissions` の表）: **skills（`.claude/skills/`・live reload）と subagents（`.claude/agents/`・v2.1.178+。v2.1.165 までは非ロード）**、および `settings.json` のうち **`enabledPlugins` / `extraKnownMarketplaces` のみ**。`CLAUDE.md` / `rules` / `CLAUDE.local.md` は環境変数 `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` を付けた時だけ読まれる。`settings.json` のそれ以外のキー（permissions/hooks 等）・commands・output-styles は読まれない。
+> **`--add-dir`（フラグ／`/add-dir`）で `<dir>/.claude/` から自動ロードされる設定**（公式 `docs/permissions` の表）: **skills（`.claude/skills/`・live reload）／subagents（`.claude/agents/`・v2.1.178+。v2.1.165 までは非ロード）／commands（`.claude/commands/`・**v2.1.235 版(2026-08-19) で追加**。live reload なし。追加ディレクトリとプロジェクト側で同名 command がある場合はプロジェクト側が優先）**、および `settings.json` のうち **`enabledPlugins` / `extraKnownMarketplaces` のみ**。`CLAUDE.md` / `rules` / `CLAUDE.local.md` は環境変数 `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` を付けた時だけ読まれる。`settings.json` のそれ以外のキー（permissions/hooks 等）・output-styles は読まれない。
+> **正本**: 版依存の事実（subagents の版境界・commands の追加時期・`settings.local.json` を含む2キー例外）は [v1.2 付録B『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions) を正とする（本注記は運用早見。詳しい根拠は [調査結果報告書 §4](./Plugin・Marketplace配布物の開発・テスト_調査結果.md#skill-only)）。
 > ⚠️ `permissions.additionalDirectories` 設定経由ではこれら例外は**一切**読まれず、ファイルアクセス付与のみ（自動ロードは `--add-dir` フラグ／`/add-dir` 限定）。
 
 ### セッション内 / CLI コマンド対応
@@ -240,6 +246,8 @@ claude --debug hooks      # hook の評価をツール実行ごとにライブ�
 | 変更の再読込 | `/reload-plugins` | —（セッション内専用） |
 | skill の雛形生成（scaffold） | — | `claude plugin init <name>` |
 
+> ⚠️ `/reload-plugins` のサマリに出る「skills」件数は plugin の `commands/` ディレクトリのみをカウントする既知の表示上の癖がある（詳細は §1③「反映（編集 → 確認のループ）」を参照）。`skills/` のみで作った plugin では実際は反映されていても `0 skills` と表示されうるため、件数だけで判断しないこと。
+>
 > **「scaffold（スキャフォールド）」= 雛形生成**。`claude plugin init <name>` は `~/.claude/skills/<name>/` に `.claude-plugin/plugin.json` と starter `SKILL.md`（土台一式）を自動生成し、次セッションで `<name>@skills-dir` として自動ロードする。ゼロからファイルを手書きせず、編集すればよい状態の雛形を作る操作。
 >
 > **`claude plugin validate` が具体的にチェックする内容**（出典は[調査結果報告書 §5](./Plugin・Marketplace配布物の開発・テスト_調査結果.md)）:
@@ -264,10 +272,14 @@ plugin 化せず `.claude/skills/` 単体で配る skill は、開発がさら�
 skill の eval ループを Claude Code 内で自動化する純正プラグイン。
 
 ```bash
+# 初回対話起動前の CI・非対話環境では未登録のことがあるため、必要なら先に:
+# claude plugin marketplace add anthropics/claude-plugins-official
 /plugin install skill-creator@claude-plugins-official
 /reload-plugins
 # 例: 「evaluate my summarize-changes skill with skill-creator」と依頼すると eval ループが走る
 ```
+
+> **v2.1.235 版(2026-08-19)**: `claude-plugins-official` はマシン初回の対話起動時に自動登録される。CI・非対話（ヘッドレス）環境で先に実行すると未登録のことがある（`docs/plugins`「Submit your plugin to the community marketplace」／`docs/discover-plugins`「Official Anthropic marketplace」）。
 
 公式 docs（`docs/skills`）が挙げる具体機能:
 
@@ -297,6 +309,8 @@ skill の eval ループを Claude Code 内で自動化する純正プラグイ�
 
 ```bash
 # 利用（marketplace から）
+# 初回対話起動前の CI・非対話環境では未登録のことがあるため、必要なら先に:
+# claude plugin marketplace add anthropics/claude-plugins-official
 /plugin install plugin-dev@claude-plugins-official
 # ※ README 上の表記は plugin-dev@claude-code-marketplace。marketplace エイリアスに表記差があるため
 #   install 時に実際の marketplace 名を確認する（公式 docs カタログ文脈では claude-plugins-official）
@@ -355,7 +369,7 @@ cc --plugin-dir /path/to/plugin-dev
 - [ ] marketplace 配布なら `claude plugin validate ./my-mp` もパスする（schema・重複名・source・バージョン整合）
 - [ ] `--plugin-dir` で起動し、skill / command / agent / hook が期待どおり動く
 - [ ] 配布形態（ローカル marketplace install → uninstall → reinstall）で挙動を確認した
-- [ ] `source` の種別（git / URL）と相対パス参照の整合を確認した
+- [ ] `source` の種別（git 経由 / ローカルディレクトリ / 直接 URL / `archive` / `command`）と相対パス参照の整合を確認した
 - [ ] `--debug` でロードエラーが出ていない
 - [ ] スクリプト/SKILL.md のパス参照が `${CLAUDE_SKILL_DIR}` / `${CLAUDE_PLUGIN_ROOT}` 解決（cwd 依存・絶対パス・`../` 不使用）（§6.1）
 - [ ] 書き込み・蓄積先が `${CLAUDE_PLUGIN_DATA}` かプロジェクト側（cache=`${CLAUDE_PLUGIN_ROOT}` 配下に書いていない）（§6.2）
@@ -371,6 +385,7 @@ cc --plugin-dir /path/to/plugin-dev
 ### 6.1 パス解決（読み取り）— cwd 非依存で書く
 
 - **skill 同梱ファイル（references/・templates/・scripts/）の参照は `${CLAUDE_SKILL_DIR}` を使う**。SKILL.md のあるディレクトリ（plugin の場合は plugin root でなく skill サブディレクトリ）に解決され、**personal / project / plugin のどこに置かれても正しく解決される**公式推奨変数。SKILL.md 本文に `python3 ${CLAUDE_SKILL_DIR}/scripts/foo.py` と書けば**実行前に絶対パスへインライン置換**される。
+- **`${CLAUDE_SKILL_DIR}` は SKILL.md 本文だけでなく、frontmatter の `allowed-tools` の Bash ルールでも同様に置換される**（例: `allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/render.sh *)`。**v2.1.235 版(2026-08-19)**・`docs/skills`「Available string substitutions」）。本文と `allowed-tools` の双方で同じ変数を使うと、SKILL.md が指示するコマンドと `allowed-tools` のルールが完全一致するため、同梱スクリプトを permission プロンプト無しで実行できる。
 - **plugin root 相対（複数 skill 横断・hook・MCP/LSP）の参照は `${CLAUDE_PLUGIN_ROOT}`**。`${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_SKILL_DIR}` / `${CLAUDE_PLUGIN_DATA}` は **skill 本文・agent 本文・hook command・monitor command・MCP/LSP config のいずれでもインライン置換**される。
 - **スクリプト内部から env 変数で読めるか**は起動経路で異なる（**ここでの env は「起動された子プロセスの OS 環境変数」であり、settings.json の `env` 要素ではない**。これらの変数は Claude Code が実行時に注入する）:
   - **hook / MCP / LSP から起動**されたプロセス → `CLAUDE_PLUGIN_ROOT` 等が環境変数として export され `os.environ` / `process.env` で読める。
@@ -379,8 +394,8 @@ cc --plugin-dir /path/to/plugin-dev
 
 ### 6.2 書き込み・蓄積先 — cache に書かない
 
-- **`${CLAUDE_PLUGIN_ROOT}` 配下（cache）へ state を書いてはならない**。更新のたびにパスが変わり、旧バージョン dir は**約7日後に削除**（orphaned 化し Glob/Grep 対象からも除外）。公式も "treat it as ephemeral … do not write state here" と明記。
-- **永続させる書き込み（ナレッジ蓄積・生成物・venv/node_modules・キャッシュ）は `${CLAUDE_PLUGIN_DATA}`**（`~/.claude/plugins/data/{id}/`・**更新をまたいで残る**・初回参照時に自動作成・最終スコープからの uninstall 時に削除〔`--keep-data` で保持〕）かプロジェクト側に置く。
+- **`${CLAUDE_PLUGIN_ROOT}` 配下（cache）へ state を書いてはならない**。更新のたびにパスが変わり、旧バージョン dir は**約14日後に削除**（orphaned 化し Glob/Grep 対象からも除外）。公式も "treat it as ephemeral … do not write state here" と明記。**v2.1.235 版(2026-08-19)**: 削除猶予は旧版の約7日から**約14日へ倍増**し、さらに**最後の1個の plugin をアンインストールすると掃除処理自体が止まり、次に何か plugin を入れるまで orphaned dir が残り続ける**という条件が付いた。
+- **永続させる書き込み（ナレッジ蓄積・生成物・キャッシュ、Python 依存等の手動インストールが必要な依存）は `${CLAUDE_PLUGIN_DATA}`**（`~/.claude/plugins/data/{id}/`・**更新をまたいで残る**・初回参照時に自動作成・最終スコープからの uninstall 時に削除〔`--keep-data` で保持〕）かプロジェクト側に置く。**例外（v2.1.235 版(2026-08-19)）**: npm/Bun の依存関係（`package.json`＋対応ロックファイル: `bun.lock`/`bun.lockb`/`npm-shrinkwrap.json`/`package-lock.json`）は、marketplace 経由の plugin なら Claude Code が cache 配置時に自動インストール（`--ignore-scripts`。lifecycle script は実行されない）するため、`${CLAUDE_PLUGIN_DATA}` への手動配置が不要な場合がある。Python 依存・yarn/pnpm ロックファイル・lifecycle script 必須の依存は引き続き手動（hook から `${CLAUDE_PLUGIN_DATA}` へ）。
 - 「references/ のファイルに追記してナレッジ蓄積」は cache 配下では不可。**同梱 references/ は読み取り専用の初期データ**として扱い、可変分は `${CLAUDE_PLUGIN_DATA}`／プロジェクトへ分離する。
 
 ### 6.3 README・references のユーザアクセス — cache 内ファイルに依存しない
@@ -408,6 +423,19 @@ cc --plugin-dir /path/to/plugin-dev
 
 ## 変更履歴
 
+- **v1.3（2026-08-20）**: 公式ドキュメント最新版（CLI v2.1.235 相当・2026-08-19 取込）との横断整合性照合（検出タスク G2・[調査結果報告書](./Plugin・Marketplace配布物の開発・テスト_調査結果.md)とあわせ計17件検出）を反映。本書側の適用は10件（G2-002, G2-004, G2-005, G2-007, G2-009, G2-010, G2-012, G2-013, G2-015, G2-016）。**あわせて H1 の版番号が v1.1〜v1.2 の間 "v1.0" のまま更新されていなかった不備を本版で訂正**（変更履歴は進んでいたが見出しが追随していなかった）。主な変更:
+  - **【CRITICAL 訂正】§1④・§2 の `--debug` コマンド例**: `claude --debug mcp` / `claude --debug hooks`（スペース区切り）というカテゴリ絞り込みの書き方は現行仕様では機能しない。カテゴリを絞るには **`=` 結合＋カンマ区切り**（例: `claude --debug='mcp,startup'`）が必須で、スペース区切りはフィルタなしでデバッグモードを有効化するだけと訂正。hook 評価の詳細確認は `CLAUDE_CODE_DEBUG_LOG_LEVEL=verbose` を案内する形に改めた。あわせて現行 `docs/cli-reference` で確認できない `--mcp-debug` 非推奨への言及を削除（旧記述のまま実行すると意図した絞り込みができない CRITICAL 案件）。
+  - **§1③「動作確認」から `/agents` を削除**: v2.1.198 以降 `/agents` は案内メッセージを表示するだけの機能に変わり、plugin agent の動作確認に使えない。代替として `/context` の Custom Agents 欄・@-mention・hook は実発火確認を案内。
+  - **§6.2 plugin cache の旧バージョン dir 削除猶予を約7日→約14日に訂正**。最後の plugin をアンインストールすると掃除処理自体が止まる新条件も追記。
+  - **§6.2 node_modules 等の依存記述を訂正**: marketplace 経由 install の plugin は npm/Bun の依存を cache 配置時に自動インストールするようになったため、手動配置が必要なのは yarn/pnpm・lifecycle script 必須の依存・Python 依存に限定されると明記。
+  - **§2 `--add-dir` 早見表に commands（`.claude/commands/`）の自動ロードを追加**（live reload なし・同名時はプロジェクト側優先）し、正本 [v1.2 付録B『--add-dir 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions) への参照リンクを新設（本書はこれまで正本を参照していなかった）。
+  - **§3・§4 の `claude-plugins-official` install 例に自動登録の注意を補記**: マシン初回の対話起動時に自動登録される仕様のため、CI・非対話環境で先に動かすと未登録になりうる。
+  - **前提環境・§1③ の `.zip` 対応の版限定注記を軟化**: v2.1.128+ という版注記が現行 docs には見当たらず、現行版では標準機能として記載されていることを明記（誤りと断定はせず、版注記が確認できなくなった旨の注記に留めた）。
+  - **§1② plugin ディレクトリ例に補足を追加**: skill が1つだけの plugin は `SKILL.md` を plugin root 直下に置ける軽量パターン、および `workflows/` が正式コンポーネントとして追加された点を追記。
+  - **§1③「副: ローカル marketplace」・§5 公開前チェックリストの `source` 相対参照の説明を訂正**（本書に該当する G2 finding はなかったが、[調査結果報告書 G2-014 の訂正](./Plugin・Marketplace配布物の開発・テスト_調査結果.md)と同一の「git 経由配布でのみ」「git / URL」という誤った二値的な説明が本書側にも残っていたため、姉妹文書との整合のため同時に修正）: git 経由の追加とローカルディレクトリとしての追加の両方で機能する旨に訂正し、`archive`/`command` の新 source 種別への言及を追加。
+  - **§6.1 に `${CLAUDE_SKILL_DIR}` が frontmatter `allowed-tools` の Bash ルールでも置換される点を追記**（同梱スクリプトを permission プロンプト無しで実行できる）。
+  - **§1③・§2 に `/reload-plugins` の既知の表示上の癖を追記**: サマリの「skills」件数は plugin の `commands/` ディレクトリのみをカウントしており、`skills/` だけの plugin では実際に反映されていても `0 skills` と表示されうる。
+  - 本書は「根拠・出典は報告書側」の位置づけのため出典表は新設せず、各記述にページ名＋版タグ（**v2.1.235 版(2026-08-19)**）をインライン記載する従来方式を踏襲。
 - **v1.2（2026-06-29）**: 横断整合性レビュー反映。§2 の `--add-dir` 自動ロード注記の subagents（`.claude/agents/`）に版境界「v2.1.178+。v2.1.165 までは非ロード」を補い、v1.2 報告書 errata [75]・他編と統一。
 - **v1.1（2026-06-25）**: §6「plugin 配布前提のスクリプト・同梱ファイル実装規約」を新設（実 skill の plugin 化テストで判明したパス解決・書き込み先・README アクセスの制約を反映）。パス解決は `${CLAUDE_SKILL_DIR}`／`${CLAUDE_PLUGIN_ROOT}` のインライン置換と起動経路別の env 注入、書き込みは cache 禁止・`${CLAUDE_PLUGIN_DATA}` 利用、README は UI 非閲覧で `homepage` 提示を明記。§②のディレクトリ例を references/templates/scripts/README 付きの実構成へ拡張し §6 への必読ポインタを追加、§5 チェックリストに 4 項目追加。（出典の行番号付き根拠は調査結果報告書へ別途追補予定）
 - **v1.0（2026-06-21）**: 初版。[調査結果報告書 v1.0](./Plugin・Marketplace配布物の開発・テスト_調査結果.md) を実務手順に落とし込み。レビュー反映として全体フロー図のローカルリポ明示（A/B/C）、standalone の語義・①の動作検証・②の実施リポ・④ validate の必須/推奨条件・`--debug` の実行時範囲・scaffold の語義・`skill-creator` の機能/URL を補強。`commands/` レガシー指針（§1②）を追記し、純正 `plugin-dev` の節（§4）を `create-plugin` 8 フェーズ表・7 skill・3 agent・6 検証スクリプトまで踏まえて拡充。**Sonnet 動作検証（実機 `claude plugin validate` v2.1.185）反映**: `plugin.json` の `author`＝オブジェクト・`marketplace.json` の `owner`＝必須の最小例追加、`--add-dir` 注記を skills＋subagents に訂正、`--debug` 出力先 `~/.claude/debug/<session-id>.txt` 明記、`validate --strict` 追加。

@@ -21,11 +21,12 @@
 
 | チャネル | 配布手段 | 運べる資産 | コスト | 強制力 | 更新性 |
 |---|---|---|---|---|---|
-| **層1** | Git commit / テンプレート | ガバナンス（CLAUDE.md/rules/permissions）＋層2 起動装置＋層1専用（workflows 等） | 低 | なし | 手動 |
-| **層2** | Plugin / Marketplace | 機能資産（skills/commands/hooks/MCP/output-styles/△以外の subagents） | 中 | 弱 | 一元更新 |
-| **層3** | Managed settings | ガバナンス資産の**強制**配布（claudeMd/permissions/MCP/subagents/skills/version） | server-managed＝極低／endpoint-managed＝中〜高 | 最高（上書き不可） | 中央 push |
+| **層1** | Git commit / テンプレート | ガバナンス（CLAUDE.md/rules/permissions）＋層2 起動装置＋層1専用（`agent-memory/`） | 低 | なし | 手動 |
+| **層2** | Plugin / Marketplace | 機能資産（skills/commands/hooks/MCP/output-styles/**workflows**/△以外の subagents） | 中 | 弱 | 一元更新 |
+| **層3** | Managed settings | ガバナンス資産の**強制**配布（claudeMd/permissions/MCP/subagents/skills/output-styles/version） | server-managed＝極低／gateway-managed＝中／endpoint-managed＝中〜高 | 最高（**ただし公式に少数の例外あり**） | 中央 push |
 
 - **`--add-dir`** は主配布チャネルではなく、層2 で運べない CLAUDE.md/rules を共有ディレクトリから参照する**補助**。
+- **2026-08-20 の最新化で変わった点**（CLI v2.1.235 相当との照合）: `workflows/` が層2 で配布可能になり層1 専用グループは `agent-memory/` のみに縮小／層3 に **gateway-managed**（自ホスト Claude apps gateway）が加わり「Bedrock 等では endpoint-managed 一択」が解消／`--add-dir` の例外ロードに `commands/` が追加／managed settings の「上書き不可」に公式の例外表が新設。詳細は [`CLAUDE.md`](CLAUDE.md) と結論・構成案の変更履歴を参照。
 - **推奨**: 機能資産は層2 へ集約し、層1（ガバナンス＋起動装置）・層3（強制）・`--add-dir`（補助）で役割分担する。
 
 ## 成果物
@@ -46,5 +47,5 @@
 
 ## 参照リソース
 
-- 根拠ドキュメント: Claude Code 公式ドキュメント（`llms-full.txt`。出典行番号の基準は CLI v2.1.165 版、一部 v2.1.178+ 版）
+- 根拠ドキュメント: Claude Code 公式ドキュメント（`llms-full.txt`）。**出典の版は 2 つ混在する** —— `[1]`〜`[75]` は **CLI v2.1.165 版の行番号**（一部 v2.1.178+ 併記）で据え置き、`[76]` 以降は **CLI v2.1.235 版（2026-08-19 取込）のページ名＋セクション見出し**。最新化の基準ファイルは `C:\cc-workspace\LLMs\official-llms-txts\` 側（`cc-relative-info\LLMs\` 側は 2026-06-05 で凍結）。詳細は [`CLAUDE.md`](CLAUDE.md) 参照
 - 調査経路・版管理運用などの詳細は [`CLAUDE.md`](CLAUDE.md) を参照

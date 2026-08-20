@@ -1,4 +1,4 @@
-# Marketplace 外資産（CLAUDE.md / rules / settings）開発・テスト手順書（v1.7）
+# Marketplace 外資産（CLAUDE.md / rules / settings）開発・テスト手順書（v1.8）
 
 > - **目的**: Marketplace（層2）で配れない config 資産（`CLAUDE.md` / `.claude/rules/` / `settings.json` / skills / agents）を、config・テンプレートリポジトリで開発・テストする実務手順。全体像・結合手段・ロード検証コマンド・落とし穴を手を動かす順に把握できる。
 > - **位置づけ**: [調査結果報告書](./Marketplace外資産の開発・テスト_調査結果.md) の派生（実務オペレーション版）。根拠・出典は報告書側にあり、本書は手順に絞る。第1フェーズ [Plugin 開発・テスト手順書](../01.Plugin・Marketplace編/Plugin開発・テスト_手順書.md) の config 資産版。
@@ -21,11 +21,11 @@ flowchart TD
     B1 --> Share
 
     Share --> Test["② テスト（2通り）"]
-    Test -->|方法A：スモーク確認| MA["&lt;Share&gt; で claude 起動<br/>ロード/発火を確認。commands・output-styles・hooks の唯一の検証手段"]
+    Test -->|方法A：スモーク確認| MA["&lt;Share&gt; で claude 起動<br/>ロード/発火を確認。output-styles・hooks の唯一の検証手段"]
     Test -->|方法B：正式機能検証・本命| MB["&lt;Other&gt; で起動して &lt;Share&gt; を結合<br/>skills/agents → --add-dir ／ CLAUDE.md・rules → ＋env ／ settings.json → --settings"]
     MA --> Verify["③ ロード・適用を検証<br/>/memory /context /status /doctor /skills /agents"]
     MB --> Verify
-    Verify --> Clean["④ クリーン隔離テスト<br/>CLAUDE_CONFIG_DIR=空dir ＋ .claude 無しの dir から起動"]
+    Verify --> Clean["④ クリーン隔離テスト<br/>一次: --safe-mode／完全分離: CLAUDE_CONFIG_DIR=空dir ＋ .claude 無しの dir から起動"]
     Clean --> Gate["⑤ 公開前の必須チェック<br/>check-assets（衛生）＋ /security-review（脆弱性・read-only）"]
 
     Gate -->|パターンA| A6["⑥ 配布<br/>&lt;Share&gt; を push"]
@@ -108,7 +108,7 @@ claude
 # 起動後、§4 の検証コマンドで「何がロードされたか」を確認
 ```
 
-> **位置づけ（重要）**: `<Share>` には基本的に**公開する config 資産しか無く、操作対象の実コード・ファイルが無い**。よって方法A で確認できるのは主に**「ロードされる・発火する」までのスモーク**で、ファイルを入出力する skill や rules が**"正しく働くか"までは検証できない**。**公開前の正式な機能検証は §3（方法B）が本命**。ただし `--add-dir` で結合できない `commands`/`output-styles`/`hooks` は、方法A（`<Share>` で直接起動）が唯一の検証手段。
+> **位置づけ（重要）**: `<Share>` には基本的に**公開する config 資産しか無く、操作対象の実コード・ファイルが無い**。よって方法A で確認できるのは主に**「ロードされる・発火する」までのスモーク**で、ファイルを入出力する skill や rules が**"正しく働くか"までは検証できない**。**公開前の正式な機能検証は §3（方法B）が本命**。ただし `--add-dir` で結合できない `output-styles`/`hooks` は、方法A（`<Share>` で直接起動）が唯一の検証手段（`commands` は **v2.1.235 版(2026-08-19)** から `--add-dir` で結合可能になったため対象外・§3 参照）。
 >
 > clone/テンプレ展開した直後は **trust 承認**が要る（承認まで permission や一部設定はフル有効化されない）。テストは trust 承認後に行う。
 
@@ -139,7 +139,8 @@ claude --settings <Share>/.claude/settings.json
 | `settings.json` / `settings.local.json` の `enabledPlugins` / `extraKnownMarketplaces` | `--add-dir <Share>`（この2キーのみ） |
 | `CLAUDE.md` / `rules/` / `CLAUDE.local.md` | `--add-dir <Share>` ＋ `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` |
 | `settings.json`（permissions / hooks / env 等） | `--settings <Share>/.claude/settings.json` |
-| `commands/` / `output-styles/` / `hooks` | **結合不可** → `<Share>` で直接起動（方法A）か物理配置 |
+| `commands/`（`.claude/commands/`） | `--add-dir <Share>`（**v2.1.235 版(2026-08-19) で新規対応**。live reload なし＝反映に再起動が要る。`<Share>` と `<Other>` の両方に同名コマンドがある場合は `<Other>`〔参照元プロジェクト〕側が優先） |
+| `output-styles/` / `hooks` | **結合不可** → `<Share>` で直接起動（方法A）か物理配置 |
 
 > **正本**: 版依存の事実（subagents の版境界・`settings.local.json` を含む2キー例外）は [v1.2 付録B『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions) を正とする（本表は運用早見）。
 
@@ -163,16 +164,16 @@ claude --settings <Share>/.claude/settings.json
 
 | コマンド | 確認できること |
 |---|---|
-| **`/memory`** | ロード済みの `CLAUDE.md` / `CLAUDE.local.md` / rules ファイル一覧＋auto memory |
-| **`/context`** | コンテキスト内訳（system prompt・memory・skills・MCP・会話）。**CLAUDE.md/rules/skill が"そもそも入っているか"を最初に確認** |
+| **`/memory`**（⚠v2.1.235 版(2026-08-19)で仕様変更） | **「ロード済み一覧」ではなく「置き場所一覧」**——CLAUDE.md/CLAUDE.local.md/rules 等の所在を**未作成ファイルも含めて**列挙する編集用コマンド＋auto memory トグル。**ロードされたかの確認は `/context` を使う** |
+| **`/context`** | コンテキスト内訳（system prompt・memory・skills・MCP・**custom subagents〔ロード元パス付き〕**・会話）。**CLAUDE.md/rules/skill が"そもそも入っているか"を最初に確認**。**ロード済み subagent の確認は `/agents` でなくこちらを使う**（後述） |
 | **`/status`** | `Setting sources` 行＝ロード済み settings レイヤ（managed は配信チャネルを括弧表示）。設定ファイルのエラーも報告 |
-| **`/doctor`**（`claude doctor`） | 設定ファイルを**バリデーション**（無効キー・schema エラー）。`f` で Claude に修正させる |
+| **`/doctor`**（`claude doctor`） | 設定ファイルを**バリデーション**（無効キー・schema エラー）。検出結果を提示→確認のうえ適用（**`f` キー方式は Before v2.1.205 の廃止済み挙動**）。**同一ディレクトリ内の同名 subagent 定義**も検出し修正を提案 |
 | **`/skills`** | skill 一覧（project/user/plugin・`user-only` バッジ） |
-| **`/agents`** | subagent 一覧 |
+| **`/agents`**（⚠v2.1.198+で仕様変更） | **v2.1.197 以前**は subagent 一覧を表示。**v2.1.198 以降は一覧を表示せず**、`.claude/agents/` 直接編集を促すリマインダーのみ。**ロード済み subagent と読込元パスの確認は `/context`** を使う |
 
 > **より厳密に追うなら hook**: `InstructionsLoaded` hook で「どの指示ファイルが・いつ・なぜロードされたか」をログ（path-specific rules・サブディレクトリ遅延ロード `CLAUDE.md` のデバッグ向け）。`ConfigChange` hook は settings 再読込で発火。
 >
-> **限界**: `/memory` はスコープ"ラベル"を明示しない（パスから判断）。`/status` は"どのレイヤが読まれたか"は出すが"個別キーの出所"は出さない。
+> **限界**: `/memory` は置き場所を一覧するがスコープ"ラベル"は明示しない（パスから判断）。`/status` は"どのレイヤが読まれたか"は出すが"個別キーの出所"は出さない。
 
 ---
 
@@ -183,7 +184,17 @@ claude --settings <Share>/.claude/settings.json
 - **`~/.claude`（個人設定）** … どのテストでも乗る。
 - **`<Other>/.claude`（作業リポ自身の設定）** … 方法B（`<Other>` で起動して `<Share>` を結合）の時に乗る。`<Other>` 自身の `CLAUDE.md`/rules/skills/agents が `<Share>` の資産と混ざる。
 
-> ⚠️ **同名衝突は自動検知されない**: 同一スコープ内に同名の subagent/skill があっても、Claude Code は**警告なく片方を残して他方を破棄**する（ロードエラーやプロンプトは出ない）。よって「混ざっていないか」は**プロンプト任せにできず、`/memory`・`/skills`・`/agents`・`/context` で"何がどのパスから読まれたか"を目視確認**する（§4）。
+> ⚠️ **同名衝突は自動検知されない**: 同一スコープ内に同名の subagent/skill があっても、Claude Code は**警告なく片方を残して他方を破棄**する（ロードエラーやプロンプトは出ない）。よって「混ざっていないか」は**プロンプト任せにできず、`/memory`・`/skills`・`/context`・`/status` で"何がどのパスから読まれたか"を目視確認**する（§4。**v2.1.198 以降 `/agents` は subagent 一覧を表示しないため `/context` を使う**）。**v2.1.235 版(2026-08-19)** で `/doctor` が**同一ディレクトリ内**の同名 subagent を自動検出するようになったが、`<Other>` と `--add-dir <Share>` のようなスコープをまたぐ衝突は対象外のため、この目視確認は引き続き必要（詳細は[調査結果報告書 §6](./Marketplace外資産の開発・テスト_調査結果.md#pitfalls)）。
+
+### 一次切り分け: `claude --safe-mode`
+
+クリーン隔離（`CLAUDE_CONFIG_DIR`）の前に、まず `claude --safe-mode` を試すと1コマンドで速く切り分けられる。CLAUDE.md/skills/plugins/hooks/MCP サーバー/custom commands・agents/output styles 等の**このセッションの全カスタマイズ**を無効化して起動する（`managed settings` のポリシーは適用され続ける）。
+
+```bash
+claude --safe-mode
+```
+
+- **`<Share>`/`<Other>`/`~/.claude` からの完全分離はしない**（ディレクトリを切り替えるわけではなく、同一セッション内でロードを止めるだけ）。よって**以下の `CLAUDE_CONFIG_DIR` 手順の代替にはならない**——`<Share>` 由来かどうかの手早い一次切り分けとして使い、それでも切り分かない、あるいは `<Other>`/`~/.claude` からの完全分離が要る場合に限り、以下の隔離手順へ進む。
 
 ### 隔離手順（`<Share>` の資産だけを効かせる）
 
@@ -241,6 +252,17 @@ cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean \
 - **check-assets と補完関係**（衛生 vs 脆弱性）。両者＋人手レビューで多層化。
 - 注: `check-assets` はシェル/CI で回せるが、`/security-review` は**セッション内スラッシュコマンド**。CI で脆弱性側も自動化するなら headless 実行や専用の security-review 手段を別途用意する。
 
+**(3) `Claude Security` プラグイン（脆弱性・任意の深掘り）** — （1）（2）は必須、こちらは**任意**。同梱スクリプト・hooks が多い/大きい `<Share>` で、(2) の単発パスより踏み込んだ検査をしたいときに使う:
+
+```text
+（`<Dev>` の publish 対象 ref を開き）  /claude-security
+```
+
+- **`/security-review` を置き換えない**: **合否判定は引き続き `/security-review`（(2)）を正とする**。`Claude Security` プラグインは、publish 対象 ref の差分（ブランチ差分・PR 差分・単一コミットのいずれかを `/claude-security` のメニューまたは自然文で指定）に対する multi-agent スキャンで、findings を patch 化まで行える任意の深掘り手段という位置づけ。
+- **合否条件にできない理由（非決定性）**: 公式ドキュメントに「スキャンは非決定的で、同一コードの2回のスキャンで検出結果が変わりうる」と明記されている（"Scans are nondeterministic: two scans of the same code can surface different findings."）。**本テーマは過去に「壊れた計測どうしが修正が効いたように見える」事故（Round 3 の改行検証で使った計測手段自体が壊れていた件。[claude-dir-sharing-governance/CLAUDE.md](../../../CLAUDE.md) 末尾の注記参照）を経験しており、再現しないゲートを合否条件に採らない**方針を踏襲する。
+- **前提**: 有償プラン（dynamic workflows を使うため。Pro は `/config` の Dynamic workflows 行で有効化）／`python3`（3.9.6 以降）が `PATH` 上にあること／差分スキャンには Git が要る（バージョン管理外のディレクトリはフルスキャンのみ可）。
+- インストール: `/plugin install claude-security@claude-plugins-official`。
+
 ### 6.2 落とし穴チェックリスト
 
 「commit したのに効かない」を生む仕様。テスト前に確認する。**🛠（スクリプト `check-assets` で自動判定できる項目）を上に、🧑（人手で目視確認する項目）を下にまとめた**。個人ファイル系の 🛠 は、`<Share>` が git リポジトリなら **Git 追跡されているか**で判定する（**追跡＝FAIL**＝clone に含まれ漏れる／**未追跡で実在＝WARN**＝gitignore 済みで配布はされないが掃除推奨／不在＝PASS）。非 git の素ディレクトリでは実在＝FAIL にフォールバックする。
@@ -272,11 +294,11 @@ cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean \
 **🧑 人手で目視確認**
 
 - [ ] 🧑 **trust 承認後**にテストしているか（clone/テンプレ展開直後は未承認でフル有効化されない。`autoMemoryDirectory`・`extraKnownMarketplaces` の install prompt は trust 後）
-- [ ] 🧑 `commands` / `output-styles` / `hooks` / `settings.json` の大半を **`--add-dir` で結合したつもりになっていないか**（読まれない。直接起動か物理配置で）
+- [ ] 🧑 `output-styles` / `hooks` / `settings.json` の大半を **`--add-dir` で結合したつもりになっていないか**（読まれない。直接起動か物理配置で。**`commands` は v2.1.235 版(2026-08-19) から `--add-dir` で結合できる**ためこの確認項目からは外れた）
 - [ ] 🧑 `--add-dir` に渡すのは `.claude/` の**親**フォルダか（フォルダ名を `.claude` にしない）
 - [ ] 🧑 参照側に読ませたくないリポ固有情報を、`CLAUDE.md`/`.claude/CLAUDE.md` でなく **`README.md`（非ロード）に置いた**か（ルート/`.claude/` の置き分けでは共有可否を制御できない）
 - [ ] 🧑 反映タイミングを踏まえているか（settings 即時／`model`・`outputStyle`・**環境変数は再起動側**／skills ホットリロード）
-- [ ] 🧑 `/doctor` が schema エラーを出していないか、`/memory`・`/status` で**意図したファイル・レイヤが実際にロードされているか**を確認したか
+- [ ] 🧑 `/doctor` が schema エラーを出していないか、`/context`・`/status` で**意図したファイル・レイヤが実際にロードされているか**を確認したか（**`/memory` は置き場所一覧であってロード確認ではない**点に注意）
 
 #### パターンB（submodule 分割）固有
 
@@ -289,7 +311,7 @@ cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean \
 
 **🧑 人手で目視確認**
 
-- [ ] 🧑 `<Share>` の submodule（`.claude`）を**初期化したか**（`git submodule update --init`）。未初期化だと `.claude` が空で、`--add-dir <Share>` しても**エラーなく何も載らない**（`/skills`・`/memory` で要確認）
+- [ ] 🧑 `<Share>` の submodule（`.claude`）を**初期化したか**（`git submodule update --init`）。未初期化だと `.claude` が空で、`--add-dir <Share>` しても**エラーなく何も載らない**（`/skills`・`/context` で要確認）
 - [ ] 🧑 root `CLAUDE.md` と `<Share.claude>` 側の `.claude/CLAUDE.md` を**二重に書いていないか**（環境変数 ON 時に両方ロードされ重複管理になる。共通ルールはどちらか一方＝通常 `.claude/CLAUDE.md` に寄せる）
 - [ ] 🧑 `.gitmodules` の `branch` が公開基準（`main`）に設定されているか（`submodule update --remote` の追従先）
 
@@ -381,13 +403,23 @@ managed settings で配る場合の確認（詳細は v1.2 案D・本タスク�
 
 - **`/status`** の `Setting sources` に `Enterprise managed settings (remote)`/`(plist)`/`(HKLM)`/`(HKCU)`/`(file)` と出て**配信方式を確認**できる。
 - managed は `CLAUDE_CONFIG_DIR` のクリーンセッションでも**残る**（system パス）。
-- server-managed は shell/env/hook 設定で**承認ダイアログ**が出る（拒否で終了。`-p` 非対話はスキップして自動適用）。
+- server-managed は shell/env/hook 設定で**承認ダイアログ**が出る（拒否で終了）。`-p`（非対話）はダイアログをスキップし、**その実行限りで**適用される——**v2.1.207 以降は承認として記録・キャッシュされない**ため、次の対話セッションでは改めてダイアログが出る（v2.1.207 より前は非対話実行が承認として保存され、以後の対話セッションでダイアログが出なくなっていた）。**CI の `-p` 実行で対話側の承認を代替することはできない**点に注意。
 - auto mode ルールは `claude auto-mode config` / `defaults` / `critique` で確認。
 
 ---
 
 ## 変更履歴
 
+- **v1.8（2026-08-20）**: 公式ドキュメント最新版（**CLI v2.1.235 相当・2026-08-19 取込**）との照合で検出した本書対象の指摘 7 件（陳腐化 5 件・改善機会 2 件）を反映（対の[調査結果報告書](./Marketplace外資産の開発・テスト_調査結果.md) v1.6 と同時反映）。
+  - **【CRITICAL】`/agents` の仕様変更**（§4・§5・mermaid・出典先＝調査結果 C5）: v2.1.198 以降 `/agents` は subagent 一覧を表示しない（`.claude/agents/` 直接編集を促すリマインダーのみ）。§4 検証コマンド早見・§5 同名衝突の目視確認手段を `/context`（custom subagents をロード元パス付きで表示）へ差し替え、mermaid「唯一の検証手段」からも整理。
+  - **【IMPORTANT】`/memory` の仕様変更**（§4）: 「ロード済み一覧」から「置き場所一覧（未作成ファイル含む）」へ変化。§4・§6.2・限界注記を、ロード確認は `/context` が正である旨に更新。
+  - **【IMPORTANT】`/doctor` の `f` キー廃止**（§4）: `f` キー方式は Before v2.1.205 の廃止済み挙動と明記し、現行の「提示→確認→適用」フローに更新。
+  - **【IMPORTANT】`commands/` の `--add-dir` 対応**（§0 mermaid・§2・§3・§6.2）: v2.1.235 版で `.claude/commands/` が `--add-dir` 例外ロード対象に追加された（live reload なし・同名は参照元プロジェクト優先）。§3 結合早見表を「`commands/`（結合可）」と「`output-styles/`/`hooks`（結合不可）」に分割し、正本（[v1.2 付録B](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions)）と整合させた。§2 の位置づけ注記、§6.2 パターンA/B共通チェックリストの🧑項目からも `commands` を除外。
+  - **【SUGGESTION】`--safe-mode` を一次切り分けとして追加**（§5）: 新設の `claude --safe-mode` を、既存の `CLAUDE_CONFIG_DIR` クリーン隔離手順の**前段**として §5 冒頭に新設。**既存の `CLAUDE_CONFIG_DIR` 手順は置き換えていない**——`--safe-mode` は `<Other>`/`~/.claude` からの完全分離はしない（managed settings は適用継続）ため、まず `--safe-mode`、それでも切り分からなければ `CLAUDE_CONFIG_DIR` という二段構えとして明記。
+  - **【SUGGESTION】`Claude Security` プラグインを任意の深掘りとして追記**（§6.1（3）新設）: `/security-review`（(2)）を**合否判定の正**として維持したまま、publish 対象 ref の差分（ブランチ/PR/コミット）に対する multi-agent スキャンを**任意**の追加手段として追記。スキャンは非決定的（同一コードの2回のスキャンで検出が変わりうる）ため合否条件には採用しない旨を明記——過去に「壊れた計測どうしが修正が効いたように見える」事故を経験しているため、再現しないゲートは採らない方針を踏襲。前提（有償プラン＋dynamic workflows・`python3`・Git）も付記。
+  - **【SUGGESTION】`/doctor` の同名 subagent 自動検出**（§5）: 現行の `/doctor` が同一ディレクトリ内の同名 subagent を検出する機能を追記。検出範囲は同一ディレクトリ内限定でスコープをまたぐ衝突は対象外のため、`/context` 目視確認は引き続き必要と明記（詳細は対の調査結果報告書 §6 に委譲し二重管理を避けた）。
+  - **【SUGGESTION（confidence medium）】server-managed の `-p` 承認スコープ**（§8）: 「`-p` 非対話はスキップして自動適用」を「その実行限りの適用（v2.1.207 以降、承認として記録・キャッシュされないため次の対話セッションでは改めてダイアログが出る。CI の `-p` 実行で対話側の承認を代替することはできない）」に精密化。
+  - **適用しなかった指摘**: なし（G3 一覧 13 件すべて適用）。
 - **v1.7（2026-07-20）**: Sonnet 動作検証（実スクリプト・実リポとの読み合わせ）で検出した文書と実装の乖離 4 件を反映。**(1) §7.2 の `publish-share` 署名を実装に合わせ訂正** ―― `--ref` は**必須**（既定 `main` は CR-A〔未 grooming ref の誤 publish で内部レポート流出〕を機に廃止済み）、`--share`/`-ShareBody` は**任意**（既定値あり）。旧版は必須/任意が逆だった。**(2) §6.2 パターンB固有の「`<Share.claude>` に直接 `check-assets`」を訂正** ―― `<Share.claude>` はルート直下が `.claude/` の中身で入れ子が無く、直接かけると実在ファイルを誤 FAIL する（実機確認）。検査は `<Dev>` の payload 経路で担保する旨に修正。**(3) §6.2 の 🛠 自動判定項目を実装に追随** ―― ランチャー個人実体・内部成果物混入（CR-A 対応の中核）・統制ファイル不在・環境固有絶対パス・`.ps1` の BOM・`.claude/CLAUDE.md` 所在・ルート `CLAUDE.md` 追跡注意の 7 項目を追記（実装は従来記載の 4 項目より広く検査していた）。**(4) §7.2 に、パターンB の `/security-review` は `<Dev>` の publish 対象 ref に対して実行する旨を補記**。あわせてタイトルの版数表記（v1.0 のまま陳腐化していた）を実体に合わせ更新。
 - **v1.6（2026-06-29）**: 開発ローカルのトポロジを **パターンA（単一 `<Share>`）／パターンB（`.claude` を独立リポ `<Share.claude>` に submodule 分割）** として正式化。§0 に「トポロジの選択」（§1〜§6 は両パターン共通・配布運用のみ §7 で分岐）を追加し、旧「推奨リポジトリ構成」を「パターンA の構成」に改題。全体像図は **① 格納/publish・⑥ 配布をパターンA箱／パターンB箱に分岐**し、テスト手段「方法A/B」とトポロジ「パターンA/B」のラベル衝突も解消。§7 を「配布・同期運用【パターン分岐】」に再編（7.1 A／7.2 B: トポロジ図・ブランチ方針〔develop=テスト基準／main=公開基準〕・publish〔Sync A・`publish-share`・手動ゲート・ref 指定〕・refresh〔Sync B・取得のみ・自動可〕・雛型コピー利用）。§6.2 を **🛠（スクリプト自動）上／🧑（人手目視）下**に並べ替え、**「パターンA/B 共通」「パターンB 固有」の見出し**に再構成（共通分はパターンB でも必須＝固有は上乗せの明示）。パターンB 固有として submodule の落とし穴（未初期化空振り・二重ロード・個人ファイル誤追跡・`.gitmodules` branch）を追加。旧 §7（層3 注記）を §8 へ繰り下げ。`scripts/` に `publish-share.{sh,ps1}` の正本を追加。`<Share>` の役割名を「雛型(配布)リポジトリ」と明確化。
 - **v1.5（2026-06-29）**: 横断整合性レビュー J1 反映。§3 結合早見表に版依存事実の**正本＝[v1.2 付録B『--add-dir 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions)** への参照注記を追加（本表は運用早見）。
