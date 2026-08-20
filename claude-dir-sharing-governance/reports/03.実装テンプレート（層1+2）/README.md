@@ -147,6 +147,11 @@ gateway-managed vs endpoint-managed）はレポート **§解決案 層3系・�
   - **検証コマンドの導線を更新** —— `/agents` は v2.1.198 以降 subagent 一覧を表示しないため **`/context`** を正とし、
     `/memory` の意味変化（ロード済み → 置き場所一覧）も注記。
   - **層3 の系統名を 3 系統へ更新**（server-managed / gateway-managed / endpoint-managed）。
-  - なお `layer1-repo-template/.env.example` は本セッションの権限設定（`Read(./.env.*)` の deny）により読み取れず、
-    **private Marketplace 認証コメントの記述（トークンだけでは自動更新の認証にならず credential helper か URL 書き換えが要る）は未反映**。
-    別途対応が要る。
+  - **`layer1-repo-template/.env.example` の private Marketplace 認証コメントを全面的に書き換え** ——
+    旧版は「`GITHUB_TOKEN` / `GH_TOKEN` / `GITLAB_TOKEN` / `GL_TOKEN` / `BITBUCKET_TOKEN` のいずれか」とだけ書いており、
+    **変数を置けば自動更新の認証になると読めた**が、公式は
+    *"Setting a provider token such as `GITHUB_TOKEN` in your environment doesn't by itself enable background authentication.
+    Tokens take effect only through a configured credential helper."* と明記している（`plugin-marketplaces` §Private repositories・
+    v2.1.235 版 2026-08-19）。**手動操作は credential helper を使うが、バックグラウンドの `git pull` は helper を無効化する**という
+    非対称が要点なので、その差と実際の設定手順（`gh auth setup-git` ／ global な URL 書き換え ／ SSH remote ／
+    `CLAUDE_CODE_PLUGIN_KEEP_MARKETPLACE_ON_FAILURE=1`）へ置き換えた。
