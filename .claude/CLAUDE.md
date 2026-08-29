@@ -9,7 +9,7 @@
 ├── CLAUDE.md               # 本ファイル（.claude/ 配下作業時の追加ガイド）
 ├── settings.json           # 共有設定（permissions + SessionStart hook）
 ├── settings.local.json     # 個人設定 ※gitignore 想定
-├── agents/                 # code-reviewer.md
+├── agents/                 # code-reviewer.md / doc-summary-reviewer.md
 ├── output-styles/          # code-review.md
 ├── rules/                  # path-scoped rule 4 種
 ├── scripts/                # resolve-activity-dir.sh / statusline.ps1

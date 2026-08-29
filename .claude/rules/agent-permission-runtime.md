@@ -129,8 +129,9 @@ sub-agent / background Agent を起動する作業の着手前に、以下 3 ス
 - 親優先となるケース: 親が `bypassPermissions` または `acceptEdits` の場合、これらは subagent frontmatter の `permissionMode` 指定より優先する
 - 親 auto モード時の特殊挙動: subagent は auto モードを継承し、frontmatter `permissionMode` は **無視される**。classifier が parent と同じ block/allow 規則で各 tool call を再評価。**§3.1 のとおり auto が既定になったため、これは例外ではなく通常ケース**。frontmatter で `permissionMode` を指定しても効かない前提で設計する
 - **`tools` フィールドに引数スコープは書けない**: 受け付けるのは**厳密なツール名**か **`mcp__<server>` / `mcp__<server>__*`** のみ。`Bash(git status:*)` のような書き方は「Unrecognized」として**無言で破棄**され、意図した絞り込みが効かない。**全エントリが解決不能な場合のみ起動拒否**（`would be spawned with zero tools`）となるため、部分不一致はエラーで気付けない。引数レベルの絞り込みは §1.3 の (a) `permissions.deny`/`ask` か (c) `PreToolUse` hook で行う
-- **background subagent の重要挙動**: 起動前に必要な tool 権限について **事前に prompt が出る**。起動後は事前承認分のみ動作し、未承認は **auto-deny**。clarifying questions の tool call は失敗するが subagent 自体は継続
-- background が permission 不足で失敗した場合、**同タスクの foreground subagent を新規起動して対話 prompt 経由でリトライ可能**（緊急回避手段）
+- **background subagent の重要挙動（2026-08-29 更新）**: **v2.1.186 以降は、background subagent が prompt を要する tool call に達した時点で、メインセッション側に prompt が出る**（どの subagent の要求かが表示され、`Esc` はその 1 回の tool call だけを拒否し subagent は止まらない）。**「起動前に一括で事前承認し、未承認は auto-deny」は v2.1.186 未満の挙動**なので、この前提で運用設計しない
+- **ただし非対話（headless）では別**: prompt を出せないため hook が走り、**どの hook も判断を返さなければ拒否**される。無人パイプラインでは §1 の事前列挙が引き続き必須
+- background が permission 不足で失敗した場合、**同タスクの foreground subagent を新規起動して対話 prompt 経由でリトライ可能**（v2.1.186 以降は対話セッションなら通常この回避は不要）
 - plugin subagent では `permissionMode` / `hooks` / `mcpServers` 指定は無効
 
 ### 3.6 既知の落とし穴
@@ -155,4 +156,4 @@ sub-agent / background Agent を起動する作業の着手前に、以下 3 ス
 ## 変更履歴
 
 - 2026-05-07: 初版作成（Claude Opus 4.7、F02-001 §5.2.2 採用案の中核実装。案 1 + 案 2 + 案 5 を統合配置）
-- 2026-08-29: 公式ドキュメント最新版（2026-08-28 取込）との照合により失効記述を更新（判断事項 D-9 対応）。(1) §3.1 permission modes を全面改訂 —— **auto が Pro/Max/Team の既定開始モード**、`default` の表示名は **Manual**、`plan` の classifier 連動、`defaultMode: "auto"` が project settings では効かない点、どのモードでも自動承認されない集合を追記。(2) §1.1 #7 に **subagent の入れ子起動（既定 3 階層）** を追記。(3) §1.3 (b) の「Pro 非適用」を削除。(4) §3.5 に **`tools` フィールドは引数スコープを解釈しない**（無言破棄）を追記。(5) §3.6 の落とし穴 2 件を差し替え
+- 2026-08-29: 公式ドキュメント最新版（2026-08-28 取込）との照合により失効記述を更新（判断事項 D-9 対応）。(1) §3.1 permission modes を全面改訂 —— **auto が Pro/Max/Team の既定開始モード**、`default` の表示名は **Manual**、`plan` の classifier 連動、`defaultMode: "auto"` が project settings では効かない点、どのモードでも自動承認されない集合を追記。(2) §1.1 #7 に **subagent の入れ子起動（既定 3 階層）** を追記。(3) §1.3 (b) の「Pro 非適用」を削除。(4) §3.5 に **`tools` フィールドは引数スコープを解釈しない**（無言破棄）を追記し、**background subagent の permission 挙動**を v2.1.186 以降（tool call 時点でメインセッションに prompt）へ更新。(5) §3.6 の落とし穴 2 件を差し替え
