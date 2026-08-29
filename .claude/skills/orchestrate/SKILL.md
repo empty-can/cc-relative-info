@@ -9,8 +9,10 @@ allowed-tools: Agent, Read, Grep, Bash
 
 このスキルは、複数の Sub-agent を協調させて複雑なタスクを効率的に処理する手順を提供します。
 
-Claude Code の公式仕様では「Subagents cannot spawn other subagents」のため、
 本スキルは**メインセッション**で実行され、`Agent` ツール経由で子エージェントを並列/順次起動します。
+
+子エージェント自身も下位エージェントを起動できる（既定でメイン会話の 3 階層下まで。`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` で調整）。
+委任した 1 タスクがさらに並列サブタスクへ分岐し、その中間出力をメインに載せたくない場合は、その分岐を子エージェント側に委譲する。
 
 ## パターン A: 並列調査（Parallel Research）
 

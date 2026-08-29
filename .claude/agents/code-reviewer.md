@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: コード変更を品質・セキュリティ・保守性・テストの観点でレビューする。大きな変更を完了した後に主体的に使用する。コードレビューを明示的に依頼された場合にも使用する。
-tools: Read, Grep, Glob, Bash(git status:*), Bash(git diff:*)
+tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
 

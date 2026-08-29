@@ -30,7 +30,7 @@ sub-agent / background Agent を起動する作業の着手前に、以下 3 ス
 | 4 | **PowerShell** | 同上の PowerShell 版（cmdlet エイリアス含む） |
 | 5 | **MCP** | `mcp__<server>__<tool>` 単位。サーバ単位ワイルドカード `mcp__<server>__*` も可 |
 | 6 | **WebFetch** | アクセスドメイン（`WebFetch(domain:<host>)` 形式） |
-| 7 | **Agent** | subagent 起動（`Agent(<AgentName>)` 形式。deny で制限する運用なら確認必要） |
+| 7 | **Agent** | subagent 起動（`Agent(<AgentName>)` 形式。deny で制限する運用なら確認必要）。**subagent 自身も既定でメイン会話の 3 階層下まで下位 subagent を起動できる**（`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`。`1` で無効化）。孫エージェントが発行しうるアクションも列挙対象に含める。特定 subagent を起動させたくない場合は当該定義の `tools` から `Agent` を外すか `disallowedTools` に入れる |
 | 8 | **Read deny 該当パス** | 既存 deny ルール（`.env*` / `secrets/**` / `~/.aws/credentials` / `~/.ssh/**`）配下を読みに行かないか |
 
 ### 1.2 3 ステップ手順
@@ -44,7 +44,7 @@ sub-agent / background Agent を起動する作業の着手前に、以下 3 ス
 | 選択肢 | 適用判断 |
 |---|---|
 | **(a) `permissions.allow` 追加** | 読み取り系（公式組み込み read-only 集合外の `git show` 等）、Write/Edit（`research-for-*/**` 等の作業ディレクトリ配下）、参照頻度の高い MCP / WebFetch ドメインが第一選択。チーム共有なら `.claude/settings.json`、個人ローカルなら `.claude/settings.local.json`。**破壊系（`git push` / `git reset` / `git commit` / `rm` 等）は追加しない** 方針（F02-001 §4.2 / `afea8b8` 同型）。詳細は §2.2 |
-| **(b) `permissionMode` 切替** | subagent frontmatter で `acceptEdits` 指定（**ファイル編集 ＋ 一般 FS コマンド `mkdir`/`touch`/`rm`/`rmdir`/`mv`/`cp`/`sed` を作業ディレクトリ内で自動承認**）。`bypassPermissions` は `.git` / `.claude` 配下への書き込みまで通すため本プロジェクト方針と相性悪く非推奨。`auto` は利用プラン Pro では非適用（§3.1 参照） |
+| **(b) `permissionMode` 切替** | subagent frontmatter で `acceptEdits` 指定（**ファイル編集 ＋ 一般 FS コマンド `mkdir`/`touch`/`rm`/`rmdir`/`mv`/`cp`/`sed` を作業ディレクトリ内で自動承認**）。`bypassPermissions` は `.git` / `.claude` 配下への書き込みまで通すため本プロジェクト方針と相性悪く非推奨。**`auto` は既に新規セッションの既定モードなので、指定するのではなく「継承される前提」で設計する**（§3.1 / §3.5 参照） |
 | **(c) PreToolUse hook** | 動的判定が必要かつ hook 実装コストを許容できる場合。**deny/ask 規則は hook の戻り値に関わらず優先評価される** ため、deny を覆す目的では使えない（公式 permissions ページ "Extend permissions with hooks" 節）。本プロジェクト現状では未使用（研究フェーズではコスト過剰） |
 | **(d) フォールバック設計（並列度低下）** | 緊急時のみ。`/orchestrate` パターン A の並列度を 1 に落としメインセッションで対話的 prompt 応答に切り替える運用。並列性能を失うため恒常運用には不適 |
 
@@ -77,14 +77,20 @@ sub-agent / background Agent を起動する作業の着手前に、以下 3 ス
 
 ### 3.1 permission modes（公式 `code.claude.com/docs/en/permission-modes`）
 
+> **⚠ 既定モードは `auto`（2026-08-29 更新）**: **Pro / Max / Team プランの対話的ターミナル・VS Code セッションでは、組み込みの開始モードが `auto`**。それ以外のプランと `-p`（非対話）は `default`（＝Manual）。組み込み `auto` 既定は CLI **v2.1.228 以降**（macOS/Linux/WSL）/ **ネイティブ Windows は v2.1.233 以降**が必要。**「既定は prompt が出る」を前提にした運用記述は成立しない**。
+>
+> **`.claude/settings.json` / `settings.local.json` に `permissions.defaultMode: "auto"` を書いても効かない**（無視され組み込み既定にフォールバックし、そのとき `~/.claude/settings.json` の `defaultMode` も使われない）。開始モードを変えるなら `--permission-mode` フラグか、`auto` 以外の値を設定ファイルに置く。
+
 | モード | 概要 |
 |---|---|
-| `default` | 各ツール初回使用時に prompt。Reads は無条件許可 |
+| `default`（CLI 表示名 **Manual**） | 各ツール初回使用時に prompt。Reads は無条件許可。**v2.1.200 以降は `manual` がエイリアス**（設定値は `default` のまま。hook / SDK は `default` を使う） |
 | `acceptEdits` | ファイル編集と一般 FS コマンド（`mkdir`/`touch`/`mv`/`cp`/`rm`/`rmdir`/`sed`）を作業ディレクトリ内で自動承認 |
-| `plan` | Reads と read-only シェルのみ。ソース編集は不可 |
-| `auto` | classifier がバックグラウンドで安全性チェック。**プラン要件: Max / Team / Enterprise / API（Pro 不可）+ Anthropic API プロバイダ限定 + 対応モデル限定**。research preview |
+| `plan` | Reads に加え、**auto mode が利用可能なら classifier が承認したコマンド**も実行可。ソース編集は不可 |
+| `auto` | classifier がバックグラウンドで安全性チェック。**Pro / Max / Team の対話セッションでは組み込みの開始モード**。**全プロバイダで利用可**（Bedrock / Agent Platform / Foundry / gateway 含む。v2.1.207 で `CLAUDE_CODE_ENABLE_AUTO_MODE=1` 要件は撤廃）。対応モデル限定。組織は `disableAutoMode` で無効化可 |
 | `dontAsk` | 事前 allow 以外を auto-deny。CI 等で利用 |
 | `bypassPermissions` | 全 prompt スキップ（`.git`/`.claude`/`.vscode`/`.idea`/`.husky` への書き込みも通過）。隔離環境専用 |
+
+**どのモードでも自動承認されないもの**: 明示 `ask` ルールに合致したツール / `AskUserQuestion` 等のユーザー対話必須ツール / critical path を対象とする `rm`・`rmdir`。**`deny` ルールは `bypassPermissions` を含む全モードで有効**。
 
 ### 3.2 Bash の組み込み read-only 認識
 
@@ -121,7 +127,8 @@ sub-agent / background Agent を起動する作業の着手前に、以下 3 ス
 
 - subagent は **メインセッションの permission context を継承** し、frontmatter `permissionMode` で独自モードに上書き可能
 - 親優先となるケース: 親が `bypassPermissions` または `acceptEdits` の場合、これらは subagent frontmatter の `permissionMode` 指定より優先する
-- 親 auto モード時の特殊挙動: subagent は auto モードを継承し、frontmatter `permissionMode` は **無視される**。classifier が parent と同じ block/allow 規則で各 tool call を再評価
+- 親 auto モード時の特殊挙動: subagent は auto モードを継承し、frontmatter `permissionMode` は **無視される**。classifier が parent と同じ block/allow 規則で各 tool call を再評価。**§3.1 のとおり auto が既定になったため、これは例外ではなく通常ケース**。frontmatter で `permissionMode` を指定しても効かない前提で設計する
+- **`tools` フィールドに引数スコープは書けない**: 受け付けるのは**厳密なツール名**か **`mcp__<server>` / `mcp__<server>__*`** のみ。`Bash(git status:*)` のような書き方は「Unrecognized」として**無言で破棄**され、意図した絞り込みが効かない。**全エントリが解決不能な場合のみ起動拒否**（`would be spawned with zero tools`）となるため、部分不一致はエラーで気付けない。引数レベルの絞り込みは §1.3 の (a) `permissions.deny`/`ask` か (c) `PreToolUse` hook で行う
 - **background subagent の重要挙動**: 起動前に必要な tool 権限について **事前に prompt が出る**。起動後は事前承認分のみ動作し、未承認は **auto-deny**。clarifying questions の tool call は失敗するが subagent 自体は継続
 - background が permission 不足で失敗した場合、**同タスクの foreground subagent を新規起動して対話 prompt 経由でリトライ可能**（緊急回避手段）
 - plugin subagent では `permissionMode` / `hooks` / `mcpServers` 指定は無効
@@ -129,7 +136,8 @@ sub-agent / background Agent を起動する作業の着手前に、以下 3 ス
 ### 3.6 既知の落とし穴
 
 - **`afea8b8` 重複疑義**（§3.2 と連動、保留事項）: 組み込み read-only 既定認識のはずの `cd` / `wc` / `git show` 等が実運用で prompt を出した。本格対処時に発生条件を特定し、冗長 allow を整理する
-- **利用プラン Pro での `auto` モード非適用**: 本要改善点に対する潜在的銀の弾丸が利用プラン上の制約で適用不可。プラン変更時に再評価
+- ~~**利用プラン Pro での `auto` モード非適用**~~ → **解消済み（2026-08-29 確認）**: auto mode は全プランで利用可能になり、Pro / Max / Team では**新規セッションの既定**。本ルール §1 の事前列挙は「prompt で止まる」ことへの対処として設計されたが、**auto 下では classifier が大半を通すため事前列挙の主目的は「止まらないこと」ではなく「`deny`/`ask` ルールと衝突しないこと」の確認に移る**（`deny`/`ask` は classifier より先に評価され、auto でも必ず効く）
+- **`tools: Bash(git status:*)` 型の無言破棄**（§3.5）: 本リポジトリの `agents/code-reviewer.md` が実際にこの状態で、**Bash を持たないまま起動していた**（2026-08-29 修正）。subagent 定義を書いたら `tools` の各エントリが厳密なツール名かを確認する
 - **`/orchestrate` パターン A 並列実行時の長尾事象**: F02-001 §4.4 のとおり、Write（2026-05-03）→ Edit（2026-05-04 事前追加）→ Bash 読み取り系（`afea8b8`）と段階的に表面化した。事前列挙だけでは捕まらない長尾を §2 検出ベースで吸収する設計
 - **`bypassPermissions` の盲点**: `.git` / `.claude` / `.vscode` / `.idea` / `.husky` への書き込みも通過する。本プロジェクトの security 方針（deny 明示）と相性悪く非推奨
 - **fork mode 時の特殊挙動**: fork 時は `background` フィールドに関係なく全 spawn が background 化し、permission は事前承認フローに乗る。`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` で同期化可能
@@ -147,3 +155,4 @@ sub-agent / background Agent を起動する作業の着手前に、以下 3 ス
 ## 変更履歴
 
 - 2026-05-07: 初版作成（Claude Opus 4.7、F02-001 §5.2.2 採用案の中核実装。案 1 + 案 2 + 案 5 を統合配置）
+- 2026-08-29: 公式ドキュメント最新版（2026-08-28 取込）との照合により失効記述を更新（判断事項 D-9 対応）。(1) §3.1 permission modes を全面改訂 —— **auto が Pro/Max/Team の既定開始モード**、`default` の表示名は **Manual**、`plan` の classifier 連動、`defaultMode: "auto"` が project settings では効かない点、どのモードでも自動承認されない集合を追記。(2) §1.1 #7 に **subagent の入れ子起動（既定 3 階層）** を追記。(3) §1.3 (b) の「Pro 非適用」を削除。(4) §3.5 に **`tools` フィールドは引数スコープを解釈しない**（無言破棄）を追記。(5) §3.6 の落とし穴 2 件を差し替え

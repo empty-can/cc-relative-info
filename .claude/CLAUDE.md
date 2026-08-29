@@ -38,7 +38,7 @@
 |---|---|---|
 | `5-whys` | description トリガで自動起動可（モデル発動型） | 体系的な root cause 分析。Why Chain → 根本原因 → 対策の 5 フェーズ |
 | `commit-and-pr` | `/commit-and-pr`（`disable-model-invocation: true`） | ステージング差分を単一コミット → push → `gh pr create` まで一気通貫 |
-| `orchestrate` | `/orchestrate`（`disable-model-invocation: true`） | パターン A 並列調査 / B 段階的処理 / C 役割分担。**Subagents cannot spawn other subagents** の仕様制約があるため、Skill としてメインセッションで実行する設計 |
+| `orchestrate` | `/orchestrate`（`disable-model-invocation: true`） | パターン A 並列調査 / B 段階的処理 / C 役割分担。子エージェントの結果統合にメイン会話の文脈が要るため、subagent ではなく Skill としてメインセッションで実行する設計（公式も「メイン会話の文脈で動く再利用可能ワークフローは Skill」を推奨）。**子エージェントの入れ子起動は既定 3 階層まで可**（`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`） |
 | `pre-compact` | `/pre-compact` | `/compact` 実行前の事前準備。メモリ最新化 → 未コミット確認 → 継続ポイント収集 → `/compact <指示>` コメント案を提示。ステップ 1・3 は完全 silent 出力禁止 |
 | `read-prompt-file` | `/read-prompt-file` | ルート CLAUDE.md「ブランチ運用ルール」で決定される活動フォルダ配下の `.claude/work/prompt.txt` を読み込む |
 | `request-new-skill` | `/request-new-skill <概要>` | 新規 Skill 作成依頼書を `.claude/workspace/skill-request/<kebab-case>/` に配置 |
@@ -51,6 +51,8 @@
 ## Sub-agent と output-style
 
 - `agents/code-reviewer.md`（sonnet 指定）: `git diff HEAD` → ファイル精査 → 重大度順で出力。出力は `output-styles/code-review.md` のフォーマット（`[CRITICAL]`/`[IMPORTANT]`/`[SUGGESTION]`/`[POSITIVE]` ラベル）に従う
+
+> **subagent の `tools` に引数スコープは書けない**（2026-08-29 修正）。`tools` が受け付けるのは**厳密なツール名**か **`mcp__<server>` / `mcp__<server>__*`** だけで、`Bash(git status:*)` のような書き方は「Unrecognized」として**無言で破棄**される（全エントリが解決不能な場合のみ起動拒否。部分不一致はエラーにならない）。`code-reviewer.md` は以前この書き方をしており、**Bash を一切持たない状態で起動していた**。引数レベルで絞りたい場合は `tools` ではなく (1) `settings.json` の `permissions.deny` / `permissions.ask`、(2) `PreToolUse` hook を使う（ただし前者はセッション全体に効き、後者は **plugin 経由の subagent では `hooks` が無視される**）。
 
 ## permissions 運用方針
 
@@ -79,5 +81,7 @@ sub-agent / background Agent 起動を含む作業の着手前には **8 種別�
 - `templates/cross-review/README.md` の `research-for-xxx/CLAUDE.md` 表記
 - `reports/design-base-kit/` 配下の調査 A〜G および計画書（`base-kit-構成プラン.md`）
 - `skills/review-skill-request/SKILL.md` の `C:\workspace\claude-doc-repositories\anthropics\claude-plugins-official\plugins\` パス
+
+> **⚠ `reports/design-base-kit/` は 2026-04 時点の調査記録であり、公式仕様の現状とは一致しない**。特に調査G / `base-kit-構成プラン.md` が結論の根拠に置く「Subagents cannot spawn other subagents」は**公式が撤回済み**（既定でメイン会話の 3 階層下まで入れ子起動可。`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`）。時点記録として本文は書き換えないので、**設計判断の根拠として再利用しないこと**。現行の運用ルールは `rules/agent-permission-runtime.md` が正。
 
 これらは流用元での運用経緯の記録であり、削除せず保持している。**本リポジトリで運用ルールを改訂する場合は、これらの記述を本リポジトリの実態に合わせて書き換える**（特にブランチ運用ルールは既に書き換え済み）。

@@ -1,7 +1,7 @@
 ---
 name: doc-summary-reviewer
 description: update-official-doc-summary が生成した公式ドキュメント更新サマリ（latest-detail.md / latest.md）を、原文差分に対するハルシネーションとフォーマット規約違反の観点で第三者レビューする。無人（ヘッドレス）パイプラインでは必須、手動実行では任意で起動する。
-tools: Read, Grep, Bash(git diff:*), Bash(git log:*), Bash(git rev-parse:*)
+tools: Read, Grep, Bash
 model: sonnet
 ---
 

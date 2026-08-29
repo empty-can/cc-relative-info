@@ -91,7 +91,7 @@
   - **v2.1.195 で commit 配布の挙動が変化**（marketplace は無プロンプト追加・外部ソース plugin は install を促されず「未インストール」報告のみ）→ 案B の前提が崩れていた
   - **付録A のキー名に実害のある誤り**（`filesystem.allowManagedReadPathsOnly` は `sandbox.` 接頭辞が正）を訂正し、「全件一覧」という宣言を撤回
   - **⚠ 実装テンプレート（層1+2）に CRITICAL な構造不整合**: `marketplace/.claude-plugin/` と `plugins/` を兄弟に置いていたため相対 `source` が解決できず、**コピーして公開すると `/plugin install` が失敗する**状態だった。`.claude-plugin/` を `layer2-plugin/` 直下へ移して修正。**`claude plugin validate`（`--strict` 含む）はこの欠陥を検出しない**ことを対照実験で実測——**下記のタスク進行状況にある「marketplace validate ともにパス」（2026-06-22）は空証明だった**。以後、相対パス `source` の検証は `marketplace add` → `install` まで通すこと
-  - **`tools: Bash(git status:*)` 形式は subagent では効かない**（`tools` は厳密なツール名か `mcp__` パターンのみ解釈）。テンプレの `code-reviewer` を修正。**本リポジトリ `.claude/agents/code-reviewer.md` も同じ書き方なので要見直し**（本テーマのスコープ外）
+  - **`tools: Bash(git status:*)` 形式は subagent では効かない**（`tools` は厳密なツール名か `mcp__` パターンのみ解釈）。テンプレの `code-reviewer` を修正。**本リポジトリ実体側（`.claude/agents/code-reviewer.md` ＋ sweep で追加検出した `doc-summary-reviewer.md`）は 2026-08-29 に D-9 対応で修正済み**
   - **出典の版が混在する形式へ移行**: 既存 `[1]`〜`[75]` は v2.1.165 版の行番号のまま据え置き、新規 `[76]`〜`[97]` は **v2.1.235 版のページ名＋セクション見出し**で付番（行番号は次回取り込みでズレるため）
   - **記録は [`reports/01.配布・統制方針調査/レビュー/公式ドキュメント最新化レポート_2026-08-20.md`](reports/01.配布・統制方針調査/レビュー/公式ドキュメント最新化レポート_2026-08-20.md) にまとめた**（エグゼクティブサマリ／**作業指示者の判断が必要な事項 D-1〜D-10**（未 push・実体リポの同種欠陥確認・案B'' による dual 解消・リリースチャネル・`claude-security`・gateway-managed・`--add-dir` の射程・出典行番号の凍結コピー保持 ほか）／オーケストレーション設計／文書別の変更／実機検証）
   - **⚠ 作業中に LF→CRLF の退行を 1 件出した**（Python の text mode で一括置換した README。`tr -cd '\r' | wc -c` で検出し LF へ戻し、`git ls-files --eol` で全 45 ファイル `i/lf w/lf` を確認）。**確定書 §10 の教訓がそのまま再現した**——一括置換にはバイトモードを使うこと
