@@ -20,6 +20,7 @@
       "Read(~/.aws/credentials)",
       "Read(~/.ssh/**)",
       "Bash(git reset --hard:*)",
+    "Bash(git -C * reset --hard*)",
       "Bash(git reset --hard)",
       "Bash(git reset --hard *)"
     ]
