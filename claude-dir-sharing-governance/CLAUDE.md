@@ -43,8 +43,12 @@
 ## 参照リソース
 
 - **本文の根拠（2 つの版が混在。2026-08-20 更新）**:
-  - **出典 `[1]`〜`[75]`（据え置き）**: `cc-relative-info\LLMs\official-llms-txts\code.claude.com\docs\llms-full.txt`（**CLI v2.1.165 相当・2026-06-05 取込で凍結**。報告書の出典一覧の行番号はこのファイルの絶対行番号）。⚠ **このパスは更新が止まっている**（LLMs 資産の定期取り込みは別リポジトリへ移管済み）。**行番号の照合をやり直すときはこの凍結コピーを使う**。
-  - **出典 `[76]`〜（2026-08-20 の最新化で追加）**: `C:\cc-workspace\LLMs\official-llms-txts\code.claude.com\docs\llms-full.txt`（**CLI v2.1.235 相当・2026-08-19 取込**＝**定期取り込みが継続している現行の正**）。**行番号ではなくページ名＋セクション見出しで参照**する（行番号は次回取り込みでズレるため）。
+  - **出典アンカーは commit ハッシュで固定されている**（2026-09-05・D-10 の結論）。基準は 2 つで、定義の正本は v1.2 §出典一覧の**基準スナップショット表**。どちらも `git show <commit>:official-llms-txts/code.claude.com/docs/llms-full.txt` で当時の断面を復元でき、**パス・行番号・見出しはその断面の中で恒久的に有効**（メンテナンス不要）。
+    - **BASE-A（出典 `[1]`〜`[75]`・行番号で参照）**: `empty-can/LLMs` @ `980975cf497b0cce6847425a0787fccd839be1ae`（2026-06-06・**CLI v2.1.165 相当**・63,719 行・blob `2650e77c624f274f11af6dc4223efe623a05e840`）
+    - **BASE-B（出典 `[76]`〜`[97]`・ページ名＋セクション見出しで参照）**: 同リポジトリ @ `32e6ee3566896a4f0a120a5c98b667aea98b22c6`（2026-08-19・**CLI v2.1.235 相当**・84,016 行・blob `f6f26436ea1725abdbd042c99ddda9f545107ef4`）
+    - **BASE-C（出典 `[75]` の版境界のみ・行番号で参照）**: 同リポジトリ @ `1a7d39cab3539583157847db90f343550a8fe42e`（2026-06-21・**v2.1.178+ 反映**・65,371 行・blob `c7c620cb201328ba440f97a45624929b5b3684ac`）。`[75]` は **BASE-A（非ロード）と BASE-C（ロード）の対比**が主張の実体なので両方が要る
+    - ⚠ `cc-relative-info\LLMs\official-llms-txts\...\llms-full.txt` は **BASE-A と byte 同一の予備コピー**。**照合の正は repo `LLMs` 側**であり、こちらは A→B 移行のクリーンアップで削除してよい（削除しても出典は追跡可能）。
+    - ⚠ **「その記述が現行版でも有効か」は上記アンカーでは分からない**。現行版の確認が要るときは公式サイトの当該ページを見る（定常メンテナンスはせず、必要が生じた時点で実施）。
   - **次に最新化するときも、比較基準は `C:\cc-workspace\LLMs\` 側の最新取込を使うこと**（`cc-relative-info\LLMs\` 側ではない）。
 - **精読の根拠**（中間成果物・workspace 保管）: `.claude/workspace/portable-claude-dir-sharing/intermediate-reports/01〜07-*.md`（7 Agent によるページ別精読結果）。
 - **改訂経緯の凍結スナップショット**（workspace 保管）: `.claude/workspace/portable-claude-dir-sharing/結論・構成案_…_v2.0〜v2.6.md`（reports/ 昇格前の版。Git 履歴と併せて経緯を追える）。
