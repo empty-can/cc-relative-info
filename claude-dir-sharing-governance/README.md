@@ -14,26 +14,47 @@
 
 想定読者: Claude Code を活用するチームのガバナンス担当者。
 
-## 核心結論
+## 核心結論（v2.0・2026-09-14）
 
-`.claude/` 全体を**単一手段で配る方法は存在しない**。**3 つの配布チャネルの組み合わせ**で設計する。
-資産 × 配布チャネルの**マトリクス**が報告書の中核。
+`.claude/` 全体を**単一手段で配る方法は存在しない**。そのうえで **v2.0 は「配布チャネル」ではなく「実体の置き場所」を主語にする**。
 
-| チャネル | 配布手段 | 運べる資産 | コスト | 強制力 | 更新性 |
-|---|---|---|---|---|---|
-| **層1** | Git commit / テンプレート | ガバナンス（CLAUDE.md/rules/permissions）＋層2 起動装置＋層1専用（`agent-memory/`） | 低 | なし | 手動 |
-| **層2** | Plugin / Marketplace | 機能資産（skills/commands/hooks/MCP/output-styles/**workflows**/△以外の subagents） | 中 | 弱 | 一元更新 |
-| **層3** | Managed settings | ガバナンス資産の**強制**配布（claudeMd/permissions/MCP/subagents/skills/output-styles/version） | server-managed＝極低／gateway-managed＝中／endpoint-managed＝中〜高 | 最高（**ただし公式に少数の例外あり**） | 中央 push |
+### 推奨構成 ＝ 案C-1
 
-- **`--add-dir`** は主配布チャネルではなく、層2 で運べない CLAUDE.md/rules を共有ディレクトリから参照する**補助**。
-- **2026-08-20 の最新化で変わった点**（CLI v2.1.235 相当との照合）: `workflows/` が層2 で配布可能になり層1 専用グループは `agent-memory/` のみに縮小／層3 に **gateway-managed**（自ホスト Claude apps gateway）が加わり「Bedrock 等では endpoint-managed 一択」が解消／`--add-dir` の例外ロードに `commands/` が追加／managed settings の「上書き不可」に公式の例外表が新設。詳細は [`CLAUDE.md`](CLAUDE.md) と結論・構成案の変更履歴を参照。
-- **推奨**: 機能資産は層2 へ集約し、層1（ガバナンス＋起動装置）・層3（強制）・`--add-dir`（補助）で役割分担する。
+**`.claude/` をひとつの Git リポジトリにし、そのリポジトリを作業リポジトリの `.claude/` ディレクトリとして clone する。作業種別はブランチで切り替える。**
+
+```txt
+<共有 .claude リポジトリ>          <作業リポジトリ>
+  main                              ├── .claude/     ← 上記のクローン（作業リポでは .gitignore）
+   ├── java/base                    ├── CLAUDE.md    ← このリポジトリ固有の指示
+   │    ├── java/design             └── start_claude_code.ps1   ← ランチャー
+   │    └── java/ut
+   └── python/base
+```
+
+**`--add-dir` も `--settings` も環境変数も要らない。** 資産は作業リポジトリの `.claude/` に**実体として存在する**ので、Claude Code から見ればごく普通の project スコープになる。
+
+### なぜこの形なのか
+
+1. **条件付きロード（`paths:` 付き rule・サブディレクトリの `CLAUDE.md` / `skills`）は「必要なときに載る」保証がない** —— **発火契機は Read ツールに限られる**（実測）。Bash の `cat` でも Grep でも発火しない
+2. だから**出し分けは「条件」ではなく「実体の置き場所」で行う**。置き場所の切替を既存の道具で賄えるのが **git のブランチ**
+3. **実体を作業リポジトリの `.claude/` に置くのは、`--add-dir` では `permissions` が届かないから** —— 追加ディレクトリの `settings.json` から読まれるのは 2 キーだけ
+4. **`.claude/` を gitignore して入れ子 clone しても、資産は普通どおりロードされる**（実測）
+
+### 層1 / 層2 / 層3 の位置づけ
+
+**強制できるのは層3（managed settings）だけ**という結論は v2.0 でも変わらない。変えたのは「配布経路は層1〜3 ＋ `--add-dir` の 4 分類で尽きる」という**網羅性の主張**のほうで、層の外側に経路が増えている（claude.ai 同期 skill・Organization settings 経由の plugin 配布・`managedMcpServers` 等）。
+
+- **チームのガバナンス資産（`CLAUDE.md` / `rules` / `permissions`）を plugin で配る手段は存在しない。** ここが案C-1 を要求する理由
+- **機能資産は plugin（層2）へ寄せてよい。** 案B は案C-1 と対立しない
+- **層3 は組織の IT 基盤が要る。** チーム単独では選べない
+
+> **⚠ 未確認の点**: `permissions.allow` は workspace trust に依存し、**trust は「入れ子になった git リポジトリを除いた git リポジトリのルート」を鍵にする**。案C-1 の `.claude/` はまさにその形状であり、**対話セッションでの実測が展開前に要る**。**`deny` / `ask` は trust 非依存なので影響を受けない。**
 
 ## 成果物
 
 | フェーズ | 内容 | 所在 |
 |---|---|---|
-| 01. 配布・統制方針調査 | 結論・構成案（確定版 v1.2）＋ 3 観点クロスレビュー報告書 | [`reports/01.配布・統制方針調査/`](reports/01.配布・統制方針調査/) |
+| 01. 配布・統制方針調査 | **結論・構成案 v2.0（正本）** ＋ v1.2（時点記録）＋ 3 観点クロスレビュー報告書 ＋ settings 宣言場所・スコープ別有効性 ＋ **実測スクリプト（`verification/`）** | [`reports/01.配布・統制方針調査/`](reports/01.配布・統制方針調査/) |
 | 02. 配布物の開発・テスト | 層2（Plugin/Marketplace）と Marketplace 外資産の開発・テスト調査＋手順書＋補助スクリプト | [`reports/02.配布物の開発・テスト/`](reports/02.配布物の開発・テスト/) |
 | 03. 実装テンプレート（層1+2） | 方針を落とし込んだコピー可能な雛形（層1 リポ骨格＋層2 plugin/marketplace 骨格） | [`reports/03.実装テンプレート（層1+2）/`](reports/03.実装テンプレート（層1+2）/) |
 
