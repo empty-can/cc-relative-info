@@ -1,0 +1,5 @@
+# 各スクリプトが生成する作業フォルダ（毎回作り直されるので追跡しない）
+nestclone/
+trigprobe/
+ffonly/
+switchfail/
