@@ -156,7 +156,7 @@ skill は plugin に同梱せず `.claude/skills/` 単体でも配布できる�
 | `CLAUDE.md` / `.claude/rules/` / `CLAUDE.local.md` | △ `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` を付けた時のみ |
 | `settings.json` のそれ以外（permissions/hooks 等）・output-styles | ❌ |
 
-> **正本**: 版依存の事実（subagents の版境界・commands の追加時期・`settings.local.json` を含む2キー例外）は [v1.2 付録B『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions) を正とする（本表は運用早見）。
+> **正本**: 版依存の事実（subagents の版境界・commands の追加時期・`settings.local.json` を含む2キー例外）は [v2.0 付録B B-2『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v2.0.md#adddir-exceptions) を正とする（本表は運用早見）。**2026-09-14 に正本が v1.2 から v2.0 へ移った**（[v1.2 側の表](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions)は時点記録として残す）。
 
 ※ これら例外は **`--add-dir` フラグ／`/add-dir` コマンド限定**。`permissions.additionalDirectories` 設定経由では一切ロードされず、ファイルアクセス付与のみ。
 → 開発・テストリポジトリ（ローカル）と作業リポジトリを**結合してテスト**する際、**skill と subagent** はこの `--add-dir` 例外で結合できる。`CLAUDE.md` / `rules` は環境変数併用、`settings.json` の大半は別経路（v1.2 案C）。
@@ -382,6 +382,8 @@ plugin ディレクトリ全体が cache にコピーされるため、`skills/<
 > **`plugin-dev` の裏取り（完了）**: web discovery 段階で観測したコミュニティ説 "plugin-development" は、**公式リポジトリの純正プラグイン `plugin-dev` が実体**であることを README 精読で確定した（[§6](#plugin-dev)）。ただしコミュニティ説の具体（`/plugin-development:init` / `:validate` でスラッシュコマンド／dev marketplace 生成）は**不正確**で、実際の主コマンドは **`/plugin-dev:create-plugin`（8 フェーズのガイド付き作成ワークフロー）**であり、専用の "dev marketplace" を生成する機能は README に記載が無い（テストは `--plugin-dir` / `claude --debug`）。公式 docs には `discover-plugins` の1行カタログ掲載と `plugins-reference` の名前空間例としての言及はあるが、**機能の詳細解説は無く、知見の出所は plugin-dev の README** である点に留意。
 
 ## 変更履歴
+
+- **（errata・2026-09-14）**: `--add-dir` 例外ロード表の**正本を v1.2 付録B から [v2.0 付録B B-2](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v2.0.md#adddir-exceptions) へ張り替えた**。結論・構成案が v2.0（案C-1）で確定し、v1.2 が時点記録になったため。**本文の版依存の事実そのものに変更は無い**（v2.0 側の表は v1.2 と同一内容に版境界の明記を足したもの）。本書全体の案C-1 への追随は D-13 として別タスク。
 
 - **v1.5（2026-08-20）**: **[§9](#single-entity)「実測: 資産形態 × 消費チャネルのロード挙動」を新設**。[手順書 v2.0](./Plugin開発・テスト_手順書.md) の刷新（開発シナリオ 2 パターン化）の根拠として、CLI v2.1.237 の実機で 10 セルのロード挙動マトリクスを取得した。主な確定事項:
   - **案B''（`.claude/skills/<name>/` に `plugin.json` を足す）は既存利用者に非破壊** ―― 追加後も素の skill としての呼び名 `/<name>` は project 経路でも `--add-dir` 経路でも変わらない。`--add-dir` 経由では plugin にはならず素の skill のままロードされる。

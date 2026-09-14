@@ -142,7 +142,7 @@ claude --settings <Share>/.claude/settings.json
 | `commands/`（`.claude/commands/`） | `--add-dir <Share>`（**v2.1.235 版(2026-08-19) で新規対応**。live reload なし＝反映に再起動が要る。`<Share>` と `<Other>` の両方に同名コマンドがある場合は `<Other>`〔参照元プロジェクト〕側が優先） |
 | `output-styles/` / `hooks` | **結合不可** → `<Share>` で直接起動（方法A）か物理配置 |
 
-> **正本**: 版依存の事実（subagents の版境界・`settings.local.json` を含む2キー例外）は [v1.2 付録B『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions) を正とする（本表は運用早見）。
+> **正本**: 版依存の事実（subagents の版境界・`settings.local.json` を含む2キー例外）は [v2.0 付録B B-2『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v2.0.md#adddir-exceptions) を正とする（本表は運用早見）。**2026-09-14 に正本が v1.2 から v2.0 へ移った**（[v1.2 側の表](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions)は時点記録として残す）。
 
 > **【挙動・仕様】**
 > - 環境変数 ON 時に `--add-dir <Share>` がロードする memory ファイルは `<Share>/CLAUDE.md`・`<Share>/.claude/CLAUDE.md`・`<Share>/.claude/rules/*.md`・`<Share>/CLAUDE.local.md`（**all-or-nothing**。ルート/`.claude/` での個別制御は不可）。
@@ -409,6 +409,8 @@ managed settings で配る場合の確認（詳細は v1.2 案D・本タスク�
 ---
 
 ## 変更履歴
+
+- **（errata・2026-09-14）**: `--add-dir` 例外ロード表の**正本を v1.2 付録B から [v2.0 付録B B-2](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v2.0.md#adddir-exceptions) へ張り替えた**。結論・構成案が v2.0（案C-1）で確定し、v1.2 が時点記録になったため。**本文の版依存の事実そのものに変更は無い**（v2.0 側の表は v1.2 と同一内容に版境界の明記を足したもの）。本書全体の案C-1 への追随は D-13 として別タスク。
 
 - **v1.8（2026-08-20）**: 公式ドキュメント最新版（**CLI v2.1.235 相当・2026-08-19 取込**）との照合で検出した本書対象の指摘 7 件（陳腐化 5 件・改善機会 2 件）を反映（対の[調査結果報告書](./Marketplace外資産の開発・テスト_調査結果.md) v1.6 と同時反映）。
   - **【CRITICAL】`/agents` の仕様変更**（§4・§5・mermaid・出典先＝調査結果 C5）: v2.1.198 以降 `/agents` は subagent 一覧を表示しない（`.claude/agents/` 直接編集を促すリマインダーのみ）。§4 検証コマンド早見・§5 同名衝突の目視確認手段を `/context`（custom subagents をロード元パス付きで表示）へ差し替え、mermaid「唯一の検証手段」からも整理。

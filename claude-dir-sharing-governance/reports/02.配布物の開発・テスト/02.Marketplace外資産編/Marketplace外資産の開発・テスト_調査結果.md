@@ -65,7 +65,7 @@
 | `commands/`（`.claude/commands/`） | **`--add-dir <Share>`** | **v2.1.235 版(2026-08-19) で新規に例外ロード対象へ追加**（live reload なし・再起動が要る）。`<Share>` と `<Other>` の両方に同名コマンドがある場合は **`<Other>`（参照元プロジェクト）側が優先**される |
 | `output-styles/` / `hooks`（settings 内） | **結合不可** | `--add-dir` 先からはロードされない。物理配置か `<Share>` で直接起動する |
 
-> **正本**: 版依存の事実（subagents の版境界・`settings.local.json` を含む2キー例外）は [v1.2 付録B『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions) を正とする（本表は運用早見）。
+> **正本**: 版依存の事実（subagents の版境界・`settings.local.json` を含む2キー例外）は [v2.0 付録B B-2『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v2.0.md#adddir-exceptions) を正とする（本表は運用早見）。**2026-09-14 に正本が v1.2 から v2.0 へ移った**（[v1.2 側の表](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions)は時点記録として残す）。
 
 > **`--add-dir` フラグ／`/add-dir` コマンド限定**。`permissions.additionalDirectories` 設定経由では**ファイルアクセス付与のみ**で、上記の自動ロードは一切起きない（`docs/permissions`）。
 >
@@ -257,7 +257,7 @@ config 資産をテストする際、**「リポに commit したのに効かな
 | C6 | `InstructionsLoaded` hook＝どの指示ファイルが・いつ・なぜロードされたかログ。`ConfigChange` hook＝settings 再読込で発火 | `docs/memory` / `docs/hooks` / `docs/settings` |
 | C7 | クリーンテスト＝`CLAUDE_CONFIG_DIR` を空 dir に向け `.claude` 無し dir から起動。managed は残る・Linux/Win 再ログイン・mac は Keychain 継承 ／ **実機確認 v1.3**: `--debug-file` でクリーン起動の watch 対象は空 config の `settings.json` **のみ**＝個人 `~/.claude`・project・local を排除を実証。`C:\Program Files\ClaudeCode\managed-settings.json` は継続探索（managed 残存）。auth 非継承で `Not logged in`＝Win 再ログイン要を裏取り | `docs/debug-your-config` / `docs/env-vars` |
 | C8 | settings はファイル監視で即時反映（brief delay）／`model`・`outputStyle` は再起動側／環境変数は起動時のみ／skills ホットリロード・`/reload-skills` | `docs/settings` / `docs/env-vars` / `docs/commands` |
-| C9 | `--add-dir` 例外ロード表（skills/subagents〔**v2.1.178+**。v2.1.165 までは非ロード〕/`enabledPlugins`・`extraKnownMarketplaces`/環境変数で CLAUDE.md・rules）。`additionalDirectories` 設定経由はファイルアクセスのみ ／ **v2.1.235 版(2026-08-19)**: `commands/`（`.claude/commands/`）が例外ロード対象に新規追加（live reload なし。`<Share>` と参照元プロジェクトの両方に同名コマンドがある場合は参照元プロジェクト側が優先）。正本は [v1.2 付録B『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions) | `docs/permissions`「Additional directories grant file access, not configuration」表 / `docs/sub-agents` |
+| C9 | `--add-dir` 例外ロード表（skills/subagents〔**v2.1.178+**。v2.1.165 までは非ロード〕/`enabledPlugins`・`extraKnownMarketplaces`/環境変数で CLAUDE.md・rules）。`additionalDirectories` 設定経由はファイルアクセスのみ ／ **v2.1.235 版(2026-08-19)**: `commands/`（`.claude/commands/`）が例外ロード対象に新規追加（live reload なし。`<Share>` と参照元プロジェクトの両方に同名コマンドがある場合は参照元プロジェクト側が優先）。正本は [v2.0 付録B B-2『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v2.0.md#adddir-exceptions)（2026-09-14 に v1.2 から移管） | `docs/permissions`「Additional directories grant file access, not configuration」表 / `docs/sub-agents` |
 | C10 | `--settings` の優先順位（managed>command-line>local>project>user）・マージ規則・deny>ask>allow ／ **実機確認 v1.3**: `--debug-file` で各スコープが別 destination として併存——`--settings` 由来は **`flagSettings`（＝command-line 層）**、他は `userSettings`/`projectSettings`/`localSettings`（managed は本検証では不在のため未出現だが、C12 の WARN が "policy" 層として言及）。tier 名がそのまま precedence（policy>flag>local>project>user）に対応 | `docs/settings` / `docs/permissions` |
 | C11 | `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` で `--add-dir` 先の CLAUDE.md/rules/CLAUDE.local.md をロード | `docs/permissions` |
 | C12 | project/local で無視される security キー（`defaultMode:auto`・`skipDangerousModePermissionPrompt`・`autoMode`・`useAutoModeDuringPlan`） ／ **実機確認 v1.3**: project に `defaultMode:"auto"` を仕込み `--debug-file` 起動で `[WARN] settings defaultMode "auto" ignored — only policy/user/flag settings may grant auto mode (projectSettings and localSettings are repo-controllable)` を実観測＝無視を実証。**付与可能スコープは policy(managed)/user(`~/.claude`)/flag(`--settings`)**＝従来記載「効かせるなら `~/.claude`」を精密化（`--settings`・managed でも付与可） | `docs/settings` / `docs/permission-modes` |
@@ -267,6 +267,8 @@ config 資産をテストする際、**「リポに commit したのに効かな
 | C16 | `claude --safe-mode`（**v2.1.235 版(2026-08-19) で新設**）＝CLAUDE.md/skills/plugins/hooks/MCP/custom commands・agents/output styles 等の全カスタマイズを無効化して起動する一次切り分け手段。managed settings のポリシーは適用継続。`<Other>`/`~/.claude` からの完全分離はしないため `CLAUDE_CONFIG_DIR` クリーンセッションの代替にはならない | `docs/cli-reference`「--safe-mode」行 / `docs/debug-your-config`「Test against a clean configuration」節 |
 
 ## 変更履歴
+
+- **（errata・2026-09-14）**: `--add-dir` 例外ロード表の**正本を v1.2 付録B から [v2.0 付録B B-2](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v2.0.md#adddir-exceptions) へ張り替えた**。結論・構成案が v2.0（案C-1）で確定し、v1.2 が時点記録になったため。**本文の版依存の事実そのものに変更は無い**（v2.0 側の表は v1.2 と同一内容に版境界の明記を足したもの）。本書全体の案C-1 への追随は D-13 として別タスク。
 
 - **v1.6（2026-08-20）**: 公式ドキュメント最新版（**CLI v2.1.235 相当・2026-08-19 取込**）との照合で検出した本書対象の指摘 6 件（陳腐化 4 件・改善機会 2 件）を反映し、加えて対の手順書側の指摘 1 件を整合のため本書にも反映。**版番号は v1.4 が既に存在していたため、タスク指示の「v1.3→v1.4」から繰り上げて v1.6 とした**（H1 の版表記も同時に v1.0 の据え置き漏れを解消し v1.6 へ更新）。
   - **【CRITICAL】`/agents` の仕様変更**（§3・§6・§エグゼクティブサマリ・出典 C5）: v2.1.198 以降 `/agents` は subagent 一覧を表示せず `.claude/agents/` 直接編集を促すリマインダーのみになった。同名衝突の目視確認手段を `/context`（custom subagents をロード元パス付きで表示）へ差し替え。

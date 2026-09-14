@@ -493,7 +493,7 @@ claude plugin tag ./my-plugin --push             # tag を remote へ
 
 > `--add-dir` で渡すのは「`.claude/` を内包する親フォルダ」。フォルダ名自体を `.claude` にすると `<dir>/.claude/.claude/` を探して読まれないので注意。
 > **`--add-dir`（フラグ／`/add-dir`）で `<dir>/.claude/` から自動ロードされる設定**（公式 `docs/permissions` の表）: **skills（`.claude/skills/`・live reload）／subagents（`.claude/agents/`・v2.1.178+。v2.1.165 までは非ロード）／commands（`.claude/commands/`・**v2.1.235 版(2026-08-19) で追加**。live reload なし。追加ディレクトリとプロジェクト側で同名 command がある場合はプロジェクト側が優先）**、および `settings.json` のうち **`enabledPlugins` / `extraKnownMarketplaces` のみ**。`CLAUDE.md` / `rules` / `CLAUDE.local.md` は環境変数 `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` を付けた時だけ読まれる。`settings.json` のそれ以外のキー（permissions/hooks 等）・output-styles は読まれない。
-> **正本**: 版依存の事実（subagents の版境界・commands の追加時期・`settings.local.json` を含む2キー例外）は [v1.2 付録B『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions) を正とする（本注記は運用早見。詳しい根拠は [調査結果報告書 §4](./Plugin・Marketplace配布物の開発・テスト_調査結果.md#skill-only)）。
+> **正本**: 版依存の事実（subagents の版境界・commands の追加時期・`settings.local.json` を含む2キー例外）は [v2.0 付録B B-2『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v2.0.md#adddir-exceptions) を正とする（本注記は運用早見。詳しい根拠は [調査結果報告書 §4](./Plugin・Marketplace配布物の開発・テスト_調査結果.md#skill-only)）。**2026-09-14 に正本が v1.2 から v2.0 へ移った**（[v1.2 側の表](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions)は時点記録として残す）。
 > ⚠️ `permissions.additionalDirectories` 設定経由ではこれら例外は**一切**読まれず、ファイルアクセス付与のみ（自動ロードは `--add-dir` フラグ／`/add-dir` 限定）。
 
 ### セッション内 / CLI コマンド対応
@@ -716,6 +716,8 @@ cc --plugin-dir /path/to/plugin-dev
 ---
 
 ## 変更履歴
+
+- **（errata・2026-09-14）**: `--add-dir` 例外ロード表の**正本を v1.2 付録B から [v2.0 付録B B-2](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v2.0.md#adddir-exceptions) へ張り替えた**。結論・構成案が v2.0（案C-1）で確定し、v1.2 が時点記録になったため。**本文の版依存の事実そのものに変更は無い**（v2.0 側の表は v1.2 と同一内容に版境界の明記を足したもの）。本書全体の案C-1 への追随は D-13 として別タスク。
 
 - **v2.0（2026-08-20）**: **開発シナリオを 2 パターンに分けて全面改稿**。旧版は「既存リポジトリの活動の中で必要になって作り、整えて公開する」入口だけを前提にしており、「公開前提で思いついたものを、その開発自体を作業として一気に公開まで持っていく」入口が抜けていた。主な変更:
   - **構成の刷新**: §0 全体像（2 シナリオの対比・共通コアの図・リポジトリ・公開形態の早見）／**§1 シナリオ A（派生型）**／**§2 シナリオ B（公開先行型）**／**§3 共通コア**（旧 §1 の②〜⑤）という「入口を分けて途中で合流する」構成へ。旧 §2→§5、旧 §3→§6、旧 §4→§7、旧 §6→**§8**、旧 §5→§9 に繰り下げ（**他文書からの「手順書 §6」参照は §8 を指すよう更新済み**）。
