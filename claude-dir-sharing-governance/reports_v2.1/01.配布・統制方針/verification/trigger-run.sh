@@ -10,7 +10,7 @@ ASK=$'\n\nそのうえで、以下を「ラベル=値」の形で1行ずつ出�
 run() {
   local label="$1" tools="$2" pre="$3"
   echo "================ $label ================"
-  claude --model haiku --allowedTools $tools -p "${pre}${ASK}" 2>&1 | tail -8
+  claude --model haiku --allowedTools $tools -p "${pre}${ASK}" 2>&1
   echo
 }
 
