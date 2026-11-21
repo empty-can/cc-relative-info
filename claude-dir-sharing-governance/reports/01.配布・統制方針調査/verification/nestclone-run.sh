@@ -2,7 +2,7 @@
 # 入れ子クローン .claude/ から各資産がロードされるかを 1 セッションで測る。
 set -uo pipefail
 
-cd "$(dirname "$0")/nestclone/work"
+cd "$(dirname "$0")/nestclone/work" || exit 1
 
 read -r -d '' PROMPT <<'EOF' || true
 次の4項目を順に実行し、結果だけを「ラベル=値」の形で1行ずつ出力してください。説明文は不要です。

@@ -7,7 +7,7 @@
 set -uo pipefail
 
 BASE="$(cd "$(dirname "$0")" && pwd)/nestclone"
-cd "$BASE/shared"
+cd "$BASE/shared" || exit 1
 
 # 共有リポ側で settings.local.json を ignore（消費側の個人設定を守るための前提）
 printf 'settings.local.json\n' > .gitignore
@@ -56,7 +56,7 @@ echo "=== rebase 後のブランチグラフ（一直線＝全ブランチが ma
 git log --oneline --graph --all --decorate | head -20
 
 # ---- 消費側 ----
-cd "$BASE/work/.claude"
+cd "$BASE/work/.claude" || exit 1
 printf '{ "env": { "PERSONAL": "KEEPME" } }\n' > settings.local.json
 echo
 echo "=== 消費側: 切替前 ==="

@@ -13,6 +13,17 @@ cd reports/01.配布・統制方針調査/verification
 bash switch-fail.sh
 ```
 
+### ⚠ 実行順序がある（足場に依存するスクリプト）
+
+単独で完結するのは `switch-fail.sh` と `ffonly-test.sh` だけである。残りは**足場を作るスクリプトを先に実行しておく必要がある**。
+
+| 系列 | 実行順 |
+|---|---|
+| 入れ子クローン | `nestclone-setup.sh` → `nestclone-run.sh` → `nestclone-branch.sh` → `nestclone-branch2.sh` → `nestclone-updaterefs.sh` |
+| 発火契機 | `trigger-setup.sh` → `trigger-run.sh` → `trigger-edit.sh` |
+
+**足場なしで後段を実行すると `cd` が失敗する。** 2026-11-21 までの版は `cd` の失敗を検査しておらず、後続の `git add -A` / `commit` / `reset --hard` / `push --force` が**このリポジトリ自身に対して**実行された（2026-11-21 に実際に発生。未追跡ファイルが誤コミットに取り込まれたうえで `reset --hard` により作業ツリーから消え、reflog から復元した。push はブランチ名が存在せず失敗したため、リモートへの影響は無かった）。現在は全スクリプトの `cd` に `|| exit 1` を付けてあり、足場が無ければ最初の `cd` で止まる。これは本文 §5-6 の「終了コードを検査しないと静かに壊れる」と同じ型の事故である。
+
 ## スクリプト一覧
 
 | スクリプト | 測るもの | 本文の対応節 |

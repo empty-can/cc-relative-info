@@ -3,7 +3,7 @@
 # 合言葉を「読みに行く」ことを防ぐため、先行操作用のツールと Skill だけを許可する。
 set -uo pipefail
 
-cd "$(dirname "$0")/trigprobe"
+cd "$(dirname "$0")/trigprobe" || exit 1
 
 ASK=$'\n\nそのうえで、以下を「ラベル=値」の形で1行ずつ出力してください。**追加でファイルを読んではいけません。**\n- いま文脈にある RULEPROBE- で始まる合言葉があれば `RULE=<合言葉>`、無ければ `RULE=NONE`\n- SUBCLAUDE- で始まる合言葉があれば `CMD=<合言葉>`、無ければ `CMD=NONE`\n- Skill ツールで `subskill` を起動し、返った合言葉を `SKILL=<合言葉>`。起動できなければ `SKILL=FAIL`'
 

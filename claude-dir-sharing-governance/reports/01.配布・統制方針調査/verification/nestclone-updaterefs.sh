@@ -4,7 +4,7 @@
 set -uo pipefail
 
 BASE="$(cd "$(dirname "$0")" && pwd)/nestclone"
-cd "$BASE/shared"
+cd "$BASE/shared" || exit 1
 
 git switch -q master
 printf '\n追記3: 合言葉 **NESTCLONE-M3-7709**。\n' >> CLAUDE.md
@@ -29,7 +29,7 @@ git push -q --force origin master "java/_base" "java/design"
 
 echo
 echo "=== 消費側: pull --ff-only 失敗 → reset --hard で復旧できるか ==="
-cd "$BASE/work/.claude"
+cd "$BASE/work/.claude" || exit 1
 git fetch -q --all --prune
 echo "    pull --ff-only:"
 git pull --ff-only >/dev/null 2>&1; echo "        終了コード=$?"
@@ -41,13 +41,13 @@ echo "    settings.local.json: $([ -f settings.local.json ] && echo '残存' || 
 
 echo
 echo "=== 参考: ローカルに全ブランチを持たない場合 updateRefs はどうなるか ==="
-cd "$BASE"
-rm -rf maint2 && git clone -q shared.git maint2 && cd maint2
+cd "$BASE" || exit 1
+rm -rf maint2 && git clone -q shared.git maint2 && cd maint2 || exit 1
 git switch -q --track origin/java/design 2>/dev/null || git switch -q "java/design"
 echo "    ローカルブランチ: [$(git branch --format='%(refname:short)' | tr '\n' ' ')]"
-cd "$BASE/shared"; git switch -q master
+cd "$BASE/shared" || exit 1; git switch -q master
 printf '\n追記4\n' >> CLAUDE.md; git add -A; git commit -qm "master 追記4"; git push -q origin master
-cd "$BASE/maint2"; git fetch -q --all
+cd "$BASE/maint2" || exit 1; git fetch -q --all
 git -c rebase.updateRefs=true rebase origin/master 2>&1 | sed 's/^/    /'
 echo "    ローカルに java/_base が無い状態での結果 → java/_base は更新され得ない（ローカル参照が無いため）"
 echo "    ローカルブランチ: [$(git branch --format='%(refname:short)' | tr '\n' ' ')]"

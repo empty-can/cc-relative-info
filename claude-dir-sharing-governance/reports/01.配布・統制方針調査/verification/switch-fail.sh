@@ -5,11 +5,11 @@
 set -uo pipefail
 
 T="$(dirname "$0")/switchfail"
-rm -rf "$T"; mkdir -p "$T"; cd "$T"
+rm -rf "$T"; mkdir -p "$T"; cd "$T" || exit 1
 
 git init -q --bare remote.git
 git clone -q remote.git repo
-cd repo
+cd repo || exit 1
 git config user.email t@example.com; git config user.name t
 
 echo "main の資産" > asset.txt

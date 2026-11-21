@@ -4,7 +4,7 @@
 set -uo pipefail
 
 BASE="$(cd "$(dirname "$0")" && pwd)/nestclone"
-cd "$BASE/shared"
+cd "$BASE/shared" || exit 1
 git switch -q master
 git branch -q -D java 2>/dev/null
 
@@ -53,7 +53,7 @@ git log --oneline --graph --all --decorate | head -20
 
 echo
 echo "=== 消費側: fetch → switch → reset --hard ==="
-cd "$BASE/work/.claude"
+cd "$BASE/work/.claude" || exit 1
 echo "    切替前: ブランチ=$(git rev-parse --abbrev-ref HEAD) rules=[$(ls rules | tr '\n' ' ')]"
 git fetch -q --all --prune
 git switch -q "java/design" && git reset -q --hard "origin/java/design"
@@ -64,9 +64,9 @@ echo "    git status: [$(git status --short | tr '\n' ' ')]"
 
 echo
 echo "=== 参考: 同じ状況で git pull --ff-only を試す ==="
-cd "$BASE/shared"; git switch -q java/design
+cd "$BASE/shared" || exit 1; git switch -q java/design
 printf '\n追記2\n' >> rules/design-rule.md; git add -A; git commit -q --amend --no-edit
 git push -q --force origin "java/design"
-cd "$BASE/work/.claude"
+cd "$BASE/work/.claude" || exit 1
 git pull --ff-only 2>&1 | sed 's/^/    /'
 echo "    終了コード: ${PIPESTATUS[0]}"
