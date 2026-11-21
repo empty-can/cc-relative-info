@@ -17,7 +17,7 @@ bash switch-fail.sh
 
 | 系列 | 実行順 |
 |---|---|
-| 入れ子クローン | `nestclone-setup.sh` → `nestclone-run.sh` → `nestclone-branch.sh` → `nestclone-branch2.sh` → `nestclone-updaterefs.sh` |
+| 入れ子クローン | `nestclone-setup.sh` → `nestclone-run.sh`・`nestclone-worktree.sh` → `nestclone-branch.sh` → `nestclone-branch2.sh` → `nestclone-updaterefs.sh` |
 | 発火 | `trigger-setup.sh` → `trigger-run.sh`・`trigger-edit.sh`・`trigger-write.sh`・`trigger-bash-forms.sh`・`trigger-adddir.sh`（後ろの 5 本は順不同） |
 
 足場が無いまま後段を実行すると、最初の `cd` で止まる（全スクリプトの `cd` に `|| exit 1` を付けてある）。`cd` の失敗を検査していなかった版では、後続の `git add -A`・`commit`・`reset --hard` がこのリポジトリ自身に対して実行された（2026-11-21 に実際に起きた。未追跡のファイルが誤ったコミットに取り込まれ、`reset --hard` で作業ツリーから消えたので、コミットから復元した）。スクリプトを足したり直したりするときは、`cd` の失敗で必ず止まる形を保つこと。
@@ -28,6 +28,7 @@ bash switch-fail.sh
 |---|---|---|
 | `nestclone-setup.sh` | **足場**: 作業リポジトリ（`.gitignore` に `.claude/`）の `.claude/` が別のリポジトリのクローン、という案C-1 の形を組む | §3-1 |
 | `nestclone-run.sh` | 上の足場で、`CLAUDE.md`・`paths:` なしの rule・`settings.json` の `env`・skill の 4 つがロードされるかを合言葉で確かめる | §3-1 |
+| `nestclone-worktree.sh` | 作業リポジトリの linked worktree から起動したとき、入れ子クローンの資産がどこまでロードされるか（`CLAUDE.md`・rule・`settings.json` はロードされず、skill だけが本体の checkout から読まれる） | §3-1 |
 | `nestclone-branch.sh` | ブランチ運用の一巡。途中の `git switch -c java/design` が D/F コンフリクトで失敗し、その後の手順も失敗が連鎖する（失敗の記録として、そのまま実行する） | §5-3 |
 | `nestclone-branch2.sh` | D/F コンフリクトを `git branch` の 2 コマンドで再現した後、名前を変えて（`java/_base`・`java/design`）多段の rebase からメンバー側の切替までを通す。`git pull --ff-only` の失敗も測る | §5-3、§5-4、§5-5 |
 | `nestclone-updaterefs.sh` | `rebase.updateRefs` が中間ブランチも進めること、中間ブランチをローカルに持たないクローンでは取り残されること | §5-4 |
