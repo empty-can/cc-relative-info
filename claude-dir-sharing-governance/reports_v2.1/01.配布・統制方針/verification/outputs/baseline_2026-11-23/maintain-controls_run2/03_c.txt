@@ -1,0 +1,20 @@
+===== (c) lease の拒否: m が fetch した後に、別のメンテナーが java/ut を push した
+  （他のメンテナーが java/ut を 7efb15f へ進めた）
+  error: atomic push failed for ref refs/heads/java/ut. status: 7
+  
+  fatal: the remote end hung up unexpectedly
+  To C:/tmp/v21-va/controls2/maintain-cc/shared.git
+   ! [rejected]        java/base -> java/base (atomic push failed)
+   ! [rejected]        java/design -> java/design (atomic push failed)
+   ! [rejected]        java/ut -> java/ut (stale info)
+   ! [rejected]        python/base -> python/base (atomic push failed)
+   ! [rejected]        python/coding -> python/coding (atomic push failed)
+  error: failed to push some refs to 'C:/tmp/v21-va/controls2/maintain-cc/shared.git'
+  push の終了コード: 1
+  origin の java/base（動いていなければ --atomic が効いている）: 7515246 ／ OLD=7515246
+  参考: 値を付けない --force-with-lease で java/ut を push する（直前に fetch して origin/java/ut を更新した場合）
+  To C:/tmp/v21-va/controls2/maintain-cc/shared.git
+   + 7efb15f...be5df0f java/ut -> java/ut (forced update)
+  push の終了コード: 0
+  → 他のメンテナーの追記は origin の java/ut に残ったか: 0 件
+#### run_one: end rc=0 seconds=28

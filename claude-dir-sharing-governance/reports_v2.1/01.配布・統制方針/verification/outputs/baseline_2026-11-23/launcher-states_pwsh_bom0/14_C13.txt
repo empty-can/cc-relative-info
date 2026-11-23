@@ -1,0 +1,16 @@
+== C13 メンテナーが rebase して force-push した後
+  $ & start_claude_code.ps1 -Branch java/design
+    | From C:/tmp/v21-va/ls-pwsh0/launcher-pwsh-bom0/shared
+    |  + e81e44d...56b11f9 java/design -> origin/java/design  (forced update)
+    |  + b4c26bd...b10d5c6 java/base   -> origin/java/base  (forced update)
+    |    8595cc4..13d109f  main        -> origin/main
+    | Your branch and 'origin/java/design' have diverged,
+    | and have 2 and 3 different commits each, respectively.
+    |   (use "git pull" if you want to integrate the remote branch with yours)
+    | Already on 'java/design'
+    | HEAD is now at 56b11f9 java/design
+    | [起動] cwd=C:\tmp\v21-va\ls-pwsh0\launcher-pwsh-bom0\cases\c13 / .claude のブランチ=java/design / 先頭=56b11f9 java/design
+    | [claude の引数] 0 個: 
+    → 終了コード 0
+    main 追記が届いたか: 1 件
+

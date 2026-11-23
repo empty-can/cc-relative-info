@@ -1,0 +1,126 @@
+################ S19 main にある資産を、既にある系列のブランチ（java/base）へ移す（§7-2 手順 2 は新しく切るブランチだけを書いている）
+  (a) main から外した後に、そのまま定常手順を実行する
+    origin java/base    rules/move.md: ある
+    origin java/design  rules/move.md: ある
+    origin java/ut      rules/move.md: ある
+    origin python/base  rules/move.md: ある
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/scenes/sc-s19a/shared
+    |    87a72d2..4ae0009  main       -> origin/main
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s19a/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s19a/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s19a/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-va/scenes/sc-s19a/shared.git
+    |  + 376cdf3...eba174b java/base -> java/base (forced update)
+    |  + 74ce96c...0eb5dd9 java/design -> java/design (forced update)
+    |  + 7955e6b...9de202c java/ut -> java/ut (forced update)
+    |  + 24fb199...b3005de python/base -> python/base (forced update)
+    |  + cefebec...02de23d python/coding -> python/coding (forced update)
+    | push した。
+  #### [S19a y] 終了コード 0
+    origin java/base    rules/move.md: 無い
+    origin java/design  rules/move.md: 無い
+    origin java/ut      rules/move.md: 無い
+    origin python/base  rules/move.md: 無い
+  (b0) 定常手順の前に、origin の java/base へ足し直そうとする（java/base はまだ旧い main の上なので、資産は残っている）
+    | On branch java/base
+    | Your branch is up to date with 'origin/java/base'.
+    | 
+    | nothing to commit, working tree clean
+    commit の終了コード: 1
+  (b) 定常手順を先に通し（資産が java/* から消える）、その後に java/base へ足し直して push し、中間ブランチの手順で子へ届ける
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/scenes/sc-s19b/shared
+    |    b96d26b..7411213  main       -> origin/main
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s19b/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s19b/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s19b/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-va/scenes/sc-s19b/shared.git
+    |  + 54354bc...8bcccf8 java/base -> java/base (forced update)
+    |  + 0041029...0738ab3 java/design -> java/design (forced update)
+    |  + 50d981f...c2ab311 java/ut -> java/ut (forced update)
+    |  + 4625bb8...3129098 python/base -> python/base (forced update)
+    |  + a74812d...97497ad python/coding -> python/coding (forced update)
+    | push した。
+  #### [S19b 定常手順 y] 終了コード 0
+    origin java/base    rules/move.md: 無い
+    origin java/design  rules/move.md: 無い
+    origin java/ut      rules/move.md: 無い
+    origin python/base  rules/move.md: 無い
+  $ bash maintain-middle.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/scenes/sc-s19b/shared
+    |    8bcccf8..ef72377  java/base  -> origin/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s19b/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s19b/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-va/scenes/sc-s19b/shared.git
+    |  + 0738ab3...f36ae9f java/design -> java/design (forced update)
+    |  + c2ab311...03e5782 java/ut -> java/ut (forced update)
+    | push した。
+  #### [S19b 中間ブランチの手順 y] 終了コード 0
+    origin java/base    rules/move.md: ある
+    origin java/design  rules/move.md: ある
+    origin java/ut      rules/move.md: ある
+    origin python/base  rules/move.md: 無い
+  (c) 誤り: ③' の入力待ちの間に、m の java/base で足し直して commit し、そのまま y を入れる
+    | From C:/tmp/v21-va/scenes/sc-s19c/shared
+    |    4913ed5..2ca5c0c  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | （試験: 入力待ちの間に m の java/base へ commit した）
+    | To C:/tmp/v21-va/scenes/sc-s19c/shared.git
+    |  + f731285...d9ad724 java/base -> java/base (forced update)
+    |  + bf28fb2...ba09de5 java/design -> java/design (forced update)
+    |  + d1366d2...4361ecd java/ut -> java/ut (forced update)
+    |  + d0411d9...4b8b379 python/base -> python/base (forced update)
+    |  + aa3c6c8...872005e python/coding -> python/coding (forced update)
+    | push した。
+  #### [S19c 入力待ちの間に commit] 終了コード 0
+    origin java/base    rules/move.md: ある
+    origin java/design  rules/move.md: 無い
+    origin java/ut      rules/move.md: 無い
+    origin python/base  rules/move.md: 無い
+    origin: java/base ⊂ java/design: NO
+    origin: java/base ⊂ java/ut: NO
+  (c2) 同じ誤りを、③ を push の直前にもう一度行う版（maintain-steady.sh）で
+    | From C:/tmp/v21-va/scenes/sc-s19d/shared
+    |    6a410e7..cba6e0d  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | （試験: 入力待ちの間に m の java/base へ commit した）
+    | 中断: java/design は java/base を先祖に持たない
+  #### [S19d 再検査の版] 終了コード 1
+    origin java/base    rules/move.md: ある
+    origin java/design  rules/move.md: ある
+    origin java/ut      rules/move.md: ある
+    origin python/base  rules/move.md: ある
+

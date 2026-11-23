@@ -1,0 +1,3 @@
+#### run_one: VERIF_ROOT=C:/tmp/v21-va/lr-pwsh script=launcher-remedy.sh args=[] LSHELL=pwsh LBOM= start=2026-11-23 19:52:42 +0900
+######## launcher-remedy.sh 2026-11-23 19:52:42 +0900 ／ git version 2.46.0.windows.1 ／ pwsh 7.4.22
+

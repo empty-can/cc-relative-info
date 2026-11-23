@@ -1,0 +1,3 @@
+=== .claude が独立リポジトリか ===
+  .claude のブランチ: master ／ git-dir: .git
+

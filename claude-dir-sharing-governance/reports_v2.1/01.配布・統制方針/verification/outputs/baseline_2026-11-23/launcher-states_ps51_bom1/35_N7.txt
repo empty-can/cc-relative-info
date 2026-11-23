@@ -1,0 +1,6 @@
+== N7 .claude がファイル
+  $ & start_claude_code.ps1 
+    | .claude/ に中身がありますが、共有リポのクローンではありません。中断します。
+    | 個人のファイル（settings.local.json など）を退避し、.claude/ を別の名前（例: .claude.old）へ移してから、もう一度起動してください。
+    → 終了コード 1
+

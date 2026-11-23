@@ -1,0 +1,39 @@
+################ R-S11 commit していない変更で止まる → git stash／commit（push しない）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | 中断: 作業ツリーに commit していない変更がある（git status で確かめ、commit か git stash で片付ける）
+  #### [R-S11a 1 回目] 終了コード 1
+    （対処: git stash）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/remedy/rm-r-s11as/shared
+    |    eb0836b..81c4d7f  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/remedy/rm-r-s11as/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/remedy/rm-r-s11as/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-va/remedy/rm-r-s11as/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-va/remedy/rm-r-s11as/shared.git
+    |  + 073b2b1...14eaffe java/base -> java/base (forced update)
+    |  + ce025e8...226eda4 java/design -> java/design (forced update)
+    |  + 9dd6f12...0ae4ad5 java/ut -> java/ut (forced update)
+    |  + dabc347...a483260 python/base -> python/base (forced update)
+    |  + f6209db...8ec9587 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S11a stash の後] 終了コード 0
+    stash は残っているか: 1 件
+    （対処: main で commit。push しない）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/remedy/rm-r-s11ac/shared
+    |    ea5108f..1d75142  main       -> origin/main
+    | 中断: ローカルの main に、origin に無い変更がある: + e3eedf9bbcc8d1274ba1f2476a901ed8cfe1913a
+  #### [R-S11a commit の後] 終了コード 1
+    （対処: java/base で commit。push しない）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/remedy/rm-r-s11bc/shared
+    |    c40651d..bc595b5  main       -> origin/main
+    | 中断: ローカルの java/base に、origin に無い変更がある: + 441691080d3b7f36ae51888dee0912943e8e7bb0
+  #### [R-S11b commit の後] 終了コード 1
+

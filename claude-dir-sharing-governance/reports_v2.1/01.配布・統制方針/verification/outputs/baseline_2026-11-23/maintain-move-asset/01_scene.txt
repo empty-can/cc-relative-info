@@ -1,0 +1,5 @@
+===== 誤った順序: main からブランチを切った後に、main から資産を外す
+  rebase 前の java/base: rules=[rules/common.md rules/java.md rules/java2.md ]
+  Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/base.
+  rebase の終了コード: 0
+  rebase 後の java/base: rules=[rules/common.md rules/java2.md ]

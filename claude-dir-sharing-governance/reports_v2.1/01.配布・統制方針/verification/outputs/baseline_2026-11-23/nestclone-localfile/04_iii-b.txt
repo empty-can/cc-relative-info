@@ -1,0 +1,46 @@
+=== (iii-b) ブランチ tracked が settings.local.json を追跡。手元のファイルは ignore されていない ===
+  前:
+      ブランチ=master HEAD=31bd052 CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[{ "env": { "FROM": "PERSONAL" } }]
+      status --porcelain=[?? settings.local.json ] --ignored=[]
+    $ git fetch -q --all --prune   （fetch）
+      終了コード: 0
+      ブランチ=master HEAD=31bd052 CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[{ "env": { "FROM": "PERSONAL" } }]
+      status --porcelain=[?? settings.local.json ] --ignored=[]
+    $ git switch tracked   （switch）
+      | error: The following untracked working tree files would be overwritten by checkout:
+      | 	settings.local.json
+      | Please move or remove them before you switch branches.
+      | Aborting
+      終了コード: 1
+      ブランチ=master HEAD=31bd052 CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[{ "env": { "FROM": "PERSONAL" } }]
+      status --porcelain=[?? settings.local.json ] --ignored=[]
+    $ git reset --hard origin/tracked   （reset）
+      | HEAD is now at 96c071a tracked: settings.local.json を追跡
+      終了コード: 0
+      ブランチ=master HEAD=96c071a CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[{ "env": { "FROM": "BRANCH" } }]
+      status --porcelain=[] --ignored=[]
+  master へ戻る:
+    $ git fetch -q --all --prune   （fetch）
+      終了コード: 0
+      ブランチ=master HEAD=96c071a CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[{ "env": { "FROM": "BRANCH" } }]
+      status --porcelain=[] --ignored=[]
+    $ git switch master   （switch）
+      | Your branch is ahead of 'origin/master' by 1 commit.
+      |   (use "git push" to publish your local commits)
+      | Already on 'master'
+      終了コード: 0
+      ブランチ=master HEAD=96c071a CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[{ "env": { "FROM": "BRANCH" } }]
+      status --porcelain=[] --ignored=[]
+    $ git reset --hard origin/master   （reset）
+      | HEAD is now at 31bd052 master
+      終了コード: 0
+      ブランチ=master HEAD=31bd052 CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[★無い★]
+      status --porcelain=[] --ignored=[]
+

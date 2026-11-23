@@ -1,0 +1,40 @@
+################ T07r 外へ移して起動した後、戻す先に同じ名前の agent-memory/ が作り直されていたとき（使っている間に Claude Code が書いたものとする）
+  -- (1) ディレクトリごとの Move-Item で戻す
+  （メンバーの操作 PS> Move-Item ..\t07r-out\agent-memory .claude\agent-memory）
+    → 終了コード 0
+    agent-memory の中身: agent-memory/agent-memory/reviewer/MEMORY.md=古いメモ agent-memory/reviewer/MEMORY.md=新しいメモ 
+  $ .\start_claude_code.ps1 
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at 1471232 ignore agent-memory/ worktrees/
+    | [起動] .claude のブランチ=main / 先頭=1471232 ignore agent-memory/ worktrees/
+    → 終了コード 0
+  -- (2) 中身だけを Move-Item で戻す（名前がぶつからない: 外は reviewer/、中は other/）
+  （メンバーの操作 PS> Move-Item ..\t07s-out\agent-memory\* .claude\agent-memory\）
+    → 終了コード 0
+    agent-memory の中身: agent-memory/other/MEMORY.md=新しいメモ agent-memory/reviewer/MEMORY.md=古いメモ 
+  $ .\start_claude_code.ps1 
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at 1471232 ignore agent-memory/ worktrees/
+    | [起動] .claude のブランチ=main / 先頭=1471232 ignore agent-memory/ worktrees/
+    → 終了コード 0
+  -- (3) 中身だけを Move-Item で戻す（名前がぶつかる: 外も中も reviewer/）
+  （メンバーの操作 PS> Move-Item ..\t07u-out\agent-memory\* .claude\agent-memory\）
+    ps| Move-Item : Cannot create a file when that file already exists.
+    ps| At line:1 char:144
+    ps| + ... ITCODE = 0; Move-Item ..\t07u-out\agent-memory\* .claude\agent-memory ...
+    ps| +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ps|     + CategoryInfo          : WriteError: (C:\tmp\v21-va\l...memory\reviewer:DirectoryInfo) [Move-Item], IOException
+    ps|     + FullyQualifiedErrorId : MoveDirectoryItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+    ps|  
+    → 終了コード 1
+    agent-memory の中身: agent-memory/reviewer/MEMORY.md=新しいメモ 
+    外に残ったもの: ./agent-memory/reviewer/MEMORY.md ./agent-memory/reviewer/notes.md 
+  $ .\start_claude_code.ps1 
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at 1471232 ignore agent-memory/ worktrees/
+    | [起動] .claude のブランチ=main / 先頭=1471232 ignore agent-memory/ worktrees/
+    → 終了コード 0
+

@@ -1,0 +1,4 @@
+=== rebase.updateRefs による多段伝播（java/design が無いので失敗するはず）===
+    switch: fatal: invalid reference: java/design
+    switch の終了コード: 128 ／ 現在のブランチ: master
+

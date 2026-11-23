@@ -1,0 +1,6 @@
+== N11 メンテナーがブランチを消した後、一度もそのブランチを使ったことのないメンバー
+  $ & start_claude_code.ps1 -Branch python/old
+    | fatal: invalid reference: python/old
+    | ブランチ 'python/old' への切替に失敗しました。中断します。
+    → 終了コード 1
+

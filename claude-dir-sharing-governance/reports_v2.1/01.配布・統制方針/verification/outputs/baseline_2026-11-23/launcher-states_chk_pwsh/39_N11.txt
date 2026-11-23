@@ -1,0 +1,6 @@
+== N11 メンテナーがブランチを消した後、一度もそのブランチを使ったことのないメンバー
+  $ & start_claude_code.ps1 -Branch python/old
+    | ブランチ 'python/old' は共有リポにありません（大文字小文字も区別します）。中断します。
+    | 共有リポのブランチ: java/base, java/design, main
+    → 終了コード 1
+

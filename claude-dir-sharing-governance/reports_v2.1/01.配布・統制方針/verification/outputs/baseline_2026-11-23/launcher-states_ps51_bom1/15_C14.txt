@@ -1,0 +1,13 @@
+== C14 リモートでブランチが消された（ローカルには残っている）
+  $ & start_claude_code.ps1 -Branch python/base
+    | From C:/tmp/v21-va/ls-ps51-1/launcher-powershell-bom1/shared
+    |  - [deleted]         (none)     -> origin/python/base
+    | Your branch is based on 'origin/python/base', but the upstream is gone.
+    |   (use "git branch --unset-upstream" to fixup)
+    | Already on 'python/base'
+    | fatal: ambiguous argument 'origin/python/base': unknown revision or path not in the working tree.
+    | Use '--' to separate paths from revisions, like this:
+    | 'git <command> [<revision>...] -- [<file>...]'
+    | reset --hard に失敗しました。中断します（origin/python/base が無いときは、リモートでブランチが消された可能性があります）。
+    → 終了コード 1
+

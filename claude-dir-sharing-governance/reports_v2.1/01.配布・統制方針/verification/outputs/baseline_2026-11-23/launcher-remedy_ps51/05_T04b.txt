@@ -1,0 +1,33 @@
+################ T04b submodule から移った作業リポジトリで、submodule の中の CLAUDE.md を手元で編集していたメンバー（手順 1 は実行していない）→ status で確かめ、出たものを外へ写し、.claude と .git/modules/.claude を消す
+    pull| warning: unable to rmdir '.claude': Directory not empty
+  $ .\start_claude_code.ps1 
+    | .claude/ にローカル変更があります。更新を中止しました:
+    |  M CLAUDE.md
+    | git -C .claude status で中身を確かめてください。覚えのないものは消さずに、メンテナーへ相談してください。
+    → 終了コード 1
+  （メンバーの操作 PS> git -C .claude status --porcelain）
+    ps|  M CLAUDE.md
+    → 終了コード 0
+  （メンバーの操作 PS> New-Item -ItemType Directory -Force ..\t04b-keep | Out-Null; Copy-Item .claude\CLAUDE.md, .claude\settings.local.json ..\t04b-keep\）
+    → 終了コード 0
+  （メンバーの操作 PS> Remove-Item -Recurse -Force .claude, .git\modules\.claude）
+    → 終了コード 0
+    .claude: 消えた ／ .git/modules/.claude: 消えた
+  $ .\start_claude_code.ps1 
+    | Cloning into 'C:\tmp\v21-va\lr-ps51\lremedy-powershell\cases\t04b\.claude'...
+    | done.
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at 9eb7367 main
+    | [起動] .claude のブランチ=main / 先頭=9eb7367 main
+    → 終了コード 0
+    .claude: main ／ status: [] ／ 作業リポ status: [?? start_claude_code.ps1 ]
+  （メンバーの操作 PS> Copy-Item ..\t04b-keep\settings.local.json .claude\）
+    → 終了コード 0
+  $ .\start_claude_code.ps1 
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at 9eb7367 main
+    | [起動] .claude のブランチ=main / 先頭=9eb7367 main
+    → 終了コード 0
+

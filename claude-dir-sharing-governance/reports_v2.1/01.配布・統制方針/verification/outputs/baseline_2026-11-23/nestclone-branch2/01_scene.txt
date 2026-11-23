@@ -1,0 +1,4 @@
+=== 先に D/F コンフリクトの再現を明示記録 ===
+    fatal: cannot lock ref 'refs/heads/java-df-test/child': 'refs/heads/java-df-test' exists; cannot create 'refs/heads/java-df-test/child'
+    終了コード: 128
+

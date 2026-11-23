@@ -1,0 +1,50 @@
+################ R-REBASED-CONF 対照: 衝突を解いて continue した後に ① で止まる → push（拒否）→ ① の説明の手（git fetch・git switch・git rebase origin/java/design）を当てると
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/remedy/rm-r-rebased-conf/shared
+    |    36b901f..7bd2e59  main        -> origin/main
+    |    dd9e950..1664daa  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 1664daa... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [R-REBASED-CONF 1 回目（衝突）] 終了コード 1
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | 中断: ローカルの java/design に、origin に無い変更がある: + 5bae59e9c4ed64ab8d7320543186ef646c46a894
+  #### [R-REBASED-CONF 解いた後] 終了コード 1
+    push| To C:/tmp/v21-va/remedy/rm-r-rebased-conf/shared.git
+    push|  ! [rejected]        java/design -> java/design (non-fast-forward)
+    push| error: failed to push some refs to 'C:/tmp/v21-va/remedy/rm-r-rebased-conf/shared.git'
+    push| hint: Updates were rejected because a pushed branch tip is behind its remote
+    push| hint: counterpart. If you want to integrate the remote changes, use 'git pull'
+    push| hint: before pushing again.
+    push| hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+    m: git push origin java/design の終了コード: 1
+    m: git fetch origin の終了コード: 0
+    switch| Your branch and 'origin/java/design' have diverged,
+    switch| and have 4 and 3 different commits each, respectively.
+    switch|   (use "git pull" if you want to integrate the remote branch with yours)
+    switch| Previous HEAD position was 7bd2e59 main: PR #1 で追記
+    switch| Switched to branch 'java/design'
+    m: git switch java/design の終了コード: 0
+    rebase| warning: skipped previously applied commit 8afd2f4
+    rebase| warning: skipped previously applied commit 7e779c0
+    rebase| Auto-merging CLAUDE.md
+    rebase| CONFLICT (content): Merge conflict in CLAUDE.md
+    rebase| hint: use --reapply-cherry-picks to include skipped commits
+    rebase| hint: Disable this message with "git config advice.skippedCherryPicks false"
+    rebase| error: could not apply 7bd2e59... main: PR #1 で追記
+    rebase| hint: Resolve all conflicts manually, mark them as resolved with
+    rebase| hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    rebase| hint: You can instead skip this commit: run "git rebase --skip".
+    rebase| hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    rebase| hint: Disable this message with "git config advice.mergeConflict false"
+    rebase| Could not apply 7bd2e59... main: PR #1 で追記
+    m: git rebase origin/java/design の終了コード: 1
+    m は rebase の途中か: はい
+    m: git rebase --abort の終了コード: 0
+

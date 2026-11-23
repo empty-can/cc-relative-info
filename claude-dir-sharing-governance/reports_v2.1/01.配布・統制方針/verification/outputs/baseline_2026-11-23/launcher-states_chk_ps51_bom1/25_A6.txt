@@ -1,0 +1,10 @@
+== A6 -File で呼ぶ: -Branch java/design -c --resume abc
+  $ powershell.exe -File start_claude_code.ps1 -Branch java/design -c --resume abc
+    | branch 'java/design' set up to track 'origin/java/design'.
+    | Switched to a new branch 'java/design'
+    | .claude/ のブランチを切り替えました: main → java/design
+    | HEAD is now at 588e7ef java/design
+    | [起動] cwd=C:\tmp\v21-va\ls-chk-ps51\launcher-powershell-bom1\cases\a6 / .claude のブランチ=java/design / 先頭=588e7ef java/design
+    | [claude の引数] 3 個: <-c> <--resume> <abc>
+    → 終了コード 0
+

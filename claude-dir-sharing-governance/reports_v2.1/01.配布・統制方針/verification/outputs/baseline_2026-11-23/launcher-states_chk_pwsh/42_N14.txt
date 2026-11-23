@@ -1,0 +1,11 @@
+== N14 実行ポリシー: PSExecutionPolicyPreference を外して -File で起動する（メンバーの普通の端末に近い）
+  Get-ExecutionPolicy（外した後）: RemoteSigned
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at 6bdbb31 main 追記
+    | [起動] cwd=C:\tmp\v21-va\ls-chk-pwsh\launcher-pwsh-bom0\cases\n14 / .claude のブランチ=main / 先頭=6bdbb31 main 追記
+    | [claude の引数] 0 個: 
+    → 終了コード 0
+
+######## 終了 ########
+#### run_one: end rc=0 seconds=194

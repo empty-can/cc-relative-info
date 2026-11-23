@@ -1,0 +1,2 @@
+#### run_one: VERIF_ROOT=C:/tmp/v21-va/migsub script=migrate-submodule.sh args=[] LSHELL= LBOM= start=2026-11-23 19:49:05 +0900
+######## migrate-submodule.sh 2026-11-23 19:49:06 +0900 ／ git version 2.46.0.windows.1 ／ pwsh 7.4.22 ########

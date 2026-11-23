@@ -1,0 +1,12 @@
+=== g: submodule。メンバー g が submodule の中の CLAUDE.md を手元で編集したまま、移行の commit を pull する
+  | warning: unable to rmdir '.claude': Directory not empty
+  pull=0
+  .claude/.git: ファイル（gitdir: ../.git/modules/.claude）
+  git -C .claude status --porcelain: [ M CLAUDE.md ]
+  §7-3 は「ローカル変更が無いことを確かめ」とだけ書く。変更があるときの扱いは書かれていない。ランチャーをそのまま実行する:
+  ランチャーを実行:
+    | .claude/ にローカル変更があります。更新を中止しました:
+    |  M CLAUDE.md
+    | git -C .claude status で中身を確かめてください。覚えのないものは消さずに、メンテナーへ相談してください。
+    → 終了コード 1
+

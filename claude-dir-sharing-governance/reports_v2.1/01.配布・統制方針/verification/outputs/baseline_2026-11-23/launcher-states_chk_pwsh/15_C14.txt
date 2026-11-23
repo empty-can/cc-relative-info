@@ -1,0 +1,8 @@
+== C14 リモートでブランチが消された（ローカルには残っている）
+  $ & start_claude_code.ps1 -Branch python/base
+    | From C:/tmp/v21-va/ls-chk-pwsh/launcher-pwsh-bom0/shared
+    |  - [deleted]         (none)     -> origin/python/base
+    | ブランチ 'python/base' は共有リポにありません（大文字小文字も区別します）。中断します。
+    | 共有リポのブランチ: java/base, java/design, main
+    → 終了コード 1
+

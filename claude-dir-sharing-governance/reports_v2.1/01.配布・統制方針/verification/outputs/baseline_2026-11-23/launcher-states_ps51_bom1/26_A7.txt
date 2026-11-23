@@ -1,0 +1,13 @@
+== A7 初回（.claude 無し）で -Branch java/base -c
+  $ & start_claude_code.ps1 -Branch java/base -c
+    | Cloning into 'C:\tmp\v21-va\ls-ps51-1\launcher-powershell-bom1\cases\a7\.claude'...
+    | done.
+    | Your branch is up to date with 'origin/java/base'.
+    | Already on 'java/base'
+    | HEAD is now at 7ba5267 java/base
+    | [起動] cwd=C:\tmp\v21-va\ls-ps51-1\launcher-powershell-bom1\cases\a7 / .claude のブランチ=java/base / 先頭=7ba5267 java/base
+    | [claude の引数] 1 個: <-c>
+    → 終了コード 0
+
+######## 足した状態（N）
+

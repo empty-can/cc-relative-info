@@ -1,0 +1,84 @@
+################ S11 作業ツリーに commit していない変更がある
+  (a) main にいて、どのブランチにもある CLAUDE.md を編集した
+  $ bash control-steady-prev.sh   （stdin: /dev/null）
+    | From C:/tmp/v21-va/scenes/sc-s11ao/shared
+    |    893f45b..b69ad92  main       -> origin/main
+    | error: Your local changes to the following files would be overwritten by checkout:
+    | 	CLAUDE.md
+    | Please commit your changes or stash them before you switch branches.
+    | Aborting
+    | 中断: detach に失敗
+  #### [S11a 対照（前の形）] 終了コード 1
+    ローカル HEAD: main ／ rebase 中: いいえ
+    local  java/base 3e3151c
+    local  java/design 138032b
+    local  java/ut 00b4171
+    local  main 893f45b
+    local  python/base 56519a4
+    local  python/coding 2f3af32
+    status:  M CLAUDE.md
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | 中断: 作業ツリーに commit していない変更がある（git status で確かめ、commit か git stash で片付ける）
+  #### [S11a maintain-steady.sh y] 終了コード 1
+    ローカル HEAD: main ／ rebase 中: いいえ
+    local  java/base 2542207
+    local  java/design f38bea3
+    local  java/ut 724c66e
+    local  main 28fb02a
+    local  python/base 6d2ffc4
+    local  python/coding 6b1507e
+    status:  M CLAUDE.md
+  (b) java/base にいて、java 系列にしか無い rules/java.md を編集した
+  $ bash control-steady-prev.sh   （stdin: /dev/null）
+    | From C:/tmp/v21-va/scenes/sc-s11bo/shared
+    |    4086823..4f4c208  main       -> origin/main
+    | error: Your local changes to the following files would be overwritten by checkout:
+    | 	rules/java.md
+    | Please commit your changes or stash them before you switch branches.
+    | Aborting
+    | 中断: detach に失敗
+  #### [S11b 対照（前の形）] 終了コード 1
+    ローカル HEAD: java/base ／ rebase 中: いいえ
+    local  java/base 4108020
+    local  java/design 2f7d731
+    local  java/ut bc712e6
+    local  main 4086823
+    local  python/base 572317c
+    local  python/coding ae1d9c9
+    status:  M rules/java.md
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | 中断: 作業ツリーに commit していない変更がある（git status で確かめ、commit か git stash で片付ける）
+  #### [S11b maintain-steady.sh y] 終了コード 1
+  (c) 未追跡のファイルだけがある（memo.txt）
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/scenes/sc-s11c/shared
+    |    5ba8d53..537d54f  main       -> origin/main
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s11c/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s11c/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s11c/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-va/scenes/sc-s11c/shared.git
+    |  + 6993082...7b24c01 java/base -> java/base (forced update)
+    |  + e55db9b...89ec0f8 java/design -> java/design (forced update)
+    |  + 93684de...6831723 java/ut -> java/ut (forced update)
+    |  + 916999a...9190150 python/base -> python/base (forced update)
+    |  + c2c4835...78e8bd1 python/coding -> python/coding (forced update)
+    | push した。
+  #### [S11c maintain-steady.sh y] 終了コード 0
+    ローカル HEAD: python/coding ／ rebase 中: いいえ
+    local  java/base 7b24c01
+    local  java/design 89ec0f8
+    local  java/ut 6831723
+    local  main 537d54f
+    local  python/base 9190150
+    local  python/coding 78e8bd1
+    status: ?? memo.txt
+

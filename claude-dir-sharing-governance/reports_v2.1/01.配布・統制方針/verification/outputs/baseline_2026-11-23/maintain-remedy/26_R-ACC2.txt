@@ -1,0 +1,7 @@
+################ R-ACC2 R-ACC と同じ戻し方で、メンテナーの最後の fetch の後に、別のメンテナーの正しい push と誤った force-push が続いたとき
+    （正しい push の後に、x が java/design を java/ut の値で force-push）
+    reflog: 34c5046 fetch -q origin: forced-update
+    reflog の 1 つ前: abe446a ／ 誤りの直前の origin の値: 9cd1ec2
+    （対処: reflog の 1 つ前の値を、値を付けた --force-with-lease で push し直す）
+    origin の java/design に「正しい追記」が残ったか: 0 件 ／ 先頭が誤りの直前の値か: 不一致
+

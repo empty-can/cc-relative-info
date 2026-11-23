@@ -1,0 +1,12 @@
+== C12b fetch 失敗・一度も取っていないブランチ（clone 後に作られた）
+  $ & start_claude_code.ps1 -Branch python/base
+    | fatal: 'C:/tmp/v21-va/ls-chk-pwsh/launcher-pwsh-bom0/broken.git' does not appear to be a git repository
+    | fatal: Could not read from remote repository.
+    | 
+    | Please make sure you have the correct access rights
+    | and the repository exists.
+    | [33;1mWARNING: fetch に失敗しました。手元にある内容で起動します（最新でない可能性があります）。[0m
+    | ブランチ 'python/base' は共有リポにありません（大文字小文字も区別します）。中断します。
+    | 共有リポのブランチ: java/base, java/design, main
+    → 終了コード 1
+

@@ -1,0 +1,9 @@
+== C:\tmp そのもの
+G-root1	期待 3	実際 3	合う		VERIF_ROOT=C:/tmp
+    | 中止: VERIF_ROOT は C:\tmp の下（例 C:/tmp/<名前>）にする。C:\tmp そのもの・ほかの場所は不可: C:/tmp
+G-root2	期待 3	実際 3	合う		VERIF_ROOT=C:/tmp/
+    | 中止: VERIF_ROOT は C:\tmp の下（例 C:/tmp/<名前>）にする。C:\tmp そのもの・ほかの場所は不可: C:/tmp/
+G-root3	期待 3	実際 3	合う		VERIF_ROOT=/c/tmp
+    | 中止: VERIF_ROOT は C:\tmp の下（例 C:/tmp/<名前>）にする。C:\tmp そのもの・ほかの場所は不可: /c/tmp
+G-root4	期待 3	実際 3	合う		VERIF_ROOT=C:\tmp
+    | 中止: VERIF_ROOT は C:\tmp の下（例 C:/tmp/<名前>）にする。C:\tmp そのもの・ほかの場所は不可: C:\tmp

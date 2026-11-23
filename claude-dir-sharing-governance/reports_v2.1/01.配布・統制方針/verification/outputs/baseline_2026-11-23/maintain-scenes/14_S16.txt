@@ -1,0 +1,13 @@
+################ S16 手元に、旧い命名のローカルブランチ java が残っている（D/F。origin には java/base など）
+  $ bash control-steady-prev.sh   （stdin: /dev/null）
+    | fatal: cannot lock ref 'refs/heads/java/base': 'refs/heads/java' exists; cannot create 'refs/heads/java/base'
+    | 中断: java/base を作れない
+  #### [S16 対照（前の形）] 終了コード 1
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | fatal: cannot lock ref 'refs/heads/java/base': 'refs/heads/java' exists; cannot create 'refs/heads/java/base'
+    | 中断: java/base を作れない
+  #### [S16 maintain-steady.sh y] 終了コード 1
+    ローカル HEAD: HEAD ／ rebase 中: いいえ
+    local  java c20949f
+    local  main 2b907a2
+

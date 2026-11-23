@@ -1,0 +1,234 @@
+################ S12 ② の rebase が衝突で止まる（java/design と main の PR #1 が、どちらも CLAUDE.md の末尾に足した）
+  -- 対照（前の形）: 1 回目 → abort せずに 2 回目
+  $ bash control-steady-prev.sh   （stdin: /dev/null）
+    | From C:/tmp/v21-va/scenes/sc-s12o/shared
+    |    1735bde..92a12a6  main        -> origin/main
+    |    5cad053..b87d89f  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | Rebasing (1/4)Rebasing (2/4)Rebasing (3/4)Rebasing (4/4)error: could not apply b87d89f... java/design: CLAUDE.md に追記
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply b87d89f... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design
+  #### [S12o 1 回目] 終了コード 1
+    ローカル HEAD: HEAD ／ rebase 中: はい
+    local  java/base 4ec574f
+    local  java/design b87d89f
+    local  java/ut 67ac74b
+    local  main 92a12a6
+    local  python/base 4e958ce
+    local  python/coding 6348d5d
+    status: UU CLAUDE.md
+  $ bash control-steady-prev.sh   （stdin: /dev/null）
+    | fatal: cannot switch branch while rebasing
+    | Consider "git rebase --quit" or "git worktree add".
+    | 中断: detach に失敗
+  #### [S12o abort せずに 2 回目] 終了コード 1
+    ローカル HEAD: HEAD ／ rebase 中: はい
+    local  java/base 4ec574f
+    local  java/design b87d89f
+    local  java/ut 67ac74b
+    local  main 92a12a6
+    local  python/base 4e958ce
+    local  python/coding 6348d5d
+    status: UU CLAUDE.md
+  -- maintain-steady.sh: 1 回目 → abort せずに 2 回目 → abort → 状態 → 3 回目
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/scenes/sc-s12n/shared
+    |    231cb1b..2612783  main        -> origin/main
+    |    651e9bb..fbbfa60  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | Rebasing (1/4)Rebasing (2/4)Rebasing (3/4)Rebasing (4/4)error: could not apply fbbfa60... java/design: CLAUDE.md に追記
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply fbbfa60... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [S12n 1 回目] 終了コード 1
+    衝突の時点: java/base=9c2a197（origin=9c2a197）
+    ローカル HEAD: HEAD ／ rebase 中: はい
+    local  java/base 9c2a197
+    local  java/design fbbfa60
+    local  java/ut 327b9a0
+    local  main 2612783
+    local  python/base 039ddb2
+    local  python/coding 0a0d03f
+    status: UU CLAUDE.md
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | 中断: rebase の途中で止まっている。git rebase --abort で戻してから実行する
+  #### [S12n abort せずに 2 回目] 終了コード 1
+    git rebase --abort の後:
+    ローカル HEAD: java/design ／ rebase 中: いいえ
+    local  java/base 9c2a197
+    local  java/design fbbfa60
+    local  java/ut 327b9a0
+    local  main 2612783
+    local  python/base 039ddb2
+    local  python/coding 0a0d03f
+    origin と一致するか: java/base 一致 ／ java/design 一致
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | Rebasing (1/4)Rebasing (2/4)Rebasing (3/4)Rebasing (4/4)error: could not apply fbbfa60... java/design: CLAUDE.md に追記
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply fbbfa60... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [S12n abort の後に 3 回目] 終了コード 1
+  -- 衝突を手で解いて continue した後に、もう一度実行する
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/scenes/sc-s12r/shared
+    |    640d6d6..2349ef4  main        -> origin/main
+    |    ac1e12b..a4b5893  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | Rebasing (1/4)Rebasing (2/4)Rebasing (3/4)Rebasing (4/4)error: could not apply a4b5893... java/design: CLAUDE.md に追記
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply a4b5893... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [S12r 1 回目（衝突）] 終了コード 1
+    手で解いて continue した後:
+    ローカル HEAD: java/design ／ rebase 中: いいえ
+    local  java/base 8c2c909
+    local  java/design cb4551a
+    local  java/ut ff0beae
+    local  main 2349ef4
+    local  python/base 16e1819
+    local  python/coding bbcc453
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | 中断: ローカルの java/design に、origin に無い変更がある: + cb4551af737417063df952e71d1b375a63e16aef
+  #### [S12r 解いた後に maintain-steady.sh] 終了コード 1
+  -- 選択肢: resume 付きの版（① を飛ばし、② の済んだブランチを飛ばす）
+  $ bash maintain-steady-resume.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/scenes/sc-s12s/shared
+    |    0c92c87..d6ade01  main        -> origin/main
+    |    3395e0e..d93e5eb  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | Rebasing (1/4)Rebasing (2/4)Rebasing (3/4)Rebasing (4/4)error: could not apply d93e5eb... java/design: CLAUDE.md に追記
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply d93e5eb... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら解いて continue し、resume で実行する）
+  #### [S12s 1 回目（衝突）] 終了コード 1
+  $ bash maintain-steady-resume.sh resume  （stdin: y\\n）
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s12s/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s12s/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s12s/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-va/scenes/sc-s12s/shared.git
+    |  + 1c92575...52e9291 java/base -> java/base (forced update)
+    |  + d93e5eb...a36cbc0 java/design -> java/design (forced update)
+    |  + 1a22af9...7a45d32 java/ut -> java/ut (forced update)
+    |  + 4cd4cc0...bdba1b3 python/base -> python/base (forced update)
+    |  + 212147e...701a04e python/coding -> python/coding (forced update)
+    | push した。
+  #### [S12s resume] 終了コード 0
+    origin java/base      52e9291  main を含む: YES
+    origin java/design    a36cbc0  main を含む: YES
+    origin java/ut        7a45d32  main を含む: YES
+    origin main           d6ade01  main を含む: YES
+    origin python/base    bdba1b3  main を含む: YES
+    origin python/coding  701a04e  main を含む: YES
+    java/design の CLAUDE.md: main 初版|main 追記（PR #1）|design の追記|
+    java/ut の CLAUDE.md: main 初版|main 追記（PR #1）|
+  -- 選択肢の版: resume で、② の途中で別のメンテナーが push していた場合（lease で止まるはず）
+  $ bash maintain-steady-resume.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/scenes/sc-s12t/shared
+    |    493f80f..9d21f5e  main        -> origin/main
+    |    a77ad9c..5d957d6  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | Rebasing (1/4)Rebasing (2/4)Rebasing (3/4)Rebasing (4/4)error: could not apply 5d957d6... java/design: CLAUDE.md に追記
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 5d957d6... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら解いて continue し、resume で実行する）
+  #### [S12t 1 回目（衝突）] 終了コード 1
+  $ bash maintain-steady-resume.sh resume  （stdin: y\\n）
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s12t/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s12t/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s12t/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | error: atomic push failed for ref refs/heads/java/ut. status: 7
+    | 
+    | fatal: the remote end hung up unexpectedly
+    | To C:/tmp/v21-va/scenes/sc-s12t/shared.git
+    |  ! [rejected]        java/base -> java/base (atomic push failed)
+    |  ! [rejected]        java/design -> java/design (atomic push failed)
+    |  ! [rejected]        java/ut -> java/ut (stale info)
+    |  ! [rejected]        python/base -> python/base (atomic push failed)
+    |  ! [rejected]        python/coding -> python/coding (atomic push failed)
+    | error: failed to push some refs to 'C:/tmp/v21-va/scenes/sc-s12t/shared.git'
+    | 中断: push に失敗（拒否されたら、このスクリプトをもう一度実行する）
+  #### [S12t resume（間に他のメンテナーの push）] 終了コード 1
+  -- 選択肢の版を、衝突の無い普通の場面と、2 回続けた場面で（resume なし）
+  $ bash maintain-steady-resume.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/scenes/sc-s12u/shared
+    |    a800309..fb48209  main       -> origin/main
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s12u/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s12u/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s12u/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-va/scenes/sc-s12u/shared.git
+    |  + 63157d5...2746d0a java/base -> java/base (forced update)
+    |  + 443b0bc...80aa7da java/design -> java/design (forced update)
+    |  + 01346e6...34a95d5 java/ut -> java/ut (forced update)
+    |  + bac56ae...65af46a python/base -> python/base (forced update)
+    |  + 78cc2fd...7cd3b2c python/coding -> python/coding (forced update)
+    | push した。
+  #### [S12u 普通] 終了コード 0
+  $ bash maintain-steady-resume.sh   （stdin: y\\n）
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s12u/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s12u/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s12u/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | Everything up-to-date
+    | push した。
+  #### [S12u 2 回目] 終了コード 0
+    origin java/base      2746d0a  main を含む: YES
+    origin java/design    80aa7da  main を含む: YES
+    origin java/ut        34a95d5  main を含む: YES
+    origin main           fb48209  main を含む: YES
+    origin python/base    65af46a  main を含む: YES
+    origin python/coding  7cd3b2c  main を含む: YES
+

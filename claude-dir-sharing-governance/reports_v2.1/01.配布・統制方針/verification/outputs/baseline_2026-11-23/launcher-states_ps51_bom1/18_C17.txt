@@ -1,0 +1,7 @@
+== C17 Claude Code が .claude/ の下に書いたファイル（agent-memory を模擬）
+  $ & start_claude_code.ps1 
+    | .claude/ にローカル変更があります。更新を中止しました:
+    | ?? agent-memory/
+    | git -C .claude status で中身を確かめてください。覚えのないものは消さずに、メンテナーへ相談してください。
+    → 終了コード 1
+

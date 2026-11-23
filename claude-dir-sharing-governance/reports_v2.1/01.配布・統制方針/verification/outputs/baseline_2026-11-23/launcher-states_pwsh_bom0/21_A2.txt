@@ -1,0 +1,11 @@
+== A2 引数を渡す: --resume abc（-Branch なし。java/design で作業中）
+  $ & start_claude_code.ps1 --resume abc
+    | Your branch is up to date with 'origin/main'.
+    | Switched to branch 'main'
+    | .claude/ のブランチを切り替えました: java/design → main
+    | HEAD is now at 13d109f main 追記
+    | [起動] cwd=C:\tmp\v21-va\ls-pwsh0\launcher-pwsh-bom0\cases\a2 / .claude のブランチ=main / 先頭=13d109f main 追記
+    | [claude の引数] 2 個: <--resume> <abc>
+    → 終了コード 0
+    .claude のブランチ（後）: main ／ 先頭: 13d109f main 追記
+

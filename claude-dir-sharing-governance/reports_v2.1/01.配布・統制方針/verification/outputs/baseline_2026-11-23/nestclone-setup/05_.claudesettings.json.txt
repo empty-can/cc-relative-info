@@ -1,0 +1,10 @@
+=== .claude/settings.json ===
+{
+  "env": {
+    "NESTPROBE_ENV": "NESTCLONE-EV7703"
+  },
+  "permissions": {
+    "deny": ["Bash(./denyprobe.sh)"]
+  }
+}
+#### run_one: end rc=0 seconds=5

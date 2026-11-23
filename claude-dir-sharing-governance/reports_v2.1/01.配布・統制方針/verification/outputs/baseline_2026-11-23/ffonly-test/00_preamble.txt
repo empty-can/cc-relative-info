@@ -1,0 +1,4 @@
+#### run_one: VERIF_ROOT=C:/tmp/v21-va/ffonly script=ffonly-test.sh args=[] LSHELL= LBOM= start=2026-11-23 19:47:31 +0900
+消費側の初期状態: cdb778d c2: rule1
+メンテナー側の新しい先頭: d66b004 c2: rule1 (修正後)
+

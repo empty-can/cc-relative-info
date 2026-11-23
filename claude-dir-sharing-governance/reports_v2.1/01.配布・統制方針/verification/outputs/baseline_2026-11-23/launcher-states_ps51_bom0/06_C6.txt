@@ -1,0 +1,49 @@
+== C6 非空で git でない .claude がある（移行前の資産）
+  $ & start_claude_code.ps1 
+    | At C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c6\start_claude_code.ps1:22 char:37
+    | +         [Console]::Error.WriteLine("蛟倶ｺｺ縺ｮ繝輔ぃ繧､繝ｫ・・ettings.local.json ...
+    | +                                     ~
+    | Missing ')' in method call.
+    | At C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c6\start_claude_code.ps1:22 char:37
+    | + ... [Console]::Error.WriteLine("蛟倶ｺｺ縺ｮ繝輔ぃ繧､繝ｫ・・ettings.local.json 縺ｪ縺ｩ・峨ｒ ...
+    | +                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    | Unexpected token '蛟倶ｺｺ縺ｮ繝輔ぃ繧､繝ｫ・・ettings.local.json' in expression or statement.
+    | At C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c6\start_claude_code.ps1:20 char:72
+    | + ...  if (Get-ChildItem -Force $ClaudeDir -ErrorAction SilentlyContinue) {
+    | +                                                                         ~
+    | Missing closing '}' in statement block or type definition.
+    | At C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c6\start_claude_code.ps1:22 char:153
+    | + ... ・claude/ 繧貞挨縺ｮ蜷榊燕・井ｾ・ .claude.old・峨∈遘ｻ縺励※縺九ｉ縲√ｂ縺・ｸ蠎ｦ襍ｷ蜍輔＠縺ｦ縺上□縺輔＞縲・)
+    | +                                                                         ~
+    | Unexpected token ')' in expression or statement.
+    | At C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c6\start_claude_code.ps1:24 char:5
+    | +     }
+    | +     ~
+    | Unexpected token '}' in expression or statement.
+    | At C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c6\start_claude_code.ps1:34 char:41
+    | +     [Console]::Error.WriteLine(".claude/ 繧・git 繝ｪ繝昴ず繝医Μ縺ｨ縺励※隱ｭ繧√∪縺帙ｓ縲 ...
+    | +                                         ~
+    | You must provide a value expression following the '/' operator.
+    | At C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c6\start_claude_code.ps1:34 char:41
+    | +     [Console]::Error.WriteLine(".claude/ 繧・git 繝ｪ繝昴ず繝医Μ縺ｨ縺励※隱ｭ繧√∪縺帙ｓ縲 ...
+    | +                                         ~
+    | Missing ')' in method call.
+    | At C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c6\start_claude_code.ps1:34 char:42
+    | +     [Console]::Error.WriteLine(".claude/ 繧・git 繝ｪ繝昴ず繝医Μ縺ｨ縺励※隱ｭ繧√∪縺帙ｓ縲 ...
+    | +                                          ~~~~~
+    | Unexpected token '繧・git' in expression or statement.
+    | At C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c6\start_claude_code.ps1:26 char:30
+    | +     if ($LASTEXITCODE -ne 0) {
+    | +                              ~
+    | Missing closing '}' in statement block or type definition.
+    | At C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c6\start_claude_code.ps1:34 char:82
+    | + ... ::Error.WriteLine(".claude/ 繧・git 繝ｪ繝昴ず繝医Μ縺ｨ縺励※隱ｭ繧√∪縺帙ｓ縲ゆｸｭ譁ｭ縺励∪縺吶・)
+    | +                                                                         ~
+    | Unexpected token ')' in expression or statement.
+    | Not all parse errors were reported.  Correct the reported errors and try again.
+    |     + CategoryInfo          : ParserError: (:) [], ParseException
+    |     + FullyQualifiedErrorId : MissingEndParenthesisInMethodCall
+    |  
+    → 終了コード 1
+    .claude の中身（後）: ./rules/old.md ./settings.local.json 
+

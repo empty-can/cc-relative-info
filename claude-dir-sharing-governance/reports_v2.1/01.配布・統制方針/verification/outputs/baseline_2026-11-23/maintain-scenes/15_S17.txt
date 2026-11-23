@@ -1,0 +1,6 @@
+################ S17 --single-branch で clone したクローン（origin/main しか取らない）
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | 中断: java/base が origin に無い（BRANCHES を直す）
+  #### [S17 maintain-steady.sh y] 終了コード 1
+    sb の fetch の refspec: +refs/heads/main:refs/remotes/origin/main
+

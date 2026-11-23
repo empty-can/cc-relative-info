@@ -1,0 +1,6 @@
+=== git -c rebase.updateRefs=true rebase master（java/design で1回だけ実行）===
+    Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    Updated the following refs with --update-refs:
+    	refs/heads/java/_base
+    rebase の終了コード: 0
+

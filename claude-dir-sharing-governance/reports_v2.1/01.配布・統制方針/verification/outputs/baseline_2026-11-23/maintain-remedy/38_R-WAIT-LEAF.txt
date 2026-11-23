@@ -1,0 +1,34 @@
+################ R-WAIT-LEAF ③' の入力待ちの間に、載せ直した手元の末端ブランチ java/design に commit → y
+  $ bash run-w2-maintain-steady.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-va/remedy/rm-r-wait-leaf/shared
+    |    f38f72a..108f460  main       -> origin/main
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    | m の java/design に commit した
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-va/remedy/rm-r-wait-leaf/shared.git
+    |  + ec75fc6...5ba005a java/base -> java/base (forced update)
+    |  + f595c01...ba4f64a java/design -> java/design (forced update)
+    |  + 03e2fd0...78900fd java/ut -> java/ut (forced update)
+    |  + 7ccc397...3fd8990 python/base -> python/base (forced update)
+    |  + db9b513...420fcea python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-WAIT-LEAF m（入力待ちの間に java/design へ commit）] 終了コード 0
+    origin の java/design の log:
+      ba4f64a java/design: 手元の追記（入力待ちの間）
+      7d3bfab java/design: 設計 rule
+      5ba005a java/base: java 共通 rule
+      108f460 main: PR #1 で追記
+      f38f72a main: 初版
+

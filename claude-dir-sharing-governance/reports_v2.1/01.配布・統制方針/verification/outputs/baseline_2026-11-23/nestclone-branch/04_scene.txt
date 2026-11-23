@@ -1,0 +1,10 @@
+=== 消費側: 切替前 ===
+    ブランチ: master / rules: plain-rule.md 
+    git status: [?? settings.local.json ]（消費側は .gitignore を含まないコミットにいる）
+    fetch の終了コード: 0
+    switch: fatal: invalid reference: java/design
+    switch の終了コード: 128
+    reset: fatal: ambiguous argument 'origin/java/design': unknown revision or path not in the working tree.
+    reset: Use '--' to separate paths from revisions, like this:
+    reset: 'git <command> [<revision>...] -- [<file>...]'
+    reset の終了コード: 128

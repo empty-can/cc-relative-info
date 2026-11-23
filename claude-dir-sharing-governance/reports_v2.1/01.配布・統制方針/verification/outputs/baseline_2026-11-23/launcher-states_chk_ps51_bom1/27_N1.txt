@@ -1,0 +1,11 @@
+== N1 -Branch が最後の引数（値が無い）
+  $ & start_claude_code.ps1 -c -Branch
+    | Your branch is up to date with 'origin/main'.
+    | Switched to branch 'main'
+    | .claude/ のブランチを切り替えました: java/design → main
+    | HEAD is now at 0129170 main 追記
+    | [起動] cwd=C:\tmp\v21-va\ls-chk-ps51\launcher-powershell-bom1\cases\n1 / .claude のブランチ=main / 先頭=0129170 main 追記
+    | [claude の引数] 2 個: <-c> <-Branch>
+    → 終了コード 0
+    .claude のブランチ（後）: main ／ 先頭: 0129170 main 追記
+

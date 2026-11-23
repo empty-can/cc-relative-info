@@ -1,0 +1,3 @@
+=== 命名を java/_base ・ java/design に変えて作成（master の現在から）===
+    push の終了コード: 0（0 なら D/F コンフリクトなし）
+

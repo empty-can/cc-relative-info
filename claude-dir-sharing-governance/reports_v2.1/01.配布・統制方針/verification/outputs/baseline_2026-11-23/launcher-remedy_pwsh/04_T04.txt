@@ -1,0 +1,26 @@
+################ T04 submodule から移った作業リポジトリで、メンバーが §7-3 の手順 1 を自分で実行して壊した →「git リポジトリとして読めません」→ §7-3 のメンバーの手順を字面どおりに
+    pull| warning: unable to rmdir '.claude': Directory not empty
+  -- メンバーが手順 1 を自分で実行する（壊す）
+  $ .\start_claude_code.ps1 
+    | fatal: not a git repository: C:/tmp/v21-va/lr-pwsh/lremedy-pwsh/cases/t04/.claude/../.git/modules/.claude
+    | .claude/ を git リポジトリとして読めません。中断します。
+    → 終了コード 1
+  （メンバーの操作 PS> git -C .claude status --porcelain）
+    ps| fatal: not a git repository: C:/tmp/v21-va/lr-pwsh/lremedy-pwsh/cases/t04/.claude/../.git/modules/.claude
+    → 終了コード 1
+  （メンバーの操作 PS> New-Item -ItemType Directory -Force ..\t04-personal | Out-Null; Copy-Item .claude\settings.local.json ..\t04-personal\）
+    → 終了コード 0
+  （メンバーの操作 PS> Remove-Item -Recurse -Force .claude, .git\modules\.claude）
+    ps| [31;1mRemove-Item: [31;1mCannot find path 'C:\tmp\v21-va\lr-pwsh\lremedy-pwsh\cases\t04\.git\modules\.claude' because it does not exist.[0m
+    → 終了コード 1
+    .claude: 消えた
+  $ .\start_claude_code.ps1 
+    | Cloning into 'C:\tmp\v21-va\lr-pwsh\lremedy-pwsh\cases\t04\.claude'...
+    | done.
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at e560bd9 main
+    | [起動] .claude のブランチ=main / 先頭=e560bd9 main
+    → 終了コード 0
+    .claude: main ／ status: [] ／ 作業リポ status: [?? start_claude_code.ps1 ]
+

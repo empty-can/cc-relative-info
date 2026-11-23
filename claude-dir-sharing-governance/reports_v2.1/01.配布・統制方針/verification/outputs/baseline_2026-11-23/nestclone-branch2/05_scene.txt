@@ -1,0 +1,9 @@
+=== 消費側: fetch → switch → reset --hard ===
+    切替前: ブランチ=master rules=[plain-rule.md ]
+    fetch の終了コード: 0
+    switch の終了コード: 0
+    reset の終了コード: 0
+    切替後: ブランチ=java/design rules=[design-rule.md java-rule.md plain-rule.md ]
+    CLAUDE.md に master の追記（M2B）が届いたか: 1 件
+    git status: []
+

@@ -1,0 +1,14 @@
+=== h: 新しい作業リポジトリ（.claude/ が無い）で §7-3 の手順 2・4・5・7
+  手順 2 commit=0
+  手順 4 clone=0
+  手順 5 commit=0
+  ランチャーを実行:
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at b4ecaba s
+    | [起動] .claude のブランチ=main / git-dir=C:/tmp/v21-va/migedit/migrate-local-edit/h/.claude/.git
+    → 終了コード 0
+  手順 7: 作業リポの git status --short: []
+
+######## 終了 ########
+#### run_one: end rc=0 seconds=17

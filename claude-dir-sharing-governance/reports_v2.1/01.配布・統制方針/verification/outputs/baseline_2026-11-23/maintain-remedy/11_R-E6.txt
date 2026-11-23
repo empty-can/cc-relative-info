@@ -1,0 +1,51 @@
+################ R-E6 既にある系列の java/coding の書き忘れで止まる → BRANCHES・PAIRS・② に足す → もう一度
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/remedy/rm-r-e6/shared
+    |    b5e408b..f21ec86  main        -> origin/main
+    |  * [new branch]      java/coding -> origin/java/coding
+    | 中断: origin に、BRANCHES に無いブランチがある: java/coding（系列のブランチなら BRANCHES・PAIRS・② に足す。PR のブランチは足さず、マージか閉じた後に origin から消す）
+  #### [R-E6 1 回目] 終了コード 1
+    diff: 5,7c5,7
+    diff: < REPO='<メンテナーのクローンのパス>'
+    diff: < URL='<共有リポの URL>'
+    diff: < BRANCHES=(java/base java/design java/ut python/base python/coding)   # main 以外の、系列の全ブランチ
+    diff: ---
+    diff: > REPO='C:/tmp/v21-va/remedy/rm-r-e6/m'
+    diff: > URL='C:/tmp/v21-va/remedy/rm-r-e6/shared.git'
+    diff: > BRANCHES=(java/base java/design java/ut python/base python/coding java/coding)   # main 以外の、系列の全ブランチ
+    diff: 9c9
+    diff: <        "main python/base" "python/base python/coding")              # 親 子
+    diff: ---
+    diff: >        "main python/base" "python/base python/coding" "java/base java/coding")              # 親 子
+    diff: 53a54,56
+    diff: > 
+    diff: > git switch -q java/coding || fail "switch"
+    diff: > git rebase --onto java/base "${OLD[java/base]}" java/coding || fail "rebase java/coding（衝突なら git rebase --abort で戻す）"
+  $ bash run-e.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/remedy/rm-r-e6/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/remedy/rm-r-e6/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-va/remedy/rm-r-e6/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/coding "/c/tmp/v21-va/remedy/rm-r-e6/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-va/remedy/rm-r-e6/shared.git
+    |  + 1f6f9b8...babf7c3 java/base -> java/base (forced update)
+    |  + 51f65f7...8d4f541 java/coding -> java/coding (forced update)
+    |  + 91fb996...f0bbe4f java/design -> java/design (forced update)
+    |  + 7e1af6b...1289cb4 java/ut -> java/ut (forced update)
+    |  + 0b6e6c5...4abb3ac python/base -> python/base (forced update)
+    |  + 905f84c...08bc2cf python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-E6 足した後] 終了コード 0
+    origin java/base      babf7c3  main を含む: YES
+    origin java/coding    8d4f541  main を含む: YES
+    origin java/design    f0bbe4f  main を含む: YES
+    origin java/ut        1289cb4  main を含む: YES
+    origin main           f21ec86  main を含む: YES
+    origin python/base    4abb3ac  main を含む: YES
+    origin python/coding  08bc2cf  main を含む: YES
+

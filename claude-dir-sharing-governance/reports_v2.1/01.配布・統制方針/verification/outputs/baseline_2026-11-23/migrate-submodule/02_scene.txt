@@ -1,0 +1,13 @@
+=== 移行担当 a が §7-3 手順 1（submodule の場合）→ 2 → 4 を本文どおりに実行
+  Cleared directory '.claude'
+  Submodule '.claude' (../shared.git) unregistered for path '.claude'
+  deinit=0
+  rm '.claude'
+  rm=0
+  commit=0
+  手順 1 の後: .claude=無い ／ .claude.bak=無い ／ .gitmodules=空か無し
+  手順 2 commit=0
+  手順 4 clone=0
+  a の作業リポの git status --short: []
+  push=0
+

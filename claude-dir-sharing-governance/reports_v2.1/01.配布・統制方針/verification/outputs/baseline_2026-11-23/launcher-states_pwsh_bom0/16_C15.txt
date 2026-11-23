@@ -1,0 +1,8 @@
+== C15 大文字小文字違い（-Branch Java/Design。clone した直後＝ref は packed）
+  $ & start_claude_code.ps1 -Branch Java/Design
+    | fatal: invalid reference: Java/Design
+    | ブランチ 'Java/Design' への切替に失敗しました。中断します。
+    → 終了コード 1
+    .claude のブランチ（後）: main ／ 先頭: 13d109f main 追記
+    ローカルブランチ: main
+

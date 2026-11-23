@@ -1,0 +1,10 @@
+=== f: 通常のディレクトリ。メンバー f が .claude/CLAUDE.md（追跡）を手元で編集したまま、移行の commit を pull する
+  | error: Your local changes to the following files would be overwritten by merge:
+  | 	.claude/CLAUDE.md
+  | Please commit your changes or stash them before you merge.
+  | Aborting
+  pull=1
+  pull の後の .claude の中身: [./CLAUDE.md ./settings.local.json ]
+  作業リポの git status --short: [ M .claude/CLAUDE.md ]
+  start_claude_code.ps1: 無い
+

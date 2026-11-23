@@ -1,0 +1,47 @@
+################ M01 基準: java/base だけが早送りで進んだ。対照（前の形）と maintain-middle.sh
+  $ bash control-middle-prev.sh   （stdin: /dev/null）
+    | From C:/tmp/v21-va/scenes/sc-m01o/shared
+    |    eaa39a2..38bc527  java/base  -> origin/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | To C:/tmp/v21-va/scenes/sc-m01o/shared.git
+    |  + db31e18...684edb6 java/design -> java/design (forced update)
+    |  + f7ce05f...fe063ac java/ut -> java/ut (forced update)
+  #### [M01 対照（前の形）] 終了コード 0
+    origin java/base      38bc527  main を含む: YES
+    origin java/design    684edb6  main を含む: YES
+    origin java/ut        fe063ac  main を含む: YES
+    origin main           4c0160a  main を含む: YES
+    origin python/base    9ddc7d4  main を含む: YES
+    origin python/coding  0728e36  main を含む: YES
+  $ bash maintain-middle.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/scenes/sc-m01n/shared
+    |    ffbdece..150f789  java/base  -> origin/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-m01n/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-m01n/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-va/scenes/sc-m01n/shared.git
+    |  + a587c14...2700c8d java/design -> java/design (forced update)
+    |  + 480808a...88970e4 java/ut -> java/ut (forced update)
+    | push した。
+  #### [M01 maintain-middle.sh y] 終了コード 0
+    origin java/base      150f789  main を含む: YES
+    origin java/design    2700c8d  main を含む: YES
+    origin java/ut        88970e4  main を含む: YES
+    origin main           6eb4bf1  main を含む: YES
+    origin python/base    724b58f  main を含む: YES
+    origin python/coding  b668495  main を含む: YES
+  $ bash maintain-middle.sh   （stdin: y\\n）
+    | Current branch java/design is up to date.
+    | Current branch java/ut is up to date.
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-m01n/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-m01n/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | Everything up-to-date
+    | push した。
+  #### [M01 maintain-middle.sh 2 回目 y] 終了コード 0
+

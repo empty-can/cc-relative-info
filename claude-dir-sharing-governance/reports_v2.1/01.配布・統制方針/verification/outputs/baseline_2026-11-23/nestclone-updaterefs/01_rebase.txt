@@ -1,0 +1,11 @@
+=== rebase 前（java/_base と java/design は古い master の上）===
+* 87faf75 (HEAD -> master, origin/master) master にさらに追記（多段伝播の起点）
+| * bf36a0a (origin/java/design, java/design) 設計作業固有の rule
+| * 9878674 (origin/java/_base, java/_base) java 系共通の rule
+|/  
+* 1e6ccf0 master に追記（branch2 の多段伝播の起点）
+* 7b30b7d master にチーム共通の追記
+* f294763 個人設定 settings.local.json を ignore
+* 513d421 共有 .claude 資産の初版
+    java/_base が master を先祖に持つ: NO
+

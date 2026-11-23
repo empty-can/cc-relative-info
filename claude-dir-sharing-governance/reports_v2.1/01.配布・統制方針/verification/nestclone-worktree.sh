@@ -1,35 +1,29 @@
 #!/usr/bin/env bash
 # 作業リポジトリの linked worktree から起動したとき、入れ子クローン .claude/ の資産が
-# どこまでロードされるかを測る。作業リポジトリは .claude/ を gitignore しているので、
-# 新しい worktree には .claude/ が作られない。
-# 先に nestclone-setup.sh で足場を作っておくこと。
+# どこまでロードされるか、共有リポの permissions.deny が効くかを測る。
+# 作業リポジトリは .claude/ を gitignore しているので、新しい worktree には .claude/ が作られない。
+# 先に nestclone-setup.sh（deny の足場）を実行しておくこと。測り方は nestclone-run.sh と同じ。
 set -uo pipefail
+source "$(dirname "$0")/lib.sh" || exit 1
+source "$(dirname "$0")/nestclone-lib.sh" || exit 1
 
-HERE="$(cd "$(dirname "$0")" && pwd)"
-cd "$HERE/nestclone/work" || exit 1
-[ -d .claude/.git ] || { echo "足場がありません。nestclone-setup.sh を先に実行してください" >&2; exit 1; }
+WORK="$VERIF_ROOT/nestclone/work"
+WT="$VERIF_ROOT/nestclone/wt"
+verif_enter_repo "$WORK"
+[ -d .claude/.git ] || verif_die "足場がありません。nestclone-setup.sh を先に実行してください"
 
-WT="$HERE/nestclone/wt"
-git worktree remove --force "$WT" >/dev/null 2>&1
-git branch -q -D wt-probe >/dev/null 2>&1
-git worktree add -q -b wt-probe "$WT" || exit 1
-trap 'cd "$HERE/nestclone/work" && git worktree remove --force "$WT" >/dev/null 2>&1; git branch -q -D wt-probe >/dev/null 2>&1' EXIT
+remove_wt() {
+  ( verif_enter_repo "$WORK" \
+    && { git worktree remove --force "$WT" >/dev/null 2>&1; git branch -q -D wt-probe >/dev/null 2>&1; true; } )
+}
+remove_wt
+git worktree add -q -b wt-probe "$WT" || verif_die "worktree add に失敗"
+trap remove_wt EXIT
 
-cd "$WT" || exit 1
-echo "=== worktree の中身（.claude/ があるか）==="
+verif_enter_repo "$WT"
+echo "=== worktree: $(verif_winpath .) の中身（.claude/ があるか）==="
 ls -a
 echo
 
-read -r -d '' PROMPT <<'EOF' || true
-次の4項目を順に実行し、結果だけを「ラベル=値」の形で1行ずつ出力してください。説明文は不要です。
-
-1. あなたのコンテキストに NESTCLONE-CM で始まる合言葉があれば `CM=<その合言葉>` を出力。無ければ `CM=NONE`。
-2. NESTCLONE-RU で始まる合言葉があれば `RU=<その合言葉>` を出力。無ければ `RU=NONE`。
-3. Bash ツールで `printenv NESTPROBE_ENV` を実行し、`EV=<出力そのまま>` を出力。何も出力されなければ `EV=NONE`。
-4. Skill ツールで skill 名 `probeskill` を起動し、返ってきた合言葉を `SK=<合言葉>` の形で出力。起動できなければ `SK=FAIL`。
-EOF
-
-echo "=== linked worktree のルートから起動 ==="
-claude --model haiku --allowedTools "Bash" "Skill" -p "$PROMPT"
-echo
-echo "----- 終了コード: $? -----"
+nc_assets "worktree"
+nc_deny "worktree"

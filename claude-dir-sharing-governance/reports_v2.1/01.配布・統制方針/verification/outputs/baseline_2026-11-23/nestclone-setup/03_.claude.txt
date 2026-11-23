@@ -1,0 +1,10 @@
+=== .claude の中身 ===
+.
+..
+.git
+CLAUDE.md
+agents
+rules
+settings.json
+skills
+

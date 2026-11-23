@@ -1,0 +1,54 @@
+################ T08 改名（java → java/base）の後: 1 回目「切替に失敗」（cannot lock ref）→ 2 回目「ローカル変更」（D/A）→ 個人のファイルを退避し、.claude を消して、同じ -Branch で起動し直す
+  $ .\start_claude_code.ps1 -Branch java/base
+    | From C:/tmp/v21-va/lr-pwsh/lremedy-pwsh/shared2
+    |  - [deleted]         (none)     -> origin/java
+    |  * [new branch]      java/base  -> origin/java/base
+    | fatal: cannot lock ref 'refs/heads/java/base': 'refs/heads/java' exists; cannot create 'refs/heads/java/base'
+    | ブランチ 'java/base' への切替に失敗しました。中断します。
+    → 終了コード 1
+  $ .\start_claude_code.ps1 -Branch java/base
+    | .claude/ にローカル変更があります。更新を中止しました:
+    | D  j.md
+    | A  jb.md
+    | git -C .claude status で中身を確かめてください。覚えのないものは消さずに、メンテナーへ相談してください。
+    → 終了コード 1
+  （メンバーの操作 PS> New-Item -ItemType Directory -Force ..\t08-personal | Out-Null; Copy-Item .claude\settings.local.json ..\t08-personal\; Remove-Item -Recurse -Force .claude）
+    → 終了コード 0
+    .claude: 消えた
+  $ .\start_claude_code.ps1 -Branch java/base
+    | Cloning into 'C:\tmp\v21-va\lr-pwsh\lremedy-pwsh\cases\t08\.claude'...
+    | done.
+    | Your branch is up to date with 'origin/java/base'.
+    | Already on 'java/base'
+    | HEAD is now at c108349 java/base
+    | [起動] .claude のブランチ=java/base / 先頭=c108349 java/base
+    → 終了コード 0
+    .claude: java/base ／ status: [] ／ 作業リポ status: [?? start_claude_code.ps1 ]
+  （メンバーの操作 PS> Copy-Item ..\t08-personal\settings.local.json .claude\）
+    → 終了コード 0
+  $ .\start_claude_code.ps1 -Branch java/base
+    | Your branch is up to date with 'origin/java/base'.
+    | Already on 'java/base'
+    | HEAD is now at c108349 java/base
+    | [起動] .claude のブランチ=java/base / 先頭=c108349 java/base
+    → 終了コード 0
+  -- 3-a' を足した版（launcher-example-check.ps1）で、表示の「.claude.old へ移して」のとおりに
+  $ .\start_claude_code.ps1 -Branch java/base
+    | From C:/tmp/v21-va/lr-pwsh/lremedy-pwsh/shared2
+    |  - [deleted]         (none)     -> origin/java
+    |  * [new branch]      java/base  -> origin/java/base
+    | 手元に旧いブランチ 'java' が残っているため、'java/base' に切り替えられません。中断します。
+    | 個人のファイル（settings.local.json など）を退避し、.claude/ を消して（または .claude.old へ移して）から、もう一度起動してください。
+    → 終了コード 1
+  （メンバーの操作 PS> Move-Item .claude ..\t08c-claude.old）
+    → 終了コード 0
+  $ .\start_claude_code.ps1 -Branch java/base
+    | Cloning into 'C:\tmp\v21-va\lr-pwsh\lremedy-pwsh\cases\t08c\.claude'...
+    | done.
+    | Your branch is up to date with 'origin/java/base'.
+    | Already on 'java/base'
+    | HEAD is now at c108349 java/base
+    | [起動] .claude のブランチ=java/base / 先頭=c108349 java/base
+    → 終了コード 0
+    .claude: java/base ／ status: [] ／ 作業リポ status: [?? start_claude_code.ps1 ]
+

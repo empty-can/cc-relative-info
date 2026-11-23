@@ -1,0 +1,31 @@
+################ M03 java/base を amend して force-push した
+  (a) m（amend の前の java/base を手元に持つ）で maintain-middle.sh
+  $ bash maintain-middle.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/scenes/sc-m03a/shared
+    |  + 0eaeb52...7016d31 java/base  -> origin/java/base  (forced update)
+    | 中断: ローカルの java/base に、origin に無い変更がある: + 0eaeb524f602de9fb01b7c5eff2e6686926ffbe1
+  #### [M03a maintain-middle.sh] 終了コード 1
+    m の reflog から書き換え前の java/base を取れるか: origin/java/base@{1}=0eaeb52
+  (b) amend の後に clone した新しいクローンで maintain-middle.sh（素の rebase）
+  $ bash maintain-middle.sh   （stdin: y\\n）
+    | Auto-merging rules/java.md
+    | CONFLICT (add/add): Merge conflict in rules/java.md
+    | Rebasing (1/2)error: could not apply 0072106... java/base: java 共通 rule
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 0072106... java/base: java 共通 rule
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [M03b maintain-middle.sh（新しいクローン）] 終了コード 1
+    fresh の reflog から書き換え前の java/base を取れるか: 取れない
+    ローカル HEAD: HEAD ／ rebase 中: はい
+    local  java/base b0f85fe
+    local  java/design 4c0856e
+    local  java/ut bde18c9
+    local  main 19fb13b
+    local  python/base df1e424
+    local  python/coding 1b9cf2e
+    status: AA rules/java.md
+

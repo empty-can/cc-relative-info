@@ -1,0 +1,6 @@
+===== 正しい順序: 先に main から外し、origin/main から切って足し直す
+  足し直した後の java/base: rules=[rules/common.md rules/java.md ]
+  Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/base.
+  rebase の終了コード: 0
+  rebase 後の java/base: rules=[rules/common.md rules/java.md ] ／ main の追記: 1 件
+#### run_one: end rc=0 seconds=7

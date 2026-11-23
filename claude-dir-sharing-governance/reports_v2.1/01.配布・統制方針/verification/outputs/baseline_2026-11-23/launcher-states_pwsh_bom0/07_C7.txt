@@ -1,0 +1,8 @@
+== C7 追跡ファイルを 2 つ編集した
+  $ & start_claude_code.ps1 
+    | .claude/ にローカル変更があります。更新を中止しました:
+    |  M CLAUDE.md
+    |  M rules/a.md
+    | git -C .claude status で中身を確かめてください。覚えのないものは消さずに、メンテナーへ相談してください。
+    → 終了コード 1
+

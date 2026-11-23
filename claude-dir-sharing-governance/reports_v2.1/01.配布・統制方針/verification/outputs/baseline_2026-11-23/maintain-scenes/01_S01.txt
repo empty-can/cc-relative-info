@@ -1,0 +1,54 @@
+################ S01 基準: ローカルの main が古いまま（PR #1 の前）。対照（前の形）と maintain-steady.sh（y を入れる）
+  $ bash control-steady-prev.sh   （stdin: /dev/null）
+    | From C:/tmp/v21-va/scenes/sc-s01o/shared
+    |    a38237c..6972d90  main       -> origin/main
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | To C:/tmp/v21-va/scenes/sc-s01o/shared.git
+    |  + 153ae80...be2658d java/base -> java/base (forced update)
+    |  + b164081...87e7647 java/design -> java/design (forced update)
+    |  + 0bb8330...e6e0aaa java/ut -> java/ut (forced update)
+    |  + d27ab8f...3aab49e python/base -> python/base (forced update)
+    |  + d6eb64d...1f2229e python/coding -> python/coding (forced update)
+  #### [S01 対照（前の形）] 終了コード 0
+    origin java/base      be2658d  main を含む: YES
+    origin java/design    87e7647  main を含む: YES
+    origin java/ut        e6e0aaa  main を含む: YES
+    origin main           6972d90  main を含む: YES
+    origin python/base    3aab49e  main を含む: YES
+    origin python/coding  1f2229e  main を含む: YES
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/scenes/sc-s01/shared
+    |    0afcffe..bb7223c  main       -> origin/main
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s01/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s01/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s01/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-va/scenes/sc-s01/shared.git
+    |  + 5443017...bb95480 java/base -> java/base (forced update)
+    |  + edd3c97...2fe7077 java/design -> java/design (forced update)
+    |  + beb19d0...d2b47f3 java/ut -> java/ut (forced update)
+    |  + 1d46bfd...ee195be python/base -> python/base (forced update)
+    |  + 27e7fd9...661e351 python/coding -> python/coding (forced update)
+    | push した。
+  #### [S01 maintain-steady.sh y] 終了コード 0
+    origin java/base      bb95480  main を含む: YES
+    origin java/design    2fe7077  main を含む: YES
+    origin java/ut        d2b47f3  main を含む: YES
+    origin main           bb7223c  main を含む: YES
+    origin python/base    ee195be  main を含む: YES
+    origin python/coding  661e351  main を含む: YES
+

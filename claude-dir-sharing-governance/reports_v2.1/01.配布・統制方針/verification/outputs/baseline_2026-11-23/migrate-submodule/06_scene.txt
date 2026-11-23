@@ -1,0 +1,32 @@
+=== 参考 e: 通常のディレクトリ（作業リポが .claude/ を追跡）から移った作業リポを pull したメンバー
+  e の準備: 追跡していない .claude/settings.local.json を置いた
+  移行担当 a2 が §7-3 手順 1（通常のディレクトリの場合）→ 2 → 4 を本文どおりに実行
+  git rm -r --cached=0
+  手順 1・2 commit=0
+  手順 4 clone=0
+  a2 の作業リポの git status --short: []
+  push=0
+  pull=0
+  e の .claude の中身: [./settings.local.json ]
+  .claude: ある ／ .claude/.git: 無い
+  .git/modules/.claude: 無い
+  .claude の HEAD: （.claude/.git が無い）
+  作業リポの git status --short: []
+  ランチャーを実行:
+    | .claude/ に中身がありますが、共有リポのクローンではありません。中断します。
+    | 個人のファイル（settings.local.json など）を退避し、.claude/ を別の名前（例: .claude.old）へ移してから、もう一度起動してください。
+    → 終了コード 1
+  ランチャーの後の .claude の中身: [./settings.local.json ]
+  表示のとおり .claude/ を .claude.old へ移してから、ランチャーをもう一度実行:
+  ランチャーを実行:
+    | Cloning into 'C:\tmp\v21-va\migsub\migrate\e\.claude'...
+    | done.
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at f59c53d s
+    | [起動] .claude のブランチ=main / git-dir=C:/tmp/v21-va/migsub/migrate/e/.claude/.git
+    → 終了コード 0
+  .claude.old の中身: [./settings.local.json ] ／ 作業リポの git status --short: [?? .claude.old/ ?? start_claude_code.ps1 ]
+
+######## 終了 ########
+#### run_one: end rc=0 seconds=33

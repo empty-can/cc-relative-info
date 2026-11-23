@@ -1,0 +1,8 @@
+== C11 既存クローンで存在しないブランチ
+  $ & start_claude_code.ps1 -Branch no/such
+    | fatal: invalid reference: no/such
+    | ブランチ 'no/such' への切替に失敗しました。中断します。
+    → 終了コード 1
+    .claude のブランチ（後）: java/design ／ 先頭: e81e44d java/design
+    rules（後）: [a.md design.md java.md ]
+

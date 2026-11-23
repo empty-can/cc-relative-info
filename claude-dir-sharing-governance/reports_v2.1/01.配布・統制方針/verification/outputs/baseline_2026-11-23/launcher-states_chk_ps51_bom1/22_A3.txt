@@ -1,0 +1,11 @@
+== A3 引数を渡す: -Branch java/design -p 'a b'
+  $ & start_claude_code.ps1 -Branch java/design -p 'a b'
+    | branch 'java/design' set up to track 'origin/java/design'.
+    | Switched to a new branch 'java/design'
+    | .claude/ のブランチを切り替えました: main → java/design
+    | HEAD is now at 588e7ef java/design
+    | [起動] cwd=C:\tmp\v21-va\ls-chk-ps51\launcher-powershell-bom1\cases\a3 / .claude のブランチ=java/design / 先頭=588e7ef java/design
+    | [claude の引数] 2 個: <-p> <a b>
+    → 終了コード 0
+    .claude のブランチ（後）: java/design ／ 先頭: 588e7ef java/design
+

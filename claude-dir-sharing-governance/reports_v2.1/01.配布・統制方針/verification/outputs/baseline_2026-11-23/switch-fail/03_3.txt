@@ -1,0 +1,26 @@
+=== 場面3: 場面2 と同じで、手元の extra.md は master の .gitignore で ignore されている ===
+  （maint: feature が追跡するファイル: .gitignore asset.txt extra.md ）
+  --- 前:
+    現在のブランチ: master
+    HEAD         : 78fe598a74e13c24bd4119112590146c6b308bc6
+    origin/feature : 6faecebb0953fae0406e042e5c455e1ec0e3e270
+    origin/master: 78fe598a74e13c24bd4119112590146c6b308bc6
+    asset.txt    : master の資産
+    extra.md: 手元の個人ファイル
+    status --porcelain --ignored: [!! extra.md ]
+    fetch --prune の終了コード: 0
+    switch: branch 'feature' set up to track 'origin/feature'.
+    switch: Switched to a new branch 'feature'
+    switch の終了コード: 0
+    reset: HEAD is now at 6faeceb feature 版
+    reset の終了コード: 0
+  --- 後:
+    現在のブランチ: feature
+    HEAD         : 6faecebb0953fae0406e042e5c455e1ec0e3e270
+    origin/feature : 6faecebb0953fae0406e042e5c455e1ec0e3e270
+    origin/master: 78fe598a74e13c24bd4119112590146c6b308bc6
+    asset.txt    : feature の資産
+    extra.md: feature が追跡する extra.md
+    status --porcelain --ignored: []
+  判定: 「名前はそのまま中身が origin/feature」にはなっていない（現在 feature）
+

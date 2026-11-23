@@ -1,0 +1,7 @@
+== C6 非空で git でない .claude がある（移行前の資産）
+  $ & start_claude_code.ps1 
+    | .claude/ に中身がありますが、共有リポのクローンではありません。中断します。
+    | 個人のファイル（settings.local.json など）を退避し、.claude/ を別の名前（例: .claude.old）へ移してから、もう一度起動してください。
+    → 終了コード 1
+    .claude の中身（後）: ./rules/old.md ./settings.local.json 
+

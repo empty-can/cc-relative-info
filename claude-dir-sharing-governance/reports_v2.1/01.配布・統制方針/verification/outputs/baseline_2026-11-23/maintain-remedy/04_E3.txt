@@ -1,0 +1,26 @@
+################ E3 開いている PR のブランチ pr/4（PR #1 の前の main から切った。マージされていない）
+    前提: pr/4 は origin/main の先祖か: NO（NO）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/remedy/rm-e3/shared
+    |    439456f..c895193  main       -> origin/main
+    |  * [new branch]      pr/4       -> origin/pr/4
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/remedy/rm-e3/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/remedy/rm-e3/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-va/remedy/rm-e3/m" <検証用のリポジトリ>/.claude
+    | 参考: origin にある、系列の名前でないブランチ: pr/4（新しい系列なら、y を入れずに終え、BRANCHES・PAIRS・② に足す）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-va/remedy/rm-e3/shared.git
+    |  + 6532c19...cb5e445 java/base -> java/base (forced update)
+    |  + 3509f95...6787d1b java/design -> java/design (forced update)
+    |  + 0fa8e83...3853783 java/ut -> java/ut (forced update)
+    |  + 4b2c1cf...39e4091 python/base -> python/base (forced update)
+    |  + 47eb535...199fa11 python/coding -> python/coding (forced update)
+    | push した。
+  #### [E3 開いている PR] 終了コード 0
+    origin の pr/4 は変わっていないか: 2b4fda6 pr/4: 作業中
+

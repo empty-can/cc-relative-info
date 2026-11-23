@@ -1,18 +1,31 @@
 #!/usr/bin/env bash
-# 入れ子クローン .claude/ から各資産がロードされるかを 1 セッションで測る。
+# 入れ子クローン .claude/ から各資産がロードされるか、共有リポの permissions.deny が効くかを測る。
+# 先に nestclone-setup.sh（deny の足場）と nestclone-setup.sh nodeny（対照の足場）を実行しておくこと。
+#
+# usage: bash nestclone-run.sh [deny|nodeny] [root|sub]
+#   deny/nodeny  使う足場（$VERIF_ROOT/nestclone か $VERIF_ROOT/nestclone-nodeny）
+#   root/sub     作業リポジトリのルートから起動するか、サブディレクトリ sub/ から起動するか
+#
+# 1 回の実行で 2 セッション:
+#   資産: CLAUDE.md・paths なし rule・settings.json の env・skill・agent（probeagent）
+#         判定は init（skills・agents）とセッション記録（起動時の指示）、ツールの結果。モデルの回答は並べるだけ
+#   deny: --tools Bash・--allowedTools Bash・--permission-mode default で ./denyprobe.sh を実行させ、
+#         denyprobe.out が作られたか・ツールの結果が拒否か（permission_denials）で判定する。
+#         指示した文字列どおりのコマンドだったかも表示する（bash ./denyprobe.sh などは rule に一致しないため）
 set -uo pipefail
+source "$(dirname "$0")/lib.sh" || exit 1
+source "$(dirname "$0")/nestclone-lib.sh" || exit 1
 
-cd "$(dirname "$0")/nestclone/work" || exit 1
+MODE="${1:-deny}"; WHERE="${2:-root}"
+case "$MODE" in deny) NAME=nestclone ;; nodeny) NAME=nestclone-nodeny ;; *) verif_die "第 1 引数は deny か nodeny" ;; esac
 
-read -r -d '' PROMPT <<'EOF' || true
-次の4項目を順に実行し、結果だけを「ラベル=値」の形で1行ずつ出力してください。説明文は不要です。
+verif_enter_repo "$VERIF_ROOT/$NAME/work"
+[ -d .claude/.git ] || verif_die "足場がありません。nestclone-setup.sh $MODE を先に実行してください"
+case "$WHERE" in
+  root) ;;
+  sub)  verif_cd sub ;;
+  *) verif_die "第 2 引数は root か sub" ;;
+esac
 
-1. あなたのコンテキストに NESTCLONE-CM で始まる合言葉があれば `CM=<その合言葉>` を出力。無ければ `CM=NONE`。
-2. NESTCLONE-RU で始まる合言葉があれば `RU=<その合言葉>` を出力。無ければ `RU=NONE`。
-3. Bash ツールで `printenv NESTPROBE_ENV` を実行し、`EV=<出力そのまま>` を出力。実行できなければ `EV=FAIL`。
-4. Skill ツールで skill 名 `probeskill` を起動し、返ってきた合言葉を `SK=<合言葉>` の形で出力。起動できなければ `SK=FAIL`。
-EOF
-
-claude --model haiku --allowedTools "Bash" "Skill" -p "$PROMPT"
-echo
-echo "----- 終了コード: $? -----"
+nc_assets "$MODE-$WHERE"
+nc_deny "$MODE-$WHERE"

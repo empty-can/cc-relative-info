@@ -1,0 +1,16 @@
+== C12a fetch 失敗（remote URL を壊す）・手元にあるブランチ
+  $ & start_claude_code.ps1 -Branch java/base
+    | fatal: 'C:/tmp/v21-va/ls-chk-ps51/launcher-powershell-bom1/broken.git' does not appear to be a git repository
+    | fatal: Could not read from remote repository.
+    | 
+    | Please make sure you have the correct access rights
+    | and the repository exists.
+    | WARNING: fetch に失敗しました。手元にある内容で起動します（最新でない可能性があります）。
+    | branch 'java/base' set up to track 'origin/java/base'.
+    | Switched to a new branch 'java/base'
+    | .claude/ のブランチを切り替えました: main → java/base
+    | HEAD is now at 14e00a9 java/base
+    | [起動] cwd=C:\tmp\v21-va\ls-chk-ps51\launcher-powershell-bom1\cases\c12a / .claude のブランチ=java/base / 先頭=14e00a9 java/base
+    | [claude の引数] 0 個: 
+    → 終了コード 0
+

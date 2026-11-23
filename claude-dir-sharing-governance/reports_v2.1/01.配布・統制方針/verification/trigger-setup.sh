@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 # 条件付きロードの発火契機を 3 資産（paths 付き rule / サブディレクトリ CLAUDE.md /
-# nested skill）について同時に測るための足場。
+# サブディレクトリの skill）について同時に測るための足場を、$VERIF_ROOT/trigprobe に作る。
 # サブディレクトリ sub/ に対象ファイルを置き、1 回の先行操作で 3 つとも発火しうる状態にする。
-set -euo pipefail
+set -uo pipefail
+source "$(dirname "$0")/lib.sh" || exit 1
 
-T="$(dirname "$0")/trigprobe"
-rm -rf "$T"; mkdir -p "$T/.claude/rules" "$T/sub/.claude/skills/subskill"
-cd "$T"
-
-git init -q
+verif_fresh_dir trigprobe
+verif_cd "$VERIF_ROOT/trigprobe"
+git init -q || verif_die "git init に失敗"
+verif_enter_repo .
 git config user.email t@example.com
 git config user.name t
+mkdir -p .claude/rules sub/.claude/skills/subskill || exit 1
 
 cat > .claude/CLAUDE.md <<'EOF'
 # 検証用プロジェクト
@@ -52,6 +53,6 @@ cat > sub/target.probefile <<'EOF'
 alpha beta gamma
 EOF
 
-git add -A && git commit -qm "検証用足場"
-echo "WORKDIR=$(pwd)"
-ls -R | head -20
+git add -A && git commit -qm "検証用足場" || verif_die "commit に失敗"
+echo "WORKDIR=$(verif_winpath .)"
+find . -path ./.git -prune -o -type f -print | sort

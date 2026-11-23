@@ -1,0 +1,45 @@
+################ R-E8 系列の名前で始まる、開いている PR のブランチ java/fix-x（PR #1 の前の main から切った）で ① が止まる → BRANCHES・PAIRS・② に足すと
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-va/remedy/rm-r-e8/shared
+    |    326e376..4535863  main       -> origin/main
+    |  * [new branch]      java/fix-x -> origin/java/fix-x
+    | 中断: origin に、BRANCHES に無いブランチがある: java/fix-x（系列のブランチなら BRANCHES・PAIRS・② に足す。PR のブランチは足さず、マージか閉じた後に origin から消す）
+  #### [R-E8 1 回目] 終了コード 1
+    diff: 5,7c5,7
+    diff: < REPO='<メンテナーのクローンのパス>'
+    diff: < URL='<共有リポの URL>'
+    diff: < BRANCHES=(java/base java/design java/ut python/base python/coding)   # main 以外の、系列の全ブランチ
+    diff: ---
+    diff: > REPO='C:/tmp/v21-va/remedy/rm-r-e8/m'
+    diff: > URL='C:/tmp/v21-va/remedy/rm-r-e8/shared.git'
+    diff: > BRANCHES=(java/base java/design java/ut python/base python/coding java/fix-x)   # main 以外の、系列の全ブランチ
+    diff: 9c9
+    diff: <        "main python/base" "python/base python/coding")              # 親 子
+    diff: ---
+    diff: >        "main python/base" "python/base python/coding" "main java/fix-x")              # 親 子
+    diff: 53a54,56
+    diff: > 
+    diff: > git switch -q java/fix-x || fail "switch"
+    diff: > git rebase main || fail "rebase java/fix-x"
+  $ bash run-e.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-va/remedy/rm-r-e8/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-va/remedy/rm-r-e8/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-va/remedy/rm-r-e8/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/fix-x "/c/tmp/v21-va/remedy/rm-r-e8/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-va/remedy/rm-r-e8/shared.git
+    |  + 29f1761...7f3d3ac java/base -> java/base (forced update)
+    |  + 5b7f34f...05a7507 java/design -> java/design (forced update)
+    |  + 6f512b3...601f1a8 java/fix-x -> java/fix-x (forced update)
+    |  + d5e18ba...d37e62d java/ut -> java/ut (forced update)
+    |  + 6056ed7...a6d677e python/base -> python/base (forced update)
+    |  + efbbc8f...07f2041 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-E8 足した後] 終了コード 0
+    origin の java/fix-x: 前 6f512b3 → 後 601f1a8（PR のブランチが書き換わったか）
+

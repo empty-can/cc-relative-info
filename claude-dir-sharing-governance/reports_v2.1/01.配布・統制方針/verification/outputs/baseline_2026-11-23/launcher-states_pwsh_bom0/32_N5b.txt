@@ -1,0 +1,11 @@
+== N5b 大文字小文字違い。origin/java/design が fetch で更新されて loose な ref になっている
+    refs/remotes/origin/java/design のファイル: ある
+  $ & start_claude_code.ps1 -Branch Java/Design
+    | Switched to branch 'Java/Design'
+    | .claude/ のブランチを切り替えました: main → Java/Design
+    | HEAD is now at f7110fd java/design 追記
+    | [起動] cwd=C:\tmp\v21-va\ls-pwsh0\launcher-pwsh-bom0\cases\n5b / .claude のブランチ=Java/Design / 先頭=f7110fd java/design 追記
+    | [claude の引数] 0 個: 
+    → 終了コード 0
+    .claude のブランチ（後）: Java/Design ／ 先頭: f7110fd java/design 追記
+

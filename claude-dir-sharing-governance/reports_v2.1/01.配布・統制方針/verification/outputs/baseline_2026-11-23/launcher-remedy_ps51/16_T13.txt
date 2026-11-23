@@ -1,0 +1,15 @@
+################ T13 「切替に失敗」＋ a branch is expected, got remote branch → origin/ を外して起動し直す
+  $ .\start_claude_code.ps1 -Branch origin/java/design
+    | fatal: a branch is expected, got remote branch 'origin/java/design'
+    | hint: If you want to detach HEAD at the commit, try again with the --detach option.
+    | ブランチ 'origin/java/design' への切替に失敗しました。中断します。
+    → 終了コード 1
+  $ .\start_claude_code.ps1 -Branch java/design
+    | branch 'java/design' set up to track 'origin/java/design'.
+    | Switched to a new branch 'java/design'
+    | .claude/ のブランチを切り替えました: main → java/design
+    | HEAD is now at deff157 java/design
+    | [起動] .claude のブランチ=java/design / 先頭=deff157 java/design
+    → 終了コード 0
+    .claude: java/design ／ status: [] ／ 作業リポ status: [?? start_claude_code.ps1 ]
+

@@ -1,0 +1,48 @@
+== C1 初回（.claude 無し・-Branch 省略）
+  $ & start_claude_code.ps1 
+    | 発生場所 C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c1\start_claude_code.ps1:22 文字:37
+    | +         [Console]::Error.WriteLine("蛟倶ｺｺ縺ｮ繝輔ぃ繧､繝ｫ・・ettings.local.json ...
+    | +                                     ~
+    | メソッド呼び出し内に ')' が存在しません。
+    | 発生場所 C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c1\start_claude_code.ps1:22 文字:37
+    | + ... [Console]::Error.WriteLine("蛟倶ｺｺ縺ｮ繝輔ぃ繧､繝ｫ・・ettings.local.json 縺ｪ縺ｩ・峨ｒ ...
+    | +                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    | 式またはステートメントのトークン '蛟倶ｺｺ縺ｮ繝輔ぃ繧､繝ｫ・・ettings.local.json' を使用できません。
+    | 発生場所 C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c1\start_claude_code.ps1:20 文字:72
+    | + ...  if (Get-ChildItem -Force $ClaudeDir -ErrorAction SilentlyContinue) {
+    | +                                                                         ~
+    | ステートメント ブロックまたは型定義に終わりの '}' が存在しません。
+    | 発生場所 C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c1\start_claude_code.ps1:22 文字:153
+    | + ... ・claude/ 繧貞挨縺ｮ蜷榊燕・井ｾ・ .claude.old・峨∈遘ｻ縺励※縺九ｉ縲√ｂ縺・ｸ蠎ｦ襍ｷ蜍輔＠縺ｦ縺上□縺輔＞縲・)
+    | +                                                                         ~
+    | 式またはステートメントのトークン ')' を使用できません。
+    | 発生場所 C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c1\start_claude_code.ps1:24 文字:5
+    | +     }
+    | +     ~
+    | 式またはステートメントのトークン '}' を使用できません。
+    | 発生場所 C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c1\start_claude_code.ps1:34 文字:41
+    | +     [Console]::Error.WriteLine(".claude/ 繧・git 繝ｪ繝昴ず繝医Μ縺ｨ縺励※隱ｭ繧√∪縺帙ｓ縲 ...
+    | +                                         ~
+    | '/' 演算子に続けて値の式を指定する必要があります。
+    | 発生場所 C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c1\start_claude_code.ps1:34 文字:41
+    | +     [Console]::Error.WriteLine(".claude/ 繧・git 繝ｪ繝昴ず繝医Μ縺ｨ縺励※隱ｭ繧√∪縺帙ｓ縲 ...
+    | +                                         ~
+    | メソッド呼び出し内に ')' が存在しません。
+    | 発生場所 C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c1\start_claude_code.ps1:34 文字:42
+    | +     [Console]::Error.WriteLine(".claude/ 繧・git 繝ｪ繝昴ず繝医Μ縺ｨ縺励※隱ｭ繧√∪縺帙ｓ縲 ...
+    | +                                          ~~~~~
+    | 式またはステートメントのトークン '繧・git' を使用できません。
+    | 発生場所 C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c1\start_claude_code.ps1:26 文字:30
+    | +     if ($LASTEXITCODE -ne 0) {
+    | +                              ~
+    | ステートメント ブロックまたは型定義に終わりの '}' が存在しません。
+    | 発生場所 C:\tmp\v21-va\ls-ps51-0\launcher-powershell-bom0\cases\c1\start_claude_code.ps1:34 文字:82
+    | + ... ::Error.WriteLine(".claude/ 繧・git 繝ｪ繝昴ず繝医Μ縺ｨ縺励※隱ｭ繧√∪縺帙ｓ縲ゆｸｭ譁ｭ縺励∪縺吶・)
+    | +                                                                         ~
+    | 式またはステートメントのトークン ')' を使用できません。
+    | 報告されていない解析エラーもあります。報告されたエラーを修正して再試行してください。
+    |     + CategoryInfo          : ParserError: (:) [], ParseException
+    |     + FullyQualifiedErrorId : MissingEndParenthesisInMethodCall
+    |  
+    → 終了コード 1
+

@@ -1,0 +1,21 @@
+################ T03 「clone に失敗」＋ does not appear to be a git repository → メンテナーが URL を確かめる（$SharedUrl を正しい値にしたランチャーに差し替える）
+  $ .\start_claude_code.ps1 
+    | Cloning into 'C:\tmp\v21-va\lr-ps51\lremedy-powershell\cases\t03\.claude'...
+    | fatal: 'C:/tmp/v21-va/lr-ps51/lremedy-powershell/nonexistent.git' does not appear to be a git repository
+    | fatal: Could not read from remote repository.
+    | 
+    | Please make sure you have the correct access rights
+    | and the repository exists.
+    | clone に失敗しました。中断します。
+    → 終了コード 1
+    .claude: 無い
+  $ .\start_claude_code.ps1 
+    | Cloning into 'C:\tmp\v21-va\lr-ps51\lremedy-powershell\cases\t03\.claude'...
+    | done.
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at 9eb7367 main
+    | [起動] .claude のブランチ=main / 先頭=9eb7367 main
+    → 終了コード 0
+    .claude: main ／ status: [] ／ 作業リポ status: [?? start_claude_code.ps1 ]
+

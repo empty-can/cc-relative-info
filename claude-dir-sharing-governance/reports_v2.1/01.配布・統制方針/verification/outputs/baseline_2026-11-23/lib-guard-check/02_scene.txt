@@ -1,0 +1,11 @@
+== 外
+G-out1	期待 3	実際 3	合う		VERIF_ROOT=C:/v21va-outside-test/x
+    | 中止: VERIF_ROOT は C:\tmp の下（例 C:/tmp/<名前>）にする。C:\tmp そのもの・ほかの場所は不可: C:/v21va-outside-test/x
+G-out2	期待 3	実際 3	合う		VERIF_ROOT=/tmp/v21va-usertemp-test
+    | 中止: VERIF_ROOT は C:\tmp の下（例 C:/tmp/<名前>）にする。C:\tmp そのもの・ほかの場所は不可: /tmp/v21va-usertemp-test
+G-out3	期待 3	実際 3	合う		VERIF_ROOT=/c/tmpX-v21va/y
+    | 中止: VERIF_ROOT は C:\tmp の下（例 C:/tmp/<名前>）にする。C:\tmp そのもの・ほかの場所は不可: /c/tmpX-v21va/y
+G-out4	期待 3	実際 3	合う		VERIF_ROOT=v21va-relative
+    | 中止: VERIF_ROOT は C:\tmp の下（例 C:/tmp/<名前>）にする。C:\tmp そのもの・ほかの場所は不可: v21va-relative
+G-out5	期待 3	実際 3	合う		VERIF_ROOT=C:/cc-workspace/cc-relative-info/v21va-test
+    | 中止: VERIF_ROOT は C:\tmp の下（例 C:/tmp/<名前>）にする。C:\tmp そのもの・ほかの場所は不可: C:/cc-workspace/cc-relative-info/v21va-test

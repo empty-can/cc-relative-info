@@ -1,0 +1,6 @@
+=== ブランチグラフ ===
+* 43e7512 (HEAD -> java) java/design 固有の rule（java/design を作れなかったので、実際には java に積まれる）
+* 4cbfa31 java ブランチ固有の rule
+* f294763 (origin/master, master) 個人設定 settings.local.json を ignore
+* 513d421 共有 .claude 資産の初版
+

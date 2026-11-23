@@ -1,0 +1,8 @@
+== N8 -Branch origin/java/design
+  $ & start_claude_code.ps1 -Branch origin/java/design
+    | fatal: a branch is expected, got remote branch 'origin/java/design'
+    | hint: If you want to detach HEAD at the commit, try again with the --detach option.
+    | ブランチ 'origin/java/design' への切替に失敗しました。中断します。
+    → 終了コード 1
+    .claude のブランチ（後）: main ／ 先頭: 42a4d08 main 追記
+

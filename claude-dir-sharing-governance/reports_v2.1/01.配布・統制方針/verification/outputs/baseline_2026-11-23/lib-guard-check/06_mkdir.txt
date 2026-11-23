@@ -1,0 +1,6 @@
+== 未設定（mkdir を差し替えて作らない。既定 C:/tmp/v21-verif が検査を通るかを見る）
+    実行前の C:/tmp/v21-verif: 無い
+G-unset	期待 1	実際 1	合う		VERIF_ROOT=UNSET
+    |   (mkdir を差し替え: 作らない) mkdir -p C:/tmp/v21-verif
+    | 中止: VERIF_ROOT を作れません: C:/tmp/v21-verif
+    実行後の C:/tmp/v21-verif: 無い
