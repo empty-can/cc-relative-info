@@ -14,7 +14,7 @@
 ├── output-styles/          # code-review.md
 ├── rule-assets/            # rule と hook が読む資産（subagent-common-rules.md・md-self-check/checklist.md）。rule としては読み込まれない
 ├── rules/                  # path-scoped rule 4 種 ＋ 常時ロードの rule 1 種
-├── scripts/                # resolve-activity-dir.sh / statusline.ps1 / doc-summary bot の旧版 3 本（run-doc-summary.ps1 など。資産は LLMs リポジトリへ移管済み）
+├── scripts/                # resolve-activity-dir.sh / statusline.ps1
 ├── skills/                 # 11 Skill
 ├── templates/              # inter-claude-communication / skill-request
 ├── workspace/              # 一時作業用（skill-request の作業フォルダ等）

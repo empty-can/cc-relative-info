@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 - `--site <slug>`: 対象サイト。省略時は `claude-code-docs`(後方互換)。有効値は「サイト設定テーブル」の `slug` 列。値を `SITE` とする
 - `--from <commit>`: 初版作成時の起点コミット。省略時は前回サマリの末尾フッタから `head_commit` を取得し `BASE_COMMIT` とする。前回サマリが無く `--from` も無ければエラー終了
-- `--automated`: 無人（ヘッドレス/パイプライン）実行を示すフラグ。**本フラグがあれば `AUTOMATED=1`、無ければ `AUTOMATED=0`** とする（手順 13 の Phase 3 要否判定で使用）。ラッパー `run-doc-summary.ps1` が自動付与する。手動・対話起動では付けない
+- `--automated`: 無人（ヘッドレス/パイプライン）実行を示すフラグ。**本フラグがあれば `AUTOMATED=1`、無ければ `AUTOMATED=0`** とする（手順 13 の Phase 3 要否判定で使用）。無人実行のラッパー（LLMs リポジトリへ移管済みの `run-doc-summary.ps1`）が自動付与する。手動・対話起動では付けない
 
 ## サイト設定テーブル
 
