@@ -73,7 +73,7 @@ mdo() { # $1=足場 $2=クローン名 以降=bash のコード（メンテナ�
 hdr() { echo; echo "################ $*"; }
 want() { case " ${SCENES[*]} " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 
-ALL=(s01 s02 s03 s06 s07 s08 s09 s09d s10 s11 s12 s12v s13 s14 s15 s16 s17 s18 s19 s20 m01 m02 m03 m04 m04d)
+ALL=(s01 s02 s03 s06 s07 s08 s09 s09d s10 s11 s12 s12v s13 s14 s15 s16 s17 s18 s19 s20 m01 m02 m03 m04 m04d s21)
 SCENES=("$@"); [ ${#SCENES[@]} -gt 0 ] || SCENES=("${ALL[@]}")
 echo "######## maintain-scenes.sh $(date '+%Y-%m-%d %H:%M:%S %z') ／ $(git --version) ／ bash $BASH_VERSION ／ VERIF_ROOT=$VERIF_ROOT"
 
@@ -395,5 +395,17 @@ if want m04d; then
   echo "    （対処: git switch --detach の後、BRANCHES の各ブランチを git branch -f で origin の値に戻す）"
   runp "M04d 捨てた後に maintain-middle.sh" sc-m04d m maintain-middle.sh 'y\n'
   runp "M04d 続けて maintain-steady.sh" sc-m04d m maintain-steady.sh 'y\n'; ostate sc-m04d; m04_has sc-m04d
+fi
+if want s21; then
+  hdr "S21 ふつうの削除: main に足して全ブランチへ載せたファイル（名前に空白と日本語）を、main で消す PR の後に定常手順 → 消えるファイルの一覧が出る → y"
+  F21='rules/廃止 する.md'
+  s21_has() { local b; for b in java/base java/design java/ut python/base python/coding; do printf '    origin %-14s %s: %s\n' "$b" "$F21" "$(git -C "$VERIF_ROOT/sc-s21/shared.git" cat-file -e "$b:$F21" 2>/dev/null && echo ある || echo 無い)"; done; }
+  prep sc-s21
+  xdo sc-s21 pa 'mkdir -p rules && echo "廃止する rule" > "$F21" && git add -A && git commit -qm "main: 廃止する rule を足す" && git push -q origin main'
+  inst maintain-steady.sh "$VERIF_ROOT/sc-s21/m" "$VERIF_ROOT/sc-s21/run-pre.sh"
+  echo y | bash "$VERIF_ROOT/sc-s21/run-pre.sh" > /dev/null 2>&1 || verif_die "定常手順に失敗: sc-s21"
+  xdo sc-s21 pb 'git rm -q "$F21" && git commit -qm "main: 廃止する rule を消す（PR）" && git push -q origin main'
+  s21_has
+  runp "S21 y" sc-s21 m maintain-steady.sh 'y\n'; s21_has
 fi
 echo; echo "######## 終了 ########"

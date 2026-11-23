@@ -62,6 +62,18 @@ for pair in "${PAIRS[@]}"; do
 done
 
 # ③' push の前に、末端ブランチを §7-2 手順 5 の形で確かめる。ここで入力を待つ
+# 載せ直しでブランチから消えるファイル（① の値と比べる）を、あるときだけ表示する（意図した削除と見分けられないので、止めない）
+declare -A GONE; names=()
+for b in "${BRANCHES[@]}"; do
+  while IFS= read -r -d '' f; do [ -n "${GONE[$f]+x}" ] || names+=("$f"); GONE[$f]="${GONE[$f]:-} $b"; done \
+    < <(git diff -z --no-renames --name-only --diff-filter=D "${OLD[$b]}" "$b")
+done
+[ ${#names[@]} -eq 0 ] || echo "注意: この push で、次のファイルがブランチから消える（main で消したものなど）:"
+for f in "${names[@]}"; do
+  left=""; for b in "${BRANCHES[@]}"; do git cat-file -e "$b:$f" 2>/dev/null && left="$left $b"; done
+  echo "  $f（消えるブランチ:${GONE[$f]}）$([ -n "$left" ] && echo "。残るブランチ:$left" || echo "。BRANCHES のどのブランチにも残らない")"
+done
+[ ${#names[@]} -eq 0 ] || echo "  意図した削除なら、そのまま y でよい。土台へ移す資産で、移す先のブランチに残っていないなら、y で push した後に、移す先の土台へ足し直して push し、土台の手順を実行する。意図していないなら、y を入れずに終える。"
 echo "③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:"
 for b in "${BRANCHES[@]}"; do
   printf '%s\n' "${PAIRS[@]}" | grep -q "^$b " || echo "  git clone --branch $b \"$(pwd)\" <検証用のリポジトリ>/.claude"
