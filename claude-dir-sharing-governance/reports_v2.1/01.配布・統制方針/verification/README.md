@@ -21,7 +21,7 @@ V=<このフォルダの絶対パス>
 export VERIF_ROOT=C:/tmp/v21-verif/<名前>        # C:/tmp の下。実行ごとに名前を分ける
 mkdir -p "/c/tmp/v21-verif/<名前>" && cd "/c/tmp/v21-verif/<名前>" || exit 1
 [ "$(pwd -W)" = "$VERIF_ROOT" ] || exit 1         # 足場に居ることを確かめる
-bash "$V/<スクリプト>.sh" [場面の名前...] > out.txt 2>&1
+bash "$V/<スクリプト>.sh" [場面の名前...] > "<足場の外の出力先>/<名前>.txt" 2>&1   # 出力は足場の外に書く（足場には足場以外を置かない）
 ```
 
 - 足場の名前は、実行ごとに分ける。同じ名前で続けて流すと、足場の中の名前が同じスクリプトは上書きし合う（`launcher-states.sh` は `launcher-<シェル>-bom<n>` を作るので、`LSHELL`・`LBOM` が同じ通常版と CHK 版（引数に `launcher-example-check.ps1` の絶対パスを渡す）は、必ず `VERIF_ROOT` を分ける）
