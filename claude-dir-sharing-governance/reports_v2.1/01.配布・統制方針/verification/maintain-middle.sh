@@ -56,7 +56,7 @@ declare -A TIP   # 待つ前の、このクローンでの先頭（push する�
 for b in "$PARENT" "${CHILDREN[@]}"; do TIP[$b]=$(git rev-parse -q --verify "refs/heads/$b"); done
 echo "③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:"
 for b in "${CHILDREN[@]}"; do echo "  git clone --branch $b \"$(pwd)\" <検証用のリポジトリ>/.claude"; done
-echo "確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。"
+echo "確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（$(for b in "${CHILDREN[@]}"; do printf ' git branch -f %s origin/%s;' "$b" "$b"; done)）、このスクリプトを最初からもう一度実行する）。"
 read -r -p "push する [y/N]: " ans || ans=""
 [ "$ans" = y ] || { echo "push しなかった。" >&2; exit 2; }
 moved=""   # 待っている間に、このクローンで動いたブランチ（commit・branch -f・消したもの）

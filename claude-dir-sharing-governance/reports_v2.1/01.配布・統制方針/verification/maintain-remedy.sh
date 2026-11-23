@@ -76,7 +76,7 @@ want() { case " ${SCENES[*]} " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 fixc() { mdo "$1" m 'printf "main 初版\nmain 追記（PR #1）\ndesign の追記\n" > CLAUDE.md && git add CLAUDE.md && GIT_EDITOR=true git rebase --continue > /dev/null 2>&1'; }
 s12prep() { prep "$1"; xdo "$1" x 'git switch -q java/design && echo "design の追記" >> CLAUDE.md && git commit -qam "java/design: CLAUDE.md に追記" && git push -q origin java/design'; }
 
-ALL=(e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 r-e6 r-e7 r-e8 r-e8b r-s10 r-s17 r-push r-s11 r-u1 r-u2 r-s18 r-s12r r-s16 r-s12a r-s12t r-s12u r-s19d r-pushrej r-ng r-path r-acc r-acc2 r-stale r-stale-base r-stale-ng r-stale-ngw r-rebased-ng r-wait-leaf r-stale-conf r-stale-conf0 r-rebased-push r-rebased-conf r-s12a-lease c-both c-both2 r-acc3 r-acc4 r-s24a r-s24p r-s24b r-s11x r-wait-tip r-wait-tip-resume r-wait-tip-middle)
+ALL=(e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 r-e6 r-e7 r-e8 r-e8b r-s10 r-s17 r-push r-s11 r-u1 r-u2 r-s18 r-s12r r-s16 r-s12a r-s12t r-s12u r-s19d r-pushrej r-ng r-path r-acc r-acc2 r-stale r-stale-base r-stale-ng r-stale-ngw r-rebased-ng r-wait-leaf r-stale-conf r-stale-conf0 r-rebased-push r-rebased-conf r-s12a-lease c-both c-both2 r-acc3 r-acc4 r-s24a r-s24p r-s24b r-s11x r-wait-tip r-wait-tip-resume r-wait-tip-middle w-main w-base w-mid w-midbase r-i13 r-i13c r-wait-tip-back r-middle-n)
 SCENES=("$@"); [ ${#SCENES[@]} -gt 0 ] || SCENES=("${ALL[@]}")
 echo "######## maintain-remedy.sh $(date '+%Y-%m-%d %H:%M:%S %z') ／ $(git --version) ／ bash $BASH_VERSION ／ VERIF_ROOT=$VERIF_ROOT"
 
@@ -781,7 +781,7 @@ fi
 
 # ---- ③' の入力を待つ間に、このクローンのブランチを動かしたとき（待つ前の値との比べ。2026-11-23 に足した）----
 heads() { git -C "$VERIF_ROOT/$1/shared.git" for-each-ref --format='%(refname:short)=%(objectname:short)' refs/heads/ | tr '\n' ' '; }
-backcmd() { sed -n 's/.*の値へ戻し（\(.*\)）、このスクリプト.*/\1/p' "$VERIF_ROOT/$1/w$WRUN_N.out" | head -1; }   # 直前の wrun の中断の文から、戻すコマンドを取り出す
+backcmd() { sed -n '/中断:/s/.*の値へ戻し（\(.*\)）、このスクリプト.*/\1/p' "$VERIF_ROOT/$1/w$WRUN_N.out" | head -1; }   # 直前の wrun の中断の文から、戻すコマンドを取り出す（③' の案内の行も同じ形なので、中断の行に限る）
 wtback() { # wtback <足場>: 中断の文の案内どおりに、git switch --detach の後、案内の値へ戻す
   local c; c="$(backcmd "$1")"; [ -n "$c" ] || { echo "    （中断の文に戻すコマンドが無い）"; return 0; }
   echo "    （対処: 中断の文の案内どおり git switch --detach →$c）"
@@ -839,6 +839,148 @@ if want r-wait-tip-middle; then
   wtback rm-r-wt-middle
   runp "R-WT7 案内どおり戻した後" rm-r-wt-middle m maintain-middle.sh 'y\n'; ostate rm-r-wt-middle
   echo "    origin の java/design に待つ間の追記: $(cnt rm-r-wt-middle java/design '待つ間の追記') 件 ／ java/ut は java/base を含むか: $(git -C "$VERIF_ROOT/rm-r-wt-middle/shared.git" merge-base --is-ancestor java/base java/ut && echo YES || echo NO)"
+fi
+
+# ---- 2 人のメンテナーの手順が重なる: 入力待ちの間に、もう 1 人（m2）の側で共有リポが進む（同件調査 K7 の差し込みを持ち込んだ。2026-11-23 に足した）----
+if want w-main; then
+  hdr "W-MAIN m の ③' の入力待ちの間に、PR #2 のマージで origin の main が進む → y → PR #2 をマージした m2 が定常手順"
+  prep rm-w-main
+  wrun "W-MAIN m（入力待ちの間に PR #2）" rm-w-main m maintain-steady.sh \
+    'xdo rm-w-main pr "git fetch -q origin && git switch -q main && git reset -q --hard origin/main && echo \"main 追記（PR #2）\" >> CLAUDE.md && git commit -qam \"main: PR #2 で追記\" && git push -q origin main" && echo "PR #2 を main にマージした"'
+  ostate rm-w-main
+  runp "W-MAIN m2 の定常手順" rm-w-main m2 maintain-steady.sh 'y\n'; ostate rm-w-main
+fi
+
+if want w-base; then
+  hdr "W-BASE m の ③' の入力待ちの間に、m2 が java/base にコミットを足して push（中間ブランチの手順はまだ）→ y → もう一度 → 本紙の ③ の説明・中間ブランチの節の手"
+  prep rm-w-base
+  wrun "W-BASE m（入力待ちの間に java/base へ push）" rm-w-base m maintain-steady.sh \
+    'mdo rm-w-base m2 "git fetch -q origin && git switch -q java/base && git reset -q --hard origin/java/base && echo m2 の土台の追記 >> rules/java.md && git commit -qam \"java/base: m2 の追記\" && git push -q origin java/base && git switch -q --detach" && echo "m2 が java/base に push した"'
+  runp "W-BASE m のもう一度" rm-w-base m maintain-steady.sh 'y\n'
+  echo "    m の HEAD: $(git -C "$VERIF_ROOT/rm-w-base/m" rev-parse --abbrev-ref HEAD)"
+  mdo rm-w-base m 'git switch -q --detach && for b in java/base java/design java/ut python/base python/coding; do git branch -q -f "$b" "origin/$b" || exit 1; done'
+  echo "    （対処: git switch --detach の後、BRANCHES の各ブランチを git branch -f で origin の値に戻す）"
+  runp "W-BASE m の中間ブランチの手順" rm-w-base m maintain-middle.sh 'y\n'
+  runp "W-BASE m の定常手順" rm-w-base m maintain-steady.sh 'y\n'; ostate rm-w-base
+  echo "    origin の m2 の土台の追記: java/design $(cnt rm-w-base java/design 'm2 の追記') 件・java/ut $(cnt rm-w-base java/ut 'm2 の追記') 件"
+fi
+
+if want w-mid; then
+  hdr "W-MID m の ③' の入力待ちの間に、m2 が java/base に push して中間ブランチの手順を終える → y → もう一度"
+  prep rm-w-mid
+  wrun "W-MID m（入力待ちの間に m2 の中間ブランチの手順）" rm-w-mid m maintain-steady.sh \
+    'mdo rm-w-mid m2 "git fetch -q origin && git switch -q java/base && git reset -q --hard origin/java/base && echo m2 の土台の追記 >> rules/java.md && git commit -qam \"java/base: m2 の追記\" && git push -q origin java/base && git switch -q --detach" && runp "W-MID m2 の中間ブランチの手順" rm-w-mid m2 maintain-middle.sh "y\n"'
+  runp "W-MID m のもう一度" rm-w-mid m maintain-steady.sh 'y\n'; ostate rm-w-mid
+  echo "    origin の m2 の土台の追記: java/design $(cnt rm-w-mid java/design 'm2 の追記') 件・java/ut $(cnt rm-w-mid java/ut 'm2 の追記') 件"
+fi
+
+if want w-midbase; then
+  hdr "W-MIDBASE m が java/base に push して中間ブランチの手順 → その入力待ちの間に、m2 が java/base にもう 1 つ push → y → m2 が中間ブランチの手順 → 定常手順"
+  prep rm-w-midbase
+  mdo rm-w-midbase m 'git switch -q java/base && echo m の土台の追記 >> rules/java.md && git commit -qam "java/base: m の追記" && git push -q origin java/base && git switch -q --detach'
+  wrun "W-MIDBASE m の中間ブランチの手順（入力待ちの間に m2 が java/base へ push）" rm-w-midbase m maintain-middle.sh \
+    'mdo rm-w-midbase m2 "git fetch -q origin && git switch -q java/base && git reset -q --hard origin/java/base && echo m2 の土台の追記 >> rules/java.md && git commit -qam \"java/base: m2 の追記\" && git push -q origin java/base && git switch -q --detach" && echo "m2 が java/base に push した"'
+  ostate rm-w-midbase
+  echo "    origin の java/design は java/base を含むか: $(git -C "$VERIF_ROOT/rm-w-midbase/shared.git" merge-base --is-ancestor java/base java/design && echo YES || echo NO)"
+  runp "W-MIDBASE m2 の中間ブランチの手順" rm-w-midbase m2 maintain-middle.sh 'y\n'
+  runp "W-MIDBASE m2 の定常手順" rm-w-midbase m2 maintain-steady.sh 'y\n'; ostate rm-w-midbase
+  echo "    origin の java/design: m の追記 $(cnt rm-w-midbase java/design 'm の追記') 件・m2 の追記 $(cnt rm-w-midbase java/design 'm2 の追記') 件"
+fi
+
+# ---- 衝突するコミットを書き換えて強制 push した後（H6b。レビューアの足場 rewrite_replay2.sh を、この足場と定常手順のスクリプトで組み直した。2026-11-23 に足した）----
+# i13prep <足場>: 末端 java/design に main の PR #1 と衝突するコミットを置く。m2 はそのコミットの上に自分のコミット（別のファイル）を持つ（push しない）。m の定常手順は ② で衝突し、--abort で戻す
+i13prep() {
+  s12prep "$1"
+  mdo "$1" m2 'git fetch -q origin && git switch -q java/design && git reset -q --hard origin/java/design && echo "m2 の追記" > rules/m2.md && git add -A && git commit -qm "java/design: m2 の追記（別のファイル）" && git switch -q --detach'
+  runp "$1 準備: m の定常手順（② で衝突）" "$1" m maintain-steady.sh 'y\n'; mdo "$1" m 'git rebase --abort'
+}
+# i13rewrite <足場>: m が (a) で衝突するコミットを書き換え、値を付けた lease で push する（R-S12a(2m) と同じ手。H6 の決まりで禁じた操作）
+i13rewrite() {
+  mdo "$1" m 'git switch -q java/design && git reset -q --hard origin/java/design && git reset -q --hard HEAD~1 && echo "design の追記" >> rules/design.md && git commit -qam "java/design: 追記（rules/design.md へ）" && git push -q --force-with-lease=java/design:$(git rev-parse origin/java/design) origin java/design && git switch -q --detach'
+  echo "    （m: 衝突するコミットを書き換え、値を付けた --force-with-lease で push した。H6 の決まりで禁じた操作）"
+}
+# i13hand <足場> rebase|onto: m2 の手。rebase は ① の説明の手（衝突したら --abort → 足したコミットだけを --onto）、onto は初めから --onto
+i13hand() {
+  local w="$VERIF_ROOT/$1"
+  rgit "$1" m2 push push origin java/design
+  rgit "$1" m2 fetch fetch origin
+  rgit "$1" m2 switch switch java/design
+  rgit "$1" m2 cherry cherry -v origin/java/design java/design origin/main
+  if [ "$2" = rebase ]; then
+    rgit "$1" m2 rebase rebase origin/java/design
+    if [ -d "$w/m2/.git/rebase-merge" ] || [ -d "$w/m2/.git/rebase-apply" ]; then
+      echo "    m2 は rebase の途中（衝突）→ --abort → 足したコミットだけを --onto で載せ直す"
+      rgit "$1" m2 abort rebase --abort
+      rgit "$1" m2 onto rebase --onto origin/java/design java/design~1 java/design
+    fi
+  else
+    rgit "$1" m2 onto rebase --onto origin/java/design java/design~1 java/design
+  fi
+  rgit "$1" m2 push push origin java/design
+}
+i13show() {
+  local g="$VERIF_ROOT/$1/shared.git"
+  echo "    origin の java/design: 書き換える前のコミット（CLAUDE.md に追記）$(cnt "$1" java/design 'CLAUDE.md に追記') 件 ／ 書き換えたコミット $(cnt "$1" java/design '追記（rules/design.md へ）') 件 ／ m2 の追記 $(cnt "$1" java/design 'm2 の追記') 件 ／ main を含む: $(git -C "$g" merge-base --is-ancestor main java/design && echo YES || echo NO)"
+  echo "    origin の java/design の CLAUDE.md: $(git -C "$g" show java/design:CLAUDE.md | tr '\n' '/') ／ rules/design.md: $(git -C "$g" show java/design:rules/design.md | tr '\n' '/')"
+}
+i13next() { runp "$2 m の次の定常手順" "$1" m maintain-steady.sh 'y\n'; mdo "$1" m 'git rebase --abort 2>/dev/null; true'; i13show "$1"; }
+if want r-i13; then
+  hdr "I13-V1 m が衝突するコミットを書き換えて push → m の次の定常手順より前に、m2 が ① の説明の手（cherry → push → git rebase origin/java/design → push）"
+  i13prep rm-i13-v1; i13rewrite rm-i13-v1; i13hand rm-i13-v1 rebase; i13show rm-i13-v1; i13next rm-i13-v1 I13-V1
+  hdr "I13-V2 m が書き換えて push し、定常手順も済ませた後に、m2 が同じ手（衝突なら --abort → --onto）"
+  i13prep rm-i13-v2; i13rewrite rm-i13-v2
+  runp "I13-V2 m の定常手順（書き換えの後）" rm-i13-v2 m maintain-steady.sh 'y\n'
+  i13hand rm-i13-v2 rebase; i13show rm-i13-v2; i13next rm-i13-v2 I13-V2
+  hdr "I13-V3 V1 と同じ時に、m2 が初めから git rebase --onto origin/java/design java/design~1 java/design"
+  i13prep rm-i13-v3; i13rewrite rm-i13-v3; i13hand rm-i13-v3 onto; i13show rm-i13-v3; i13next rm-i13-v3 I13-V3
+  hdr "I13-V4 V2 と同じ時に、m2 が初めから --onto"
+  i13prep rm-i13-v4; i13rewrite rm-i13-v4
+  runp "I13-V4 m の定常手順（書き換えの後）" rm-i13-v4 m maintain-steady.sh 'y\n'
+  i13hand rm-i13-v4 onto; i13show rm-i13-v4; i13next rm-i13-v4 I13-V4
+fi
+if want r-i13c; then
+  hdr "I13-C 対照: m は書き換えず、--abort の後に main を直す PR（H6 の決まりの形）→ 定常手順 → m2 が V1 と同じ手（cherry → push → git rebase origin/java/design → push）"
+  i13prep rm-i13-c
+  xdo rm-i13-c pa 'grep -v "main 追記" CLAUDE.md > c.tmp && mv c.tmp CLAUDE.md && echo "main 追記（PR #1）" > rules-main.md && git add -A && git commit -qm "main: PR #1 の追記を rules-main.md へ移す（PR #2）" && git push -q origin main'
+  echo "    （m: 書き換えずに、main の変更を直す新しい PR をマージ）"
+  runp "I13-C m の定常手順（main を直した後）" rm-i13-c m maintain-steady.sh 'y\n'
+  i13hand rm-i13-c rebase; i13show rm-i13-c; i13next rm-i13-c I13-C
+fi
+
+# ---- 中断の文と ③' の案内のとおりに戻して、もう一度実行する（2026-11-23 に足した）----
+if want r-wait-tip-back; then
+  hdr "R-WAIT-TIP-BACK 入力を待つ間にブランチが動いて止まった後、中断の文のとおりに戻してもう一度（定常手順で main・土台の手順で PARENT）"
+  for v in 5b 8; do prep rm-r-wt$v; done
+  echo "  (5b) R-WT5 と同じ（載せ先 main に commit → y）→ 中断の文のとおり戻す → もう一度"
+  b0=$(heads rm-r-wt5b)
+  wrun "R-WT5B main を動かす y" rm-r-wt5b m maintain-steady.sh "$(wtcommit rm-r-wt5b main CLAUDE.md)"
+  echo "    origin は動いていないか: $( [ "$b0" = "$(heads rm-r-wt5b)" ] && echo 動いていない || echo 動いた )"
+  wtback rm-r-wt5b
+  runp "R-WT5B 戻した後" rm-r-wt5b m maintain-steady.sh 'y\n'; ostate rm-r-wt5b
+  echo "    origin に待つ間の追記: main $(cnt rm-r-wt5b main '待つ間の追記') 件・java/design $(cnt rm-r-wt5b java/design '待つ間の追記') 件"
+  echo "  (8) 土台の手順: java/base が早送りで進んだ → 入力を待つ間に PARENT（java/base）へ commit → y → 中断の文のとおり戻す → もう一度"
+  xdo rm-r-wt8 x 'git switch -q java/base && echo 土台の追記 >> rules/java.md && git commit -qam "java/base: 土台の追記" && git push -q origin java/base'
+  b0=$(heads rm-r-wt8)
+  wrun "R-WT8 PARENT を動かす y" rm-r-wt8 m maintain-middle.sh "$(wtcommit rm-r-wt8 java/base rules/java.md)"
+  echo "    origin は動いていないか: $( [ "$b0" = "$(heads rm-r-wt8)" ] && echo 動いていない || echo 動いた )"
+  wtback rm-r-wt8
+  runp "R-WT8 戻した後" rm-r-wt8 m maintain-middle.sh 'y\n'; ostate rm-r-wt8
+  echo "    origin に待つ間の追記: java/base $(cnt rm-r-wt8 java/base '待つ間の追記') 件・java/design $(cnt rm-r-wt8 java/design '待つ間の追記') 件 ／ java/design・java/ut は java/base を含むか: $(git -C "$VERIF_ROOT/rm-r-wt8/shared.git" merge-base --is-ancestor java/base java/design && echo YES || echo NO)・$(git -C "$VERIF_ROOT/rm-r-wt8/shared.git" merge-base --is-ancestor java/base java/ut && echo YES || echo NO)"
+fi
+if want r-middle-n; then
+  hdr "R-MN 土台の手順: java/base が早送りで進んだ → ③' で n → そのままもう一度 → ③' の案内のとおり戻す → もう一度"
+  prep rm-r-mn; W="$VERIF_ROOT/rm-r-mn"
+  xdo rm-r-mn x 'git switch -q java/base && echo 土台の追記 >> rules/java.md && git commit -qam "java/base: 土台の追記" && git push -q origin java/base'
+  runp "R-MN n" rm-r-mn m maintain-middle.sh 'n\n' | tee "$W/mn.out"
+  runp "R-MN そのままもう一度" rm-r-mn m maintain-middle.sh 'y\n'
+  c="$(sed -n 's/.*の値へ戻し（\(.*\)）、このスクリプト.*/\1/p' "$W/mn.out" | head -1)"
+  if [ -n "$c" ]; then
+    echo "    （対処: ③' の案内どおり git switch --detach →$c）"; mdo rm-r-mn m "git switch -q --detach && $c"
+    runp "R-MN 案内どおり戻した後" rm-r-mn m maintain-middle.sh 'y\n'; ostate rm-r-mn
+  else
+    echo "    （③' の案内に戻すコマンドが無い）"
+  fi
+  echo "    origin の java/design・java/ut は java/base を含むか: $(git -C "$W/shared.git" merge-base --is-ancestor java/base java/design && echo YES || echo NO)・$(git -C "$W/shared.git" merge-base --is-ancestor java/base java/ut && echo YES || echo NO)"
 fi
 
 echo; echo "######## 終了 ########"
