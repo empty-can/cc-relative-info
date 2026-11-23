@@ -1,0 +1,48 @@
+################ M04 java/base と main の両方が進んでいる → 中間ブランチの手順 → 続けて定常手順
+  $ bash maintain-middle.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/scenes/sc-m04/shared
+    |    de31149..1519065  java/base  -> origin/java/base
+    |    f83d333..f928c39  main       -> origin/main
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-m04/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-m04/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | To C:/tmp/v21-vd/scenes/sc-m04/shared.git
+    |  + 9b57da5...63ffdea java/design -> java/design (forced update)
+    |  + 1337e53...6a21c4e java/ut -> java/ut (forced update)
+    | push した。
+  #### [M04 maintain-middle.sh] 終了コード 0
+    origin java/design: 土台の追記 1 件 ／ main の追記（PR #9）0 件
+    origin java/ut: 土台の追記 1 件 ／ main の追記（PR #9）0 件
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | Rebasing (1/4)Rebasing (2/4)Rebasing (3/4)Rebasing (4/4)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-m04/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-m04/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/scenes/sc-m04/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/scenes/sc-m04/shared.git
+    |  + 1519065...ae3fe4a java/base -> java/base (forced update)
+    |  + 63ffdea...89a5c6f java/design -> java/design (forced update)
+    |  + 6a21c4e...35af7d7 java/ut -> java/ut (forced update)
+    |  + 9eb9f6e...53f090c python/base -> python/base (forced update)
+    |  + 06f2710...f9fc610 python/coding -> python/coding (forced update)
+    | push した。
+  #### [M04 続けて maintain-steady.sh] 終了コード 0
+    origin java/base      ae3fe4a  main を含む: YES
+    origin java/design    89a5c6f  main を含む: YES
+    origin java/ut        35af7d7  main を含む: YES
+    origin main           f928c39  main を含む: YES
+    origin python/base    53f090c  main を含む: YES
+    origin python/coding  f9fc610  main を含む: YES
+    origin java/design: 土台の追記 1 件 ／ main の追記（PR #9）1 件
+    origin java/ut: 土台の追記 1 件 ／ main の追記（PR #9）1 件
+

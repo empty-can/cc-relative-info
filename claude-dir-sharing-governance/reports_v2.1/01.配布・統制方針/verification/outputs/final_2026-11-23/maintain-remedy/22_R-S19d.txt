@@ -1,0 +1,36 @@
+################ R-S19d 入力待ちの間に java/base へ commit → push の直前の、待つ前の値との比べで止まる → もう一度実行すると
+    | From C:/tmp/v21-vd/remedy/rm-r-s19d/shared
+    |    7f6b747..ab6fcf0  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （試験: 入力待ちの間に m の java/base へ commit した）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | 中断: 入力を待つ間に、このクローンの次のブランチが動いた: java/base（push は 1 本もしていない。待つ間の変更を確かめ、残すなら控えてから、git switch --detach の後に待つ前の値へ戻し（ git branch -f java/base 2969fe9d41fae20fb133e65195e579d16e6c9180;）、このスクリプトを最初からもう一度実行する）
+  #### [R-S19d 1 回目] 終了コード 1
+    中断の後の HEAD: java/base
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | 中断: ローカルの java/base に、origin に無い変更がある: + b749f50402f7c298828eb25c871a259abee447dd
+  #### [R-S19d そのままもう一度] 終了コード 1
+    （対処: git switch --detach の後、動かした java/base を git branch -f java/base origin/java/base で捨てる）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s19d/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s19d/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s19d/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s19d/shared.git
+    |  + 4600efc...8570ad0 java/base -> java/base (forced update)
+    |  + 79f35f9...b8be0b1 java/design -> java/design (forced update)
+    |  + 67dcae0...3216951 java/ut -> java/ut (forced update)
+    |  + 1fee5a0...3a175ab python/base -> python/base (forced update)
+    |  + 3da8809...6dd3736 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S19d 捨てた後] 終了コード 0
+

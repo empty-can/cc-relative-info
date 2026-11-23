@@ -1,0 +1,9 @@
+=== 参考: ローカルに中間ブランチ java/_base を持たないクローンで rebase した場合 ===
+    ローカルブランチ: [java/design master ]
+    Rebasing (1/2)Rebasing (2/2)[KSuccessfully rebased and updated refs/heads/java/design.
+    rebase の終了コード: 0
+    ローカルブランチ: [java/design master ]
+    ローカルの java/design は origin/master を先祖に持つ: YES
+    origin/java/_base は origin/master を先祖に持つ: NO
+    （push はしていない。origin/java/_base は、このクローンの rebase では動かない）
+#### run_one: end rc=0 seconds=8

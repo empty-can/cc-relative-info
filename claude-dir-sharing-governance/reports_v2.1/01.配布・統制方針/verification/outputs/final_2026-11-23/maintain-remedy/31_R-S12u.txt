@@ -1,0 +1,68 @@
+################ R-S12u resume の版で、解いている間に別のメンテナーが push して ④ が拒否 → git switch --detach の後に各ブランチを戻す → resume を付けずにやり直す → 解いて resume
+  $ bash run-maintain-steady-resume.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s12u/shared
+    |    d7b970e..4b41f9f  main        -> origin/main
+    |    3f5a4af..15db0e3  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 15db0e3... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら解いて continue し、resume で実行する）
+  #### [R-S12u 1 回目（衝突）] 終了コード 1
+  $ bash run-maintain-steady-resume.sh resume  （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s12u/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s12u/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s12u/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | error: atomic push failed for ref refs/heads/java/ut. status: 7
+    | 
+    | fatal: the remote end hung up unexpectedly
+    | To C:/tmp/v21-vd/remedy/rm-r-s12u/shared.git
+    |  ! [rejected]        java/base -> java/base (atomic push failed)
+    |  ! [rejected]        java/design -> java/design (atomic push failed)
+    |  ! [rejected]        java/ut -> java/ut (stale info)
+    |  ! [rejected]        python/base -> python/base (atomic push failed)
+    |  ! [rejected]        python/coding -> python/coding (atomic push failed)
+    | error: failed to push some refs to 'C:/tmp/v21-vd/remedy/rm-r-s12u/shared.git'
+    | 中断: push に失敗（拒否されたら、このスクリプトをもう一度実行する）
+  #### [R-S12u resume（拒否）] 終了コード 1
+    拒否の後の HEAD: python/coding
+    （対処: git switch --detach の後、BRANCHES の各ブランチを git branch -f で origin の値に戻す）
+  $ bash run-maintain-steady-resume.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s12u/shared
+    |    a8694ff..bce83a8  java/ut    -> origin/java/ut
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 15db0e3... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら解いて continue し、resume で実行する）
+  #### [R-S12u 付けずにやり直す（衝突する）] 終了コード 1
+  $ bash run-maintain-steady-resume.sh resume  （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s12u/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s12u/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s12u/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s12u/shared.git
+    |  + 55a4ad3...2b87949 java/base -> java/base (forced update)
+    |  + 15db0e3...910eca1 java/design -> java/design (forced update)
+    |  + bce83a8...cdae065 java/ut -> java/ut (forced update)
+    |  + 78648b8...4235c00 python/base -> python/base (forced update)
+    |  + 4d1368d...f58773f python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S12u 解いて resume] 終了コード 0
+    他のメンテナーの追記は origin の java/ut に残ったか: 1 件
+

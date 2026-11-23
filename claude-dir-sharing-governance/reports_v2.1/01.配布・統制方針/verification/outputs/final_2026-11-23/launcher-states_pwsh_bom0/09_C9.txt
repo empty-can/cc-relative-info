@@ -1,0 +1,10 @@
+== C9 ignore 済みの settings.local.json だけがある
+  $ & start_claude_code.ps1 
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at 2a95555 main
+    | [起動] cwd=C:\tmp\v21-vd\ls-pwsh0\launcher-pwsh-bom0\cases\c9 / .claude のブランチ=main / 先頭=2a95555 main
+    | [claude の引数] 0 個: 
+    → 終了コード 0
+    settings.local.json（後）: {"p":1}
+

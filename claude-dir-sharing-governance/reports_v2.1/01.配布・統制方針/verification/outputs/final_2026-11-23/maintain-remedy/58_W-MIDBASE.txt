@@ -1,0 +1,64 @@
+################ W-MIDBASE m が java/base に push して中間ブランチの手順 → その入力待ちの間に、m2 が java/base にもう 1 つ push → y → m2 が中間ブランチの手順 → 定常手順
+  $ bash run-w16-maintain-middle.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-w-midbase/shared
+    |    13899cc..c3782e4  main       -> origin/main
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    | m2 が java/base に push した
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | To C:/tmp/v21-vd/remedy/rm-w-midbase/shared.git
+    |  + 6e7c969...adba663 java/design -> java/design (forced update)
+    |  + f0ad527...c4cf591 java/ut -> java/ut (forced update)
+    | push した。
+  #### [W-MIDBASE m の中間ブランチの手順（入力待ちの間に m2 が java/base へ push）] 終了コード 0
+    origin java/base      1397046  main を含む: NO
+    origin java/design    adba663  main を含む: NO
+    origin java/ut        c4cf591  main を含む: NO
+    origin main           c3782e4  main を含む: YES
+    origin python/base    44c40d7  main を含む: NO
+    origin python/coding  7d4780a  main を含む: NO
+    origin の java/design は java/base を含むか: NO
+  $ bash run-maintain-middle.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-w-midbase/shared
+    |  + 6e7c969...adba663 java/design -> origin/java/design  (forced update)
+    |  + f0ad527...c4cf591 java/ut     -> origin/java/ut  (forced update)
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-w-midbase/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-w-midbase/m2" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | To C:/tmp/v21-vd/remedy/rm-w-midbase/shared.git
+    |  + adba663...0be766c java/design -> java/design (forced update)
+    |  + c4cf591...1fa17a7 java/ut -> java/ut (forced update)
+    | push した。
+  #### [W-MIDBASE m2 の中間ブランチの手順] 終了コード 0
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-w-midbase/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-w-midbase/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-w-midbase/m2" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-w-midbase/shared.git
+    |  + 1397046...38796a0 java/base -> java/base (forced update)
+    |  + 0be766c...a020445 java/design -> java/design (forced update)
+    |  + 1fa17a7...fd02707 java/ut -> java/ut (forced update)
+    |  + 44c40d7...2f8925b python/base -> python/base (forced update)
+    |  + 7d4780a...aff046a python/coding -> python/coding (forced update)
+    | push した。
+  #### [W-MIDBASE m2 の定常手順] 終了コード 0
+    origin java/base      38796a0  main を含む: YES
+    origin java/design    a020445  main を含む: YES
+    origin java/ut        fd02707  main を含む: YES
+    origin main           c3782e4  main を含む: YES
+    origin python/base    2f8925b  main を含む: YES
+    origin python/coding  aff046a  main を含む: YES
+    origin の java/design: m の追記 1 件・m2 の追記 1 件
+

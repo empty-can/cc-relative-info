@@ -1,0 +1,9 @@
+== 下
+G-in1	期待 0	実際 0	合う		VERIF_ROOT=C:/tmp/v21-vd/guard/ok1
+    |   lib.sh を通った: VERIF_ROOT=C:/tmp/v21-vd/guard/ok1 VERIF_ROOT_W=C:/tmp/v21-vd/guard/ok1
+G-in2	期待 0	実際 0	合う		VERIF_ROOT=/c/tmp/v21-vd/guard/ok2
+    |   lib.sh を通った: VERIF_ROOT=/c/tmp/v21-vd/guard/ok2 VERIF_ROOT_W=C:/tmp/v21-vd/guard/ok2
+G-in3	期待 0	実際 0	合う		VERIF_ROOT=C:\tmp\v21-vd\guard\ok3
+    |   lib.sh を通った: VERIF_ROOT=C:/tmp/v21-vd/guard/ok3 VERIF_ROOT_W=C:/tmp/v21-vd/guard/ok3
+G-in4	期待 0	実際 0	合う		VERIF_ROOT=c:/TMP/v21-vd/guard/ok4
+    |   lib.sh を通った: VERIF_ROOT=c:/TMP/v21-vd/guard/ok4 VERIF_ROOT_W=C:/TMP/v21-vd/guard/ok4

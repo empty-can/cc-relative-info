@@ -1,0 +1,8 @@
+== C18 サブディレクトリから起動
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at 900afff main 追記
+    | [起動] cwd=C:\tmp\v21-vd\ls-chk-pwsh\launcher-pwsh-bom0\cases\c18 / .claude のブランチ=main / 先頭=900afff main 追記
+    | [claude の引数] 0 個: 
+    → 終了コード 0
+

@@ -1,0 +1,23 @@
+################ M02 手元に java/old（origin で消した旧いブランチ。java/base を含まない）が残っている
+  $ bash control-middle-prev.sh   （stdin: /dev/null）
+    | From C:/tmp/v21-vd/scenes/sc-m02o/shared
+    |    07f2e27..ab4d467  java/base  -> origin/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | 中断: main を取り込めていない: java/old
+  #### [M02 対照（前の形）] 終了コード 1
+  $ bash maintain-middle.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/scenes/sc-m02n/shared
+    |    6ea156d..f2c8662  java/base  -> origin/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-m02n/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-m02n/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | To C:/tmp/v21-vd/scenes/sc-m02n/shared.git
+    |  + 1729626...164c2f7 java/design -> java/design (forced update)
+    |  + 474686f...967d12e java/ut -> java/ut (forced update)
+    | push した。
+  #### [M02 maintain-middle.sh y] 終了コード 0
+

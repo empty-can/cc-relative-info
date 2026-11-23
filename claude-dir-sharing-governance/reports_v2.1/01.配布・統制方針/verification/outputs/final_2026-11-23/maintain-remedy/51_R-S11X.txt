@@ -1,0 +1,51 @@
+################ R-S11X commit していない変更 → 案内の手（変更を捨てる）／案内に無い手（末端 java/design で commit・origin に無いブランチを切って commit）→ もう一度
+    （対処 r: git checkout -- . で変更を捨てる）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s11xr/shared
+    |    a075a1b..a5d9765  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s11xr/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s11xr/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s11xr/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s11xr/shared.git
+    |  + 10fac3b...604e2c6 java/base -> java/base (forced update)
+    |  + f774c72...5db37e0 java/design -> java/design (forced update)
+    |  + ad656c1...d21b4a7 java/ut -> java/ut (forced update)
+    |  + 03d2b0b...6414673 python/base -> python/base (forced update)
+    |  + fee256a...cb2ac31 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S11Xr 捨てた後] 終了コード 0
+    （対処 d: 末端 java/design で commit。push しない）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s11xd/shared
+    |    5f51947..d55beb8  main       -> origin/main
+    | 中断: ローカルの java/design に、origin に無い変更がある: + 8c076349939bfea3076d10d20e6b701b1e951c3e
+  #### [R-S11Xd 末端で commit の後] 終了コード 1
+    （対処 t: origin に無いブランチ topic/local を切って commit）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s11xt/shared
+    |    3b6bfd9..7bdb322  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s11xt/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s11xt/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s11xt/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s11xt/shared.git
+    |  + 3afa220...7915a10 java/base -> java/base (forced update)
+    |  + 120b282...6536f31 java/design -> java/design (forced update)
+    |  + d5c8fcb...725daaa java/ut -> java/ut (forced update)
+    |  + 2f2fe00...1c96e3a python/base -> python/base (forced update)
+    |  + bb6bb10...ddef40a python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S11Xt origin に無いブランチで commit の後] 終了コード 0
+    topic/local は残っているか: 残る
+

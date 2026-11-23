@@ -1,0 +1,59 @@
+################ S20 2 人目のメンテナー m2 が、1 人目の rebase より前の古いローカルブランチのまま実行する（maintain-steady.sh）
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/scenes/sc-s20/shared
+    |    8d947ed..ec95ccc  main       -> origin/main
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-s20/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-s20/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/scenes/sc-s20/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/scenes/sc-s20/shared.git
+    |  + 21c0336...7da531c java/base -> java/base (forced update)
+    |  + 84a846f...76bfd79 java/design -> java/design (forced update)
+    |  + 911220c...503df50 java/ut -> java/ut (forced update)
+    |  + ead71d7...c67b592 python/base -> python/base (forced update)
+    |  + b72238d...81d207d python/coding -> python/coding (forced update)
+    | push した。
+  #### [S20 m が実行 y] 終了コード 0
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/scenes/sc-s20/shared
+    |    8d947ed..d408770  main          -> origin/main
+    |  + 21c0336...7da531c java/base     -> origin/java/base  (forced update)
+    |  + 84a846f...76bfd79 java/design   -> origin/java/design  (forced update)
+    |  + 911220c...503df50 java/ut       -> origin/java/ut  (forced update)
+    |  + ead71d7...c67b592 python/base   -> origin/python/base  (forced update)
+    |  + b72238d...81d207d python/coding -> origin/python/coding  (forced update)
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-s20/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-s20/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/scenes/sc-s20/m2" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/scenes/sc-s20/shared.git
+    |  + 7da531c...647e6c3 java/base -> java/base (forced update)
+    |  + 76bfd79...da783ef java/design -> java/design (forced update)
+    |  + 503df50...cbfb5e4 java/ut -> java/ut (forced update)
+    |  + c67b592...b559657 python/base -> python/base (forced update)
+    |  + 81d207d...978cd5f python/coding -> python/coding (forced update)
+    | push した。
+  #### [S20 m2 が実行 y] 終了コード 0
+    origin java/base      647e6c3  main を含む: YES
+    origin java/design    da783ef  main を含む: YES
+    origin java/ut        cbfb5e4  main を含む: YES
+    origin main           d408770  main を含む: YES
+    origin python/base    b559657  main を含む: YES
+    origin python/coding  978cd5f  main を含む: YES
+

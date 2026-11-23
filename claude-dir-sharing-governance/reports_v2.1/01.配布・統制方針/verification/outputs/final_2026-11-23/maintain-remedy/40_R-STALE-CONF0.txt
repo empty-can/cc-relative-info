@@ -1,0 +1,65 @@
+################ R-STALE-CONF0 m2 は衝突するコミット（java/design の CLAUDE.md の追記）を手元に持つだけで、自分では何も足していない → m が (b) で衝突を解いて resume で push → m2 が定常手順 → 捨てる → もう一度
+  $ bash run-maintain-steady-resume.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-stale-conf0/shared
+    |    b8e3e8b..11b4a02  main        -> origin/main
+    |    ce0b4bc..072b475  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 072b475... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら解いて continue し、resume で実行する）
+  #### [R-STALE-CONF0 m の 1 回目（衝突）] 終了コード 1
+  $ bash run-maintain-steady-resume.sh resume  （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-stale-conf0/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-stale-conf0/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-stale-conf0/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-stale-conf0/shared.git
+    |  + b04250b...ed9d1fa java/base -> java/base (forced update)
+    |  + 072b475...a1b5664 java/design -> java/design (forced update)
+    |  + 9edf052...fedfccf java/ut -> java/ut (forced update)
+    |  + 2b0035d...7618a80 python/base -> python/base (forced update)
+    |  + b61b584...98f11f5 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-STALE-CONF0 m の resume] 終了コード 0
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-stale-conf0/shared
+    |  + b04250b...ed9d1fa java/base     -> origin/java/base  (forced update)
+    |  + 072b475...a1b5664 java/design   -> origin/java/design  (forced update)
+    |  + 9edf052...fedfccf java/ut       -> origin/java/ut  (forced update)
+    |  + 2b0035d...7618a80 python/base   -> origin/python/base  (forced update)
+    |  + b61b584...98f11f5 python/coding -> origin/python/coding  (forced update)
+    | 中断: ローカルの java/design に、origin に無い変更がある: + 072b475b3c6a9af3f70d511799e9e41c0fb14e40
+  #### [R-STALE-CONF0 m2 の 1 回目] 終了コード 1
+    中断の後の m2 の HEAD: HEAD
+    m2: git cherry -v origin/java/design java/design origin/main:
+      - b04250b5c47df686870bcedf0e515d061f7be107 java/base: java 共通 rule
+      - ce0b4bcf418ba95c4b6974571f5e72a6661d7b03 java/design: 設計 rule
+      + 072b475b3c6a9af3f70d511799e9e41c0fb14e40 java/design: CLAUDE.md に追記
+    （対処: git branch -f java/design origin/java/design で捨てる）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Current branch java/design is up to date.
+    | Current branch java/ut is up to date.
+    | Current branch python/coding is up to date.
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-stale-conf0/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-stale-conf0/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-stale-conf0/m2" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | Everything up-to-date
+    | push した。
+  #### [R-STALE-CONF0 m2 の捨てた後] 終了コード 0
+    origin java/base      ed9d1fa  main を含む: YES
+    origin java/design    a1b5664  main を含む: YES
+    origin java/ut        fedfccf  main を含む: YES
+    origin main           11b4a02  main を含む: YES
+    origin python/base    7618a80  main を含む: YES
+    origin python/coding  98f11f5  main を含む: YES
+

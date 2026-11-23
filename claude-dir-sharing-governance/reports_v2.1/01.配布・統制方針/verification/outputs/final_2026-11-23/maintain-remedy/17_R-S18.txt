@@ -1,0 +1,76 @@
+################ R-S18 push していないコミットで ① が止まる → 先に push する／git branch -f で捨てる／switch して reset --hard で捨てる
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s18p/shared
+    |    6708e84..3ec1628  main       -> origin/main
+    | 中断: ローカルの java/design に、origin に無い変更がある: + 9d1a72cf6b4733d1f9abb0fa1fb7953575157b25
+  #### [R-S18 1 回目] 終了コード 1
+    log: 9d1a72c java/design: まだ push していない
+    （対処 p: 先に push する）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s18p/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s18p/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s18p/m2" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s18p/shared.git
+    |  + 3df0413...3f5a370 java/base -> java/base (forced update)
+    |  + 9d1a72c...866a2e1 java/design -> java/design (forced update)
+    |  + 805459c...273ce32 java/ut -> java/ut (forced update)
+    |  + 25323ff...5a2e348 python/base -> python/base (forced update)
+    |  + a6e945a...fad4ef4 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S18p push の後] 終了コード 0
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s18b/shared
+    |    4877b8c..3357905  main       -> origin/main
+    | 中断: ローカルの java/design に、origin に無い変更がある: + 116c789cfcc12a4b5e1d071d2a0b8c9d58787c07
+  #### [R-S18b 1 回目] 終了コード 1
+    中断の後の HEAD: HEAD
+    （対処 b: git branch -f java/design origin/java/design）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s18b/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s18b/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s18b/m2" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s18b/shared.git
+    |  + 4a40fd2...76889ac java/base -> java/base (forced update)
+    |  + 87e625f...f4ea702 java/design -> java/design (forced update)
+    |  + 500527c...d880014 java/ut -> java/ut (forced update)
+    |  + a80edca...767615f python/base -> python/base (forced update)
+    |  + c9afd39...321ce31 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S18b 捨てた後] 終了コード 0
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s18r/shared
+    |    9768cd0..a702c64  main       -> origin/main
+    | 中断: ローカルの java/design に、origin に無い変更がある: + c4b1f1d985b2e254b24f278490eac526a2cd93dd
+  #### [R-S18r 1 回目] 終了コード 1
+    （対処 r: git switch java/design → git reset --hard origin/java/design）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s18r/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s18r/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s18r/m2" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s18r/shared.git
+    |  + bf3ddbc...7fc9a6c java/base -> java/base (forced update)
+    |  + 299a8fe...eaa4141 java/design -> java/design (forced update)
+    |  + 15bb320...514facb java/ut -> java/ut (forced update)
+    |  + 19aa2a6...9bd549d python/base -> python/base (forced update)
+    |  + 2cfc7f0...3b65f2f python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S18r 捨てた後] 終了コード 0
+

@@ -1,0 +1,60 @@
+################ S14 メンテナーが別のブランチにいる・detached HEAD から始める
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/scenes/sc-s14a/shared
+    |    67f32b3..cb18329  main       -> origin/main
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-s14a/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-s14a/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/scenes/sc-s14a/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/scenes/sc-s14a/shared.git
+    |  + ed39b9b...7dc20f1 java/base -> java/base (forced update)
+    |  + 724b57a...70af08b java/design -> java/design (forced update)
+    |  + 4c68c98...f0f3f4c java/ut -> java/ut (forced update)
+    |  + 322e197...9ab88c8 python/base -> python/base (forced update)
+    |  + 76d9318...ad769f3 python/coding -> python/coding (forced update)
+    | push した。
+  #### [S14a java/ut にいる y] 終了コード 0
+    origin java/base      7dc20f1  main を含む: YES
+    origin java/design    70af08b  main を含む: YES
+    origin java/ut        f0f3f4c  main を含む: YES
+    origin main           cb18329  main を含む: YES
+    origin python/base    9ab88c8  main を含む: YES
+    origin python/coding  ad769f3  main を含む: YES
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/scenes/sc-s14b/shared
+    |    ccb21fc..03f47cb  main       -> origin/main
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-s14b/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-s14b/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/scenes/sc-s14b/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/scenes/sc-s14b/shared.git
+    |  + 2892fb9...31128db java/base -> java/base (forced update)
+    |  + fad56ff...c46e3db java/design -> java/design (forced update)
+    |  + 1fb73a5...de1ecc0 java/ut -> java/ut (forced update)
+    |  + 9ad4442...0f7a33c python/base -> python/base (forced update)
+    |  + 1249995...94cddf5 python/coding -> python/coding (forced update)
+    | push した。
+  #### [S14b detached HEAD y] 終了コード 0
+    origin java/base      31128db  main を含む: YES
+    origin java/design    c46e3db  main を含む: YES
+    origin java/ut        de1ecc0  main を含む: YES
+    origin main           03f47cb  main を含む: YES
+    origin python/base    0f7a33c  main を含む: YES
+    origin python/coding  94cddf5  main を含む: YES
+

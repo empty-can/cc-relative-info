@@ -1,0 +1,24 @@
+################ S10 系列の一覧にある python/coding が origin に無い（origin で消した。手元には残る）
+  $ bash control-steady-prev.sh   （stdin: /dev/null）
+    | From C:/tmp/v21-vd/scenes/sc-s10o/shared
+    |  - [deleted]         (none)     -> origin/python/coding
+    |    642aed3..f37c755  main       -> origin/main
+    | fatal: ambiguous argument 'refs/remotes/origin/python/coding': unknown revision or path not in the working tree.
+    | Use '--' to separate paths from revisions, like this:
+    | 'git <command> [<revision>...] -- [<file>...]'
+    | 中断: python/coding が origin に無い
+  #### [S10 対照（前の形）] 終了コード 1
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/scenes/sc-s10n/shared
+    |  - [deleted]         (none)     -> origin/python/coding
+    |    fa9149e..87ebbaa  main       -> origin/main
+    | 中断: python/coding が origin に無い（BRANCHES を直す）
+  #### [S10 maintain-steady.sh y] 終了コード 1
+    ローカル HEAD: HEAD ／ rebase 中: いいえ
+    local  java/base 9465343
+    local  java/design 9d35f8f
+    local  java/ut 13b60b0
+    local  main 87ebbaa
+    local  python/base fbf89fc
+    local  python/coding 525f3b8
+

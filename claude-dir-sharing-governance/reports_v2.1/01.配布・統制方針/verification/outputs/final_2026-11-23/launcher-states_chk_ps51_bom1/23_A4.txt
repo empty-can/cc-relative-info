@@ -1,0 +1,9 @@
+== A4 引数を渡す: -w x -d --model sonnet
+  $ & start_claude_code.ps1 -w x -d --model sonnet
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at c6355f2 main 追記
+    | [起動] cwd=C:\tmp\v21-vd\ls-chk-ps51\launcher-powershell-bom1\cases\a4 / .claude のブランチ=main / 先頭=c6355f2 main 追記
+    | [claude の引数] 5 個: <-w> <x> <-d> <--model> <sonnet>
+    → 終了コード 0
+

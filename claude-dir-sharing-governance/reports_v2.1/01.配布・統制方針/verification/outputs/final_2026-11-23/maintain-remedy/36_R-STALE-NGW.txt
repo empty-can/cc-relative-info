@@ -1,0 +1,89 @@
+################ R-STALE-NGW m の ③' の入力待ちの間に m2 が定常手順を終える → m は n で終える → 本紙の「このクローンで直すとき」の手で直して push → 拒否 → git fetch・git switch・git rebase → push → もう一度
+  $ bash run-w1-maintain-steady.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-r-stale-ngw/shared
+    |    e50c2d2..cf7513c  main       -> origin/main
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    |   $ bash run-maintain-steady.sh   （stdin: y\\n）
+    |     | From C:/tmp/v21-vd/remedy/rm-r-stale-ngw/shared
+    |     |    e50c2d2..cf7513c  main       -> origin/main
+    |     | Updated the following refs with --update-refs:
+    |     | 	refs/heads/java/base
+    |     | Updated the following refs with --update-refs:
+    |     | 	refs/heads/python/base
+    |     | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |     | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    |     | To C:/tmp/v21-vd/remedy/rm-r-stale-ngw/shared.git
+    |     |  + 8f3d776...23f80a2 java/base -> java/base (forced update)
+    |     |  + ee70856...39ac607 java/design -> java/design (forced update)
+    |     |  + c88c039...3c55e43 java/ut -> java/ut (forced update)
+    |     |  + 576d024...581613a python/base -> python/base (forced update)
+    |     |  + a7d667d...d6c8672 python/coding -> python/coding (forced update)
+    |     | push した。
+    |   #### [R-STALE-NGW m2 の定常手順] 終了コード 0
+    | （ここで n を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | push しなかった。
+  #### [R-STALE-NGW m（入力待ちの間に m2 の定常手順。その後 n）] 終了コード 2
+    （本紙の手: git switch --detach → git branch -f java/design origin/java/design → git switch java/design → 直しを commit → push）
+    push| To C:/tmp/v21-vd/remedy/rm-r-stale-ngw/shared.git
+    push|  ! [rejected]        java/design -> java/design (fetch first)
+    push| error: failed to push some refs to 'C:/tmp/v21-vd/remedy/rm-r-stale-ngw/shared.git'
+    push| hint: Updates were rejected because the remote contains work that you do not
+    push| hint: have locally. This is usually caused by another repository pushing to
+    push| hint: the same ref. If you want to integrate the remote changes, use
+    push| hint: 'git pull' before pushing again.
+    push| hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+    m: git push origin java/design の終了コード: 1
+    （対処: git fetch → git switch java/design → git rebase origin/java/design → git push origin java/design）
+    fetch| From C:/tmp/v21-vd/remedy/rm-r-stale-ngw/shared
+    fetch|  + ee70856...39ac607 java/design   -> origin/java/design  (forced update)
+    fetch|  + 8f3d776...23f80a2 java/base     -> origin/java/base  (forced update)
+    fetch|  + c88c039...3c55e43 java/ut       -> origin/java/ut  (forced update)
+    fetch|  + 576d024...581613a python/base   -> origin/python/base  (forced update)
+    fetch|  + a7d667d...d6c8672 python/coding -> origin/python/coding  (forced update)
+    m: git fetch origin の終了コード: 0
+    switch| Your branch and 'origin/java/design' have diverged,
+    switch| and have 3 and 3 different commits each, respectively.
+    switch|   (use "git pull" if you want to integrate the remote branch with yours)
+    switch| Already on 'java/design'
+    m: git switch java/design の終了コード: 0
+    rebase| warning: skipped previously applied commit 8f3d776
+    rebase| warning: skipped previously applied commit ee70856
+    rebase| hint: use --reapply-cherry-picks to include skipped commits
+    rebase| hint: Disable this message with "git config advice.skippedCherryPicks false"
+    rebase| [KSuccessfully rebased and updated refs/heads/java/design.
+    m: git rebase origin/java/design の終了コード: 0
+    push| To C:/tmp/v21-vd/remedy/rm-r-stale-ngw/shared.git
+    push|    39ac607..2dea04a  java/design -> java/design
+    m: git push origin java/design の終了コード: 0
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Current branch java/design is up to date.
+    | Current branch java/ut is up to date.
+    | Current branch python/coding is up to date.
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-stale-ngw/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-stale-ngw/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-stale-ngw/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | Everything up-to-date
+    | push した。
+  #### [R-STALE-NGW m の 2 回目] 終了コード 0
+    origin java/base      23f80a2  main を含む: YES
+    origin java/design    2dea04a  main を含む: YES
+    origin java/ut        3c55e43  main を含む: YES
+    origin main           cf7513c  main を含む: YES
+    origin python/base    581613a  main を含む: YES
+    origin python/coding  d6c8672  main を含む: YES
+    origin の java/design: 直し 1 件 ／ 共通 rule のコミット 1 件
+

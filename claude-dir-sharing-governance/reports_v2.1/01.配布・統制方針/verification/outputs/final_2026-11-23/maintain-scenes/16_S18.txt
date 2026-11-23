@@ -1,0 +1,7 @@
+################ S18 push していないコミットがある（m2 の java/design）
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/scenes/sc-s18/shared
+    |    a8de413..c3eabd7  main       -> origin/main
+    | 中断: ローカルの java/design に、origin に無い変更がある: + 7260a10e5e858e93bcbfa7c5d0549def99397c6a
+  #### [S18 maintain-steady.sh y] 終了コード 1
+

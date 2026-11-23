@@ -1,0 +1,24 @@
+################ E5 origin で消したブランチ pr/6 が、メンテナーの手元に残る（squash でマージして origin から消した）
+    前提: origin に pr/6: 無い ／ m の手元に pr/6: af3ffa7
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-e5/shared
+    |  - [deleted]         (none)     -> origin/pr/6
+    |    3a15a1d..20967bd  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-e5/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-e5/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-e5/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-e5/shared.git
+    |  + ab9fa5a...69e8bda java/base -> java/base (forced update)
+    |  + c69407f...9b6ff9d java/design -> java/design (forced update)
+    |  + b600edc...282c593 java/ut -> java/ut (forced update)
+    |  + f7a68b1...aebb34a python/base -> python/base (forced update)
+    |  + ff12aeb...7cbd176 python/coding -> python/coding (forced update)
+    | push した。
+  #### [E5 origin で消した] 終了コード 0
+

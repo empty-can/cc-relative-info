@@ -1,0 +1,5 @@
+=== 消費側: fetch → switch → reset --hard 後 ===
+    ブランチ: master / rules: plain-rule.md 
+    settings.local.json: { "env": { "PERSONAL": "KEEPME" } }
+    git status: [?? settings.local.json ]
+#### run_one: end rc=0 seconds=3

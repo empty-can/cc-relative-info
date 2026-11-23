@@ -1,0 +1,37 @@
+=== (iv) git status --porcelain と git clean（(i) の足場。worktrees/・agent-memory/ は未追跡）===
+  前:
+      ブランチ=master HEAD=c9010ca CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[{ "env": { "FROM": "PERSONAL" } }]
+      status --porcelain=[?? agent-memory/ ?? worktrees/ ] --ignored=[!! settings.local.json ]
+    git status --porcelain:
+      | ?? agent-memory/
+      | ?? worktrees/
+    git status --porcelain --ignored:
+      | ?? agent-memory/
+      | ?? worktrees/
+      | !! settings.local.json
+    git clean -n -fd（消す予定の一覧）:
+      | Would remove agent-memory/
+      | Would remove worktrees/
+    $ git clean -fd   （clean -fd）
+      | Removing agent-memory/
+      | Removing worktrees/
+      終了コード: 0
+      ブランチ=master HEAD=c9010ca CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[{ "env": { "FROM": "PERSONAL" } }]
+      status --porcelain=[] --ignored=[!! settings.local.json ]
+      残ったもの: [.git .gitignore CLAUDE.md settings.local.json ]
+    git clean -n -fdx（消す予定の一覧）:
+      | Would remove agent-memory/
+      | Would remove settings.local.json
+      | Would remove worktrees/
+    $ git clean -fdx   （clean -fdx）
+      | Removing agent-memory/
+      | Removing settings.local.json
+      | Removing worktrees/
+      終了コード: 0
+      ブランチ=master HEAD=c9010ca CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[★無い★]
+      status --porcelain=[] --ignored=[]
+      残ったもの: [.git .gitignore CLAUDE.md ]
+#### run_one: end rc=0 seconds=32

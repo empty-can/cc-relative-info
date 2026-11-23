@@ -1,0 +1,58 @@
+== N12 D/F: 旧い名前 java を使っていたメンバー。メンテナーが java を消して java/base を作った（別の共有リポ shared2）
+  -- -Branch java/base
+  $ & start_claude_code.ps1 -Branch java/base
+    | From C:/tmp/v21-vd/ls-pwsh0/launcher-pwsh-bom0/shared2
+    |  - [deleted]         (none)     -> origin/java
+    |  * [new branch]      java/base  -> origin/java/base
+    | fatal: cannot lock ref 'refs/heads/java/base': 'refs/heads/java' exists; cannot create 'refs/heads/java/base'
+    | ブランチ 'java/base' への切替に失敗しました。中断します。
+    → 終了コード 1
+    .claude のブランチ（後）: java ／ 先頭: 67df5ff java
+    refs/remotes/origin: origin origin/java/base origin/main  ／ ローカル: java main 
+  -- -Branch 省略（main）
+  $ & start_claude_code.ps1 
+    | .claude/ にローカル変更があります。更新を中止しました:
+    | D  j.md
+    | A  jb.md
+    | git -C .claude status で中身を確かめてください。覚えのないものは消さずに、メンテナーへ相談してください。
+    → 終了コード 1
+    .claude のブランチ（後）: java ／ 先頭: 67df5ff java
+  -- もう一度 -Branch java/base
+  $ & start_claude_code.ps1 -Branch java/base
+    | .claude/ にローカル変更があります。更新を中止しました:
+    | D  j.md
+    | A  jb.md
+    | git -C .claude status で中身を確かめてください。覚えのないものは消さずに、メンテナーへ相談してください。
+    → 終了コード 1
+    .claude のブランチ（後）: java ／ 先頭: 67df5ff java
+    git -C .claude status --short: D  j.md A  jb.md 
+  -- 戻し方 (1): switch -f main で作業ツリーを戻し、旧いローカルブランチ java を消してから -Branch java/base
+  $ & start_claude_code.ps1 -Branch java/base
+    | branch 'java/base' set up to track 'origin/java/base'.
+    | Switched to a new branch 'java/base'
+    | .claude/ のブランチを切り替えました: main → java/base
+    | HEAD is now at c630045 java/base
+    | [起動] cwd=C:\tmp\v21-vd\ls-pwsh0\launcher-pwsh-bom0\cases\n12 / .claude のブランチ=java/base / 先頭=c630045 java/base
+    | [claude の引数] 0 個: 
+    → 終了コード 0
+    .claude のブランチ（後）: java/base ／ 先頭: c630045 java/base
+  -- 戻し方 (2): 同じ状態の n12b で 1 回失敗させた後、.claude を消して（個人のファイルを退避した前提）ランチャーに clone させる
+  $ & start_claude_code.ps1 -Branch java/base
+    | From C:/tmp/v21-vd/ls-pwsh0/launcher-pwsh-bom0/shared2
+    |  - [deleted]         (none)     -> origin/java
+    |  * [new branch]      java/base  -> origin/java/base
+    | fatal: cannot lock ref 'refs/heads/java/base': 'refs/heads/java' exists; cannot create 'refs/heads/java/base'
+    | ブランチ 'java/base' への切替に失敗しました。中断します。
+    → 終了コード 1
+    .claude のブランチ（後）: java ／ 先頭: 67df5ff java
+  $ & start_claude_code.ps1 -Branch java/base
+    | Cloning into 'C:\tmp\v21-vd\ls-pwsh0\launcher-pwsh-bom0\cases\n12b\.claude'...
+    | done.
+    | Your branch is up to date with 'origin/java/base'.
+    | Already on 'java/base'
+    | HEAD is now at c630045 java/base
+    | [起動] cwd=C:\tmp\v21-vd\ls-pwsh0\launcher-pwsh-bom0\cases\n12b / .claude のブランチ=java/base / 先頭=c630045 java/base
+    | [claude の引数] 0 個: 
+    → 終了コード 0
+    .claude のブランチ（後）: java/base ／ 先頭: c630045 java/base
+

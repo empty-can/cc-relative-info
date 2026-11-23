@@ -1,0 +1,73 @@
+################ C-BOTH2 m が定常手順を始める → 入力待ちの間に PR #2 がマージされ、それをマージした m2 が定常手順を最後まで通す → m に y → もう一度
+  $ bash run-w5-maintain-steady.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-c-both2/shared
+    |    051c824..ebc1f73  main       -> origin/main
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    |   $ bash run-maintain-steady.sh   （stdin: y\\n）
+    |     | From C:/tmp/v21-vd/remedy/rm-c-both2/shared
+    |     |    051c824..ca80176  main       -> origin/main
+    |     | Updated the following refs with --update-refs:
+    |     | 	refs/heads/java/base
+    |     | Updated the following refs with --update-refs:
+    |     | 	refs/heads/python/base
+    |     | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |     | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    |     | To C:/tmp/v21-vd/remedy/rm-c-both2/shared.git
+    |     |  + e76fb69...f6108d6 java/base -> java/base (forced update)
+    |     |  + 91aa44c...60eac4d java/design -> java/design (forced update)
+    |     |  + b6be2f0...1ec947b java/ut -> java/ut (forced update)
+    |     |  + 9e1ff5c...04143a9 python/base -> python/base (forced update)
+    |     |  + 6d85dd9...7879c19 python/coding -> python/coding (forced update)
+    |     | push した。
+    |   #### [C-BOTH2 m2 の定常手順] 終了コード 0
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | error: atomic push failed for ref refs/heads/java/base. status: 7
+    | 
+    | fatal: the remote end hung up unexpectedly
+    | To C:/tmp/v21-vd/remedy/rm-c-both2/shared.git
+    |  ! [rejected]        java/base -> java/base (stale info)
+    |  ! [rejected]        java/design -> java/design (stale info)
+    |  ! [rejected]        java/ut -> java/ut (stale info)
+    |  ! [rejected]        python/base -> python/base (stale info)
+    |  ! [rejected]        python/coding -> python/coding (stale info)
+    | error: failed to push some refs to 'C:/tmp/v21-vd/remedy/rm-c-both2/shared.git'
+    | 中断: push に失敗（拒否されたら、このスクリプトをもう一度実行する）
+  #### [C-BOTH2 m（入力待ちの間に PR #2 と m2 の定常手順）] 終了コード 1
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-c-both2/shared
+    |  + 6d85dd9...7879c19 python/coding -> origin/python/coding  (forced update)
+    |  + e76fb69...f6108d6 java/base     -> origin/java/base  (forced update)
+    |  + 91aa44c...60eac4d java/design   -> origin/java/design  (forced update)
+    |  + b6be2f0...1ec947b java/ut       -> origin/java/ut  (forced update)
+    |    ebc1f73..ca80176  main          -> origin/main
+    |  + 9e1ff5c...04143a9 python/base   -> origin/python/base  (forced update)
+    | Current branch java/design is up to date.
+    | Current branch java/ut is up to date.
+    | Current branch python/coding is up to date.
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-c-both2/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-c-both2/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-c-both2/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | Everything up-to-date
+    | push した。
+  #### [C-BOTH2 m のもう一度] 終了コード 0
+    origin java/base      f6108d6  main を含む: YES
+    origin java/design    60eac4d  main を含む: YES
+    origin java/ut        1ec947b  main を含む: YES
+    origin main           ca80176  main を含む: YES
+    origin python/base    04143a9  main を含む: YES
+    origin python/coding  7879c19  main を含む: YES
+

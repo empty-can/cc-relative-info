@@ -1,0 +1,65 @@
+################ W-MAIN m の ③' の入力待ちの間に、PR #2 のマージで origin の main が進む → y → PR #2 をマージした m2 が定常手順
+  $ bash run-w13-maintain-steady.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-w-main/shared
+    |    4c2c631..e246eab  main       -> origin/main
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    | PR #2 を main にマージした
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-w-main/shared.git
+    |  + 2ea2ee6...9d89bd8 java/base -> java/base (forced update)
+    |  + af695d6...8f0a345 java/design -> java/design (forced update)
+    |  + ab62ec9...07728eb java/ut -> java/ut (forced update)
+    |  + 94e74cc...2e139a8 python/base -> python/base (forced update)
+    |  + 894d289...aeb4369 python/coding -> python/coding (forced update)
+    | push した。
+  #### [W-MAIN m（入力待ちの間に PR #2）] 終了コード 0
+    origin java/base      9d89bd8  main を含む: NO
+    origin java/design    8f0a345  main を含む: NO
+    origin java/ut        07728eb  main を含む: NO
+    origin main           013055d  main を含む: YES
+    origin python/base    2e139a8  main を含む: NO
+    origin python/coding  aeb4369  main を含む: NO
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-w-main/shared
+    |    4c2c631..013055d  main          -> origin/main
+    |  + 2ea2ee6...9d89bd8 java/base     -> origin/java/base  (forced update)
+    |  + af695d6...8f0a345 java/design   -> origin/java/design  (forced update)
+    |  + ab62ec9...07728eb java/ut       -> origin/java/ut  (forced update)
+    |  + 94e74cc...2e139a8 python/base   -> origin/python/base  (forced update)
+    |  + 894d289...aeb4369 python/coding -> origin/python/coding  (forced update)
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-w-main/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-w-main/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-w-main/m2" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-w-main/shared.git
+    |  + 9d89bd8...d03647c java/base -> java/base (forced update)
+    |  + 8f0a345...61bf4ea java/design -> java/design (forced update)
+    |  + 07728eb...19174ce java/ut -> java/ut (forced update)
+    |  + 2e139a8...2d50bd5 python/base -> python/base (forced update)
+    |  + aeb4369...6be1775 python/coding -> python/coding (forced update)
+    | push した。
+  #### [W-MAIN m2 の定常手順] 終了コード 0
+    origin java/base      d03647c  main を含む: YES
+    origin java/design    61bf4ea  main を含む: YES
+    origin java/ut        19174ce  main を含む: YES
+    origin main           013055d  main を含む: YES
+    origin python/base    2d50bd5  main を含む: YES
+    origin python/coding  6be1775  main を含む: YES
+

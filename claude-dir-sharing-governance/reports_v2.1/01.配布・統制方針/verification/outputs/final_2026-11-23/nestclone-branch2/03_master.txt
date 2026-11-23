@@ -1,0 +1,13 @@
+=== master を先に進めてから、多段 rebase で伝播 ===
+    master の先頭: c035830 master に追記（branch2 の多段伝播の起点）
+    rebase 前: java/_base は master を先祖に持つか: NO
+    Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    Updated the following refs with --update-refs:
+    	refs/heads/java/_base
+    rebase の終了コード: 0
+    java/_base  の先頭: c9e3582 java 系共通の rule
+    java/design の先頭: b16375a 設計作業固有の rule
+    rebase 後: java/_base は master を先祖に持つか: YES
+    rebase 後: java/design は master を先祖に持つか: YES
+    push --force の終了コード: 0
+

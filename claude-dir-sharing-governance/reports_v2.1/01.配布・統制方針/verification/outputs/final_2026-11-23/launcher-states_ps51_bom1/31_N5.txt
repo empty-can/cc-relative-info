@@ -1,0 +1,23 @@
+== N5 大文字小文字違い（-Branch Java/Design）。一度 java/design へ切り替えたことがある（loose な ref がある）
+    refs/heads/java/design のファイル: ある
+  $ & start_claude_code.ps1 -Branch Java/Design
+    | Switched to branch 'Java/Design'
+    | .claude/ のブランチを切り替えました: main → Java/Design
+    | fatal: ambiguous argument 'origin/Java/Design': unknown revision or path not in the working tree.
+    | Use '--' to separate paths from revisions, like this:
+    | 'git <command> [<revision>...] -- [<file>...]'
+    | reset --hard に失敗しました。中断します（origin/Java/Design が無いときは、リモートでブランチが消された可能性があります）。
+    → 終了コード 1
+    .claude のブランチ（後）: Java/Design ／ 先頭: 4b2a73d java/design
+    ローカルブランチ: java/design main 
+  -- 続けて、正しい名前 -Branch java/design で起動し直す
+  $ & start_claude_code.ps1 -Branch java/design
+    | Your branch is up to date with 'origin/java/design'.
+    | Switched to branch 'java/design'
+    | HEAD is now at 4b2a73d java/design
+    | [起動] cwd=C:\tmp\v21-vd\ls-ps51-1\launcher-powershell-bom1\cases\n5 / .claude のブランチ=java/design / 先頭=4b2a73d java/design
+    | [claude の引数] 0 個: 
+    → 終了コード 0
+    .claude のブランチ（後）: java/design ／ 先頭: 4b2a73d java/design
+    ローカルブランチ: java/design main 
+

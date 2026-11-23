@@ -1,0 +1,104 @@
+################ R-STALE-CONF m2 は衝突するコミット（java/design の CLAUDE.md の追記）を手元に持ったまま自分のコミットを足した → m が (b) で衝突を解いて resume で push → m2 が ① で止まる → push → 拒否 → git fetch・git switch・git rebase origin/java/design（衝突）→ --abort → 足したコミットだけを --onto で載せ直す → push → もう一度
+  $ bash run-maintain-steady-resume.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-stale-conf/shared
+    |    f78c9ad..6d47b6f  main        -> origin/main
+    |    16e7939..4ae9f53  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 4ae9f53... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら解いて continue し、resume で実行する）
+  #### [R-STALE-CONF m の 1 回目（衝突）] 終了コード 1
+  $ bash run-maintain-steady-resume.sh resume  （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-stale-conf/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-stale-conf/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-stale-conf/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-stale-conf/shared.git
+    |  + de989e0...414411b java/base -> java/base (forced update)
+    |  + 4ae9f53...9f5d7c6 java/design -> java/design (forced update)
+    |  + 1302d6b...e202e93 java/ut -> java/ut (forced update)
+    |  + cdbdd65...281c184 python/base -> python/base (forced update)
+    |  + c661f00...6a4538f python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-STALE-CONF m の resume] 終了コード 0
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-stale-conf/shared
+    |  + de989e0...414411b java/base     -> origin/java/base  (forced update)
+    |  + 4ae9f53...9f5d7c6 java/design   -> origin/java/design  (forced update)
+    |  + 1302d6b...e202e93 java/ut       -> origin/java/ut  (forced update)
+    |  + cdbdd65...281c184 python/base   -> origin/python/base  (forced update)
+    |  + c661f00...6a4538f python/coding -> origin/python/coding  (forced update)
+    | 中断: ローカルの java/design に、origin に無い変更がある: + 4ae9f53084509ad4b6fa3a6bb56232b8683fcfd2
+    | + 9603967c0cc6e2e51631d16c06a1d8128539db20
+  #### [R-STALE-CONF m2 の 1 回目] 終了コード 1
+    m2: git cherry -v origin/java/design java/design origin/main:
+      - de989e0af09e45e6704981bc35adf6390069b33e java/base: java 共通 rule
+      - 16e793961215268879b1490edf3a169a785a6f72 java/design: 設計 rule
+      + 4ae9f53084509ad4b6fa3a6bb56232b8683fcfd2 java/design: CLAUDE.md に追記
+      + 9603967c0cc6e2e51631d16c06a1d8128539db20 java/design: m2 の追記
+    push| To C:/tmp/v21-vd/remedy/rm-r-stale-conf/shared.git
+    push|  ! [rejected]        java/design -> java/design (non-fast-forward)
+    push| error: failed to push some refs to 'C:/tmp/v21-vd/remedy/rm-r-stale-conf/shared.git'
+    push| hint: Updates were rejected because a pushed branch tip is behind its remote
+    push| hint: counterpart. If you want to integrate the remote changes, use 'git pull'
+    push| hint: before pushing again.
+    push| hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+    m2: git push origin java/design の終了コード: 1
+    （対処: git fetch → git switch java/design → git rebase origin/java/design）
+    m2: git fetch origin の終了コード: 0
+    switch| Your branch and 'origin/java/design' have diverged,
+    switch| and have 4 and 4 different commits each, respectively.
+    switch|   (use "git pull" if you want to integrate the remote branch with yours)
+    switch| Previous HEAD position was 6d47b6f main: PR #1 で追記
+    switch| Switched to branch 'java/design'
+    m2: git switch java/design の終了コード: 0
+    rebase| warning: skipped previously applied commit de989e0
+    rebase| warning: skipped previously applied commit 16e7939
+    rebase| Auto-merging CLAUDE.md
+    rebase| CONFLICT (content): Merge conflict in CLAUDE.md
+    rebase| hint: use --reapply-cherry-picks to include skipped commits
+    rebase| hint: Disable this message with "git config advice.skippedCherryPicks false"
+    rebase| error: could not apply 4ae9f53... java/design: CLAUDE.md に追記
+    rebase| hint: Resolve all conflicts manually, mark them as resolved with
+    rebase| hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    rebase| hint: You can instead skip this commit: run "git rebase --skip".
+    rebase| hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    rebase| hint: Disable this message with "git config advice.mergeConflict false"
+    rebase| Could not apply 4ae9f53... java/design: CLAUDE.md に追記
+    m2: git rebase origin/java/design の終了コード: 1
+    m2 は rebase の途中か: はい
+    m2: git rebase --abort の終了コード: 0
+    （対処: 足したコミット 1 つだけを載せ直す: git rebase --onto origin/java/design java/design~1 java/design → push）
+    rebase| [KSuccessfully rebased and updated refs/heads/java/design.
+    m2: git rebase --onto origin/java/design java/design~1 java/design の終了コード: 0
+    push| To C:/tmp/v21-vd/remedy/rm-r-stale-conf/shared.git
+    push|    9f5d7c6..ce70ebd  java/design -> java/design
+    m2: git push origin java/design の終了コード: 0
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Current branch java/design is up to date.
+    | Current branch java/ut is up to date.
+    | Current branch python/coding is up to date.
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-stale-conf/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-stale-conf/m2" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-stale-conf/m2" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | Everything up-to-date
+    | push した。
+  #### [R-STALE-CONF m2 の 2 回目] 終了コード 0
+    origin java/base      414411b  main を含む: YES
+    origin java/design    ce70ebd  main を含む: YES
+    origin java/ut        e202e93  main を含む: YES
+    origin main           6d47b6f  main を含む: YES
+    origin python/base    281c184  main を含む: YES
+    origin python/coding  6a4538f  main を含む: YES
+    origin の java/design: m2 の追記 1 件 ／ CLAUDE.md: main 初版/main 追記（PR #1）/design の追記/
+

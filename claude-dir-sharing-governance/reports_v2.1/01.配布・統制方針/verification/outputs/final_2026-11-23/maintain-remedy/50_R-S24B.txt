@@ -1,0 +1,49 @@
+################ R-S24B 衝突するコミットが土台 java/base にある → (b) 解いて continue → resume
+  $ bash run-maintain-middle.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s24b/shared
+    |    6caf382..e2fc19a  main       -> origin/main
+    |    6687c5c..d20a949  java/base  -> origin/java/base
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s24b/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s24b/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s24b/shared.git
+    |  + bd564e1...e85ca69 java/design -> java/design (forced update)
+    |  + b359b69...50ac6e1 java/ut -> java/ut (forced update)
+    | push した。
+  #### [rm-r-s24b 準備: 中間ブランチの手順で子へ届ける] 終了コード 0
+  $ bash run-maintain-steady-resume.sh   （stdin: y\\n）
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply d20a949... java/base: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら解いて continue し、resume で実行する）
+  #### [R-S24B 1 回目（衝突）] 終了コード 1
+  $ bash run-maintain-steady-resume.sh resume  （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s24b/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s24b/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s24b/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s24b/shared.git
+    |  + d20a949...5454310 java/base -> java/base (forced update)
+    |  + e85ca69...ce12521 java/design -> java/design (forced update)
+    |  + 50ac6e1...a2041c2 java/ut -> java/ut (forced update)
+    |  + 282d6e3...b427d43 python/base -> python/base (forced update)
+    |  + 7854a16...e93352c python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S24B 解いて resume] 終了コード 0
+    origin java/base      5454310  main を含む: YES
+    origin java/design    ce12521  main を含む: YES
+    origin java/ut        a2041c2  main を含む: YES
+    origin main           e2fc19a  main を含む: YES
+    origin python/base    b427d43  main を含む: YES
+    origin python/coding  e93352c  main を含む: YES
+    origin の java/ut は java/base を含むか: YES ／ java/design の CLAUDE.md: main 初版/main 追記（PR #1）/base の追記/
+

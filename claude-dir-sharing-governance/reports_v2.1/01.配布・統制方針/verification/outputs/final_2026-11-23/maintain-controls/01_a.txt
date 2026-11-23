@@ -1,0 +1,12 @@
+===== (a) 兄弟の末端ブランチを、それぞれ rebase main。間に 2 秒待つ
+  java/design の rebase の終了コード: 0
+  java/ut の rebase の終了コード: 0
+  --no-contains main: [python/base python/coding ]
+  java/base ⊂ java/ut: NO
+  * 2c3f011 (HEAD -> java/ut) java/ut: UT rule
+  * c9a2fab java/base: java 共通 rule
+  | * bf915bd (java/design) java/design: 設計 rule
+  | * 2ed19a0 (java/base) java/base: java 共通 rule
+  |/  
+  * abccc28 (origin/main, origin/HEAD, main) main: PR #1 で追記
+  * df81c55 main: 初版

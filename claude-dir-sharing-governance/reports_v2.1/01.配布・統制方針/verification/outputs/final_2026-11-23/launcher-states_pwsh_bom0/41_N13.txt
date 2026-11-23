@@ -1,0 +1,9 @@
+== N13 引数に二重引用符を含む値と空の値（caller.ps1 から呼ぶ）
+  caller.ps1: & "$PSScriptRoot\start_claude_code.ps1" -p 'say "hi" now' --x ''
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at fd28135 main 追記
+    | [起動] cwd=C:\tmp\v21-vd\ls-pwsh0\launcher-pwsh-bom0\cases\n13 / .claude のブランチ=main / 先頭=fd28135 main 追記
+    | [claude の引数] 4 個: <-p> <say "hi" now> <--x> <>
+    → 終了コード 0
+

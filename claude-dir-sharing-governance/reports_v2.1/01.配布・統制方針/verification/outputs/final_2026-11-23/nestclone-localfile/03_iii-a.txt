@@ -1,0 +1,43 @@
+=== (iii-a) ブランチ tracked が settings.local.json を追跡。手元のファイルは ignore されている ===
+  前:
+      ブランチ=master HEAD=c9010ca CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[{ "env": { "FROM": "PERSONAL" } }]
+      status --porcelain=[] --ignored=[!! settings.local.json ]
+    $ git fetch -q --all --prune   （fetch）
+      終了コード: 0
+      ブランチ=master HEAD=c9010ca CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[{ "env": { "FROM": "PERSONAL" } }]
+      status --porcelain=[] --ignored=[!! settings.local.json ]
+    $ git switch tracked   （switch）
+      | branch 'tracked' set up to track 'origin/tracked'.
+      | Switched to a new branch 'tracked'
+      終了コード: 0
+      ブランチ=tracked HEAD=696f340 CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[{ "env": { "FROM": "BRANCH" } }]
+      status --porcelain=[] --ignored=[]
+    $ git reset --hard origin/tracked   （reset）
+      | HEAD is now at 696f340 tracked: settings.local.json を追跡
+      終了コード: 0
+      ブランチ=tracked HEAD=696f340 CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[{ "env": { "FROM": "BRANCH" } }]
+      status --porcelain=[] --ignored=[]
+  master へ戻る（tracked では追跡、master では ignore）:
+    $ git fetch -q --all --prune   （fetch）
+      終了コード: 0
+      ブランチ=tracked HEAD=696f340 CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[{ "env": { "FROM": "BRANCH" } }]
+      status --porcelain=[] --ignored=[]
+    $ git switch master   （switch）
+      | Your branch is up to date with 'origin/master'.
+      | Switched to branch 'master'
+      終了コード: 0
+      ブランチ=master HEAD=c9010ca CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[★無い★]
+      status --porcelain=[] --ignored=[]
+    $ git reset --hard origin/master   （reset）
+      | HEAD is now at c9010ca master
+      終了コード: 0
+      ブランチ=master HEAD=c9010ca CLAUDE.md=[master の CLAUDE.md]
+      settings.local.json=[★無い★]
+      status --porcelain=[] --ignored=[]
+

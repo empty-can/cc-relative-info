@@ -1,8 +1,0 @@
-== C18 サブディレクトリから起動
-    | Your branch is up to date with 'origin/main'.
-    | Already on 'main'
-    | HEAD is now at 42a4d08 main 追記
-    | [起動] cwd=C:\tmp\v21-va\ls-ps51-1\launcher-powershell-bom1\cases\c18 / .claude のブランチ=main / 先頭=42a4d08 main 追記
-    | [claude の引数] 0 個: 
-    → 終了コード 0
-

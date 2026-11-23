@@ -1,0 +1,43 @@
+################ R-WAIT-TIP-MIDDLE 土台の手順（maintain-middle.sh）: java/base が早送りで進んだ → 入力を待つ間に子 java/design へ commit → y → 案内どおり戻す → もう一度
+  $ bash run-w12-maintain-middle.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-r-wt-middle/shared
+    |    0b0dcf4..fcf1bdd  main       -> origin/main
+    |    be58823..378a7c6  java/base  -> origin/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    | m の java/design に commit した
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | 中断: 入力を待つ間に、このクローンの次のブランチが動いた: java/design（push は 1 本もしていない。待つ間の変更を確かめ、残すなら控えてから、git switch --detach の後に java/base と子をすべて origin の値へ戻し（ git branch -f java/base origin/java/base; git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する。子を待つ前の値へ戻すだけでは ① で止まる）
+  #### [R-WT7 子を動かす y] 終了コード 1
+    origin は動いていないか: 動いていない
+    （案内に無い手: git switch --detach → 子 java/design だけを待つ前の値（java/design@{1}）へ戻す）
+  $ bash run-maintain-middle.sh   （stdin: y\\n）
+    | 中断: ローカルの java/design に、origin に無い変更がある: + 378a7c6ed4a5e636134217c4e7fe106ae545f49a
+  #### [R-WT7 待つ前の値へ戻した後] 終了コード 1
+    （対処: 中断の文の案内どおり git switch --detach → git branch -f java/base origin/java/base; git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）
+branch 'java/base' set up to track 'origin/java/base'.
+branch 'java/design' set up to track 'origin/java/design'.
+branch 'java/ut' set up to track 'origin/java/ut'.
+  $ bash run-maintain-middle.sh   （stdin: y\\n）
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-wt-middle/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-wt-middle/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | To C:/tmp/v21-vd/remedy/rm-r-wt-middle/shared.git
+    |  + 32c5714...dba0ad7 java/design -> java/design (forced update)
+    |  + b48d0dc...b850f2c java/ut -> java/ut (forced update)
+    | push した。
+  #### [R-WT7 案内どおり戻した後] 終了コード 0
+    origin java/base      378a7c6  main を含む: NO
+    origin java/design    dba0ad7  main を含む: NO
+    origin java/ut        b850f2c  main を含む: NO
+    origin main           fcf1bdd  main を含む: YES
+    origin python/base    05de653  main を含む: NO
+    origin python/coding  d1237b5  main を含む: NO
+    origin の java/design に待つ間の追記: 0 件 ／ java/ut は java/base を含むか: YES
+

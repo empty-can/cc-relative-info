@@ -1,0 +1,11 @@
+== C5 空の .claude がある
+  $ & start_claude_code.ps1 
+    | Cloning into 'C:\tmp\v21-vd\ls-chk-pwsh\launcher-pwsh-bom0\cases\c5\.claude'...
+    | done.
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at 97b352c main
+    | [起動] cwd=C:\tmp\v21-vd\ls-chk-pwsh\launcher-pwsh-bom0\cases\c5 / .claude のブランチ=main / 先頭=97b352c main
+    | [claude の引数] 0 個: 
+    → 終了コード 0
+

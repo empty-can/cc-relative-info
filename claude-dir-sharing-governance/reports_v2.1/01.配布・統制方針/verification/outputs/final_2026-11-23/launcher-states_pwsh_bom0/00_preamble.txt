@@ -1,0 +1,6 @@
+#### run_one: VERIF_ROOT=C:/tmp/v21-vd/ls-pwsh0 script=launcher-states.sh args=[] LSHELL=pwsh LBOM=0 start=2026-11-23 22:30:00 +0900
+######## launcher-states.sh 2026-11-23 22:30:01 +0900 ／ git version 2.46.0.windows.1 ／ pwsh 7.4.22 ／ BOM=0 ########
+出どころ: /c/cc-workspace/cc-relative-info/claude-dir-sharing-governance/reports_v2.1/01.配布・統制方針/verification/launcher-example.ps1
+実行ポリシー（この環境の PSExecutionPolicyPreference=RemoteSigned）: RemoteSigned
+ランチャー例: 80 行
+

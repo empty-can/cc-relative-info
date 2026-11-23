@@ -1,0 +1,6 @@
+== リンク（ジャンクション: guard/jlink → scratchpad の空のフォルダ）
+G-link1	期待 3	実際 3	合う		VERIF_ROOT=C:/tmp/v21-vd/guard/jlink/x
+    | 中止: VERIF_ROOT の既にある祖先の解決先が C:\tmp の外です: C:/tmp/v21-vd/guard/jlink
+G-link2	期待 3	実際 3	合う		VERIF_ROOT=C:/tmp/v21-vd/guard/jlink
+    | 中止: VERIF_ROOT の既にある祖先の解決先が C:\tmp の外です: C:/tmp/v21-vd/guard/jlink
+    jtarget の中身: []

@@ -1,0 +1,165 @@
+################ R-WAIT-TIP ③' の入力を待つ間に、このクローンのブランチを動かす → y（push の直前に、待つ前の値と比べる）
+  (1) 末端 java/design に commit → y → そのままもう一度 → 案内どおり戻す → もう一度
+  $ bash run-w6-maintain-steady.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-r-wt-leaf/shared
+    |    993bf7d..8569529  main       -> origin/main
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    | m の java/design に commit した
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | 中断: 入力を待つ間に、このクローンの次のブランチが動いた: java/design（push は 1 本もしていない。待つ間の変更を確かめ、残すなら控えてから、git switch --detach の後に待つ前の値へ戻し（ git branch -f java/design 768582a76456d4bcdbca4ac016a1fad62714e88a;）、このスクリプトを最初からもう一度実行する）
+  #### [R-WT1 末端を動かす y] 終了コード 1
+    origin は動いていないか: 動いていない
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | 中断: ローカルの java/design に、origin に無い変更がある: + 1ba4a32083feb138b87cab38d021619f0b746ca0
+  #### [R-WT1 そのままもう一度] 終了コード 1
+    （対処: 中断の文の案内どおり git switch --detach → git branch -f java/design 768582a76456d4bcdbca4ac016a1fad62714e88a;）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-wt-leaf/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-wt-leaf/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-wt-leaf/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-wt-leaf/shared.git
+    |  + 4f6d116...0e550ee java/base -> java/base (forced update)
+    |  + 405de87...d3101fe java/design -> java/design (forced update)
+    |  + fc01005...d33ce3f java/ut -> java/ut (forced update)
+    |  + ec2d82a...c2681d6 python/base -> python/base (forced update)
+    |  + 0e3da3b...5182832 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-WT1 戻した後] 終了コード 0
+    origin の java/design に待つ間の追記: 0 件
+  (2) 土台 java/base に commit → y → 案内どおり戻す → もう一度
+  $ bash run-w7-maintain-steady.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-r-wt-base/shared
+    |    792352d..3b3f8fb  main       -> origin/main
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    | m の java/base に commit した
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | 中断: 入力を待つ間に、このクローンの次のブランチが動いた: java/base（push は 1 本もしていない。待つ間の変更を確かめ、残すなら控えてから、git switch --detach の後に待つ前の値へ戻し（ git branch -f java/base 899016daf19c00f024372acd541e9352aa042af9;）、このスクリプトを最初からもう一度実行する）
+  #### [R-WT2 土台を動かす y] 終了コード 1
+    origin は動いていないか: 動いていない
+    （対処: 中断の文の案内どおり git switch --detach → git branch -f java/base 899016daf19c00f024372acd541e9352aa042af9;）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-wt-base/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-wt-base/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-wt-base/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-wt-base/shared.git
+    |  + a80c0cb...b11ca69 java/base -> java/base (forced update)
+    |  + 61825a9...b3c66e6 java/design -> java/design (forced update)
+    |  + d8795ad...0d2b69c java/ut -> java/ut (forced update)
+    |  + 7771f1a...5d70fa7 python/base -> python/base (forced update)
+    |  + 9d23c60...143c269 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-WT2 戻した後] 終了コード 0
+  (3) どのブランチも動かさない（git switch java/ut で HEAD だけを動かす）→ y
+  $ bash run-w8-maintain-steady.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-r-wt-none/shared
+    |    09bc16f..c090c50  main       -> origin/main
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    | m で git switch java/ut した
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-wt-none/shared.git
+    |  + d8431a3...ba95800 java/base -> java/base (forced update)
+    |  + 4d720ab...cc69093 java/design -> java/design (forced update)
+    |  + 9973c1c...09f6817 java/ut -> java/ut (forced update)
+    |  + 6e40240...a6d4ce3 python/base -> python/base (forced update)
+    |  + f0e9a58...e8c28b7 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-WT3 動かさない y] 終了コード 0
+    origin java/base      ba95800  main を含む: YES
+    origin java/design    cc69093  main を含む: YES
+    origin java/ut        09f6817  main を含む: YES
+    origin main           c090c50  main を含む: YES
+    origin python/base    a6d4ce3  main を含む: YES
+    origin python/coding  e8c28b7  main を含む: YES
+  (4) 末端 java/design に commit → n
+  $ bash run-w9-maintain-steady.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-r-wt-n/shared
+    |    30871da..d93ec6a  main       -> origin/main
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    | m の java/design に commit した
+    | （ここで n を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | push しなかった。
+  #### [R-WT4 末端を動かす n] 終了コード 2
+    origin は動いていないか: 動いていない
+  (5) 載せ先 main に commit → y
+  $ bash run-w10-maintain-steady.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-r-wt-main/shared
+    |    685cbc5..c239970  main       -> origin/main
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    | m の main に commit した
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | 中断: 入力を待つ間に、このクローンの次のブランチが動いた: main（push は 1 本もしていない。待つ間の変更を確かめ、残すなら控えてから、git switch --detach の後に待つ前の値へ戻し（ git branch -f main c239970c0ad3037bd54f3a524524e63d0f722e38;）、このスクリプトを最初からもう一度実行する）
+  #### [R-WT5 main を動かす y] 終了コード 1
+    origin は動いていないか: 動いていない
+

@@ -1,0 +1,100 @@
+################ R-NG ③' で不合格（n）→ 末端ブランチを直して、もう一度
+  $ bash run-maintain-steady.sh   （stdin: n\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-ng1/shared
+    |    40d0495..533418c  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-ng1/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-ng1/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-ng1/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | push しなかった。
+  #### [R-NG1 n] 終了コード 2
+  $ bash run-maintain-steady.sh   （stdin: n\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-ng2/shared
+    |    fc384b0..9023853  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-ng2/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-ng2/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-ng2/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | push しなかった。
+  #### [R-NG2 n] 終了コード 2
+    （対処 1: メンテナーのクローンの rebase 済みの java/design で直しを commit し、push せずにもう一度）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | 中断: ローカルの java/design に、origin に無い変更がある: + 274f34f264282effb2040825e6cc98c43788837f
+  #### [R-NG1 push せずに] 終了コード 1
+    （対処 2: origin の java/design の上で直しを commit して先に push し、もう一度）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-ng2/shared
+    |    e3bf3f7..26d5227  java/design -> origin/java/design
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-ng2/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-ng2/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-ng2/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-ng2/shared.git
+    |  + 3179dd4...03a1cce java/base -> java/base (forced update)
+    |  + 26d5227...2e9c09c java/design -> java/design (forced update)
+    |  + 3d02a02...ef17d73 java/ut -> java/ut (forced update)
+    |  + 6116185...9bee42d python/base -> python/base (forced update)
+    |  + 81420a8...43f832a python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-NG2 先に push] 終了コード 0
+    origin java/base      03a1cce  main を含む: YES
+    origin java/design    2e9c09c  main を含む: YES
+    origin java/ut        ef17d73  main を含む: YES
+    origin main           9023853  main を含む: YES
+    origin python/base    9bee42d  main を含む: YES
+    origin python/coding  43f832a  main を含む: YES
+  $ bash run-maintain-steady.sh   （stdin: n\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-ng3/shared
+    |    7dc3b60..ae94dbd  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-ng3/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-ng3/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-ng3/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | push しなかった。
+  #### [R-NG3 n] 終了コード 2
+    （対処 3: 同じクローンで、git switch --detach → git branch -f java/design origin/java/design → git switch java/design → 直しを commit → push してから、もう一度）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-ng3/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-ng3/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-ng3/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-ng3/shared.git
+    |  + 655c883...e632c8f java/base -> java/base (forced update)
+    |  + e9e66e8...1066699 java/design -> java/design (forced update)
+    |  + 672ff3c...2ea9fed java/ut -> java/ut (forced update)
+    |  + 2291261...3898404 python/base -> python/base (forced update)
+    |  + 0c54604...fda1a3b python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-NG3 同じクローンで直して push した後] 終了コード 0
+    origin java/base      e632c8f  main を含む: YES
+    origin java/design    1066699  main を含む: YES
+    origin java/ut        2ea9fed  main を含む: YES
+    origin main           ae94dbd  main を含む: YES
+    origin python/base    3898404  main を含む: YES
+    origin python/coding  fda1a3b  main を含む: YES
+

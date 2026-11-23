@@ -1,0 +1,43 @@
+################ T07w '?? worktrees/'（作業リポジトリの git worktree add で .claude/worktrees/ の下に置いた。Claude Code が作る worktree の代わり）
+    main の .gitignore（今）: [settings.local.json agent-memory/ worktrees/ ]
+  -- (1) .gitignore に worktrees/ が入っていない python/base で
+  $ .\start_claude_code.ps1 -Branch python/base
+    | .claude/ にローカル変更があります。更新を中止しました:
+    | ?? worktrees/
+    | git -C .claude status で中身を確かめてください。覚えのないものは消さずに、メンテナーへ相談してください。
+    → 終了コード 1
+  （メンバーの操作 PS> Move-Item .claude\worktrees ..\t07w-worktrees）
+    → 終了コード 0
+    移した後の git worktree list: 1 件が prunable
+  $ .\start_claude_code.ps1 -Branch python/base
+    | Your branch is up to date with 'origin/python/base'.
+    | Already on 'python/base'
+    | HEAD is now at 1ef5e2b python/base
+    | [起動] .claude のブランチ=python/base / 先頭=1ef5e2b python/base
+    → 終了コード 0
+  （メンバーの操作 PS> Move-Item ..\t07w-worktrees .claude\worktrees）
+    → 終了コード 0
+    戻した後: worktree list の prunable 0 件 ／ wt1 の status: ## wt1
+  $ .\start_claude_code.ps1 -Branch python/base
+    | .claude/ にローカル変更があります。更新を中止しました:
+    | ?? worktrees/
+    | git -C .claude status で中身を確かめてください。覚えのないものは消さずに、メンテナーへ相談してください。
+    → 終了コード 1
+  -- (2) .gitignore に worktrees/ が入っている main で
+    .claude の status --porcelain: []
+  $ .\start_claude_code.ps1 
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at e50ce5a ignore agent-memory/ worktrees/
+    | [起動] .claude のブランチ=main / 先頭=e50ce5a ignore agent-memory/ worktrees/
+    → 終了コード 0
+    .claude: main ／ status: [] ／ 作業リポ status: [?? start_claude_code.ps1 ]
+  -- (3) .gitignore に agent-memory/ が入っている main で agent-memory を書いた
+  $ .\start_claude_code.ps1 
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at e50ce5a ignore agent-memory/ worktrees/
+    | [起動] .claude のブランチ=main / 先頭=e50ce5a ignore agent-memory/ worktrees/
+    → 終了コード 0
+    .claude: main ／ status: [] ／ 作業リポ status: [?? start_claude_code.ps1 ]
+

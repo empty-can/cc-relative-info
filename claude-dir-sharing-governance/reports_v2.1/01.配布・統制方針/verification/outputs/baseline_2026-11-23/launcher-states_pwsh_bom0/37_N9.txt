@@ -1,9 +1,0 @@
-== N9 -Branch -（直前のブランチ）
-  $ & start_claude_code.ps1 -Branch -
-    | Your branch is up to date with 'origin/java/design'.
-    | Switched to branch 'java/design'
-    | .claude/ のブランチを切り替えました: main → -
-    | 現在のブランチ 'java/design' が指定 '-' と一致しません。reset を中止します。
-    → 終了コード 1
-    .claude のブランチ（後）: java/design ／ 先頭: f7110fd java/design 追記
-

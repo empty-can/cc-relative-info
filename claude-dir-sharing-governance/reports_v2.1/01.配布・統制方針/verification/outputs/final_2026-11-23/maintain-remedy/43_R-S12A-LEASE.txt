@@ -1,0 +1,53 @@
+################ R-S12A-LEASE ② の衝突 → --abort → 末端ブランチの衝突するコミットを書き換える間に、別のメンテナーが java/design に push → 書き換える前の origin の値を付けた lease で push → 拒否 → fetch して origin の新しい値の上で書き換え直す → 同じ形の lease で push → もう一度
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s12a-lease/shared
+    |    9380af8..32cb85a  main        -> origin/main
+    |    f3ab0f1..80ce7de  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 80ce7de... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [R-S12A-LEASE 1 回目（衝突）] 終了コード 1
+    （書き換えている間に、x が java/design に push した）
+    push| To C:/tmp/v21-vd/remedy/rm-r-s12a-lease/shared.git
+    push|  ! [rejected]        java/design -> java/design (stale info)
+    push| error: failed to push some refs to 'C:/tmp/v21-vd/remedy/rm-r-s12a-lease/shared.git'
+    m: git push --force-with-lease=java/design:80ce7de49028354a0e397ba5cca459e8c7fc9884 origin java/design の終了コード: 1
+    （対処: git fetch → git reset --hard origin/java/design → 衝突するコミットだけを外して（git rebase --onto HEAD~2 HEAD~1）→ 書き換えた追記を commit → fetch した後の値を付けた lease で push）
+    log: 0c9ee0a java/design: 別のメンテナーの追記
+    log: 80ce7de java/design: CLAUDE.md に追記
+    log: f3ab0f1 java/design: 設計 rule
+    push| To C:/tmp/v21-vd/remedy/rm-r-s12a-lease/shared.git
+    push|  + 0c9ee0a...7b7c993 java/design -> java/design (forced update)
+    m: git push --force-with-lease=java/design:0c9ee0a5eff1e7d01a07f6db641e3956bc0d28fa origin java/design の終了コード: 0
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s12a-lease/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s12a-lease/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s12a-lease/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s12a-lease/shared.git
+    |  + f29ca6f...d8ae49a java/base -> java/base (forced update)
+    |  + 7b7c993...07c7e30 java/design -> java/design (forced update)
+    |  + b62f2d6...8c76f70 java/ut -> java/ut (forced update)
+    |  + f5bcc76...cd3bf9a python/base -> python/base (forced update)
+    |  + 08785c6...e047175 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S12A-LEASE 書き換え直した後] 終了コード 0
+    origin java/base      d8ae49a  main を含む: YES
+    origin java/design    07c7e30  main を含む: YES
+    origin java/ut        8c76f70  main を含む: YES
+    origin main           32cb85a  main を含む: YES
+    origin python/base    cd3bf9a  main を含む: YES
+    origin python/coding  e047175  main を含む: YES
+    origin の java/design: 別のメンテナーの追記 1 件
+

@@ -1,0 +1,88 @@
+################ R-WAIT-TIP-BACK 入力を待つ間にブランチが動いて止まった後、中断の文のとおりに戻してもう一度（定常手順で main・土台の手順で PARENT）
+  (5b) R-WT5 と同じ（載せ先 main に commit → y）→ 中断の文のとおり戻す → もう一度
+  $ bash run-w17-maintain-steady.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-r-wt5b/shared
+    |    097d0e9..c1a413d  main       -> origin/main
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    | m の main に commit した
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | 中断: 入力を待つ間に、このクローンの次のブランチが動いた: main（push は 1 本もしていない。待つ間の変更を確かめ、残すなら控えてから、git switch --detach の後に待つ前の値へ戻し（ git branch -f main c1a413d1760e86aa1fc4405366bc1e23c3106342;）、このスクリプトを最初からもう一度実行する）
+  #### [R-WT5B main を動かす y] 終了コード 1
+    origin は動いていないか: 動いていない
+    （対処: 中断の文の案内どおり git switch --detach → git branch -f main c1a413d1760e86aa1fc4405366bc1e23c3106342;）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-wt5b/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-wt5b/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-wt5b/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-wt5b/shared.git
+    |  + ae38c64...74ab21e java/base -> java/base (forced update)
+    |  + 6566a4c...00a7904 java/design -> java/design (forced update)
+    |  + 68785fa...3b4cbd0 java/ut -> java/ut (forced update)
+    |  + dc9aac0...77ca43a python/base -> python/base (forced update)
+    |  + e64034e...9a944da python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-WT5B 戻した後] 終了コード 0
+    origin java/base      74ab21e  main を含む: YES
+    origin java/design    00a7904  main を含む: YES
+    origin java/ut        3b4cbd0  main を含む: YES
+    origin main           c1a413d  main を含む: YES
+    origin python/base    77ca43a  main を含む: YES
+    origin python/coding  9a944da  main を含む: YES
+    origin に待つ間の追記: main 0 件・java/design 0 件
+  (8) 土台の手順: java/base が早送りで進んだ → 入力を待つ間に PARENT（java/base）へ commit → y → 中断の文のとおり戻す → もう一度
+  $ bash run-w18-maintain-middle.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-r-wt8/shared
+    |    873d55c..5b0d9c1  main       -> origin/main
+    |    e055f3d..4556810  java/base  -> origin/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    | m の java/base に commit した
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | 中断: 入力を待つ間に、このクローンの次のブランチが動いた: java/base（push は 1 本もしていない。待つ間の変更を確かめ、残すなら控えてから、git switch --detach の後に java/base と子をすべて origin の値へ戻し（ git branch -f java/base origin/java/base; git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する。子を待つ前の値へ戻すだけでは ① で止まる）
+  #### [R-WT8 PARENT を動かす y] 終了コード 1
+    origin は動いていないか: 動いていない
+    （対処: 中断の文の案内どおり git switch --detach → git branch -f java/base origin/java/base; git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）
+branch 'java/base' set up to track 'origin/java/base'.
+branch 'java/design' set up to track 'origin/java/design'.
+branch 'java/ut' set up to track 'origin/java/ut'.
+  $ bash run-maintain-middle.sh   （stdin: y\\n）
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-wt8/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-wt8/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | To C:/tmp/v21-vd/remedy/rm-r-wt8/shared.git
+    |  + fffb572...7393825 java/design -> java/design (forced update)
+    |  + f646642...8f23df9 java/ut -> java/ut (forced update)
+    | push した。
+  #### [R-WT8 戻した後] 終了コード 0
+    origin java/base      4556810  main を含む: NO
+    origin java/design    7393825  main を含む: NO
+    origin java/ut        8f23df9  main を含む: NO
+    origin main           5b0d9c1  main を含む: YES
+    origin python/base    a704be6  main を含む: NO
+    origin python/coding  06d90ee  main を含む: NO
+    origin に待つ間の追記: java/base 0 件・java/design 0 件 ／ java/design・java/ut は java/base を含むか: YES・YES
+

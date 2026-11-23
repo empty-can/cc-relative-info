@@ -1,0 +1,34 @@
+################ E7 丸ごと新しい系列 ts/base・ts/coding を作り、BRANCHES に書き忘れた（PR #1 の前の main から切った）
+    前提: ts/base は origin/main の先祖か: NO
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-e7/shared
+    |    a762a5c..e00e341  main       -> origin/main
+    |  * [new branch]      ts/base    -> origin/ts/base
+    |  * [new branch]      ts/coding  -> origin/ts/coding
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-e7/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-e7/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-e7/m" <検証用のリポジトリ>/.claude
+    | 参考: origin にある、系列の名前でないブランチ: ts/base ts/coding（新しい系列なら、y を入れずに終え、BRANCHES・PAIRS・② に足す）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-e7/shared.git
+    |  + be05eba...02ce9e0 java/base -> java/base (forced update)
+    |  + a23f86d...0a05f3e java/design -> java/design (forced update)
+    |  + 9ebe85c...a179ce2 java/ut -> java/ut (forced update)
+    |  + 48a5a8f...8ed4de9 python/base -> python/base (forced update)
+    |  + bba3edc...dc9adce python/coding -> python/coding (forced update)
+    | push した。
+  #### [E7 新しい系列の書き忘れ] 終了コード 0
+    origin java/base      02ce9e0  main を含む: YES
+    origin java/design    0a05f3e  main を含む: YES
+    origin java/ut        a179ce2  main を含む: YES
+    origin main           e00e341  main を含む: YES
+    origin python/base    8ed4de9  main を含む: YES
+    origin python/coding  dc9adce  main を含む: YES
+    origin ts/base        f2ad5ad  main を含む: NO
+    origin ts/coding      daebcca  main を含む: NO
+

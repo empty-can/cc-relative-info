@@ -1,0 +1,48 @@
+################ R-S17 --single-branch のクローンで「java/base が origin に無い（BRANCHES を直す）」→ 付けずに clone し直す・git remote set-branches origin '*'
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | 中断: java/base が origin に無い（BRANCHES を直す）
+  #### [R-S17 1 回目] 終了コード 1
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s17/full" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s17/full" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s17/full" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s17/shared.git
+    |  + b3c5aa1...3937591 java/base -> java/base (forced update)
+    |  + e20a2d4...fa46eff java/design -> java/design (forced update)
+    |  + f306f47...d659d22 java/ut -> java/ut (forced update)
+    |  + e284f76...0410e89 python/base -> python/base (forced update)
+    |  + 832c006...95568b6 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S17 付けずに clone し直したクローン] 終了コード 0
+    （対処: git remote set-branches origin '*'）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s17b/shared
+    |  * [new branch]      java/base     -> origin/java/base
+    |  * [new branch]      java/design   -> origin/java/design
+    |  * [new branch]      java/ut       -> origin/java/ut
+    |  * [new branch]      python/base   -> origin/python/base
+    |  * [new branch]      python/coding -> origin/python/coding
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s17b/sb" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s17b/sb" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s17b/sb" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s17b/shared.git
+    |  + 93b601d...6c865b6 java/base -> java/base (forced update)
+    |  + 15de8c3...69e4d99 java/design -> java/design (forced update)
+    |  + 40133e4...488d3bf java/ut -> java/ut (forced update)
+    |  + d3ebb3e...990cd06 python/base -> python/base (forced update)
+    |  + 5193773...24c5150 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S17b set-branches の後] 終了コード 0
+

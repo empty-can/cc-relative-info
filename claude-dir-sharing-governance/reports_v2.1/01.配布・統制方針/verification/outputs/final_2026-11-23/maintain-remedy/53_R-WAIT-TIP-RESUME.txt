@@ -1,0 +1,52 @@
+################ R-WAIT-TIP-RESUME 選択肢の版（maintain-steady-resume.sh）: 衝突を解いて resume → 入力を待つ間に java/ut へ commit → y → 案内どおり戻す → resume
+  $ bash run-maintain-steady-resume.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-wt-resume/shared
+    |    a347840..4451899  main        -> origin/main
+    |    ed80e4d..b9dfa8c  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply b9dfa8c... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら解いて continue し、resume で実行する）
+  #### [R-WT6 1 回目（衝突）] 終了コード 1
+  $ bash run-w11-maintain-steady-resume.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    | m の java/ut に commit した
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | 中断: 入力を待つ間に、このクローンの次のブランチが動いた: java/ut（push は 1 本もしていない。待つ間の変更を確かめ、残すなら控えてから、git switch --detach の後に待つ前の値へ戻し（ git branch -f java/ut 175bada70c49bf408a25a8db56f8d1cf5c3c8aaf;）、このスクリプトをもう一度実行する。resume を付けて実行していたなら、resume を付ける）
+  #### [R-WT6 resume、待つ間に java/ut を動かす y] 終了コード 1
+    origin は動いていないか: 動いていない
+    （対処: 中断の文の案内どおり git switch --detach → git branch -f java/ut 175bada70c49bf408a25a8db56f8d1cf5c3c8aaf;）
+  $ bash run-maintain-steady-resume.sh resume  （stdin: y\\n）
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-wt-resume/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-wt-resume/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-wt-resume/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-wt-resume/shared.git
+    |  + 7d449d5...cf1e5c1 java/base -> java/base (forced update)
+    |  + b9dfa8c...cf6120f java/design -> java/design (forced update)
+    |  + 3994225...175bada java/ut -> java/ut (forced update)
+    |  + 91105b8...759c599 python/base -> python/base (forced update)
+    |  + 476e817...de751c0 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-WT6 戻した後に resume] 終了コード 0
+    origin java/base      cf1e5c1  main を含む: YES
+    origin java/design    cf6120f  main を含む: YES
+    origin java/ut        175bada  main を含む: YES
+    origin main           4451899  main を含む: YES
+    origin python/base    759c599  main を含む: YES
+    origin python/coding  de751c0  main を含む: YES
+

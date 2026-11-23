@@ -1,0 +1,27 @@
+=== 場面4: D/F（手元にローカルブランチ java、リモートは java を消して java/design を作った。master にいる）===
+  （maint: java が追跡するファイル: asset.txt java.md ）
+  手元のローカルブランチ: [java master ]
+  （maint: java/design が追跡するファイル: asset.txt design.md ）
+  --- 前:
+    現在のブランチ: master
+    HEAD         : 356581d1f31d167dffa81936db7e37859e7190f9
+    origin/java/design : （無い）
+    origin/master: 356581d1f31d167dffa81936db7e37859e7190f9
+    asset.txt    : master の資産
+    status --porcelain --ignored: []
+    fetch --prune の終了コード: 0
+    switch: fatal: cannot lock ref 'refs/heads/java/design': 'refs/heads/java' exists; cannot create 'refs/heads/java/design'
+    switch の終了コード: 128
+    reset: HEAD is now at 7e93d6a java/design 版
+    reset の終了コード: 0
+  --- 後:
+    現在のブランチ: master
+    HEAD         : 7e93d6a3a9231298196e0f8d873cb1b11163f61a
+    origin/java/design : 7e93d6a3a9231298196e0f8d873cb1b11163f61a
+    origin/master: 356581d1f31d167dffa81936db7e37859e7190f9
+    asset.txt    : java/design の資産
+    status --porcelain --ignored: []
+  ★ 判定: ブランチ名は master のまま、中身が origin/java/design になった
+  手元のローカルブランチ: [java master ]
+  リモート追跡ブランチ: [origin origin/java/design origin/master ]
+

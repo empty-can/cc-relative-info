@@ -1,0 +1,68 @@
+################ W-MID m の ③' の入力待ちの間に、m2 が java/base に push して中間ブランチの手順を終える → y → もう一度
+  $ bash run-w15-maintain-steady.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-w-mid/shared
+    |    7d15dc0..da2ac43  main       -> origin/main
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    |   $ bash run-maintain-middle.sh   （stdin: y\\n）
+    |     | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |     | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    |     | To C:/tmp/v21-vd/remedy/rm-w-mid/shared.git
+    |     |  + 7d113c5...737f22b java/design -> java/design (forced update)
+    |     |  + b058991...4488028 java/ut -> java/ut (forced update)
+    |     | push した。
+    |   #### [W-MID m2 の中間ブランチの手順] 終了コード 0
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | error: atomic push failed for ref refs/heads/java/base. status: 7
+    | 
+    | fatal: the remote end hung up unexpectedly
+    | To C:/tmp/v21-vd/remedy/rm-w-mid/shared.git
+    |  ! [rejected]        java/base -> java/base (stale info)
+    |  ! [rejected]        java/design -> java/design (stale info)
+    |  ! [rejected]        java/ut -> java/ut (stale info)
+    |  ! [rejected]        python/base -> python/base (atomic push failed)
+    |  ! [rejected]        python/coding -> python/coding (atomic push failed)
+    | error: failed to push some refs to 'C:/tmp/v21-vd/remedy/rm-w-mid/shared.git'
+    | 中断: push に失敗（拒否されたら、このスクリプトをもう一度実行する）
+  #### [W-MID m（入力待ちの間に m2 の中間ブランチの手順）] 終了コード 1
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-w-mid/shared
+    |    760b0e7..12e4f6e  java/base   -> origin/java/base
+    |  + 7d113c5...737f22b java/design -> origin/java/design  (forced update)
+    |  + b058991...4488028 java/ut     -> origin/java/ut  (forced update)
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-w-mid/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-w-mid/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-w-mid/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-w-mid/shared.git
+    |  + 12e4f6e...47386d2 java/base -> java/base (forced update)
+    |  + 737f22b...ff10a61 java/design -> java/design (forced update)
+    |  + 4488028...535055e java/ut -> java/ut (forced update)
+    |  + 4cbfb31...19c13cd python/base -> python/base (forced update)
+    |  + b654e70...2e51631 python/coding -> python/coding (forced update)
+    | push した。
+  #### [W-MID m のもう一度] 終了コード 0
+    origin java/base      47386d2  main を含む: YES
+    origin java/design    ff10a61  main を含む: YES
+    origin java/ut        535055e  main を含む: YES
+    origin main           da2ac43  main を含む: YES
+    origin python/base    19c13cd  main を含む: YES
+    origin python/coding  2e51631  main を含む: YES
+    origin の m2 の土台の追記: java/design 1 件・java/ut 1 件
+

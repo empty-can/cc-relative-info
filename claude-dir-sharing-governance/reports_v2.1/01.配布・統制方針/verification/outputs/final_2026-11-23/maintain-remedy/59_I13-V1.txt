@@ -1,0 +1,59 @@
+################ I13-V1 m が衝突するコミットを書き換えて push → m の次の定常手順より前に、m2 が ① の説明の手（cherry → push → git rebase origin/java/design → push）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-i13-v1/shared
+    |    d3d28a9..bbfc5c2  main        -> origin/main
+    |    076009c..07ea29e  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 07ea29e... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [rm-i13-v1 準備: m の定常手順（② で衝突）] 終了コード 1
+    （m: 衝突するコミットを書き換え、値を付けた --force-with-lease で push した。H6 の決まりで禁じた操作）
+    push| To C:/tmp/v21-vd/remedy/rm-i13-v1/shared.git
+    push|  ! [rejected]        java/design -> java/design (fetch first)
+    push| error: failed to push some refs to 'C:/tmp/v21-vd/remedy/rm-i13-v1/shared.git'
+    push| hint: Updates were rejected because the remote contains work that you do not
+    push| hint: have locally. This is usually caused by another repository pushing to
+    push| hint: the same ref. If you want to integrate the remote changes, use
+    push| hint: 'git pull' before pushing again.
+    push| hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+    m2: git push origin java/design の終了コード: 1
+    fetch| From C:/tmp/v21-vd/remedy/rm-i13-v1/shared
+    fetch|  + 07ea29e...831b3be java/design -> origin/java/design  (forced update)
+    m2: git fetch origin の終了コード: 0
+    switch| Your branch and 'origin/java/design' have diverged,
+    switch| and have 2 and 1 different commits each, respectively.
+    switch|   (use "git pull" if you want to integrate the remote branch with yours)
+    switch| Switched to branch 'java/design'
+    m2: git switch java/design の終了コード: 0
+    cherry| + 07ea29e8ed616872ff5307eba458463ff8728383 java/design: CLAUDE.md に追記
+    cherry| + 77c4999efecb5bc8e7a5108f79777c00c5a222a7 java/design: m2 の追記（別のファイル）
+    m2: git cherry -v origin/java/design java/design origin/main の終了コード: 0
+    rebase| [KSuccessfully rebased and updated refs/heads/java/design.
+    m2: git rebase origin/java/design の終了コード: 0
+    push| To C:/tmp/v21-vd/remedy/rm-i13-v1/shared.git
+    push|    831b3be..9d29a6f  java/design -> java/design
+    m2: git push origin java/design の終了コード: 0
+    origin の java/design: 書き換える前のコミット（CLAUDE.md に追記）1 件 ／ 書き換えたコミット 1 件 ／ m2 の追記 1 件 ／ main を含む: NO
+    origin の java/design の CLAUDE.md: main 初版/design の追記/ ／ rules/design.md: 設計/design の追記/
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-i13-v1/shared
+    |    831b3be..9d29a6f  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 74d0beb... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [I13-V1 m の次の定常手順] 終了コード 1
+    origin の java/design: 書き換える前のコミット（CLAUDE.md に追記）1 件 ／ 書き換えたコミット 1 件 ／ m2 の追記 1 件 ／ main を含む: NO
+    origin の java/design の CLAUDE.md: main 初版/design の追記/ ／ rules/design.md: 設計/design の追記/
+

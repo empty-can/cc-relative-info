@@ -1,0 +1,11 @@
+== N14 実行ポリシー: PSExecutionPolicyPreference を外して -File で起動する（メンバーの普通の端末に近い）
+  Get-ExecutionPolicy（外した後）: Restricted
+    | File C:\tmp\v21-vd\ls-chk-ps51\launcher-powershell-bom1\cases\n14\start_claude_code.ps1 cannot be loaded because runnin
+    | g scripts is disabled on this system. For more information, see about_Execution_Policies at https:/go.microsoft.com/fwl
+    | ink/?LinkID=135170.
+    |     + CategoryInfo          : SecurityError: (:) [], ParentContainsErrorRecordException
+    |     + FullyQualifiedErrorId : UnauthorizedAccess
+    → 終了コード 1
+
+######## 終了 ########
+#### run_one: end rc=0 seconds=124

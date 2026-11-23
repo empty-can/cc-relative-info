@@ -1,0 +1,11 @@
+===== (b) 同じ操作を待たずに行う
+  java/design の rebase の終了コード: 0
+  java/ut の rebase の終了コード: 0
+  --no-contains main: [python/base python/coding ]
+  java/base ⊂ java/ut: YES
+  * 7685cf7 (java/design) java/design: 設計 rule
+  | * a389ab4 (HEAD -> java/ut) java/ut: UT rule
+  |/  
+  * e72b6f1 (java/base) java/base: java 共通 rule
+  * 98555fb (origin/main, origin/HEAD, main) main: PR #1 で追記
+  * beb3711 main: 初版

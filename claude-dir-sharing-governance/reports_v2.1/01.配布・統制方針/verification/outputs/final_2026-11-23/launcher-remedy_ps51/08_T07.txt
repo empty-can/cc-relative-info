@@ -1,0 +1,34 @@
+################ T07 「ローカル変更があります」＋ '?? agent-memory/'（main を使うメンバー）→ メンテナーが main の .gitignore に足す → もう一度 → 外へ移して起動 → 戻す
+  $ .\start_claude_code.ps1 
+    | .claude/ にローカル変更があります。更新を中止しました:
+    | ?? agent-memory/
+    | git -C .claude status で中身を確かめてください。覚えのないものは消さずに、メンテナーへ相談してください。
+    → 終了コード 1
+  （メンテナー: main の .gitignore に agent-memory/・worktrees/ を足して push）
+  $ .\start_claude_code.ps1 
+    | .claude/ にローカル変更があります。更新を中止しました:
+    | ?? agent-memory/
+    | git -C .claude status で中身を確かめてください。覚えのないものは消さずに、メンテナーへ相談してください。
+    → 終了コード 1
+  （メンバーの操作 PS> Move-Item .claude\agent-memory ..\t07-agent-memory）
+    → 終了コード 0
+  $ .\start_claude_code.ps1 
+    | From C:/tmp/v21-vd/lr-ps51/lremedy-powershell/shared
+    |    231daec..e50ce5a  main       -> origin/main
+    | Your branch is behind 'origin/main' by 1 commit, and can be fast-forwarded.
+    |   (use "git pull" to update your local branch)
+    | Already on 'main'
+    | HEAD is now at e50ce5a ignore agent-memory/ worktrees/
+    | [起動] .claude のブランチ=main / 先頭=e50ce5a ignore agent-memory/ worktrees/
+    → 終了コード 0
+  （メンバーの操作 PS> Move-Item ..\t07-agent-memory .claude\agent-memory）
+    → 終了コード 0
+  $ .\start_claude_code.ps1 
+    | Your branch is up to date with 'origin/main'.
+    | Already on 'main'
+    | HEAD is now at e50ce5a ignore agent-memory/ worktrees/
+    | [起動] .claude のブランチ=main / 先頭=e50ce5a ignore agent-memory/ worktrees/
+    → 終了コード 0
+    .claude: main ／ status: [] ／ 作業リポ status: [?? start_claude_code.ps1 ]
+    MEMORY.md: m
+

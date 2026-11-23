@@ -1,3 +1,0 @@
-#### run_one: VERIF_ROOT=C:/tmp/v21-va/remedy script=maintain-remedy.sh args=[] LSHELL= LBOM= start=2026-11-23 19:47:30 +0900
-######## maintain-remedy.sh 2026-11-23 19:47:31 +0900 ／ git version 2.46.0.windows.1 ／ bash 5.2.26(1)-release ／ VERIF_ROOT=C:/tmp/v21-va/remedy
-

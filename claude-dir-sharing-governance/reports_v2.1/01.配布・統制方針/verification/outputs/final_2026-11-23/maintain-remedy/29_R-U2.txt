@@ -1,0 +1,33 @@
+################ R-U2 手元の main に 2 つのコミット → PR のブランチ pr/10 にして push → 1 つに squash してマージ → 実行（① で止まる）→ 手元の main を origin の値に合わせる → もう一度
+    （pr/10 の 2 つのコミットを、1 つに squash して origin の main にマージした）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-u2/shared
+    |    33dea74..b605d4e  main       -> origin/main
+    | 中断: ローカルの main に、origin に無い変更がある: + 84cfd328c4f96b8e920681fd4e8b375f53206a42
+    | + de8fbe974dd7b5b6a120035eabd28c2dc2c02d89
+  #### [R-U2 マージの後] 終了コード 1
+    中断の後の HEAD: HEAD
+    （メンテナーが main に戻った状態を作る: git switch main）
+    branch| fatal: cannot force update the branch 'main' used by worktree at 'C:/tmp/v21-vd/remedy/rm-r-u2/m'
+    HEAD が main のままの git branch -f main origin/main の終了コード: 128
+    （対処: git switch --detach の後に git branch -f main origin/main）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-u2/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-u2/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-u2/m" <検証用のリポジトリ>/.claude
+    | 参考: origin にある、系列の名前でないブランチ: pr/10（新しい系列なら、y を入れずに終え、BRANCHES・PAIRS・② に足す）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-u2/shared.git
+    |  + 2037c9e...1362ada java/base -> java/base (forced update)
+    |  + 656ce1c...4c51024 java/design -> java/design (forced update)
+    |  + f568ddb...d7f80c8 java/ut -> java/ut (forced update)
+    |  + 7ae36c6...7d72fbd python/base -> python/base (forced update)
+    |  + 86c40c4...db12f1c python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-U2 合わせた後] 終了コード 0
+

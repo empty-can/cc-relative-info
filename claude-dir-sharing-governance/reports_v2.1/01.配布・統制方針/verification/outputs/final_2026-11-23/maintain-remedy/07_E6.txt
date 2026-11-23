@@ -1,0 +1,16 @@
+################ E6 既にある系列に足したばかりで、BRANCHES に書き忘れた java/coding（旧い java/base から切った）
+    前提: java/coding は origin/main の先祖か: NO
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-e6/shared
+    |    2985d67..d396fbc  main        -> origin/main
+    |  * [new branch]      java/coding -> origin/java/coding
+    | 中断: origin に、BRANCHES に無いブランチがある: java/coding（系列のブランチなら BRANCHES・PAIRS・② に足す。PR のブランチは足さず、マージか閉じた後に origin から消す）
+  #### [E6 既にある系列の書き忘れ] 終了コード 1
+    origin java/base      65b218c  main を含む: NO
+    origin java/coding    883a3f7  main を含む: NO
+    origin java/design    a3cd6c2  main を含む: NO
+    origin java/ut        642e28c  main を含む: NO
+    origin main           d396fbc  main を含む: YES
+    origin python/base    401bce7  main を含む: NO
+    origin python/coding  476dc89  main を含む: NO
+

@@ -1,0 +1,29 @@
+################ S15 main だけを持つ新しいクローン（git clone した直後）
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-s15/fresh" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-s15/fresh" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/scenes/sc-s15/fresh" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/scenes/sc-s15/shared.git
+    |  + 3a99255...031c0d6 java/base -> java/base (forced update)
+    |  + 49c968f...3e6efe4 java/design -> java/design (forced update)
+    |  + d242e7f...857a90f java/ut -> java/ut (forced update)
+    |  + 7455be1...4d6374a python/base -> python/base (forced update)
+    |  + 9907052...14b171f python/coding -> python/coding (forced update)
+    | push した。
+  #### [S15 y] 終了コード 0
+    origin java/base      031c0d6  main を含む: YES
+    origin java/design    3e6efe4  main を含む: YES
+    origin java/ut        857a90f  main を含む: YES
+    origin main           75f1c11  main を含む: YES
+    origin python/base    4d6374a  main を含む: YES
+    origin python/coding  14b171f  main を含む: YES
+

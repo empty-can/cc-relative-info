@@ -1,0 +1,15 @@
+=== rebase 後：中間ブランチ java/_base も一緒に動いたか ===
+* 5b53ea4 (HEAD -> java/design) 設計作業固有の rule
+* 9be6b10 (java/_base) java 系共通の rule
+* 0303f68 (origin/master, master) master にさらに追記（多段伝播の起点）
+| * 5b6d54b (origin/java/design) 設計作業固有の rule
+| * c9e3582 (origin/java/_base) java 系共通の rule
+|/  
+* c035830 master に追記（branch2 の多段伝播の起点）
+* 06c9bff master にチーム共通の追記
+* 906544f 個人設定 settings.local.json を ignore
+* 058e217 共有 .claude 資産の初版
+    java/_base が master を先祖に持つ: YES
+    java/design が java/_base を先祖に持つ: YES
+    push --force の終了コード: 0
+

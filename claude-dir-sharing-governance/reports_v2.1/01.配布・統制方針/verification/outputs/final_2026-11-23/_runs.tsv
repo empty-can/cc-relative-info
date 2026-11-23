@@ -1,0 +1,22 @@
+switch-fail	switch	switch-fail.sh 	rc=0	sec=26	start=1795440618	end=1795440644
+ffonly-test	ffonly	ffonly-test.sh 	rc=0	sec=8	start=1795440654	end=1795440662
+nestclone-localfile	localfile	nestclone-localfile.sh 	rc=0	sec=32	start=1795440663	end=1795440695
+maintain-move-asset	moveasset	maintain-move-asset.sh 	rc=0	sec=7	start=1795440696	end=1795440703
+launcher-states_ps51_bom1	ls-ps51-1	launcher-states.sh 	rc=0	sec=116	start=1795440609	end=1795440725
+launcher-states_pwsh_bom0	ls-pwsh0	launcher-states.sh 	rc=0	sec=132	start=1795440600	end=1795440732
+migrate-submodule	migsub	migrate-submodule.sh 	rc=0	sec=29	start=1795440704	end=1795440733
+migrate-local-edit	migedit	migrate-local-edit.sh 	rc=0	sec=15	start=1795440734	end=1795440749
+nestclone-setup	nest	nestclone-setup.sh 	rc=0	sec=2	start=1795440750	end=1795440752
+nestclone-branch	nest	nestclone-branch.sh 	rc=0	sec=3	start=1795440758	end=1795440761
+nestclone-branch2	nest	nestclone-branch2.sh 	rc=0	sec=8	start=1795440766	end=1795440774
+nestclone-updaterefs	nest	nestclone-updaterefs.sh 	rc=0	sec=8	start=1795440778	end=1795440786
+maintain-controls	controls	maintain-controls.sh 	rc=0	sec=36	start=1795440787	end=1795440823
+launcher-states_ps51_bom0	ls-ps51-0	launcher-states.sh 	rc=0	sec=78	start=1795440762	end=1795440840
+maintain-controls_run2	controls2	maintain-controls.sh 	rc=0	sec=38	start=1795440829	end=1795440867
+maintain-controls_run3	controls3	maintain-controls.sh 	rc=0	sec=30	start=1795440868	end=1795440898
+launcher-remedy_pwsh	lr-pwsh	launcher-remedy.sh 	rc=0	sec=235	start=1795440763	end=1795440998
+launcher-states_chk_ps51_bom1	ls-chk-ps51	launcher-states.sh C:/cc-workspace/cc-relative-info/claude-dir-sharing-governance/reports_v2.1/01.配布・統制方針/verification/launcher-example-check.ps1	rc=0	sec=124	start=1795440903	end=1795441027
+launcher-states_chk_pwsh	ls-chk-pwsh	launcher-states.sh C:/cc-workspace/cc-relative-info/claude-dir-sharing-governance/reports_v2.1/01.配布・統制方針/verification/launcher-example-check.ps1	rc=0	sec=138	start=1795440899	end=1795441037
+launcher-remedy_ps51	lr-ps51	launcher-remedy.sh 	rc=0	sec=155	start=1795441008	end=1795441163
+maintain-scenes	scenes	maintain-scenes.sh 	rc=0	sec=853	start=1795440599	end=1795441452
+maintain-remedy	remedy	maintain-remedy.sh 	rc=0	sec=1438	start=1795440600	end=1795442038

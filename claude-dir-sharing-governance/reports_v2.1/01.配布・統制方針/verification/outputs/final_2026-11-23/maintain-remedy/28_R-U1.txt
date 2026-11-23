@@ -1,0 +1,29 @@
+################ R-U1 手元の main に commit した変更を PR のブランチ pr/9 にして push → マージの前に実行 → squash でマージした後に実行
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-u1/shared
+    |    3bf297a..009abb3  main       -> origin/main
+    | 中断: ローカルの main に、origin に無い変更がある: + 890ebabe48b2d421c6d9dc6ccc62d8d61ff61627
+  #### [R-U1 マージの前] 終了コード 1
+    （pr/9 を squash で origin の main にマージした）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-u1/shared
+    |    009abb3..fe0e206  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-u1/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-u1/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-u1/m" <検証用のリポジトリ>/.claude
+    | 参考: origin にある、系列の名前でないブランチ: pr/9（新しい系列なら、y を入れずに終え、BRANCHES・PAIRS・② に足す）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-u1/shared.git
+    |  + 06b9898...2084bc9 java/base -> java/base (forced update)
+    |  + 9335be1...e753691 java/design -> java/design (forced update)
+    |  + 10d5e48...e34a2a8 java/ut -> java/ut (forced update)
+    |  + c1a4399...3676d43 python/base -> python/base (forced update)
+    |  + 26b61b4...d4d17c6 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-U1 マージの後] 終了コード 0
+

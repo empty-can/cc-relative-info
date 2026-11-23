@@ -1,0 +1,34 @@
+################ R-PUSH §7-2 手順 3: 新しく作った土台 go/base を push し忘れた（go/coding だけ push）→ go/base を push → もう一度
+  $ bash run-g.sh   （stdin: y\\n）
+    | 中断: go/base が origin に無い（BRANCHES を直す）
+  #### [R-PUSH 1 回目] 終了コード 1
+    （対処: git push -u origin go/base）
+  $ bash run-g.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | Current branch go/coding is up to date.
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-push/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-push/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-push/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch go/coding "/c/tmp/v21-vd/remedy/rm-r-push/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-push/shared.git
+    |  + 6a822cb...738b5f6 java/base -> java/base (forced update)
+    |  + 04dd582...3c6685e java/design -> java/design (forced update)
+    |  + f1bc824...2ecd895 java/ut -> java/ut (forced update)
+    |  + 29fa791...8b7e59d python/base -> python/base (forced update)
+    |  + f149ad1...ab42e28 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-PUSH push した後] 終了コード 0
+    origin go/base        0ac4fa4  main を含む: YES
+    origin go/coding      1c2b1aa  main を含む: YES
+    origin java/base      738b5f6  main を含む: YES
+    origin java/design    3c6685e  main を含む: YES
+    origin java/ut        2ecd895  main を含む: YES
+    origin main           1473912  main を含む: YES
+    origin python/base    8b7e59d  main を含む: YES
+    origin python/coding  ab42e28  main を含む: YES
+

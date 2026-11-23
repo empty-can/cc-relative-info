@@ -1,0 +1,31 @@
+################ E9 系列の名前で、自分のコミットが無い java/empty（旧い main を指す＝新しい main の先祖。maintain-scenes.sh の S09d と同じ形）
+    前提: java/empty は origin/main の先祖か: YES
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-e9/shared
+    |    d3847fa..b1f711a  main       -> origin/main
+    |  * [new branch]      java/empty -> origin/java/empty
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-e9/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-e9/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-e9/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-e9/shared.git
+    |  + fe8073a...c24d9a0 java/base -> java/base (forced update)
+    |  + 70062eb...494a146 java/design -> java/design (forced update)
+    |  + 75dc32e...bb6b25d java/ut -> java/ut (forced update)
+    |  + dbc4592...bb28ead python/base -> python/base (forced update)
+    |  + 1f98f76...25bcfef python/coding -> python/coding (forced update)
+    | push した。
+  #### [E9 java/empty] 終了コード 0
+    origin java/base      c24d9a0  main を含む: YES
+    origin java/design    494a146  main を含む: YES
+    origin java/empty     d3847fa  main を含む: NO
+    origin java/ut        bb6b25d  main を含む: YES
+    origin main           b1f711a  main を含む: YES
+    origin python/base    bb28ead  main を含む: YES
+    origin python/coding  25bcfef  main を含む: YES
+

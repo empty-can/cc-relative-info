@@ -1,0 +1,37 @@
+################ R-MN 土台の手順: java/base が早送りで進んだ → ③' で n → そのままもう一度 → ③' の案内のとおり戻す → もう一度
+  $ bash run-maintain-middle.sh   （stdin: n\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-mn/shared
+    |    2326273..6406d60  main       -> origin/main
+    |    fc14ddb..d33c0c3  java/base  -> origin/java/base
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-mn/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-mn/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | push しなかった。
+  #### [R-MN n] 終了コード 2
+  $ bash run-maintain-middle.sh   （stdin: y\\n）
+    | 中断: ローカルの java/design に、origin に無い変更がある: + d33c0c3f559fdee3a4edf01c27f0f280d4a51447
+  #### [R-MN そのままもう一度] 終了コード 1
+    （対処: ③' の案内どおり git switch --detach → git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）
+branch 'java/design' set up to track 'origin/java/design'.
+branch 'java/ut' set up to track 'origin/java/ut'.
+  $ bash run-maintain-middle.sh   （stdin: y\\n）
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-mn/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-mn/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | To C:/tmp/v21-vd/remedy/rm-r-mn/shared.git
+    |  + 1534719...dd350ae java/design -> java/design (forced update)
+    |  + a2a51a4...fe8fbb6 java/ut -> java/ut (forced update)
+    | push した。
+  #### [R-MN 案内どおり戻した後] 終了コード 0
+    origin java/base      d33c0c3  main を含む: NO
+    origin java/design    dd350ae  main を含む: NO
+    origin java/ut        fe8fbb6  main を含む: NO
+    origin main           6406d60  main を含む: YES
+    origin python/base    441b332  main を含む: NO
+    origin python/coding  e7a3737  main を含む: NO
+    origin の java/design・java/ut は java/base を含むか: YES・YES
+
+######## 終了 ########
+#### run_one: end rc=0 seconds=1438

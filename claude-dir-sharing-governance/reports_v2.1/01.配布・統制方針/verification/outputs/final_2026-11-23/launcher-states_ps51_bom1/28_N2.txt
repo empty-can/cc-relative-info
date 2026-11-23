@@ -1,0 +1,11 @@
+== N2 小文字の -branch java/design
+  $ & start_claude_code.ps1 -branch java/design
+    | branch 'java/design' set up to track 'origin/java/design'.
+    | Switched to a new branch 'java/design'
+    | .claude/ のブランチを切り替えました: main → java/design
+    | HEAD is now at 4b2a73d java/design
+    | [起動] cwd=C:\tmp\v21-vd\ls-ps51-1\launcher-powershell-bom1\cases\n2 / .claude のブランチ=java/design / 先頭=4b2a73d java/design
+    | [claude の引数] 0 個: 
+    → 終了コード 0
+    .claude のブランチ（後）: java/design ／ 先頭: 4b2a73d java/design
+

@@ -1,0 +1,1 @@
+#### run_one: VERIF_ROOT=C:/tmp/v21-vd/moveasset script=maintain-move-asset.sh args=[] LSHELL= LBOM= start=2026-11-23 22:31:36 +0900

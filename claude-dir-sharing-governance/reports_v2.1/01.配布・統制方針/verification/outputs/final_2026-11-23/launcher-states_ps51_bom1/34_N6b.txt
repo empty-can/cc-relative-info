@@ -1,0 +1,12 @@
+== N6b 同じで -Branch 省略（main のまま）
+  $ & start_claude_code.ps1 
+    | fatal: Unable to create 'C:/tmp/v21-vd/ls-ps51-1/launcher-powershell-bom1/cases/n6b/.claude/.git/index.lock': File exists.
+    | 
+    | Another git process seems to be running in this repository, e.g.
+    | an editor opened by 'git commit'. Please make sure all processes
+    | are terminated then try again. If it still fails, a git process
+    | may have crashed in this repository earlier:
+    | remove the file manually to continue.
+    | ブランチ 'main' への切替に失敗しました。中断します。
+    → 終了コード 1
+

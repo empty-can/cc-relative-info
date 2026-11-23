@@ -1,0 +1,16 @@
+################ R-ACC3 §5-7 誤った force-push の後に、メンテナーが fetch せずに reflog の値を使う → fetch してから使う
+    （誤り: x が java/design を java/ut の値で force-push）
+    reflog（fetch の前）: e3dd557 fetch -q origin: fast-forward
+    fetch の前: @{0}=e3dd557 @{1}=8d0539e ／ 誤りの前の origin の値: e3dd557
+    push| To C:/tmp/v21-vd/remedy/rm-r-acc3/shared.git
+    push|  ! [rejected]        8d0539e2fce85ebf519049bbba9bb5160904e587 -> java/design (stale info)
+    push| error: failed to push some refs to 'C:/tmp/v21-vd/remedy/rm-r-acc3/shared.git'
+    m: git push --force-with-lease=java/design:e3dd5573c158f84b2181945333bf354f97ef2560 origin 8d0539e2fce85ebf519049bbba9bb5160904e587:refs/heads/java/design の終了コード: 1
+    （上は、fetch せずに @{1} を、手元の origin/java/design（=@{0}）を lease に渡して push したもの）
+    reflog（fetch の後）: 40584e9 fetch -q origin: forced-update
+    reflog（fetch の後）: e3dd557 fetch -q origin: fast-forward
+    push| To C:/tmp/v21-vd/remedy/rm-r-acc3/shared.git
+    push|  + 40584e9...e3dd557 e3dd5573c158f84b2181945333bf354f97ef2560 -> java/design (forced update)
+    m: git push --force-with-lease=java/design:40584e9fa132d2fcc2e3310fee84d2927912e12b origin e3dd5573c158f84b2181945333bf354f97ef2560:refs/heads/java/design の終了コード: 0
+    origin の java/design が誤りの前の値に戻ったか: 一致
+

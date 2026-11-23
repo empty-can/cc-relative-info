@@ -1,0 +1,7 @@
+=== git switch -c java/design（java がある状態で）===
+    fatal: cannot lock ref 'refs/heads/java/design': 'refs/heads/java' exists; cannot create 'refs/heads/java/design'
+    終了コード: 128
+    現在のブランチ: java
+    push: error: src refspec java/design does not match any
+    push: error: failed to push some refs to 'C:/tmp/v21-vd/nest/nestclone/shared.git'
+    push の終了コード: 1

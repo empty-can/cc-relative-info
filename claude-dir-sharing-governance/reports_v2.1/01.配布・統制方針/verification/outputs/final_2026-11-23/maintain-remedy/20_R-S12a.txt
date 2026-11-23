@@ -1,0 +1,137 @@
+################ R-S12a ② の衝突 → --abort で戻し、main の変更か末端ブランチの変更を直してからやり直す
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s12a1/shared
+    |    1c6ba0b..b8ac18a  main        -> origin/main
+    |    646e168..8a3faff  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 8a3faff... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [R-S12a1 1 回目（衝突）] 終了コード 1
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s12a2m/shared
+    |    3ee075c..b79d917  main        -> origin/main
+    |    3521ed9..de674fe  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply de674fe... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [R-S12a2m 1 回目（衝突）] 終了コード 1
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s12a2x/shared
+    |    1df2ddc..3815bf5  main        -> origin/main
+    |    7413d2f..710b1bd  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 710b1bd... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [R-S12a2x 1 回目（衝突）] 終了コード 1
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s12a3/shared
+    |    4ffdfe9..eb1a402  main        -> origin/main
+    |    dc8c340..c11a96b  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply c11a96b... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [R-S12a3 1 回目（衝突）] 終了コード 1
+    （対処 1: 末端ブランチに、衝突する行を別のファイルへ移すコミットを足して push）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s12a1/shared
+    |    8a3faff..6e0ea92  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 8a3faff... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [R-S12a1 足した後] 終了コード 1
+    （対処 2m: 実行するクローン m で、末端ブランチの衝突するコミットを書き換え、値を付けた --force-with-lease で push）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s12a2m/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s12a2m/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s12a2m/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s12a2m/shared.git
+    |  + e8506e8...a319206 java/base -> java/base (forced update)
+    |  + 2007e1e...64a9b37 java/design -> java/design (forced update)
+    |  + 1e84be0...c1144c4 java/ut -> java/ut (forced update)
+    |  + b536651...e813a01 python/base -> python/base (forced update)
+    |  + 7b3a1e0...5bd2181 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S12a2m 書き換えた後] 終了コード 0
+    （対処 2x: 別のクローン x で同じ書き換え）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s12a2x/shared
+    |  + 710b1bd...de79fdb java/design -> origin/java/design  (forced update)
+    | 中断: ローカルの java/design に、origin に無い変更がある: + 710b1bd87a8e099f3d39f09960c692a67ff08b2f
+  #### [R-S12a2x 書き換えた後（m）] 終了コード 1
+    （m で捨てる: git branch -f java/design origin/java/design）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s12a2x/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s12a2x/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s12a2x/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s12a2x/shared.git
+    |  + 94cdd99...28a5634 java/base -> java/base (forced update)
+    |  + de79fdb...72afcf7 java/design -> java/design (forced update)
+    |  + 4099819...631ccc5 java/ut -> java/ut (forced update)
+    |  + 762b2ba...7a09a3e python/base -> python/base (forced update)
+    |  + c25a9da...a4a5224 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S12a2x 捨てた後] 終了コード 0
+    （対処 3: main の変更を直す新しい PR をマージ）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-s12a3/shared
+    |    eb1a402..db3f5ba  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s12a3/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s12a3/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s12a3/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s12a3/shared.git
+    |  + 85dde04...02d74cf java/base -> java/base (forced update)
+    |  + c11a96b...9b0c3cb java/design -> java/design (forced update)
+    |  + 9e56803...07b1f57 java/ut -> java/ut (forced update)
+    |  + b829ce5...8985d38 python/base -> python/base (forced update)
+    |  + b4ce9c8...65fb117 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S12a3 main を直した後] 終了コード 0
+

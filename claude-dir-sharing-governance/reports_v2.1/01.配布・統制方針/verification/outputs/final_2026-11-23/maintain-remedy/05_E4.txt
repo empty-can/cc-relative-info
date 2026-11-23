@@ -1,0 +1,24 @@
+################ E4 対照: merge commit でマージした PR のブランチ pr/5 が origin に残る
+    前提: pr/5 は origin/main の先祖か: YES（YES）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-e4/shared
+    |    43a3eba..9ab5226  main       -> origin/main
+    |  * [new branch]      pr/5       -> origin/pr/5
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-e4/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-e4/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-e4/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-e4/shared.git
+    |  + 0c41bdb...d006eee java/base -> java/base (forced update)
+    |  + ac52f35...cde7997 java/design -> java/design (forced update)
+    |  + 9791999...acf2de0 java/ut -> java/ut (forced update)
+    |  + f838215...2084c23 python/base -> python/base (forced update)
+    |  + 71123f6...42096bf python/coding -> python/coding (forced update)
+    | push した。
+  #### [E4 merge commit] 終了コード 0
+

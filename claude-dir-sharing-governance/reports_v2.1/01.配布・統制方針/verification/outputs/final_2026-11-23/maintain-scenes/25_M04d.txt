@@ -1,0 +1,59 @@
+################ M04d 同じ状態で、先に定常手順を実行する → ③ で止まる → そのまま中間ブランチの手順 → 手元のブランチを捨てる → 中間ブランチの手順 → 定常手順
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/scenes/sc-m04d/shared
+    |    fa6bff9..6de14c3  java/base  -> origin/java/base
+    |    5bb57f0..4508ef5  main       -> origin/main
+    | Rebasing (1/2)Rebasing (2/2)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | 中断: java/base が main を取り込めていない
+  #### [M04d maintain-steady.sh（先に）] 終了コード 1
+    中断の後の HEAD: python/coding
+  $ bash maintain-middle.sh   （stdin: y\\n）
+    | 中断: ローカルの java/ut に、origin に無い変更がある: + 6de14c33b9d8b044368eb734b96a76ab7ba23069
+  #### [M04d そのまま maintain-middle.sh] 終了コード 1
+    （対処: git switch --detach の後、BRANCHES の各ブランチを git branch -f で origin の値に戻す）
+  $ bash maintain-middle.sh   （stdin: y\\n）
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-m04d/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-m04d/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | To C:/tmp/v21-vd/scenes/sc-m04d/shared.git
+    |  + b2e8a2a...c3caa69 java/design -> java/design (forced update)
+    |  + 60a73d0...ea82e16 java/ut -> java/ut (forced update)
+    | push した。
+  #### [M04d 捨てた後に maintain-middle.sh] 終了コード 0
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | Rebasing (1/4)Rebasing (2/4)Rebasing (3/4)Rebasing (4/4)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-m04d/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-m04d/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/scenes/sc-m04d/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/scenes/sc-m04d/shared.git
+    |  + 6de14c3...d5dbdbd java/base -> java/base (forced update)
+    |  + c3caa69...2cea748 java/design -> java/design (forced update)
+    |  + ea82e16...498bdb9 java/ut -> java/ut (forced update)
+    |  + be4f25b...2d6777e python/base -> python/base (forced update)
+    |  + 7488c62...b125cd4 python/coding -> python/coding (forced update)
+    | push した。
+  #### [M04d 続けて maintain-steady.sh] 終了コード 0
+    origin java/base      d5dbdbd  main を含む: YES
+    origin java/design    2cea748  main を含む: YES
+    origin java/ut        498bdb9  main を含む: YES
+    origin main           4508ef5  main を含む: YES
+    origin python/base    2d6777e  main を含む: YES
+    origin python/coding  b125cd4  main を含む: YES
+    origin java/design: 土台の追記 1 件 ／ main の追記（PR #9）1 件
+    origin java/ut: 土台の追記 1 件 ／ main の追記（PR #9）1 件
+

@@ -1,61 +1,0 @@
-################ S13 ③ と ④ の間（入力待ちの間）に、別のメンテナーが java/ut を push する → ④ が拒否 → もう一度実行
-  $ bash maintain-steady.sh  （stdin: 「③ の検査に合格した」が出るのを待ち、x から java/ut を push してから y）
-    | From C:/tmp/v21-va/scenes/sc-s13/shared
-    |    d38511e..833f119  main       -> origin/main
-    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
-    | Updated the following refs with --update-refs:
-    | 	refs/heads/java/base
-    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
-    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
-    | Updated the following refs with --update-refs:
-    | 	refs/heads/python/base
-    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
-    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s13/m" <検証用のリポジトリ>/.claude
-    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s13/m" <検証用のリポジトリ>/.claude
-    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s13/m" <検証用のリポジトリ>/.claude
-    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
-    | （試験: 入力待ちの間に x が java/ut を push した）
-    | error: atomic push failed for ref refs/heads/java/ut. status: 7
-    | 
-    | fatal: the remote end hung up unexpectedly
-    | To C:/tmp/v21-va/scenes/sc-s13/shared.git
-    |  ! [rejected]        java/base -> java/base (atomic push failed)
-    |  ! [rejected]        java/design -> java/design (atomic push failed)
-    |  ! [rejected]        java/ut -> java/ut (stale info)
-    |  ! [rejected]        python/base -> python/base (atomic push failed)
-    |  ! [rejected]        python/coding -> python/coding (atomic push failed)
-    | error: failed to push some refs to 'C:/tmp/v21-va/scenes/sc-s13/shared.git'
-    | 中断: push に失敗（拒否されたら、このスクリプトをもう一度実行する）
-  #### [S13 割り込みあり] 終了コード 1
-    origin の java/base は動いていないか（--atomic）: d9868cd java/base: java 共通 rule
-  $ bash maintain-steady.sh   （stdin: y\\n）
-    | From C:/tmp/v21-va/scenes/sc-s13/shared
-    |    67c4b52..37e44f3  java/ut    -> origin/java/ut
-    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
-    | Updated the following refs with --update-refs:
-    | 	refs/heads/java/base
-    | Rebasing (1/2)Rebasing (2/2)[KSuccessfully rebased and updated refs/heads/java/ut.
-    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
-    | Updated the following refs with --update-refs:
-    | 	refs/heads/python/base
-    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
-    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s13/m" <検証用のリポジトリ>/.claude
-    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s13/m" <検証用のリポジトリ>/.claude
-    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s13/m" <検証用のリポジトリ>/.claude
-    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
-    | To C:/tmp/v21-va/scenes/sc-s13/shared.git
-    |  + d9868cd...c231b8e java/base -> java/base (forced update)
-    |  + 02c80b3...1079432 java/design -> java/design (forced update)
-    |  + 37e44f3...44b15b7 java/ut -> java/ut (forced update)
-    |  + ac54d53...b6b0381 python/base -> python/base (forced update)
-    |  + ac8ca19...73d3713 python/coding -> python/coding (forced update)
-    | push した。
-  #### [S13b もう一度 y] 終了コード 0
-    他のメンテナーの追記は origin の java/ut に残ったか: 1 件
-    origin java/base      c231b8e  main を含む: YES
-    origin java/design    1079432  main を含む: YES
-    origin java/ut        44b15b7  main を含む: YES
-    origin main           833f119  main を含む: YES
-    origin python/base    b6b0381  main を含む: YES
-    origin python/coding  73d3713  main を含む: YES
-

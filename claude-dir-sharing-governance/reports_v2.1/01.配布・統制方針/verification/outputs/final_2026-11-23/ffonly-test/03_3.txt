@@ -1,0 +1,4 @@
+=== 試験3: 参考 — detached HEAD で origin を直接チェックアウト ===
+    -> 終了コード: 0
+    消費側の現在: 2456365 c2: rule1 (修正後) / HEAD=HEAD
+#### run_one: end rc=0 seconds=8

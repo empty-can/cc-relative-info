@@ -1,0 +1,7 @@
+== N10 手元だけのブランチ mine（origin に無い）
+  $ & start_claude_code.ps1 -Branch mine
+    | ブランチ 'mine' は共有リポにありません（大文字小文字も区別します）。中断します。
+    | 共有リポのブランチ: java/base, java/design, main
+    → 終了コード 1
+    .claude のブランチ（後）: main ／ 先頭: c6355f2 main 追記
+

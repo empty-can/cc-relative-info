@@ -1,6 +1,0 @@
-#### run_one: VERIF_ROOT=C:/tmp/v21-va/ls-chk-ps51 script=launcher-states.sh args=[C:/cc-workspace/cc-relative-info/claude-dir-sharing-governance/reports_v2.1/01.配布・統制方針/verification/launcher-example-check.ps1] LSHELL=powershell LBOM=1 start=2026-11-23 19:56:43 +0900
-######## launcher-states.sh 2026-11-23 19:56:45 +0900 ／ git version 2.46.0.windows.1 ／ powershell.exe 5.1.26100.9711 ／ BOM=1 ########
-出どころ: C:/cc-workspace/cc-relative-info/claude-dir-sharing-governance/reports_v2.1/01.配布・統制方針/verification/launcher-example-check.ps1
-実行ポリシー（この環境の PSExecutionPolicyPreference=RemoteSigned）: RemoteSigned
-ランチャー例: 98 行
-

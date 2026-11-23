@@ -1,0 +1,25 @@
+################ R-S16 旧い名前のローカルブランチ java で「java/base を作れない」→ git branch -D java → もう一度
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | fatal: cannot lock ref 'refs/heads/java/base': 'refs/heads/java' exists; cannot create 'refs/heads/java/base'
+    | 中断: java/base を作れない
+  #### [R-S16 1 回目] 終了コード 1
+    （対処: git branch -D java）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-s16/fresh" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-s16/fresh" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-s16/fresh" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-s16/shared.git
+    |  + 72ef4bb...20c0817 java/base -> java/base (forced update)
+    |  + 018e0e6...c903e3f java/design -> java/design (forced update)
+    |  + 9175f02...c6e7448 java/ut -> java/ut (forced update)
+    |  + 5d629ad...5689d68 python/base -> python/base (forced update)
+    |  + 6e01722...942b496 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-S16 消した後] 終了コード 0
+

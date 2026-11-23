@@ -1,0 +1,34 @@
+################ R-ACC4 R-ACC2 と同じ状態（最後の fetch の後に別のメンテナーの正しい push、その後に誤り）で、正しい push をした x2 のクローンの値を使って戻す
+    （正しい push の後に、x が java/design を java/ut の値で force-push）
+    m の reflog: debe288 fetch -q origin: forced-update
+    m の @{1}: fdafafe ／ 正しい push の値: 908b4e9
+    x2 の手元の java/design: 908b4e9
+    （対処: x2 で git fetch → 手元の java/design を、fetch した後の値を付けた lease で push）
+    origin の java/design が正しい push の値に戻ったか: 一致 ／ 正しい追記 1 件
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-acc4/shared
+    |  + debe288...908b4e9 java/design -> origin/java/design  (forced update)
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-acc4/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-acc4/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-acc4/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-acc4/shared.git
+    |  + ff7062f...29b0313 java/base -> java/base (forced update)
+    |  + 908b4e9...336802d java/design -> java/design (forced update)
+    |  + debe288...501c142 java/ut -> java/ut (forced update)
+    |  + 9b50a09...d9ef510 python/base -> python/base (forced update)
+    |  + 9d48680...48a5db7 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-ACC4 戻した後の定常手順（m）] 終了コード 0
+    origin java/base      29b0313  main を含む: YES
+    origin java/design    336802d  main を含む: YES
+    origin java/ut        501c142  main を含む: YES
+    origin main           a01d81c  main を含む: YES
+    origin python/base    d9ef510  main を含む: YES
+    origin python/coding  48a5db7  main を含む: YES
+

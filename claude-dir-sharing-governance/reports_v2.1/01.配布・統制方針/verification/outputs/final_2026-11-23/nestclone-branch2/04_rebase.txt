@@ -1,0 +1,8 @@
+=== rebase 後のブランチグラフ ===
+* b16375a (HEAD -> java/design, origin/java/design) 設計作業固有の rule
+* c9e3582 (origin/java/_base, java/_base) java 系共通の rule
+* c035830 (origin/master, master) master に追記（branch2 の多段伝播の起点）
+* 06c9bff master にチーム共通の追記
+* 906544f 個人設定 settings.local.json を ignore
+* 058e217 共有 .claude 資産の初版
+

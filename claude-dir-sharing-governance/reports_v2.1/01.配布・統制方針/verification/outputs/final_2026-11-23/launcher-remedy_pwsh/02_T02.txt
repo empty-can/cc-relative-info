@@ -1,0 +1,17 @@
+################ T02 「clone に失敗」＋ Remote branch not found → -Branch の綴りを直して起動し直す
+  $ .\start_claude_code.ps1 -Branch java/desing
+    | Cloning into 'C:\tmp\v21-vd\lr-pwsh\lremedy-pwsh\cases\t02\.claude'...
+    | fatal: Remote branch java/desing not found in upstream origin
+    | clone に失敗しました。中断します。
+    → 終了コード 1
+    .claude: 無い
+  $ .\start_claude_code.ps1 -Branch java/design
+    | Cloning into 'C:\tmp\v21-vd\lr-pwsh\lremedy-pwsh\cases\t02\.claude'...
+    | done.
+    | Your branch is up to date with 'origin/java/design'.
+    | Already on 'java/design'
+    | HEAD is now at 4e9bf93 java/design
+    | [起動] .claude のブランチ=java/design / 先頭=4e9bf93 java/design
+    → 終了コード 0
+    .claude: java/design ／ status: [] ／ 作業リポ status: [?? start_claude_code.ps1 ]
+

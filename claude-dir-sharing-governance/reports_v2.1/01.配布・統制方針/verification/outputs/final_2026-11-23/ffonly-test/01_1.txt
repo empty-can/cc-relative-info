@@ -1,0 +1,16 @@
+=== 試験1: git pull --ff-only ===
+    From C:/tmp/v21-vd/ffonly/ffonly/remote
+     + 3d7252c...2456365 master     -> origin/master  (forced update)
+    hint: Diverging branches can't be fast-forwarded, you need to either:
+    hint:
+    hint: 	git merge --no-ff
+    hint:
+    hint: or:
+    hint:
+    hint: 	git rebase
+    hint:
+    hint: Disable this message with "git config advice.diverging false"
+    fatal: Not possible to fast-forward, aborting.
+    -> 終了コード: 128
+    消費側の現在: 3d7252c c2: rule1
+

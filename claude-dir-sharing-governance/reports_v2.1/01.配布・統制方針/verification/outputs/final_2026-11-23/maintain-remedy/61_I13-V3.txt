@@ -1,0 +1,66 @@
+################ I13-V3 V1 と同じ時に、m2 が初めから git rebase --onto origin/java/design java/design~1 java/design
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-i13-v3/shared
+    |    173646c..bd42a11  main        -> origin/main
+    |    4a17751..c923477  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply c923477... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [rm-i13-v3 準備: m の定常手順（② で衝突）] 終了コード 1
+    （m: 衝突するコミットを書き換え、値を付けた --force-with-lease で push した。H6 の決まりで禁じた操作）
+    push| To C:/tmp/v21-vd/remedy/rm-i13-v3/shared.git
+    push|  ! [rejected]        java/design -> java/design (fetch first)
+    push| error: failed to push some refs to 'C:/tmp/v21-vd/remedy/rm-i13-v3/shared.git'
+    push| hint: Updates were rejected because the remote contains work that you do not
+    push| hint: have locally. This is usually caused by another repository pushing to
+    push| hint: the same ref. If you want to integrate the remote changes, use
+    push| hint: 'git pull' before pushing again.
+    push| hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+    m2: git push origin java/design の終了コード: 1
+    fetch| From C:/tmp/v21-vd/remedy/rm-i13-v3/shared
+    fetch|  + c923477...ee373f3 java/design -> origin/java/design  (forced update)
+    m2: git fetch origin の終了コード: 0
+    switch| Your branch and 'origin/java/design' have diverged,
+    switch| and have 2 and 1 different commits each, respectively.
+    switch|   (use "git pull" if you want to integrate the remote branch with yours)
+    switch| Switched to branch 'java/design'
+    m2: git switch java/design の終了コード: 0
+    cherry| + c9234779862d53aeccbe30f3d2eb5cab0a7da33d java/design: CLAUDE.md に追記
+    cherry| + 3e7f6554d951d63d5677e17e650f206dde6f3fac java/design: m2 の追記（別のファイル）
+    m2: git cherry -v origin/java/design java/design origin/main の終了コード: 0
+    onto| [KSuccessfully rebased and updated refs/heads/java/design.
+    m2: git rebase --onto origin/java/design java/design~1 java/design の終了コード: 0
+    push| To C:/tmp/v21-vd/remedy/rm-i13-v3/shared.git
+    push|    ee373f3..8aeff81  java/design -> java/design
+    m2: git push origin java/design の終了コード: 0
+    origin の java/design: 書き換える前のコミット（CLAUDE.md に追記）0 件 ／ 書き換えたコミット 1 件 ／ m2 の追記 1 件 ／ main を含む: NO
+    origin の java/design の CLAUDE.md: main 初版/ ／ rules/design.md: 設計/design の追記/
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-i13-v3/shared
+    |    ee373f3..8aeff81  java/design -> origin/java/design
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-i13-v3/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-i13-v3/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-i13-v3/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-i13-v3/shared.git
+    |  + 8606c00...e33fdc0 java/base -> java/base (forced update)
+    |  + 8aeff81...eb59f9c java/design -> java/design (forced update)
+    |  + 399631b...9575725 java/ut -> java/ut (forced update)
+    |  + cd67c87...2795117 python/base -> python/base (forced update)
+    |  + a48b2c9...72c1822 python/coding -> python/coding (forced update)
+    | push した。
+  #### [I13-V3 m の次の定常手順] 終了コード 0
+    origin の java/design: 書き換える前のコミット（CLAUDE.md に追記）0 件 ／ 書き換えたコミット 1 件 ／ m2 の追記 1 件 ／ main を含む: YES
+    origin の java/design の CLAUDE.md: main 初版/main 追記（PR #1）/ ／ rules/design.md: 設計/design の追記/
+

@@ -1,0 +1,25 @@
+################ E1 squash でマージした PR のブランチ pr/2 が origin に残る
+    前提: pr/2 は origin/main の先祖か: NO（squash なので NO）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-e1/shared
+    |    02626d2..0a4b9e8  main       -> origin/main
+    |  * [new branch]      pr/2       -> origin/pr/2
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-e1/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-e1/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-e1/m" <検証用のリポジトリ>/.claude
+    | 参考: origin にある、系列の名前でないブランチ: pr/2（新しい系列なら、y を入れずに終え、BRANCHES・PAIRS・② に足す）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-e1/shared.git
+    |  + 56aab79...d3c9df9 java/base -> java/base (forced update)
+    |  + c0a93f1...093b03d java/design -> java/design (forced update)
+    |  + cfb9276...ec3c892 java/ut -> java/ut (forced update)
+    |  + 1829de4...6002deb python/base -> python/base (forced update)
+    |  + 9371163...07a943d python/coding -> python/coding (forced update)
+    | push した。
+  #### [E1 squash] 終了コード 0
+

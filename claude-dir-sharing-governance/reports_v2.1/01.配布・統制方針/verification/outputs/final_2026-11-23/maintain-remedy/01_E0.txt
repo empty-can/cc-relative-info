@@ -1,0 +1,22 @@
+################ E0 基準（BRANCHES に無いブランチなし）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-e0/shared
+    |    152faca..6941404  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-e0/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-e0/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-e0/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-e0/shared.git
+    |  + 233ea0a...2ebce21 java/base -> java/base (forced update)
+    |  + eece168...2bfb765 java/design -> java/design (forced update)
+    |  + 3ed4fac...b631424 java/ut -> java/ut (forced update)
+    |  + ed125ff...31c398a python/base -> python/base (forced update)
+    |  + 2b34041...4e32228 python/coding -> python/coding (forced update)
+    | push した。
+  #### [E0] 終了コード 0
+

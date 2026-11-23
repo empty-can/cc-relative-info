@@ -1,0 +1,22 @@
+=== 場面4b: 場面4 の後、手元のローカルブランチ java に戻ってから同じ手順 ===
+  --- 前:
+    現在のブランチ: java
+    HEAD         : f127e24fead5b371ee53b70efd7591e2b1515020
+    origin/java/design : 7e93d6a3a9231298196e0f8d873cb1b11163f61a
+    origin/master: 356581d1f31d167dffa81936db7e37859e7190f9
+    asset.txt    : java の資産
+    status --porcelain --ignored: []
+    fetch --prune の終了コード: 0
+    switch: fatal: cannot lock ref 'refs/heads/java/design': 'refs/heads/java' exists; cannot create 'refs/heads/java/design'
+    switch の終了コード: 128
+    reset: HEAD is now at 7e93d6a java/design 版
+    reset の終了コード: 0
+  --- 後:
+    現在のブランチ: java
+    HEAD         : 7e93d6a3a9231298196e0f8d873cb1b11163f61a
+    origin/java/design : 7e93d6a3a9231298196e0f8d873cb1b11163f61a
+    origin/master: 356581d1f31d167dffa81936db7e37859e7190f9
+    asset.txt    : java/design の資産
+    status --porcelain --ignored: []
+  ★ 判定: ブランチ名は java のまま、中身が origin/java/design になった
+

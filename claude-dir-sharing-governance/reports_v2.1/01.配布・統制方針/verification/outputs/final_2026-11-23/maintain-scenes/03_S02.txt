@@ -1,0 +1,54 @@
+################ S02 ③' で中止（n）→ push しない。続けて、もう一度実行して y
+  $ bash maintain-steady.sh   （stdin: n\\n）
+    | From C:/tmp/v21-vd/scenes/sc-s02/shared
+    |    e092be5..29d2457  main       -> origin/main
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-s02/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-s02/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/scenes/sc-s02/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | push しなかった。
+  #### [S02 n] 終了コード 2
+    origin が変わっていないか: 変わっていない
+    ローカル HEAD: python/coding ／ rebase 中: いいえ
+    local  java/base 17719d0
+    local  java/design 47d3f16
+    local  java/ut 1aff15c
+    local  main 29d2457
+    local  python/base 048bd74
+    local  python/coding 16f19d6
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-s02/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-s02/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/scenes/sc-s02/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/scenes/sc-s02/shared.git
+    |  + c9efb68...e899bc5 java/base -> java/base (forced update)
+    |  + e668cbe...078271c java/design -> java/design (forced update)
+    |  + 67a426e...815090c java/ut -> java/ut (forced update)
+    |  + 7ec92d9...4164246 python/base -> python/base (forced update)
+    |  + 22affc1...9150618 python/coding -> python/coding (forced update)
+    | push した。
+  #### [S02b 中止の後にもう一度 y] 終了コード 0
+    origin java/base      e899bc5  main を含む: YES
+    origin java/design    078271c  main を含む: YES
+    origin java/ut        815090c  main を含む: YES
+    origin main           29d2457  main を含む: YES
+    origin python/base    4164246  main を含む: YES
+    origin python/coding  9150618  main を含む: YES
+

@@ -1,0 +1,92 @@
+################ I13-C 対照: m は書き換えず、--abort の後に main を直す PR（H6 の決まりの形）→ 定常手順 → m2 が V1 と同じ手（cherry → push → git rebase origin/java/design → push）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-i13-c/shared
+    |    df544fd..8c6d976  main        -> origin/main
+    |    91d95f2..53bb8ad  java/design -> origin/java/design
+    | Auto-merging CLAUDE.md
+    | CONFLICT (content): Merge conflict in CLAUDE.md
+    | hint: Resolve all conflicts manually, mark them as resolved with
+    | hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+    | hint: You can instead skip this commit: run "git rebase --skip".
+    | hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+    | hint: Disable this message with "git config advice.mergeConflict false"
+    | Could not apply 53bb8ad... java/design: CLAUDE.md に追記
+    | 中断: rebase java/design（衝突なら git rebase --abort で戻す）
+  #### [rm-i13-c 準備: m の定常手順（② で衝突）] 終了コード 1
+    （m: 書き換えずに、main の変更を直す新しい PR をマージ）
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-i13-c/shared
+    |    8c6d976..e7d97c3  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-i13-c/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-i13-c/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-i13-c/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-i13-c/shared.git
+    |  + 960b3b0...05b9171 java/base -> java/base (forced update)
+    |  + 53bb8ad...c9c8ef9 java/design -> java/design (forced update)
+    |  + a32f19e...dad725c java/ut -> java/ut (forced update)
+    |  + ae7f954...6838b81 python/base -> python/base (forced update)
+    |  + ff5144b...dfc6016 python/coding -> python/coding (forced update)
+    | push した。
+  #### [I13-C m の定常手順（main を直した後）] 終了コード 0
+    push| To C:/tmp/v21-vd/remedy/rm-i13-c/shared.git
+    push|  ! [rejected]        java/design -> java/design (fetch first)
+    push| error: failed to push some refs to 'C:/tmp/v21-vd/remedy/rm-i13-c/shared.git'
+    push| hint: Updates were rejected because the remote contains work that you do not
+    push| hint: have locally. This is usually caused by another repository pushing to
+    push| hint: the same ref. If you want to integrate the remote changes, use
+    push| hint: 'git pull' before pushing again.
+    push| hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+    m2: git push origin java/design の終了コード: 1
+    fetch| From C:/tmp/v21-vd/remedy/rm-i13-c/shared
+    fetch|  + 960b3b0...05b9171 java/base     -> origin/java/base  (forced update)
+    fetch|  + 53bb8ad...c9c8ef9 java/design   -> origin/java/design  (forced update)
+    fetch|  + a32f19e...dad725c java/ut       -> origin/java/ut  (forced update)
+    fetch|    8c6d976..e7d97c3  main          -> origin/main
+    fetch|  + ae7f954...6838b81 python/base   -> origin/python/base  (forced update)
+    fetch|  + ff5144b...dfc6016 python/coding -> origin/python/coding  (forced update)
+    m2: git fetch origin の終了コード: 0
+    switch| Your branch and 'origin/java/design' have diverged,
+    switch| and have 4 and 5 different commits each, respectively.
+    switch|   (use "git pull" if you want to integrate the remote branch with yours)
+    switch| Switched to branch 'java/design'
+    m2: git switch java/design の終了コード: 0
+    cherry| - 960b3b097b2a0e5ec83a09188b128bf7efd6e8d9 java/base: java 共通 rule
+    cherry| - 91d95f2037f38d4fd4050aba4d17ac8d1fbe498f java/design: 設計 rule
+    cherry| - 53bb8ade533ce288c1aded746601a6ff18bb1c29 java/design: CLAUDE.md に追記
+    cherry| + f7fc725110bdb5b4ccad9a0980dd8e9132d86444 java/design: m2 の追記（別のファイル）
+    m2: git cherry -v origin/java/design java/design origin/main の終了コード: 0
+    rebase| warning: skipped previously applied commit 960b3b0
+    rebase| warning: skipped previously applied commit 91d95f2
+    rebase| warning: skipped previously applied commit 53bb8ad
+    rebase| hint: use --reapply-cherry-picks to include skipped commits
+    rebase| hint: Disable this message with "git config advice.skippedCherryPicks false"
+    rebase| [KSuccessfully rebased and updated refs/heads/java/design.
+    m2: git rebase origin/java/design の終了コード: 0
+    push| To C:/tmp/v21-vd/remedy/rm-i13-c/shared.git
+    push|    c9c8ef9..74a6a63  java/design -> java/design
+    m2: git push origin java/design の終了コード: 0
+    origin の java/design: 書き換える前のコミット（CLAUDE.md に追記）1 件 ／ 書き換えたコミット 0 件 ／ m2 の追記 1 件 ／ main を含む: YES
+    origin の java/design の CLAUDE.md: main 初版/design の追記/ ／ rules/design.md: 設計/
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/remedy/rm-i13-c/shared
+    |    c9c8ef9..74a6a63  java/design -> origin/java/design
+    | Current branch java/design is up to date.
+    | Current branch java/ut is up to date.
+    | Current branch python/coding is up to date.
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-i13-c/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-i13-c/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-i13-c/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | Everything up-to-date
+    | push した。
+  #### [I13-C m の次の定常手順] 終了コード 0
+    origin の java/design: 書き換える前のコミット（CLAUDE.md に追記）1 件 ／ 書き換えたコミット 0 件 ／ m2 の追記 1 件 ／ main を含む: YES
+    origin の java/design の CLAUDE.md: main 初版/design の追記/ ／ rules/design.md: 設計/
+

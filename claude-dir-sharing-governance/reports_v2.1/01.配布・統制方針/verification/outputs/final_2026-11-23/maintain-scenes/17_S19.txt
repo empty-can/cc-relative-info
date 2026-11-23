@@ -1,0 +1,138 @@
+################ S19 main にある資産を、既にある系列のブランチ（java/base）へ移す（§7-2 手順 2 は新しく切るブランチだけを書いている）
+  (a) main から外した後に、そのまま定常手順を実行する
+    origin java/base    rules/move.md: ある
+    origin java/design  rules/move.md: ある
+    origin java/ut      rules/move.md: ある
+    origin python/base  rules/move.md: ある
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/scenes/sc-s19a/shared
+    |    b2104a9..47f4ee7  main       -> origin/main
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | 注意: この push で、次のファイルがブランチから消える（main で消したものなど）:
+    |   rules/move.md（消えるブランチ: java/base java/design java/ut python/base python/coding）。BRANCHES のどのブランチにも残らない
+    |   意図した削除なら、そのまま y でよい。土台へ移す資産で、移す先のブランチに残っていないなら、y で push した後に、移す先の土台へ足し直して push し、土台の手順を実行する。意図していないなら、y を入れずに終える。
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-s19a/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-s19a/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/scenes/sc-s19a/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/scenes/sc-s19a/shared.git
+    |  + 97b753d...1371618 java/base -> java/base (forced update)
+    |  + f45f591...933b527 java/design -> java/design (forced update)
+    |  + 75d0173...434ac78 java/ut -> java/ut (forced update)
+    |  + edfb772...ab92363 python/base -> python/base (forced update)
+    |  + 96879a5...361eef5 python/coding -> python/coding (forced update)
+    | push した。
+  #### [S19a y] 終了コード 0
+    origin java/base    rules/move.md: 無い
+    origin java/design  rules/move.md: 無い
+    origin java/ut      rules/move.md: 無い
+    origin python/base  rules/move.md: 無い
+  (b0) 定常手順の前に、origin の java/base へ足し直そうとする（java/base はまだ旧い main の上なので、資産は残っている）
+    | On branch java/base
+    | Your branch is up to date with 'origin/java/base'.
+    | 
+    | nothing to commit, working tree clean
+    commit の終了コード: 1
+  (b) 定常手順を先に通し（資産が java/* から消える）、その後に java/base へ足し直して push し、中間ブランチの手順で子へ届ける
+  $ bash maintain-steady.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/scenes/sc-s19b/shared
+    |    83df5f3..39dbe3b  main       -> origin/main
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | 注意: この push で、次のファイルがブランチから消える（main で消したものなど）:
+    |   rules/move.md（消えるブランチ: java/base java/design java/ut python/base python/coding）。BRANCHES のどのブランチにも残らない
+    |   意図した削除なら、そのまま y でよい。土台へ移す資産で、移す先のブランチに残っていないなら、y で push した後に、移す先の土台へ足し直して push し、土台の手順を実行する。意図していないなら、y を入れずに終える。
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-s19b/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-s19b/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/scenes/sc-s19b/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/scenes/sc-s19b/shared.git
+    |  + d962212...1808230 java/base -> java/base (forced update)
+    |  + 03e7ab9...a11d6c4 java/design -> java/design (forced update)
+    |  + 40c14a4...8eb0e54 java/ut -> java/ut (forced update)
+    |  + 0e03866...0b89b25 python/base -> python/base (forced update)
+    |  + 17b565f...a8fcc7a python/coding -> python/coding (forced update)
+    | push した。
+  #### [S19b 定常手順 y] 終了コード 0
+    origin java/base    rules/move.md: 無い
+    origin java/design  rules/move.md: 無い
+    origin java/ut      rules/move.md: 無い
+    origin python/base  rules/move.md: 無い
+  $ bash maintain-middle.sh   （stdin: y\\n）
+    | From C:/tmp/v21-vd/scenes/sc-s19b/shared
+    |    1808230..4679725  java/base  -> origin/java/base
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/design.
+    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/scenes/sc-s19b/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/scenes/sc-s19b/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | To C:/tmp/v21-vd/scenes/sc-s19b/shared.git
+    |  + a11d6c4...1480015 java/design -> java/design (forced update)
+    |  + 8eb0e54...764fd22 java/ut -> java/ut (forced update)
+    | push した。
+  #### [S19b 中間ブランチの手順 y] 終了コード 0
+    origin java/base    rules/move.md: ある
+    origin java/design  rules/move.md: ある
+    origin java/ut      rules/move.md: ある
+    origin python/base  rules/move.md: 無い
+  (c) 誤り: ③' の入力待ちの間に、m の java/base で足し直して commit し、そのまま y を入れる
+    | From C:/tmp/v21-vd/scenes/sc-s19c/shared
+    |    d715906..122e9fb  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | 注意: この push で、次のファイルがブランチから消える（main で消したものなど）:
+    |   rules/move.md（消えるブランチ: java/base java/design java/ut python/base python/coding）。BRANCHES のどのブランチにも残らない
+    |   意図した削除なら、そのまま y でよい。土台へ移す資産で、移す先のブランチに残っていないなら、y で push した後に、移す先の土台へ足し直して push し、土台の手順を実行する。意図していないなら、y を入れずに終える。
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | （試験: 入力待ちの間に m の java/base へ commit した）
+    | To C:/tmp/v21-vd/scenes/sc-s19c/shared.git
+    |  + 431211a...c0a525b java/base -> java/base (forced update)
+    |  + 295acda...c16cfce java/design -> java/design (forced update)
+    |  + 655e007...a276d9c java/ut -> java/ut (forced update)
+    |  + a981108...8513c40 python/base -> python/base (forced update)
+    |  + 9bf5903...dedfcac python/coding -> python/coding (forced update)
+    | push した。
+  #### [S19c 入力待ちの間に commit] 終了コード 0
+    origin java/base    rules/move.md: ある
+    origin java/design  rules/move.md: 無い
+    origin java/ut      rules/move.md: 無い
+    origin python/base  rules/move.md: 無い
+    origin: java/base ⊂ java/design: NO
+    origin: java/base ⊂ java/ut: NO
+  (c2) 同じ誤りを、push の直前に待つ前の値と比べ、③ をもう一度行う版（maintain-steady.sh）で
+    | From C:/tmp/v21-vd/scenes/sc-s19d/shared
+    |    1fadfb9..15d1e1f  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | 注意: この push で、次のファイルがブランチから消える（main で消したものなど）:
+    |   rules/move.md（消えるブランチ: java/base java/design java/ut python/base python/coding）。BRANCHES のどのブランチにも残らない
+    |   意図した削除なら、そのまま y でよい。土台へ移す資産で、移す先のブランチに残っていないなら、y で push した後に、移す先の土台へ足し直して push し、土台の手順を実行する。意図していないなら、y を入れずに終える。
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | （試験: 入力待ちの間に m の java/base へ commit した）
+    | 中断: 入力を待つ間に、このクローンの次のブランチが動いた: java/base（push は 1 本もしていない。待つ間の変更を確かめ、残すなら控えてから、git switch --detach の後に待つ前の値へ戻し（ git branch -f java/base 0b5108c7660075c6e1031a397087e179a351974d;）、このスクリプトを最初からもう一度実行する）
+  #### [S19d 再検査の版] 終了コード 1
+    origin java/base    rules/move.md: ある
+    origin java/design  rules/move.md: ある
+    origin java/ut      rules/move.md: ある
+    origin python/base  rules/move.md: ある
+

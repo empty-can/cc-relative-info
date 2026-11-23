@@ -1,3 +1,0 @@
-#### run_one: VERIF_ROOT=C:/tmp/v21-va/scenes script=maintain-scenes.sh args=[] LSHELL= LBOM= start=2026-11-23 19:47:29 +0900
-######## maintain-scenes.sh 2026-11-23 19:47:29 +0900 ／ git version 2.46.0.windows.1 ／ bash 5.2.26(1)-release ／ VERIF_ROOT=C:/tmp/v21-va/scenes
-

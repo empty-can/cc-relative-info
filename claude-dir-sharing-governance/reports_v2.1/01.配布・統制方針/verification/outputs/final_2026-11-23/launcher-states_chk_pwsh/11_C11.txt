@@ -1,0 +1,8 @@
+== C11 既存クローンで存在しないブランチ
+  $ & start_claude_code.ps1 -Branch no/such
+    | ブランチ 'no/such' は共有リポにありません（大文字小文字も区別します）。中断します。
+    | 共有リポのブランチ: java/base, java/design, main
+    → 終了コード 1
+    .claude のブランチ（後）: java/design ／ 先頭: 11f0fc5 java/design
+    rules（後）: [a.md design.md java.md ]
+

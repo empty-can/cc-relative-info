@@ -1,0 +1,93 @@
+################ R-REBASED-PUSH 対照: ③' の入力待ちの間に、載せ直した手元の java/base に commit → y → 待つ前の値との比べで止まる → push（拒否）→ ① の説明の手（git fetch・git switch・git rebase origin/java/base）を当てると
+  $ bash run-w3-maintain-steady.sh  （入力待ちの間に、別の操作をしてから y を送る）
+    | From C:/tmp/v21-vd/remedy/rm-r-rebased-push/shared
+    |    9e41c15..72c881e  main       -> origin/main
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/design.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | 
+    | [KSuccessfully rebased and updated refs/heads/java/ut.
+    | 
+    | [KSuccessfully rebased and updated refs/heads/python/coding.
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    | （入力待ちの間に、次を実行した）
+    | m の java/base に commit した
+    | （ここで y を送った）
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | 中断: 入力を待つ間に、このクローンの次のブランチが動いた: java/base（push は 1 本もしていない。待つ間の変更を確かめ、残すなら控えてから、git switch --detach の後に待つ前の値へ戻し（ git branch -f java/base 3455e134de6cb1391e48fb7159914a976b6b6896;）、このスクリプトを最初からもう一度実行する）
+  #### [R-REBASED-PUSH m（入力待ちの間に java/base へ commit）] 終了コード 1
+    中断の後の m の HEAD: java/base
+    push| To C:/tmp/v21-vd/remedy/rm-r-rebased-push/shared.git
+    push|  ! [rejected]        java/base -> java/base (non-fast-forward)
+    push| error: failed to push some refs to 'C:/tmp/v21-vd/remedy/rm-r-rebased-push/shared.git'
+    push| hint: Updates were rejected because the tip of your current branch is behind
+    push| hint: its remote counterpart. If you want to integrate the remote changes,
+    push| hint: use 'git pull' before pushing again.
+    push| hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+    m: git push origin java/base の終了コード: 1
+    m: git fetch origin の終了コード: 0
+    switch| Your branch and 'origin/java/base' have diverged,
+    switch| and have 3 and 1 different commits each, respectively.
+    switch|   (use "git pull" if you want to integrate the remote branch with yours)
+    switch| Already on 'java/base'
+    m: git switch java/base の終了コード: 0
+    rebase| warning: skipped previously applied commit 3455e13
+    rebase| hint: use --reapply-cherry-picks to include skipped commits
+    rebase| hint: Disable this message with "git config advice.skippedCherryPicks false"
+    rebase| [KSuccessfully rebased and updated refs/heads/java/base.
+    m: git rebase origin/java/base の終了コード: 0
+    push| To C:/tmp/v21-vd/remedy/rm-r-rebased-push/shared.git
+    push|    1fd9bc5..15ef443  java/base -> java/base
+    m: git push origin java/base の終了コード: 0
+    origin の java/base の log:
+      15ef443 java/base: 手元の追記（入力待ちの間）
+      f6ed926 main: PR #1 で追記
+      1fd9bc5 java/base: java 共通 rule
+      9e41c15 main: 初版
+    origin の java/base は main を含むか: NO
+  $ bash run-maintain-middle.sh   （stdin: y\\n）
+    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-rebased-push/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-rebased-push/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（載せ直した子は手元に残り、そのままもう一度実行すると ① で止まる。もう一度実行する前に、git switch --detach の後に子を origin の値へ戻し（ git branch -f java/design origin/java/design; git branch -f java/ut origin/java/ut;）、このスクリプトを最初からもう一度実行する）。
+    | To C:/tmp/v21-vd/remedy/rm-r-rebased-push/shared.git
+    |  + 3a979bf...251d280 java/design -> java/design (forced update)
+    |  + 7b084d2...de063d3 java/ut -> java/ut (forced update)
+    | push した。
+  #### [R-REBASED-PUSH 中間ブランチの手順] 終了コード 0
+  $ bash run-maintain-steady.sh   （stdin: y\\n）
+    | warning: skipped previously applied commit f6ed926
+    | hint: use --reapply-cherry-picks to include skipped commits
+    | hint: Disable this message with "git config advice.skippedCherryPicks false"
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-rebased-push/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-rebased-push/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-rebased-push/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | To C:/tmp/v21-vd/remedy/rm-r-rebased-push/shared.git
+    |  + 15ef443...024cae3 java/base -> java/base (forced update)
+    |  + 251d280...0c99c0f java/design -> java/design (forced update)
+    |  + de063d3...a3b5ebe java/ut -> java/ut (forced update)
+    |  + 6973702...88f5e23 python/base -> python/base (forced update)
+    |  + 51a6b83...833c480 python/coding -> python/coding (forced update)
+    | push した。
+  #### [R-REBASED-PUSH 定常手順] 終了コード 0
+    origin java/base      024cae3  main を含む: YES
+    origin java/design    0c99c0f  main を含む: YES
+    origin java/ut        a3b5ebe  main を含む: YES
+    origin main           72c881e  main を含む: YES
+    origin python/base    88f5e23  main を含む: YES
+    origin python/coding  833c480  main を含む: YES
+    origin の java/base の log（定常手順の後）:
+      024cae3 java/base: 手元の追記（入力待ちの間）
+      3d21913 java/base: java 共通 rule
+      72c881e main: PR #1 で追記
+      9e41c15 main: 初版
+

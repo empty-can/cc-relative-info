@@ -1,1 +1,0 @@
-#### run_one: VERIF_ROOT=C:/tmp/v21-va/switch script=switch-fail.sh args=[] LSHELL= LBOM= start=2026-11-23 19:47:05 +0900

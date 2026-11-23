@@ -1,23 +1,0 @@
-################ M02 手元に java/old（origin で消した旧いブランチ。java/base を含まない）が残っている
-  $ bash control-middle-prev.sh   （stdin: /dev/null）
-    | From C:/tmp/v21-va/scenes/sc-m02o/shared
-    |    58a11b9..33d2e23  java/base  -> origin/java/base
-    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/design.
-    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
-    | 中断: main を取り込めていない: java/old
-  #### [M02 対照（前の形）] 終了コード 1
-  $ bash maintain-middle.sh   （stdin: y\\n）
-    | From C:/tmp/v21-va/scenes/sc-m02n/shared
-    |    88dadac..d947939  java/base  -> origin/java/base
-    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/design.
-    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
-    | ③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:
-    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-m02n/m" <検証用のリポジトリ>/.claude
-    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-m02n/m" <検証用のリポジトリ>/.claude
-    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
-    | To C:/tmp/v21-va/scenes/sc-m02n/shared.git
-    |  + c203b8f...5bed8c5 java/design -> java/design (forced update)
-    |  + 192a9bb...82d9d27 java/ut -> java/ut (forced update)
-    | push した。
-  #### [M02 maintain-middle.sh y] 終了コード 0
-

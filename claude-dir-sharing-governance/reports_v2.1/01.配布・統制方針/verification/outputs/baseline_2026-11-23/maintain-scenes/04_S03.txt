@@ -1,77 +1,0 @@
-################ S03 ③' の入力が y 以外（yes・空行・EOF）→ どれも push しない。最後に y
-  $ bash maintain-steady.sh   （stdin: yes\\n）
-    | From C:/tmp/v21-va/scenes/sc-s03/shared
-    |    7c01d5f..8fe316b  main       -> origin/main
-    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
-    | Updated the following refs with --update-refs:
-    | 	refs/heads/java/base
-    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
-    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
-    | Updated the following refs with --update-refs:
-    | 	refs/heads/python/base
-    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
-    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s03/m" <検証用のリポジトリ>/.claude
-    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s03/m" <検証用のリポジトリ>/.claude
-    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s03/m" <検証用のリポジトリ>/.claude
-    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
-    | push しなかった。
-  #### [S03a yes] 終了コード 2
-  $ bash maintain-steady.sh   （stdin: \\n）
-    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
-    | Updated the following refs with --update-refs:
-    | 	refs/heads/java/base
-    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
-    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
-    | Updated the following refs with --update-refs:
-    | 	refs/heads/python/base
-    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
-    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s03/m" <検証用のリポジトリ>/.claude
-    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s03/m" <検証用のリポジトリ>/.claude
-    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s03/m" <検証用のリポジトリ>/.claude
-    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
-    | push しなかった。
-  #### [S03b 空行] 終了コード 2
-  $ bash maintain-steady.sh   （stdin: /dev/null）
-    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
-    | Updated the following refs with --update-refs:
-    | 	refs/heads/java/base
-    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
-    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
-    | Updated the following refs with --update-refs:
-    | 	refs/heads/python/base
-    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
-    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s03/m" <検証用のリポジトリ>/.claude
-    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s03/m" <検証用のリポジトリ>/.claude
-    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s03/m" <検証用のリポジトリ>/.claude
-    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
-    | push しなかった。
-  #### [S03c EOF] 終了コード 2
-    3 回の後、origin が変わっていないか: 変わっていない
-  $ bash maintain-steady.sh   （stdin: y\\n）
-    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/java/design.
-    | Updated the following refs with --update-refs:
-    | 	refs/heads/java/base
-    | Rebasing (1/1)[KSuccessfully rebased and updated refs/heads/java/ut.
-    | Rebasing (1/3)Rebasing (2/3)Rebasing (3/3)[KSuccessfully rebased and updated refs/heads/python/coding.
-    | Updated the following refs with --update-refs:
-    | 	refs/heads/python/base
-    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
-    |   git clone --branch java/design "/c/tmp/v21-va/scenes/sc-s03/m" <検証用のリポジトリ>/.claude
-    |   git clone --branch java/ut "/c/tmp/v21-va/scenes/sc-s03/m" <検証用のリポジトリ>/.claude
-    |   git clone --branch python/coding "/c/tmp/v21-va/scenes/sc-s03/m" <検証用のリポジトリ>/.claude
-    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
-    | To C:/tmp/v21-va/scenes/sc-s03/shared.git
-    |  + f72c429...ba31453 java/base -> java/base (forced update)
-    |  + aa87cd2...ad4f0dd java/design -> java/design (forced update)
-    |  + 44dfdfb...d17960d java/ut -> java/ut (forced update)
-    |  + d4744ff...8bccfbf python/base -> python/base (forced update)
-    |  + 232bad6...1b37ea1 python/coding -> python/coding (forced update)
-    | push した。
-  #### [S03d y] 終了コード 0
-    origin java/base      ba31453  main を含む: YES
-    origin java/design    ad4f0dd  main を含む: YES
-    origin java/ut        d17960d  main を含む: YES
-    origin main           8fe316b  main を含む: YES
-    origin python/base    8bccfbf  main を含む: YES
-    origin python/coding  1b37ea1  main を含む: YES
-

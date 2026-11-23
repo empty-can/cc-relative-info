@@ -1,0 +1,47 @@
+################ R-REBASED-NG 対照: ③' で n → 載せ直した手元の末端ブランチ java/design に commit → push（拒否）→ ① の説明の手（git fetch・git switch・git rebase origin/java/design）を当てると
+  $ bash run-maintain-steady.sh   （stdin: n\\n）
+    | From C:/tmp/v21-vd/remedy/rm-r-rebased-ng/shared
+    |    b23363a..1648396  main       -> origin/main
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/java/base
+    | Updated the following refs with --update-refs:
+    | 	refs/heads/python/base
+    | ③ の検査に合格した。push する前に、次の末端ブランチを確かめる（§7-2 手順 5）:
+    |   git clone --branch java/design "/c/tmp/v21-vd/remedy/rm-r-rebased-ng/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch java/ut "/c/tmp/v21-vd/remedy/rm-r-rebased-ng/m" <検証用のリポジトリ>/.claude
+    |   git clone --branch python/coding "/c/tmp/v21-vd/remedy/rm-r-rebased-ng/m" <検証用のリポジトリ>/.claude
+    | 確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。
+    | push しなかった。
+  #### [R-REBASED-NG ③' で n] 終了コード 2
+    push| To C:/tmp/v21-vd/remedy/rm-r-rebased-ng/shared.git
+    push|  ! [rejected]        java/design -> java/design (non-fast-forward)
+    push| error: failed to push some refs to 'C:/tmp/v21-vd/remedy/rm-r-rebased-ng/shared.git'
+    push| hint: Updates were rejected because the tip of your current branch is behind
+    push| hint: its remote counterpart. If you want to integrate the remote changes,
+    push| hint: use 'git pull' before pushing again.
+    push| hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+    m: git push origin java/design の終了コード: 1
+    m: git fetch origin の終了コード: 0
+    switch| Your branch and 'origin/java/design' have diverged,
+    switch| and have 4 and 2 different commits each, respectively.
+    switch|   (use "git pull" if you want to integrate the remote branch with yours)
+    switch| Already on 'java/design'
+    m: git switch java/design の終了コード: 0
+    rebase| warning: skipped previously applied commit 89351f1
+    rebase| warning: skipped previously applied commit 95a08fa
+    rebase| hint: use --reapply-cherry-picks to include skipped commits
+    rebase| hint: Disable this message with "git config advice.skippedCherryPicks false"
+    rebase| [KSuccessfully rebased and updated refs/heads/java/design.
+    m: git rebase origin/java/design の終了コード: 0
+    m は rebase の途中か: いいえ
+    push| To C:/tmp/v21-vd/remedy/rm-r-rebased-ng/shared.git
+    push|    9c32d22..62f8c1e  java/design -> java/design
+    m: git push origin java/design の終了コード: 0
+    origin の java/design の log:
+      62f8c1e java/design: 手元の追記（載せ直したブランチの上）
+      0fec9f3 main: PR #1 で追記
+      9c32d22 java/design: 設計 rule
+      79198b2 java/base: java 共通 rule
+      b23363a main: 初版
+    origin の java/design は main を含むか: NO
+

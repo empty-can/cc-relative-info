@@ -1,8 +1,0 @@
-== C3 初回（存在しないブランチ）
-  $ & start_claude_code.ps1 -Branch no/such
-    | Cloning into 'C:\tmp\v21-va\ls-pwsh0\launcher-pwsh-bom0\cases\c3\.claude'...
-    | fatal: Remote branch no/such not found in upstream origin
-    | clone に失敗しました。中断します。
-    → 終了コード 1
-    .claude: 無い
-

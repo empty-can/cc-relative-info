@@ -7,9 +7,26 @@
 Git Bash（または任意の bash 4 以降）から実行する。`claude` を起動するスクリプトは、API の利用が発生する。セッション記録を読むために Python 3 が要る（`python` が無ければ `python3` を使う）。ランチャーと移行のスクリプトは PowerShell（`pwsh`。`launcher-states.sh` は Windows PowerShell 5.1 の `powershell.exe` も選べる）が要る。
 
 ```bash
-cd "$(git rev-parse --show-toplevel)/claude-dir-sharing-governance/reports_v2.1/01.配布・統制方針/verification" || exit 1
-VERIF_ROOT=C:/tmp/v21-verif bash switch-fail.sh
+V="$(git rev-parse --show-toplevel)/claude-dir-sharing-governance/reports_v2.1/01.配布・統制方針/verification"
+mkdir -p /c/tmp/v21-verif && cd /c/tmp/v21-verif || exit 1
+VERIF_ROOT=C:/tmp/v21-verif bash "$V/switch-fail.sh"
 ```
+
+### 流す型（足場へ `cd` してから、絶対パスで呼ぶ。`VERIF_ROOT` を必ず付ける）
+
+**スクリプトは、足場のフォルダへ `cd` してから、スクリプトの絶対パスで呼ぶ。`VERIF_ROOT` は毎回付ける。** `verification/` やリポジトリの中が cwd のままだと、`cd` に失敗した後に、このリポジトリ自身に対して git が動く（前に、足場なしで流して実リポジトリを壊したことがある）。
+
+```bash
+V=<このフォルダの絶対パス>
+export VERIF_ROOT=C:/tmp/v21-verif/<名前>        # C:/tmp の下。実行ごとに名前を分ける
+mkdir -p "/c/tmp/v21-verif/<名前>" && cd "/c/tmp/v21-verif/<名前>" || exit 1
+[ "$(pwd -W)" = "$VERIF_ROOT" ] || exit 1         # 足場に居ることを確かめる
+bash "$V/<スクリプト>.sh" [場面の名前...] > out.txt 2>&1
+```
+
+- 足場の名前は、実行ごとに分ける。同じ名前で続けて流すと、足場の中の名前が同じスクリプトは上書きし合う（`launcher-states.sh` は `launcher-<シェル>-bom<n>` を作るので、`LSHELL`・`LBOM` が同じ通常版と CHK 版（引数に `launcher-example-check.ps1` の絶対パスを渡す）は、必ず `VERIF_ROOT` を分ける）
+- 環境変数を付けるスクリプトは、同じ行に置く（`LSHELL=pwsh LBOM=0 bash "$V/launcher-states.sh"`）
+- 流し終えたら、足場（`C:\tmp\v21-verif`）の下だけを消す
 
 ### 足場の場所（`VERIF_ROOT`）
 
@@ -65,7 +82,7 @@ stream-json そのものには、文脈に足したものの記録は出ない�
 
 - `switch-fail.sh`・`ffonly-test.sh`・`nestclone-localfile.sh`・`nestclone-trust-noninteractive.sh`・`nestclone-localsettings.sh`（足場は `$VERIF_ROOT/nclocal`・`nclocal-track`）・`maintain-move-asset.sh`
 - `maintain-scenes.sh`・`maintain-controls.sh`・`maintain-remedy.sh`（どれも場面ごとに `maintain-setup.sh` を呼んで、別の名前の足場を作る）
-- `launcher-states.sh`（足場は `$VERIF_ROOT/launcher-<シェル>-bom<0|1>`）・`launcher-remedy.sh`（足場は `$VERIF_ROOT/lremedy-<シェル>`）・`migrate-submodule.sh`（足場は `$VERIF_ROOT/migrate`）・`migrate-local-edit.sh`（足場は `$VERIF_ROOT/migrate-local-edit`）
+- `launcher-states.sh`（足場は `$VERIF_ROOT/launcher-<シェル>-bom<0|1>`。**引数に `launcher-example-check.ps1` を渡す CHK 版も足場の中の名前が通常版と同じなので、通常版と CHK 版は `VERIF_ROOT` を分ける**。同じ `VERIF_ROOT` で続けて流すと上書きされる）・`launcher-remedy.sh`（足場は `$VERIF_ROOT/lremedy-<シェル>`）・`migrate-submodule.sh`（足場は `$VERIF_ROOT/migrate`）・`migrate-local-edit.sh`（足場は `$VERIF_ROOT/migrate-local-edit`）
 
 `maintain-scenes.sh`・`maintain-remedy.sh` は、引数に場面の名前（各スクリプトの `ALL`）を渡すと、その場面だけを流す。全場面を 1 本で流すと長い（`maintain-remedy.sh` は 20 分を超える）ので、場面の名前で分けて、別の `VERIF_ROOT` で流してよい（各場面は自分の足場を作り直すので、分けても結果は同じ）。**流している間は、そのスクリプトのファイルを書き換えない**（bash は実行中にファイルを読み進めるので、書き換えると、流れている実行が途中から別の行を読んで壊れる）。
 
@@ -76,7 +93,7 @@ stream-json そのものには、文脈に足したものの記録は出ない�
 | 入れ子クローン | `nestclone-setup.sh`・`nestclone-setup.sh nodeny` → `nestclone-run.sh`（引数 4 通り）・`nestclone-worktree.sh` → `nestclone-branch.sh` → `nestclone-branch2.sh` → `nestclone-updaterefs.sh` |
 | 発火 | `trigger-setup.sh` → `trigger-matrix.sh`・`trigger-adddir.sh`（順不同。ただし同じ足場を使うので、同時には実行しない） |
 
-`nestclone-branch.sh` 以降は共有リポとメンバー側のクローンを書き換えるので、`nestclone-run.sh`・`nestclone-worktree.sh` の後に実行する。**もう一度通すときは `nestclone-setup.sh` からやり直す。** 足場を作り直さずに後段を再実行すると、`nestclone-branch2.sh` は `java/_base を作れない` で止まり、`nestclone-updaterefs.sh` は止まらずに 1 回目と別の履歴の上で通る（終了コード 0 のまま結果が変わる）。単独で実行できるスクリプトは、毎回足場を作り直すので、続けて何度実行してもよい。
+`nestclone-branch.sh` 以降は共有リポとメンバー側のクローンを書き換えるので、`nestclone-run.sh`・`nestclone-worktree.sh` の後に実行する。**`claude` を使わずに流すときは、この 2 本を飛ばし、`nestclone-setup.sh` の直後に `nestclone-branch.sh` → `nestclone-branch2.sh` → `nestclone-updaterefs.sh` を、同じ足場名（同じ `VERIF_ROOT`）で続けて流す**（2026-11-23 に確かめた。4 本とも終了コード 0）。**もう一度通すときは `nestclone-setup.sh` からやり直す。** 足場を作り直さずに後段を再実行すると、`nestclone-branch2.sh` は `java/_base を作れない` で止まり、`nestclone-updaterefs.sh` は止まらずに 1 回目と別の履歴の上で通る（終了コード 0 のまま結果が変わる）。単独で実行できるスクリプトは、毎回足場を作り直すので、続けて何度実行してもよい。
 
 足場が無いまま後段を実行すると、最初の `verif_enter_repo` で止まる。`cd` が失敗したまま続けると、後続の `git add -A`・`commit`・`reset --hard` が、このリポジトリ自身に対して実行される。このため、
 
@@ -84,6 +101,37 @@ stream-json そのものには、文脈に足したものの記録は出ない�
 - 足場の削除は `verif_fresh_dir` だけで行い、`VERIF_ROOT` の外は消さない
 
 スクリプトを足したり直したりするときは、この形を保つこと。
+
+### 全部を流す順と、かかる時間（`claude` を使わない場面）
+
+場面の表の §1〜§7 の全部は、次の順で流せる（足場へ `cd` してから絶対パスで呼び、`VERIF_ROOT` を付ける型で、足場名を分ける）。2026-11-23 の最後の流し直しは、この順・この足場名の分け方で流した。**流している間は、スクリプトのファイルを書き換えない。**
+
+1. 単独のもの（どの順でもよい。足場名を分ければ並べてよい）: `switch-fail.sh`・`ffonly-test.sh`・`nestclone-localfile.sh`・`maintain-move-asset.sh`・`maintain-controls.sh`（CT-b を見るなら足場名を変えて 3 回）・`migrate-submodule.sh`・`migrate-local-edit.sh`
+2. 長いもの（足場名を分けて、並べて流す）
+   - `maintain-scenes.sh`（引数なしで 26 の名前の全部）・`maintain-remedy.sh`（引数なしで 62 の名前の全部）。場面の名前の引数で分けて流してもよい
+   - `launcher-states.sh`: `LSHELL=pwsh LBOM=0`・`LSHELL=powershell LBOM=1`・`LSHELL=powershell LBOM=0`（BOM0-5.1）の 3 通り。CHK は、引数に `launcher-example-check.ps1` の絶対パスを渡して、`LSHELL=pwsh`・`LSHELL=powershell LBOM=1` の 2 通り（足場名は通常版と分ける）
+   - `launcher-remedy.sh`: `LSHELL=pwsh`・`LSHELL=powershell` の 2 通り
+3. 入れ子クローンの連鎖（同じ足場名で、この順に）: `nestclone-setup.sh` → `nestclone-branch.sh` → `nestclone-branch2.sh` → `nestclone-updaterefs.sh`
+4. 足場の検査（`lib.sh` の `verif_guard_tmp` ほか）の場面。`lib.sh` を読み込むだけの 1 場面を、`VERIF_ROOT` を変えて 19 通り流す（`C:\tmp` の下の通る形 4・外 5・`C:\tmp` そのもの 4・`..` と `.` 3・リンク 2・未設定 1）。このスクリプトは `verification/` には置いていない。出力は `outputs/final_2026-11-23/lib-guard-check/`
+
+終わったら、足場（`C:\tmp` の下の `VERIF_ROOT`）だけを消す。
+
+かかった時間（2026-11-23 の最後の流し直し。秒。5 本ほどを並べて流した負荷を含み、直列の時間ではない）:
+
+| 実行 | 秒 | 実行 | 秒 |
+|---|---|---|---|
+| `maintain-scenes.sh`（全場面） | 853 | `launcher-states.sh` pwsh・BOM なし | 132 |
+| `maintain-remedy.sh`（全場面） | 1438 | 同 5.1・BOM あり | 116 |
+| `maintain-controls.sh`（3 回） | 36・38・30 | 同 5.1・BOM なし | 78 |
+| `maintain-move-asset.sh` | 7 | 同 CHK pwsh | 138 |
+| `switch-fail.sh` | 26 | 同 CHK 5.1・BOM あり | 124 |
+| `ffonly-test.sh` | 8 | `launcher-remedy.sh` pwsh | 235 |
+| `nestclone-localfile.sh` | 32 | 同 5.1 | 155 |
+| `nestclone-setup.sh` → `branch` → `branch2` → `updaterefs` | 2・3・8・8 | `migrate-submodule.sh`・`migrate-local-edit.sh` | 29・15 |
+
+秒の合計は約 3,500 秒（約 58 分）。全部を並べて流した壁時計は約 24 分（いちばん長い `maintain-remedy.sh` が律速）。足場の検査の 19 場面の時間は測っていない。
+
+**§8 の `claude -p` を使うスクリプト**（`nestclone-run.sh`・`nestclone-worktree.sh`・`nestclone-localsettings.sh`・`nestclone-trust-noninteractive.sh`・`trigger-matrix.sh`・`trigger-adddir.sh`）は、足場の検査（`C:\tmp`）と `verif_show` の直しを入れた後の `lib.sh` では流していない。場面の表 §8 の値は 2026-11-21 の実測（CLI 2.1.330）で、`verif_show` の欠陥（2026-11-22 02:45 のコミットから）より前のものである。
 
 ## スクリプトの一覧
 
@@ -115,8 +163,8 @@ stream-json そのものには、文脈に足したものの記録は出ない�
 | `maintain-steady.sh` | 本紙 §5-4 の定常手順（①〜④。③ の後で入力を待つ）そのもの。入力を待つ前に、push するブランチと `main` のこのクローンでの先頭を控え、push の直前に比べる（1 つでも動いていれば、1 本も push せずに止まる）。③' の案内の前に、載せ直しでブランチから消えるファイル（① の値と比べる）を、あるときだけ、消えるブランチと「`BRANCHES` のどのブランチにも残らない」かとともに一覧にする（止めはしない。名前に空白や日本語があってもそのまま出す）。プレースホルダ（`REPO`・`URL`）のままで、単独では実行しない（`maintain-scenes.sh` が 2 行だけ差し替えて使う） | §5-4 |
 | `maintain-middle.sh` | 中間ブランチ（土台）だけを更新したときの手順。`main` を含むかは検査しない（`main` も進んでいるときは、この手順の後に定常手順を実行する）。入力を待つ間に土台と子が動いていないかを、push の直前に比べる。③' の案内は、`y` 以外で終えた後にもう一度実行する前に、子を origin の値へ戻すコマンドを出す（載せ直した子が手元に残り、そのままもう一度実行すると ① で止まるため。R-MN）。プレースホルダのまま | §5-4 |
 | `maintain-steady-resume.sh` | `maintain-steady.sh` に、rebase の衝突を手で解いた後に `resume` で続ける形を足したもの（① の値を `.git/steady-old` に保存し、`resume` で読み戻す）。消えるファイルの一覧も同じ（`resume` では保存した ① の値と比べる）。本紙 §5-4 の選択肢。プレースホルダのまま | §5-4 |
-| `maintain-scenes.sh [場面...]` | 上の 3 つを、場面ごとに作った足場（`$VERIF_ROOT/sc-<場面>`）で通す。プレースホルダの 2 行だけを差し替え、差し替えた行数を diff で確かめる。場面: 基準・2 回続けて・③' で中止・`y` 以外の入力・手元の PR 用のブランチ・origin で消したブランチ・origin の一覧外のブランチ・origin に無いブランチ・未コミットの変更・rebase の衝突（`--abort`・解いた後・`resume`）・入力待ちの間の別のメンテナーの push・別のブランチや detached HEAD から・新しいクローン・旧い名前のブランチ（D/F）・`--single-branch` のクローン・push していないコミット・資産を既にある土台へ移す・2 人目のメンテナー、中間ブランチの手順の基準・手元の古いブランチ・土台の書き換え・`main` も進んでいるとき（中間ブランチの手順の後に定常手順・定常手順を先に実行して止まった後）、末尾の S21（2026-11-23 に VC2 が足した。名前に空白と日本語を含むファイルを `main` で消すふつうの削除で、消えるファイルの一覧が正しい名前で出るか）。対照として `control-*.sh` も通す | §5-4、§7-2 |
-| `maintain-remedy.sh [場面...]` | 定常手順が止まる場面で、本紙に書いた対処をしてからもう一度実行し、通るかを見る（足場は `$VERIF_ROOT/rm-<場面>`）。E0〜E9 は ① の「origin にあって `BRANCHES` に無いブランチ」の検査を、squash・rebase でマージした PR のブランチ、開いている PR のブランチ、merge commit でマージしたブランチ（対照）、origin で消したブランチ、既にある系列と新しい系列の書き忘れ、系列の名前で始まる PR のブランチ、自分のコミットが無いブランチで通す。R-… は対処: 書き忘れたブランチを足す、系列の名前で始まる開いている PR のブランチを足すと何が起きるか・別の名前で出し直して消した後、origin に無いブランチ（`BRANCHES` を直す・`--single-branch`・push し忘れ）、未コミットの変更（`git stash`・commit・手元の `main` の commit を PR にしてマージする前と後・複数のコミットを 1 つに squash した後に手元の `main` を合わせる）、push していないコミットを捨てる、衝突の後（`--abort` の後・コミットを書き換える・`main` を直す PR・`resume` で拒否された後の 2 つの順）、載せ直した手元のブランチを手で push する、入力待ちの間に動かした後、③' の不合格の後（同じクローンで直す形を含む）、表示された clone 元を PowerShell に貼る（`pwsh` を使う）、誤った force-push を reflog の値で戻す（間に別のメンテナーの push があったときを含む）。R-STALE〜R-S24B は、origin がほかのメンテナーの手順で書き換わった後に、古い手元のブランチから push して拒否されたときの載せ直し（末端・土台・③' の不合格の後（入力待ちの間に別のメンテナーの定常手順が済んだときを含む）・衝突を解いたコミットの元が手元にあるとき）とその対照（このクローンの定常手順で載せ直したブランチ。土台と末端）、入力待ちの間に末端ブランチへ commit したとき、(b) の後の別のクローン、衝突するコミットを書き換える間の別のメンテナーの push、2 人の定常手順が重なったとき（入力待ちの間の操作は coproc で行う）、誤った force-push を戻すときの fetch と lease の値・正しい push をしたメンテナーのクローンで戻す形、衝突するコミットが土台にあるとき。「足す」「直す」は写しのファイルを書き換えて作り、変えた行を diff で表示する。R-S11X は先頭の中断の案内に従う手（変更を捨てる）と従わない手（末端で commit・origin に無いブランチで commit）、R-WT1〜R-WT7 は入力を待つ間にこのクローンのブランチを動かしたとき（末端・土台・`main`・動かさない・`n`・選択肢の版・土台の手順）の、待つ前の値との比べと中断の文の案内。末尾の場面（2026-11-23 に VC が足した）: `w-main`・`w-base`・`w-mid`・`w-midbase`（W-MAIN〜W-MIDBASE。2 人のメンテナーの手順が重なり、`m` の入力待ちの間に `m2` の側で共有リポが進む。同件調査 K7 の差し込みを持ち込んだ）、`r-i13`・`r-i13c`（I13-V1〜V4。衝突するコミットを書き換えて強制 push した後に、書き換える前のコミットを持つ `m2` が載せ直す。I13-C はその対照で、書き換えずに `main` の PR の側で直した形。レビューアの足場 `rewrite_replay2.sh` をこの足場と定常手順のスクリプトで組み直した）、`r-wait-tip-back`（R-WT5B・R-WT8。待つ間に `main`・土台が動いて止まった後、中断の文のとおり戻してもう一度）、`r-middle-n`（R-MN。土台の手順の ③' で `n` → もう一度 → ③' の案内のとおり戻してもう一度） | §5-4、§5-7、§7-2 |
+| `maintain-scenes.sh [場面...]` | 上の 3 つを、場面ごとに作った足場（`$VERIF_ROOT/sc-<場面>`）で通す。プレースホルダの 2 行だけを差し替え、差し替えた行数を diff で確かめる。場面: 基準・2 回続けて・③' で中止・`y` 以外の入力・手元の PR 用のブランチ・origin で消したブランチ・origin の一覧外のブランチ・origin に無いブランチ・未コミットの変更・rebase の衝突（`--abort`・解いた後・`resume`）・入力待ちの間の別のメンテナーの push・別のブランチや detached HEAD から・新しいクローン・旧い名前のブランチ（D/F）・`--single-branch` のクローン・push していないコミット・資産を既にある土台へ移す・2 人目のメンテナー、中間ブランチの手順の基準・手元の古いブランチ・土台の書き換え・`main` も進んでいるとき（中間ブランチの手順の後に定常手順・定常手順を先に実行して止まった後）、末尾の S21（2026-11-23 に足した。名前に空白と日本語を含むファイルを `main` で消すふつうの削除で、消えるファイルの一覧が正しい名前で出るか）。対照として `control-*.sh` も通す | §5-4、§7-2 |
+| `maintain-remedy.sh [場面...]` | 定常手順が止まる場面で、本紙に書いた対処をしてからもう一度実行し、通るかを見る（足場は `$VERIF_ROOT/rm-<場面>`）。E0〜E9 は ① の「origin にあって `BRANCHES` に無いブランチ」の検査を、squash・rebase でマージした PR のブランチ、開いている PR のブランチ、merge commit でマージしたブランチ（対照）、origin で消したブランチ、既にある系列と新しい系列の書き忘れ、系列の名前で始まる PR のブランチ、自分のコミットが無いブランチで通す。R-… は対処: 書き忘れたブランチを足す、系列の名前で始まる開いている PR のブランチを足すと何が起きるか・別の名前で出し直して消した後、origin に無いブランチ（`BRANCHES` を直す・`--single-branch`・push し忘れ）、未コミットの変更（`git stash`・commit・手元の `main` の commit を PR にしてマージする前と後・複数のコミットを 1 つに squash した後に手元の `main` を合わせる）、push していないコミットを捨てる、衝突の後（`--abort` の後・コミットを書き換える・`main` を直す PR・`resume` で拒否された後の 2 つの順）、載せ直した手元のブランチを手で push する、入力待ちの間に動かした後、③' の不合格の後（同じクローンで直す形を含む）、表示された clone 元を PowerShell に貼る（`pwsh` を使う）、誤った force-push を reflog の値で戻す（間に別のメンテナーの push があったときを含む）。R-STALE〜R-S24B は、origin がほかのメンテナーの手順で書き換わった後に、古い手元のブランチから push して拒否されたときの載せ直し（末端・土台・③' の不合格の後（入力待ちの間に別のメンテナーの定常手順が済んだときを含む）・衝突を解いたコミットの元が手元にあるとき）とその対照（このクローンの定常手順で載せ直したブランチ。土台と末端）、入力待ちの間に末端ブランチへ commit したとき、(b) の後の別のクローン、衝突するコミットを書き換える間の別のメンテナーの push、2 人の定常手順が重なったとき（入力待ちの間の操作は coproc で行う）、誤った force-push を戻すときの fetch と lease の値・正しい push をしたメンテナーのクローンで戻す形、衝突するコミットが土台にあるとき。「足す」「直す」は写しのファイルを書き換えて作り、変えた行を diff で表示する。R-S11X は先頭の中断の案内に従う手（変更を捨てる）と従わない手（末端で commit・origin に無いブランチで commit）、R-WT1〜R-WT7 は入力を待つ間にこのクローンのブランチを動かしたとき（末端・土台・`main`・動かさない・`n`・選択肢の版・土台の手順）の、待つ前の値との比べと中断の文の案内。末尾の場面（2026-11-23 に足した）: `w-main`・`w-base`・`w-mid`・`w-midbase`（W-MAIN〜W-MIDBASE。2 人のメンテナーの手順が重なり、`m` の入力待ちの間に `m2` の側で共有リポが進む。同件調査 K7 の差し込みを持ち込んだ）、`r-i13`・`r-i13c`（I13-V1〜V4。衝突するコミットを書き換えて強制 push した後に、書き換える前のコミットを持つ `m2` が載せ直す。I13-C はその対照で、書き換えずに `main` の PR の側で直した形。レビューアの足場 `rewrite_replay2.sh` をこの足場と定常手順のスクリプトで組み直した）、`r-wait-tip-back`（R-WT5B・R-WT8。待つ間に `main`・土台が動いて止まった後、中断の文のとおり戻してもう一度）、`r-middle-n`（R-MN。土台の手順の ③' で `n` → もう一度 → ③' の案内のとおり戻してもう一度） | §5-4、§5-7、§7-2 |
 | `control-steady-prev.sh`・`control-middle-prev.sh` | **対照**: 定常手順と中間ブランチの手順の前の形（③ でローカルの全ブランチを `--no-contains` で数える・③ の後で止まらない・先頭の検査が無い） | §5-4 |
 | `control-steady-norecheck.sh` | **対照**: `maintain-steady.sh` から、push の直前の検査（入力を待つ前の値との比べと、③ の再検査）を除いた形（消えるファイルの一覧は本体と同じ行を持つ） | §5-4 |
 | `control-steady-resume-refs.sh` | **対照**: `maintain-steady-resume.sh` の `resume` で、① の値を保存せずにリモート追跡ブランチから取り直す形（入力を待つ前の値との比べも持たない。消えるファイルの一覧は本体と同じ行を持ち、`resume` ではこの取り直した値と比べる） | §5-4 |

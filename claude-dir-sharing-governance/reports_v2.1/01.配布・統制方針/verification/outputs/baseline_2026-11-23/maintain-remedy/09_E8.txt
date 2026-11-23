@@ -1,9 +1,0 @@
-################ E8 系列の名前で始まる PR のブランチ java/fix-x（開いている。PR #1 の後の main から切った）
-    前提: java/fix-x は origin/main の先祖か: NO
-  $ bash run-maintain-steady.sh   （stdin: y\\n）
-    | From C:/tmp/v21-va/remedy/rm-e8/shared
-    |    e00ce91..ae910ea  main       -> origin/main
-    |  * [new branch]      java/fix-x -> origin/java/fix-x
-    | 中断: origin に、BRANCHES に無いブランチがある: java/fix-x（系列のブランチなら BRANCHES・PAIRS・② に足す。PR のブランチは足さず、マージか閉じた後に origin から消す）
-  #### [E8 系列の名前の PR のブランチ] 終了コード 1
-

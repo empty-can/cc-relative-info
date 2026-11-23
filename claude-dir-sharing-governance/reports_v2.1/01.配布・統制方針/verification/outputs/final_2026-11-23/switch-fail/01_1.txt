@@ -1,0 +1,24 @@
+=== 場面1: B がどこにも無い（B=does/not/exist）===
+  --- 前:
+    現在のブランチ: master
+    HEAD         : b4003cd5323a64f7e7f442a2bf7be871251fcb61
+    origin/does/not/exist : （無い）
+    origin/master: b4003cd5323a64f7e7f442a2bf7be871251fcb61
+    asset.txt    : master の資産
+    status --porcelain --ignored: []
+    fetch --prune の終了コード: 0
+    switch: fatal: invalid reference: does/not/exist
+    switch の終了コード: 128
+    reset: fatal: ambiguous argument 'origin/does/not/exist': unknown revision or path not in the working tree.
+    reset: Use '--' to separate paths from revisions, like this:
+    reset: 'git <command> [<revision>...] -- [<file>...]'
+    reset の終了コード: 128
+  --- 後:
+    現在のブランチ: master
+    HEAD         : b4003cd5323a64f7e7f442a2bf7be871251fcb61
+    origin/does/not/exist : （無い）
+    origin/master: b4003cd5323a64f7e7f442a2bf7be871251fcb61
+    asset.txt    : master の資産
+    status --porcelain --ignored: []
+  判定: 「名前はそのまま中身が origin/does/not/exist」にはなっていない（現在 master）
+

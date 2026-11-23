@@ -1,0 +1,17 @@
+################ T14 「現在のブランチ … が指定 '-' と一致しません」→ 名前をそのまま書いて起動し直す
+  $ .\start_claude_code.ps1 -Branch -
+    | Your branch is up to date with 'origin/java/design'.
+    | Switched to branch 'java/design'
+    | .claude/ のブランチを切り替えました: main → -
+    | 現在のブランチ 'java/design' が指定 '-' と一致しません。reset を中止します。
+    → 終了コード 1
+    .claude: java/design ／ status: [] ／ 作業リポ status: [?? start_claude_code.ps1 ]
+  $ .\start_claude_code.ps1 -Branch main
+    | Your branch is up to date with 'origin/main'.
+    | Switched to branch 'main'
+    | .claude/ のブランチを切り替えました: java/design → main
+    | HEAD is now at 71058f0 ignore agent-memory/ worktrees/
+    | [起動] .claude のブランチ=main / 先頭=71058f0 ignore agent-memory/ worktrees/
+    → 終了コード 0
+    .claude: main ／ status: [] ／ 作業リポ status: [?? start_claude_code.ps1 ]
+

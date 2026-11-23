@@ -1,7 +1,0 @@
-== ..
-G-dd1	期待 3	実際 3	合う		VERIF_ROOT=C:/tmp/v21-va/guard/../../v21va-escape
-    | 中止: VERIF_ROOT に .. を含めない: C:/tmp/v21-va/guard/../../v21va-escape
-G-dd2	期待 3	実際 3	合う		VERIF_ROOT=C:/tmp/..
-    | 中止: VERIF_ROOT に .. を含めない: C:/tmp/..
-G-dot	期待 3	実際 3	合う		VERIF_ROOT=C:/tmp/./v21-va/guard/dot
-    | 中止: VERIF_ROOT に . や空の要素を含めない: C:/tmp/./v21-va/guard/dot
