@@ -11,7 +11,7 @@
 ├── settings.local.json     # 個人設定 ※gitignore 想定
 ├── agents/                 # code-reviewer.md / doc-summary-reviewer.md
 ├── output-styles/          # code-review.md
-├── rules/                  # path-scoped rule 4 種
+├── rules/                  # path-scoped rule 4 種 ＋ 常時ロードの rule 1 種
 ├── scripts/                # resolve-activity-dir.sh / statusline.ps1
 ├── skills/                 # 7 Skill
 ├── templates/              # cross-review / inter-claude-communication / skill-request
@@ -29,6 +29,8 @@
 | `cross-review-runtime.md` | `**/レビュー/**/*.md` / `.claude/templates/cross-review/*.md` を読み書きするとき。レビューア・レビューイ・作業指示者の 3 ロール × 0.8/0.9/1.0 版フロー、セルフレビュー上限、レビューア確認セクション仕様、判断依頼サマリ運用を規定（v3.0α 暫定運用中） |
 | `coding-standards.md` | `**/*.{js,ts,jsx,tsx,py,go,rs,java,rb,kt,swift,c,cpp,cs}` を編集するとき。命名規則・コメント方針・エラー処理・テスト方針 |
 | `skill-creation-guide.md` | `**/.claude/skills/*/SKILL.md` を読み書きするとき。Skill の責務 3 層分離（README.md / SKILL.md / スクリプト）、SKILL.md 記述原則、allowed-tools 絞り込み方針、セルフレビュー観点 |
+
+> **常時ロードの rule**: `chunked-generation.md` は `paths:` を持たず、セッションの起動時に必ずロードされる（サブエージェントにも入る）。1 回の Write・Edit で大量の文章やコードを生成しない（章・節、関数・ファイルごとに分けて書く）、サブエージェントに持たせる量を絞る、大きいファイルを丸ごと読まない、を規定する。`Prompt is too long` などの API のエラーを避けるため。
 
 > **重複ロード**: `.claude/skills/*/SKILL.md` は `agent-permission-runtime.md` と `skill-creation-guide.md` の両方がマッチし得る。同時にロードされる前提で読む。
 
