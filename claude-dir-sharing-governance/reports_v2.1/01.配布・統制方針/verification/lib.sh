@@ -182,7 +182,7 @@ verif_header() {
 }
 
 # stream-json を表示用に整形する。
-verif_show() { "$VERIF_PY" -I -X utf8"$VERIF_LIB_DIR/stream-show.py" "$@"; }
+verif_show() { "$VERIF_PY" -I -X utf8 "$VERIF_LIB_DIR/stream-show.py" "$@"; }
 
 # claude を stream-json で起動し、生の出力を <出力ファイル> に保存して整形表示する。
 # 終了コードは claude 自身の値を VERIF_RC に入れる（パイプの後の $? ではない）。

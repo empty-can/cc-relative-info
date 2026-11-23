@@ -295,7 +295,7 @@ if want s19; then
   rc=${PIPESTATUS[1]}; grep -v 'Rebasing\|git clone --branch' "$out" | tr -d '\033' | sed 's/^/    | /'; echo "  #### [S19c 入力待ちの間に commit] 終了コード $rc"
   has_move sc-s19c
   for b in java/design java/ut; do echo "    origin: java/base ⊂ $b: $(git -C "$W19/shared.git" merge-base --is-ancestor java/base $b && echo YES || echo NO)"; done
-  echo "  (c2) 同じ誤りを、③ を push の直前にもう一度行う版（maintain-steady.sh）で"
+  echo "  (c2) 同じ誤りを、push の直前に待つ前の値と比べ、③ をもう一度行う版（maintain-steady.sh）で"
   move_prep sc-s19d
   W19="$VERIF_ROOT/sc-s19d"; inst maintain-steady.sh "$W19/m" "$W19/run-maintain-steady.sh"; out="$W19/s19d.out"; : > "$out"
   ( n=0; until grep -q '③ の検査に合格した' "$out"; do sleep 0.2; n=$((n+1)); [ $n -lt 300 ] || exit 1; done

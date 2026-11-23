@@ -76,7 +76,7 @@ want() { case " ${SCENES[*]} " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 fixc() { mdo "$1" m 'printf "main 初版\nmain 追記（PR #1）\ndesign の追記\n" > CLAUDE.md && git add CLAUDE.md && GIT_EDITOR=true git rebase --continue > /dev/null 2>&1'; }
 s12prep() { prep "$1"; xdo "$1" x 'git switch -q java/design && echo "design の追記" >> CLAUDE.md && git commit -qam "java/design: CLAUDE.md に追記" && git push -q origin java/design'; }
 
-ALL=(e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 r-e6 r-e7 r-e8 r-e8b r-s10 r-s17 r-push r-s11 r-u1 r-u2 r-s18 r-s12r r-s16 r-s12a r-s12t r-s12u r-s19d r-pushrej r-ng r-path r-acc r-acc2 r-stale r-stale-base r-stale-ng r-stale-ngw r-rebased-ng r-wait-leaf r-stale-conf r-stale-conf0 r-rebased-push r-rebased-conf r-s12a-lease c-both c-both2 r-acc3 r-acc4 r-s24a r-s24p r-s24b)
+ALL=(e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 r-e6 r-e7 r-e8 r-e8b r-s10 r-s17 r-push r-s11 r-u1 r-u2 r-s18 r-s12r r-s16 r-s12a r-s12t r-s12u r-s19d r-pushrej r-ng r-path r-acc r-acc2 r-stale r-stale-base r-stale-ng r-stale-ngw r-rebased-ng r-wait-leaf r-stale-conf r-stale-conf0 r-rebased-push r-rebased-conf r-s12a-lease c-both c-both2 r-acc3 r-acc4 r-s24a r-s24p r-s24b r-s11x r-wait-tip r-wait-tip-resume r-wait-tip-middle)
 SCENES=("$@"); [ ${#SCENES[@]} -gt 0 ] || SCENES=("${ALL[@]}")
 echo "######## maintain-remedy.sh $(date '+%Y-%m-%d %H:%M:%S %z') ／ $(git --version) ／ bash $BASH_VERSION ／ VERIF_ROOT=$VERIF_ROOT"
 
@@ -313,7 +313,7 @@ if want r-s12t; then
 fi
 
 if want r-s19d; then
-  hdr "R-S19d 入力待ちの間に java/base へ commit → push の直前の ③ で止まる → もう一度実行すると"
+  hdr "R-S19d 入力待ちの間に java/base へ commit → push の直前の、待つ前の値との比べで止まる → もう一度実行すると"
   prep rm-r-s19d
   W="$VERIF_ROOT/rm-r-s19d"; inst maintain-steady.sh "$W/m" "$W/run-maintain-steady.sh"; out="$W/s19d.out"; : > "$out"
   # sleep で待たずに、coproc で出力の行を読み、入力待ちの案内が出たところで commit してから y を送る
@@ -638,7 +638,7 @@ if want r-stale-conf0; then
 fi
 
 if want r-rebased-push; then
-  hdr "R-REBASED-PUSH 対照: ③' の入力待ちの間に、載せ直した手元の java/base に commit → y → ③ で止まる → push（拒否）→ ① の説明の手（git fetch・git switch・git rebase origin/java/base）を当てると"
+  hdr "R-REBASED-PUSH 対照: ③' の入力待ちの間に、載せ直した手元の java/base に commit → y → 待つ前の値との比べで止まる → push（拒否）→ ① の説明の手（git fetch・git switch・git rebase origin/java/base）を当てると"
   prep rm-r-rebased-push; W="$VERIF_ROOT/rm-r-rebased-push"
   wrun "R-REBASED-PUSH m（入力待ちの間に java/base へ commit）" rm-r-rebased-push m maintain-steady.sh \
     'mdo rm-r-rebased-push m "git switch -q java/base && echo 手元の追記 >> rules/java.md && git commit -qam \"java/base: 手元の追記（入力待ちの間）\"" && echo "m の java/base に commit した"'
@@ -764,6 +764,81 @@ if want r-s24b; then
   runp "R-S24B 1 回目（衝突）" rm-r-s24b m maintain-steady-resume.sh 'y\n'; fixb rm-r-s24b
   runp "R-S24B 解いて resume" rm-r-s24b m maintain-steady-resume.sh 'y\n' resume; ostate rm-r-s24b
   echo "    origin の java/ut は java/base を含むか: $(git -C "$VERIF_ROOT/rm-r-s24b/shared.git" merge-base --is-ancestor java/base java/ut && echo YES || echo NO) ／ java/design の CLAUDE.md: $(git -C "$VERIF_ROOT/rm-r-s24b/shared.git" show java/design:CLAUDE.md | tr '\n' '/')"
+fi
+
+# ---- 先頭の中断の案内（commit していない変更）に従う形と、従わない形（2026-11-23 に足した）----
+if want r-s11x; then
+  hdr "R-S11X commit していない変更 → 案内の手（変更を捨てる）／案内に無い手（末端 java/design で commit・origin に無いブランチを切って commit）→ もう一度"
+  for v in r d t; do prep rm-r-s11x$v; done
+  mdo rm-r-s11xr m 'echo 手元の編集 >> CLAUDE.md && git checkout -- .'; echo "    （対処 r: git checkout -- . で変更を捨てる）"
+  runp "R-S11Xr 捨てた後" rm-r-s11xr m maintain-steady.sh 'y\n'
+  mdo rm-r-s11xd m 'git switch -q java/design && echo 手元の編集 >> rules/design.md && git commit -qam "java/design: 手元の編集"'; echo "    （対処 d: 末端 java/design で commit。push しない）"
+  runp "R-S11Xd 末端で commit の後" rm-r-s11xd m maintain-steady.sh 'y\n'
+  mdo rm-r-s11xt m 'echo 手元の編集 >> CLAUDE.md && git switch -q -c topic/local && git commit -qam "topic/local: 手元の編集"'; echo "    （対処 t: origin に無いブランチ topic/local を切って commit）"
+  runp "R-S11Xt origin に無いブランチで commit の後" rm-r-s11xt m maintain-steady.sh 'y\n'
+  echo "    topic/local は残っているか: $(git -C "$VERIF_ROOT/rm-r-s11xt/m" rev-parse -q --verify refs/heads/topic/local > /dev/null && echo 残る || echo 無い)"
+fi
+
+# ---- ③' の入力を待つ間に、このクローンのブランチを動かしたとき（待つ前の値との比べ。2026-11-23 に足した）----
+heads() { git -C "$VERIF_ROOT/$1/shared.git" for-each-ref --format='%(refname:short)=%(objectname:short)' refs/heads/ | tr '\n' ' '; }
+backcmd() { sed -n 's/.*の値へ戻し（\(.*\)）、このスクリプト.*/\1/p' "$VERIF_ROOT/$1/w$WRUN_N.out" | head -1; }   # 直前の wrun の中断の文から、戻すコマンドを取り出す
+wtback() { # wtback <足場>: 中断の文の案内どおりに、git switch --detach の後、案内の値へ戻す
+  local c; c="$(backcmd "$1")"; [ -n "$c" ] || { echo "    （中断の文に戻すコマンドが無い）"; return 0; }
+  echo "    （対処: 中断の文の案内どおり git switch --detach →$c）"
+  mdo "$1" m "git switch -q --detach && $c"
+}
+wtcommit() { echo "mdo $1 m \"git switch -q $2 && echo 待つ間の追記 >> $3 && git commit -qam \\\"$2: 待つ間の追記\\\"\" && echo \"m の $2 に commit した\""; }
+if want r-wait-tip; then
+  hdr "R-WAIT-TIP ③' の入力を待つ間に、このクローンのブランチを動かす → y（push の直前に、待つ前の値と比べる）"
+  for v in leaf base none n main; do prep rm-r-wt-$v; done
+  echo "  (1) 末端 java/design に commit → y → そのままもう一度 → 案内どおり戻す → もう一度"
+  b0=$(heads rm-r-wt-leaf)
+  wrun "R-WT1 末端を動かす y" rm-r-wt-leaf m maintain-steady.sh "$(wtcommit rm-r-wt-leaf java/design rules/design.md)"
+  echo "    origin は動いていないか: $( [ "$b0" = "$(heads rm-r-wt-leaf)" ] && echo 動いていない || echo 動いた )"
+  runp "R-WT1 そのままもう一度" rm-r-wt-leaf m maintain-steady.sh 'y\n'
+  wtback rm-r-wt-leaf
+  runp "R-WT1 戻した後" rm-r-wt-leaf m maintain-steady.sh 'y\n'
+  echo "    origin の java/design に待つ間の追記: $(cnt rm-r-wt-leaf java/design '待つ間の追記') 件"
+  echo "  (2) 土台 java/base に commit → y → 案内どおり戻す → もう一度"
+  b0=$(heads rm-r-wt-base)
+  wrun "R-WT2 土台を動かす y" rm-r-wt-base m maintain-steady.sh "$(wtcommit rm-r-wt-base java/base rules/java.md)"
+  echo "    origin は動いていないか: $( [ "$b0" = "$(heads rm-r-wt-base)" ] && echo 動いていない || echo 動いた )"
+  wtback rm-r-wt-base
+  runp "R-WT2 戻した後" rm-r-wt-base m maintain-steady.sh 'y\n'
+  echo "  (3) どのブランチも動かさない（git switch java/ut で HEAD だけを動かす）→ y"
+  wrun "R-WT3 動かさない y" rm-r-wt-none m maintain-steady.sh 'mdo rm-r-wt-none m "git switch -q java/ut" && echo "m で git switch java/ut した"'; ostate rm-r-wt-none
+  echo "  (4) 末端 java/design に commit → n"
+  b0=$(heads rm-r-wt-n)
+  WRUN_ANS=n wrun "R-WT4 末端を動かす n" rm-r-wt-n m maintain-steady.sh "$(wtcommit rm-r-wt-n java/design rules/design.md)"
+  echo "    origin は動いていないか: $( [ "$b0" = "$(heads rm-r-wt-n)" ] && echo 動いていない || echo 動いた )"
+  echo "  (5) 載せ先 main に commit → y"
+  b0=$(heads rm-r-wt-main)
+  wrun "R-WT5 main を動かす y" rm-r-wt-main m maintain-steady.sh "$(wtcommit rm-r-wt-main main CLAUDE.md)"
+  echo "    origin は動いていないか: $( [ "$b0" = "$(heads rm-r-wt-main)" ] && echo 動いていない || echo 動いた )"
+fi
+if want r-wait-tip-resume; then
+  hdr "R-WAIT-TIP-RESUME 選択肢の版（maintain-steady-resume.sh）: 衝突を解いて resume → 入力を待つ間に java/ut へ commit → y → 案内どおり戻す → resume"
+  s12prep rm-r-wt-resume
+  runp "R-WT6 1 回目（衝突）" rm-r-wt-resume m maintain-steady-resume.sh 'y\n'; fixc rm-r-wt-resume
+  b0=$(heads rm-r-wt-resume)
+  wrun "R-WT6 resume、待つ間に java/ut を動かす y" rm-r-wt-resume m maintain-steady-resume.sh "$(wtcommit rm-r-wt-resume java/ut rules/ut.md)" resume
+  echo "    origin は動いていないか: $( [ "$b0" = "$(heads rm-r-wt-resume)" ] && echo 動いていない || echo 動いた )"
+  wtback rm-r-wt-resume
+  runp "R-WT6 戻した後に resume" rm-r-wt-resume m maintain-steady-resume.sh 'y\n' resume; ostate rm-r-wt-resume
+fi
+if want r-wait-tip-middle; then
+  hdr "R-WAIT-TIP-MIDDLE 土台の手順（maintain-middle.sh）: java/base が早送りで進んだ → 入力を待つ間に子 java/design へ commit → y → 案内どおり戻す → もう一度"
+  prep rm-r-wt-middle
+  xdo rm-r-wt-middle x 'git switch -q java/base && echo 土台の追記 >> rules/java.md && git commit -qam "java/base: 土台の追記" && git push -q origin java/base'
+  b0=$(heads rm-r-wt-middle)
+  wrun "R-WT7 子を動かす y" rm-r-wt-middle m maintain-middle.sh "$(wtcommit rm-r-wt-middle java/design rules/design.md)"
+  echo "    origin は動いていないか: $( [ "$b0" = "$(heads rm-r-wt-middle)" ] && echo 動いていない || echo 動いた )"
+  ( verif_enter_repo "$VERIF_ROOT/rm-r-wt-middle/m"; git switch -q --detach && git branch -q -f java/design 'java/design@{1}' ) || verif_die "R-WT7 の戻し"
+  echo "    （案内に無い手: git switch --detach → 子 java/design だけを待つ前の値（java/design@{1}）へ戻す）"
+  runp "R-WT7 待つ前の値へ戻した後" rm-r-wt-middle m maintain-middle.sh 'y\n'
+  wtback rm-r-wt-middle
+  runp "R-WT7 案内どおり戻した後" rm-r-wt-middle m maintain-middle.sh 'y\n'; ostate rm-r-wt-middle
+  echo "    origin の java/design に待つ間の追記: $(cnt rm-r-wt-middle java/design '待つ間の追記') 件 ／ java/ut は java/base を含むか: $(git -C "$VERIF_ROOT/rm-r-wt-middle/shared.git" merge-base --is-ancestor java/base java/ut && echo YES || echo NO)"
 fi
 
 echo; echo "######## 終了 ########"

@@ -21,7 +21,7 @@ gd=$(git rev-parse --git-dir)
 [ ! -d "$gd/rebase-merge" ] && [ ! -d "$gd/rebase-apply" ] \
   || fail "rebase の途中で止まっている。git rebase --abort で戻してから実行する"
 [ -z "$(git status --porcelain --untracked-files=no)" ] \
-  || fail "作業ツリーに commit していない変更がある（git status で確かめ、commit か git stash で片付ける）"
+  || fail "作業ツリーに commit していない変更がある（git status で確かめ、git stash で退避するか変更を捨ててから、もう一度実行する。origin にあるブランチでの commit では片付かない: push していない commit があると ① で止まる）"
 
 # ① fetch し、全ブランチ（main を含む）をローカルで origin に合わせる（resume では飛ばす）
 if [ "${1:-}" != resume ]; then

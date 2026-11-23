@@ -18,7 +18,7 @@ gd=$(git rev-parse --git-dir)
 [ ! -d "$gd/rebase-merge" ] && [ ! -d "$gd/rebase-apply" ] \
   || fail "rebase の途中で止まっている。git rebase --abort で戻してから実行する"
 [ -z "$(git status --porcelain --untracked-files=no)" ] \
-  || fail "作業ツリーに commit していない変更がある（git status で確かめ、commit か git stash で片付ける）"
+  || fail "作業ツリーに commit していない変更がある（git status で確かめ、git stash で退避するか変更を捨ててから、もう一度実行する。origin にあるブランチでの commit では片付かない: push していない commit があると ① で止まる）"
 
 # ① 定常手順の ① の同期と同じ（BRANCHES に無いブランチの検査は行わない）
 git fetch --prune origin || fail "fetch に失敗"
@@ -52,12 +52,20 @@ check() {
 check
 
 # ③' 確認（入力待ち）
+declare -A TIP   # 待つ前の、このクローンでの先頭（push する子と、その載せ先の PARENT）。④ の直前に比べる
+for b in "$PARENT" "${CHILDREN[@]}"; do TIP[$b]=$(git rev-parse -q --verify "refs/heads/$b"); done
 echo "③ の検査に合格した。push する前に、次のブランチを確かめる（§7-2 手順 5）:"
 for b in "${CHILDREN[@]}"; do echo "  git clone --branch $b \"$(pwd)\" <検証用のリポジトリ>/.claude"; done
 echo "確かめたら y を入れて push する。y 以外では push せずに終わる（次の実行の ① がローカルを origin に戻す）。"
 read -r -p "push する [y/N]: " ans || ans=""
 [ "$ans" = y ] || { echo "push しなかった。" >&2; exit 2; }
-check   # 待っている間に祖先関係が崩れていないか（中身の変更は見ない）
+moved=""   # 待っている間に、このクローンで動いたブランチ（commit・branch -f・消したもの）
+for b in "$PARENT" "${CHILDREN[@]}"; do
+  [ "$(git rev-parse -q --verify "refs/heads/$b")" = "${TIP[$b]}" ] || moved="$moved $b"
+done
+[ -z "$moved" ] || { back=""; for b in "$PARENT" "${CHILDREN[@]}"; do back="$back git branch -f $b origin/$b;"; done
+  fail "入力を待つ間に、このクローンの次のブランチが動いた:$moved（push は 1 本もしていない。待つ間の変更を確かめ、残すなら控えてから、git switch --detach の後に $PARENT と子をすべて origin の値へ戻し（$back）、このスクリプトを最初からもう一度実行する。子を待つ前の値へ戻すだけでは ① で止まる）"; }
+check   # 待っている間に祖先関係が崩れていないか（中身の変更は見ない。上の比べを通れば崩れていないが、残す）
 
 # ④ 動かした子だけを push する
 lease=()

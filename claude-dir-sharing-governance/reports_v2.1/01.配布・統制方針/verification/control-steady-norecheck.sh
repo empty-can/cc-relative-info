@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 【対照】maintain-steady.sh から、push の直前の ③ の再検査（2 回目の check）だけを除いた形。maintain-scenes.sh の S19c で使う
+# 【対照】maintain-steady.sh から、push の直前の検査（入力を待つ前の値との比べと、③ の再検査＝2 回目の check）を除いた形。maintain-scenes.sh の S19c で使う
 # メンテナーのクローンで、bash 4 以降で実行する: bash maintain-steady.sh
 # 自分の共有リポに合わせて書くのは、REPO・URL・BRANCHES・PAIRS と、② の rebase の行である。
 REPO='<メンテナーのクローンのパス>'
@@ -17,7 +17,7 @@ gd=$(git rev-parse --git-dir)
 [ ! -d "$gd/rebase-merge" ] && [ ! -d "$gd/rebase-apply" ] \
   || fail "rebase の途中で止まっている。git rebase --abort で戻してから実行する"
 [ -z "$(git status --porcelain --untracked-files=no)" ] \
-  || fail "作業ツリーに commit していない変更がある（git status で確かめ、commit か git stash で片付ける）"
+  || fail "作業ツリーに commit していない変更がある（git status で確かめ、git stash で退避するか変更を捨ててから、もう一度実行する。origin にあるブランチでの commit では片付かない: push していない commit があると ① で止まる）"
 
 # ① fetch し、全ブランチ（main を含む）をローカルで origin に合わせる
 git fetch --prune origin || fail "fetch に失敗"
