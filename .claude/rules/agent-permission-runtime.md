@@ -8,7 +8,7 @@ paths:
 
 # Agent 実行時の permission 事前準備運用ルール（F02-001 派生・横断スコープ）
 
-sub-agent / background Agent を起動する作業に関わるファイル（agent 定義・作業計画書・SKILL.md 等）を読み書きする際に自動ロードされる path-scoped rule。F02-001（background Agent の Write 権限設定漏れ）§5.2.2 採用案の **本格対処の中核実装** であり、`.claude/rules/cross-review-runtime.md`（v3.0α-r1）と並ぶ横断スコープ rule として位置付ける。
+sub-agent / background Agent を起動する作業に関わるファイル（agent 定義・作業計画書・SKILL.md 等）を読み書きする際に自動ロードされる path-scoped rule。F02-001（background Agent の Write 権限設定漏れ）§5.2.2 採用案の **本格対処の中核実装** であり、横断スコープ rule として位置付ける。クロスレビュー（skill `.claude/skills/cross-review/`）も、担当の起動前の照合で本ルール §1.3 を参照する。
 
 > **採用案ステータス**: F02-001 §5.2 にて **暫定対処（検知ベース対処療法継続）と本格対処（本ファイル＋多層防御）を二段階採用** と確定済。本格対処の最終運用は **クロージング時判断** 対象。本ファイルは中核実装として先行整備し、運用フィードバックを `paths:` 範囲・チェックリスト粒度に反映していく。
 >
@@ -147,11 +147,11 @@ sub-agent / background Agent を起動する作業の着手前に、以下 3 ス
 
 - F02-001（本要改善点、§5.2.2 採用案の中核実装）: `research-for-local-RAG-for-cc/improvements/F02-001_background_Agent_Write権限設定漏れ.md`
 - F02-013（なぜなぜ分析プロセス改善検討、F02-001 派生）
-- 同種の path-scoped rule 先例: `.claude/rules/cross-review-runtime.md`（v3.0α-r1）
+- 関連する rule・skill: `.claude/rules/md-self-check.md`（`.md` の反復セルフチェック。チェックリストは `.claude/rule-assets/md-self-check/checklist.md`）／`.claude/skills/cross-review/SKILL.md`（クロスレビューの進行。担当の起動前に本ルール §1.3 を参照）
 - 公式ドキュメント: `code.claude.com/docs/en/permissions` / `code.claude.com/docs/en/permission-modes` / `code.claude.com/docs/en/sub-agents`
 - 既存 settings: `.claude/settings.json`（チーム共有）/ `.claude/settings.local.json`（個人ローカル、`.gitignore` 対象）
 
-> **`paths:` 調整方針**: 初期版は「Agent を起動する計画段階のファイル」「Agent 関連スキル」「Agent 並列実行が記述される計画書」をカバー。実運用フィードバックで以下を判断する: (a) 報告書執筆段階で本ルールが必要となる作業が発生したら `**/reports/**/*.md` 系の追加検討、(b) 過剰ロード（不要シーンでの context 消費）が観測されたら `paths:` を絞る、(c) cross-review-runtime.md と paths 重複領域がある場合の整理。
+> **`paths:` 調整方針**: 初期版は「Agent を起動する計画段階のファイル」「Agent 関連スキル」「Agent 並列実行が記述される計画書」をカバー。実運用フィードバックで以下を判断する: (a) 報告書執筆段階で本ルールが必要となる作業が発生したら `**/reports/**/*.md` 系の追加検討、(b) 過剰ロード（不要シーンでの context 消費）が観測されたら `paths:` を絞る、(c) `md-self-check.md`（`**/*.md`）と paths が重なる領域の整理。
 
 ## 変更履歴
 

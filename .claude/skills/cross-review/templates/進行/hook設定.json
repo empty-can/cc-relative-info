@@ -1,0 +1,13 @@
+{
+  "_説明": "主担当が段階 0 で、二重の波括弧で囲んだ欄を全部埋め、リポジトリの .claude/workspace/cross-review-hook.json（未追跡の固定のパス）に Write ツールで書く。担当はこのファイルとログを書き換えない（hook が止める）。欄が 1 つでも残っている・JSON が壊れている・ファイルが無いときは、hook がクロスレビューの担当の Bash・PowerShell・Write・Edit を全部止める。担当の hook（hook_pre_write.py）が担当の種類ごとに書いてよい場所を、hook_pre_bash.py が対象のリポジトリと work_folder/30_tmp を、ここから読む。ログは work_folder/30_tmp/cross-review-hook.log に足される。パスは / で書く。末尾の /** は、その下の全部",
+  "work_folder": "{{作業フォルダ。例 C:/cc-workspace/cc-relative-info/.claude/workspace/202611-01_write-report-v3}}",
+  "repo": "{{対象のリポジトリ。例 C:/cc-workspace/cc-relative-info}}",
+  "allow": {
+    "cross-review-logic-reviewer": ["{{作業フォルダ}}/30_tmp/**", "{{作業フォルダ}}/11_interim-artifacts/**", "{{報告書の置き場所}}/**", "C:/tmp/**"],
+    "cross-review-practicality-reviewer": ["{{作業フォルダ}}/30_tmp/**", "{{作業フォルダ}}/11_interim-artifacts/**", "{{報告書の置き場所}}/**", "C:/tmp/**"],
+    "cross-review-reader-reviewer": ["{{作業フォルダ}}/30_tmp/**", "{{作業フォルダ}}/11_interim-artifacts/**", "{{報告書の置き場所}}/**", "C:/tmp/**"],
+    "cross-review-reviser": ["{{作業フォルダ}}/30_tmp/**", "{{作業フォルダ}}/11_interim-artifacts/**", "{{報告書の置き場所}}/**", "{{対象の文書のフォルダ}}/**", "C:/tmp/**"],
+    "cross-review-diff-checker": ["{{作業フォルダ}}/30_tmp/**", "{{作業フォルダ}}/11_interim-artifacts/**", "C:/tmp/**"],
+    "cross-review-clerk": ["{{作業フォルダ}}/30_tmp/**", "{{作業フォルダ}}/11_interim-artifacts/**", "{{報告書の置き場所}}/**"]
+  }
+}

@@ -46,6 +46,17 @@
           }
         ]
       }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python",
+            "args": ["-I", "-X", "utf8", "${CLAUDE_PROJECT_DIR}/.claude/hooks/subagent-start-rules.py"]
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {
