@@ -4,14 +4,15 @@
     "allow": [
       "WebFetch(domain:code.claude.com)",
       "WebFetch(domain:docs.claude.com)",
-      "WebFetch(domain:github.com/anthropics)",
-      "Bash(git clone:*)",
-      "Bash(git -C:*)",
-      "Bash(python LLMs:*)",
-      "Bash(python3 LLMs:*)",
-      "Bash(bash LLMs:*)",
-      "Bash(mkdir -p:*)",
-      "Agent(doc-summary-reviewer)"
+      "Bash(git clone *)",
+      "Bash(mkdir -p *)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(git -C * push*)",
+      "Bash(git -c * push*)",
+      "PowerShell(git push *)",
+      "PowerShell(git -C * push*)"
     ],
     "deny": [
       "Read(./.env)",
@@ -19,10 +20,11 @@
       "Read(./secrets/**)",
       "Read(~/.aws/credentials)",
       "Read(~/.ssh/**)",
-      "Bash(git reset --hard:*)",
-    "Bash(git -C * reset --hard*)",
-      "Bash(git reset --hard)",
-      "Bash(git reset --hard *)"
+      "Read(~/.claude/.credentials.json)",
+      "Bash(git reset *--hard*)",
+      "Bash(git -* reset *--hard*)",
+      "PowerShell(git reset *--hard*)",
+      "PowerShell(git -* reset *--hard*)"
     ]
   },
   "hooks": {
@@ -53,7 +55,12 @@
           {
             "type": "command",
             "command": "python",
-            "args": ["-I", "-X", "utf8", "${CLAUDE_PROJECT_DIR}/.claude/hooks/subagent-start-rules.py"]
+            "args": [
+              "-I",
+              "-X",
+              "utf8",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/subagent-start-rules.py"
+            ]
           }
         ]
       }

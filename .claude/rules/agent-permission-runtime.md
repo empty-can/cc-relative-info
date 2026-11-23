@@ -6,154 +6,175 @@ paths:
   - "**/.claude/skills/*/SKILL.md"
 ---
 
-# Agent 実行時の permission 事前準備運用ルール（F02-001 派生・横断スコープ）
+# Agent 実行時の permission の運用ルール（auto mode が既定の前提）
 
-sub-agent / background Agent を起動する作業に関わるファイル（agent 定義・作業計画書・SKILL.md 等）を読み書きする際に自動ロードされる path-scoped rule。F02-001（background Agent の Write 権限設定漏れ）§5.2.2 採用案の **本格対処の中核実装** であり、横断スコープ rule として位置付ける。クロスレビュー（skill `.claude/skills/cross-review/`）も、担当の起動前の照合で本ルール §1.3 を参照する。
+サブエージェント（以下「担当」。背景で動くものを含む）を起動する作業に関わるファイル（agent の定義・作業計画書・SKILL.md など）を読み書きするときに自動でロードされる path-scoped rule。担当を起動する前の確かめ（§1）、止まったときの復旧（§2）、公式の仕様と既知の落とし穴（§3）を定める。クロスレビュー（skill `.claude/skills/cross-review/`）も、担当の起動前の照合で本ルール §1（台帳の表）と §1.3、止まったときに §2 を参照する。
 
-> **採用案ステータス**: F02-001 §5.2 にて **暫定対処（検知ベース対処療法継続）と本格対処（本ファイル＋多層防御）を二段階採用** と確定済。本格対処の最終運用は **クロージング時判断** 対象。本ファイルは中核実装として先行整備し、運用フィードバックを `paths:` 範囲・チェックリスト粒度に反映していく。
+> **根拠の書き方**: `（L83973）` は公式ドキュメントの断面（CLI 2.1.330 相当）の行番号。断面は、LLMs リポジトリ（`C:\cc-workspace\LLMs`。参照だけ）のコミット `5f51174`（2026-11-21）の `official-llms-txts/code.claude.com/docs/llms-full.txt` と同じ中身（`git -C <LLMs> show 5f51174:official-llms-txts/code.claude.com/docs/llms-full.txt` で取り出せる。作業ツリーの同じファイルは日々更新されるので、行番号は合わなくなる）。「探り」は 2026-11-23 に主担当が実機（同じ版）で確かめたこと。「未確認」と書いたものは断定しない。
 >
-> **本ファイルの位置付け**: F02-001 §5.2.2 採用案の (1) 案 1 ＋ 案 5（事前列挙 ＋ 落とし穴記録）と (2) 案 2（検出ベース拡張ワークフロー）を統合配置する。雛型同梱（案 6）は新規プロジェクト開始時に別途実施。`permissionMode` 切替（案 3）/ PreToolUse hook（案 4）/ 並列度低下フォールバック（案 7）は本ファイルでは方針記述のみで実装スコープ外。
+> **経緯**: 流用元で 2026-05 に、F02-001（背景の担当の Write の権限の設定漏れ）への対処として作った。当時は auto が既定ではなく、実行中の担当で `PostToolUseFailure`・`PermissionRequest` が多発したため、8 種別の事前列挙と、拒否のたびに allow を足す復旧を定めた。F02-001 などの参照先は、このリポジトリには無い。
 
-## 1. 着手前チェックリスト（事前列挙ステップ）
+## 0. 前提: 今の既定と、止まる場合
 
-sub-agent / background Agent を起動する作業の着手前に、以下 3 ステップを実施する。Agent 委任を含む作業計画を立案するメインセッションが責任を持つ（subagent 自身がセルフチェックで吸収できる構造ではないため）。
+- 端末・VS Code の新しいセッションの既定は auto（v2.1.283 以降。L83470）。`claude -p` と Agent SDK は Manual（`default`）で始まり、確認の要る呼び出しは拒否される（L83468・L83485）。プロジェクトの `settings.json`・`settings.local.json` に `defaultMode: "auto"` を書いても効かない（L83455）
+- 担当は親のモードと permission のルールを受け継ぐ。親が auto・`acceptEdits`・`bypassPermissions` なら、定義の `permissionMode` は無視される（L52844・L52848・L84018）
+- ルールの評価は deny → ask → allow の順で、最初に当たったもので決まる。細かい allow が ask・deny より先に来ることはない（L84513・L84515）
+- auto で確認が出るか止まるのは、次の 5 つの場合。どれでもない呼び出しは、allow に当たるか、読み取り・作業フォルダの中の編集として自動で承認されるか、分類器が通す（L83968〜L83981）
 
-### 1.1 列挙対象のアクション種別
-
-公式の permission rule syntax（`code.claude.com/docs/en/permissions`「Tool-specific permission rules」）に対応する以下 8 種別を列挙対象とする。「発行されない」と判断できるならスキップしてよいが、判断根拠を計画上に明記する。
-
-| # | 種別 | 確認観点 |
+| # | 場合 | 何が起きるか |
 |---|---|---|
-| 1 | **Write** | 新規ファイル作成・上書きが発生するパス（例: `Write(research-for-*/**)`） |
-| 2 | **Edit** | 既存ファイル編集が発生するパス（Edit 系内蔵ツール全般に適用） |
-| 3 | **Bash** | 実行するシェルコマンド（組み込み read-only に該当しない / 引数パターン依存のもの。§3.2 参照） |
-| 4 | **PowerShell** | 同上の PowerShell 版（cmdlet エイリアス含む） |
-| 5 | **MCP** | `mcp__<server>__<tool>` 単位。サーバ単位ワイルドカード `mcp__<server>__*` も可 |
-| 6 | **WebFetch** | アクセスドメイン（`WebFetch(domain:<host>)` 形式） |
-| 7 | **Agent** | subagent 起動（`Agent(<AgentName>)` 形式。deny で制限する運用なら確認必要）。**subagent 自身も既定でメイン会話の 3 階層下まで下位 subagent を起動できる**（`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`。`1` で無効化）。孫エージェントが発行しうるアクションも列挙対象に含める。特定 subagent を起動させたくない場合は当該定義の `tools` から `Agent` を外すか `disallowedTools` に入れる |
-| 8 | **Read deny 該当パス** | 既存 deny ルール（`.env*` / `secrets/**` / `~/.aws/credentials` / `~/.ssh/**`）配下を読みに行かないか |
+| 1 | **ask に当たる** | auto でも確認に落ちる（L83973）。背景の担当の確認はメインのセッションに出て、Esc はその 1 回だけを拒否する（L53172）。長く続く承認を選ぶと、メインを含むセッション全体に効く（L53207） |
+| 2 | **protected path への書き込み**（`.claude/`・`.git`・`.vscode` など） | allow があっても分類器に回る（L83969・L84143）。allow では前もって承認されない（L84153）。`.claude/workspace/` が例外に入っていないことは未確認（例外の一覧は「such as」。L84169）。サーバー側の判定（`/status` の `Auto mode server: Enabled`。作業指示者の端末は 2026-11-23 に Enabled）では、作業フォルダの中のふつうの書き込みも判定を待つ（L83977）ので、`.claude/` の下かどうかで待ちの差はほぼ無く、分類器の別の通信も出ない（L84027） |
+| 3 | **分類器のブロック** | 理由（`[Destructive or Unwanted Actions]` など）が担当に届く（L83984）。続けて 3 回か合計 20 回で auto が止まり、確認に戻る（L83947）。担当の起動時に依頼の説明を、終了時に作業と報告を審査する（L84017・L84019）。無害な Write が拒まれたことがある（探り） |
+| 4 | **deny に当たる** | どのモードでも止まり、確認でも通せない（L83968・L84205） |
+| 5 | **定義の hook が止める** | 終了コード 2 で止まり、stderr の文が担当に届く（探り）。hook が `allow` を返しても、deny・ask は先に効く（L85106） |
 
-### 1.2 3 ステップ手順
+- ほかに、どのモードでも自動で承認されないもの: `AskUserQuestion`、critical path の `rm`・`rmdir` など（L83416〜L83425）
+- `claude -p` では、確認の要るものは全部拒否される（L83485）。auto で起動した `-p` では、分類器のブロックが続いても実行は止まらない（L83956）。プロジェクトの定義の hook は、定義のあるフォルダを信頼の確認で受け入れるまで飛ばされ、`-p` のセッションは信頼に数えない（L53023・L53025）。前もって対話で信頼したフォルダで `-p` のときに hook が動くかは未確認
 
-1. **列挙**: 上記 8 種別について、当該作業で発行されうるアクションを具体例ベースで挙げる。複数 Agent を並列起動する場合（パターン A / C）は **各 Agent ごとに列挙**
-2. **照合**: 既存 `permissions.allow`（チーム共有 `.claude/settings.json` ＋ 個人 `.claude/settings.local.json`）と突き合わせ、未カバーアクションを抽出
-3. **不足対処方針決定**: §1.3 の選択肢から方針を決定。決定結果は計画書または着手チェック結果として残す（後続の振り返りで参照する）
+## 1. 担当を起動する前に見ること
 
-### 1.3 不足対処方針の選択肢
+担当を起動する作業を計画するメインのセッションが責任を持つ（担当が自分で吸収できる構造ではないため）。結果は計画書か台帳に残す。
 
-| 選択肢 | 適用判断 |
-|---|---|
-| **(a) `permissions.allow` 追加** | 読み取り系（公式組み込み read-only 集合外の `git show` 等）、Write/Edit（`research-for-*/**` 等の作業ディレクトリ配下）、参照頻度の高い MCP / WebFetch ドメインが第一選択。チーム共有なら `.claude/settings.json`、個人ローカルなら `.claude/settings.local.json`。**破壊系（`git push` / `git reset` / `git commit` / `rm` 等）は追加しない** 方針（F02-001 §4.2 / `afea8b8` 同型）。詳細は §2.2 |
-| **(b) `permissionMode` 切替** | subagent frontmatter で `acceptEdits` 指定（**ファイル編集 ＋ 一般 FS コマンド `mkdir`/`touch`/`rm`/`rmdir`/`mv`/`cp`/`sed` を作業ディレクトリ内で自動承認**）。`bypassPermissions` は `.git` / `.claude` 配下への書き込みまで通すため本プロジェクト方針と相性悪く非推奨。**`auto` は既に新規セッションの既定モードなので、指定するのではなく「継承される前提」で設計する**（§3.1 / §3.5 参照） |
-| **(c) PreToolUse hook** | 動的判定が必要かつ hook 実装コストを許容できる場合。**deny/ask 規則は hook の戻り値に関わらず優先評価される** ため、deny を覆す目的では使えない（公式 permissions ページ "Extend permissions with hooks" 節）。本プロジェクト現状では未使用（研究フェーズではコスト過剰） |
-| **(d) フォールバック設計（並列度低下）** | 緊急時のみ。`/orchestrate` パターン A の並列度を 1 に落としメインセッションで対話的 prompt 応答に切り替える運用。並列性能を失うため恒常運用には不適 |
+### 1.1 止まり方に沿って見ること
 
-## 2. 検出ベースの拡張ワークフロー（拒否発生時の標準復旧）
+1. **書く先**: 担当が書く先は protected path（§0 の 2）か。auto では分類器が決め、Manual では確認、`-p` では確認の代わりに拒否される（L84141・L84143・L83485 から推した。未確認）。`.claude/` の外に置ける一時ファイル・足場は外に置く
+2. **ask**: 担当に、ask に当たるコマンド（今の設定では push・reset・`rm` など）を流させる必要があるか。あるなら担当にやらせず、メインのセッションか作業指示者が流す（§1.3 の (a)）
+3. **deny**: deny（秘匿ファイルの Read、`reset --hard` など）に当たる操作が無いか。deny は確認で通せない
+4. **担当の定義**: `tools` の各エントリが厳密なツール名か（§3.5）。定義に hook があるなら、依頼文で流させるコマンドが hook の通す形に合うか。定義を足した・書き換えたなら、使えるのは次の応答の区切りから（探り）
+5. **入れ子と背景**: 担当に子の担当・fork・背景の Bash を使わせるか。どれも担当の中から起動でき、非同期（探り）。使わせないなら、定義の `tools` から `Agent` を外す（または `disallowedTools` に入れる）か、依頼文で禁じる。fork は高く付く（§3.5）ので担当には使わせない
+6. **依頼文**: 分類器は起動時に依頼の説明を審査する（L84017）。目的・書き先・流すコマンドの形を書き、破壊的に見える語だけの依頼にしない
+7. **無人（`claude -p`）**: 確認の要るものは全部拒否されるので、§1.2 の 8 種別を総当たりで照合する
 
-事前列挙は経験的に積み上がる性質を持ち（F02-001 §4.4「事前列挙の網羅性は構造的に限界がある」所見）、長尾事象は実行時拒否で初めて顕在化する。発生時の標準復旧手順を以下に定める。
+### 1.2 権限の事前列挙: 8 種別の照合（台帳の表）
 
-### 2.1 標準復旧手順
+公式のルールの書式（`code.claude.com/docs/en/permissions`）に対応する 8 種別について、(1) 担当が出しうる呼び出しを担当ごとに挙げ、(2) 共有 `.claude/settings.json`・個人 `.claude/settings.local.json` の allow・ask・deny と照らし、(3) 当たるものの対処を §1.3 で決める。出さないと判断した種別は、根拠を書いて飛ばしてよい。対話の auto では、照合の主眼は allow の不足ではなく、deny・ask・protected path との衝突にある。クロスレビューは `check_permissions.py` がこの照合を近似で行い、台帳の表に書く。
 
-1. **拒否検出**: sub-agent / background 実行中に permission 拒否で中断した場合、**全 Agent 再起動を避け** 該当 Agent / 該当箇所のみリトライ準備に入る
-2. **`settings.json` への追加判断**: §2.2 の基準に従い、追加先（共有 `.claude/settings.json` か 個人 `.claude/settings.local.json` か）と allow エントリを決定
-3. **追加実施**: 決定したエントリを追加。書き込み系・破壊系を含める場合は作業指示者に確認する
-4. **該当箇所リトライ**: 拒否で中断した箇所から再開（拒否時点までの作業をなるべく無駄にしない）
-5. **本ファイル §3.6 への追記**: 既知の落とし穴として再発防止用に追記。条件（並列度・コマンド形態・引数パターン等）を可能な限り具体化
-
-### 2.2 settings.json への追加判断基準
-
-| 種類 | 追加可否 | 配置先 |
+| # | 種別 | 見る所 |
 |---|---|---|
-| 読み取り系 Bash（`git show:*` / `wc:*` / `cd:*` / `pwd` 等）| 積極的に追加 | チーム共有（再発防止のため） |
-| Write/Edit（`research-for-*/**` 配下等）| 追加可 | チーム共有 |
-| MCP 読み取り系・検索系 | 追加可 | チーム共有 |
-| WebFetch（参照頻度高いドメイン）| 追加可 | チーム共有 |
-| 書き込み系 Bash（`git push` / `git reset` / `git commit` / `rm` 等）| **追加しない**（明示確認方針）| — |
-| 個人検証用の限定的 allow | 追加可 | 個人ローカル（`.gitignore` 対象） |
+| 1・2 | **Write・Edit** | 書く先が protected path か。ルールは `Edit(path)` で書く（`Write(path)` のルールは何にも当たらない。L84825〜L84829） |
+| 3 | **Bash** | deny・ask に当たる形か（§3.2）。組み込みの読み取りの集合は確認が要らない（L84732） |
+| 4 | **PowerShell** | 同上。Bash のルールは PowerShell に効かない（§3.4） |
+| 5 | **MCP** | `mcp__<server>__<tool>`。ask に当たるもの、リモートを変えるもの |
+| 6 | **WebFetch** | `WebFetch(domain:<ホスト名>)`。ホスト名と照らすので、パスつき（`github.com/anthropics`）は当たらない（L85003）。WebFetch は原則として使わない（§2.2） |
+| 7 | **Agent** | 子の担当・fork を使わせるか。入れ子は既定で 3 階層まで（L53317）。`Agent` の allow は auto に入るとき外される（L83998） |
+| 8 | **Read の deny** | 既存の deny（`.env*`・`secrets/**`・`~/.aws/credentials`・`~/.ssh/**`）を読みに行かないか |
 
-## 3. 落とし穴記録（公式仕様の要点と既知の挙動）
+### 1.3 deny・ask・protected path に当たるときの対処
 
-公式仕様要約。原典は引用 URL を参照。
+上から順に検討する。広い allow を足すのは最後にする。
 
-### 3.1 permission modes（公式 `code.claude.com/docs/en/permission-modes`）
-
-> **⚠ 既定モードは `auto`（2026-08-29 更新）**: **Pro / Max / Team プランの対話的ターミナル・VS Code セッションでは、組み込みの開始モードが `auto`**。それ以外のプランと `-p`（非対話）は `default`（＝Manual）。組み込み `auto` 既定は CLI **v2.1.228 以降**（macOS/Linux/WSL）/ **ネイティブ Windows は v2.1.233 以降**が必要。**「既定は prompt が出る」を前提にした運用記述は成立しない**。
->
-> **`.claude/settings.json` / `settings.local.json` に `permissions.defaultMode: "auto"` を書いても効かない**（無視され組み込み既定にフォールバックし、そのとき `~/.claude/settings.json` の `defaultMode` も使われない）。開始モードを変えるなら `--permission-mode` フラグか、`auto` 以外の値を設定ファイルに置く。
-
-| モード | 概要 |
+| 選択肢 | 使いどころ |
 |---|---|
-| `default`（CLI 表示名 **Manual**） | 各ツール初回使用時に prompt。Reads は無条件許可。**v2.1.200 以降は `manual` がエイリアス**（設定値は `default` のまま。hook / SDK は `default` を使う） |
-| `acceptEdits` | ファイル編集と一般 FS コマンド（`mkdir`/`touch`/`mv`/`cp`/`rm`/`rmdir`/`sed`）を作業ディレクトリ内で自動承認 |
-| `plan` | Reads に加え、**auto mode が利用可能なら classifier が承認したコマンド**も実行可。ソース編集は不可 |
-| `auto` | classifier がバックグラウンドで安全性チェック。**Pro / Max / Team の対話セッションでは組み込みの開始モード**。**全プロバイダで利用可**（Bedrock / Agent Platform / Foundry / gateway 含む。v2.1.207 で `CLAUDE_CODE_ENABLE_AUTO_MODE=1` 要件は撤廃）。対応モデル限定。組織は `disableAutoMode` で無効化可 |
-| `dontAsk` | 事前 allow 以外を auto-deny。CI 等で利用 |
-| `bypassPermissions` | 全 prompt スキップ（`.git`/`.claude`/`.vscode`/`.idea`/`.husky` への書き込みも通過）。隔離環境専用 |
+| **(a) 担当にやらせない** | push・reset・削除など ask・deny の操作。メインのセッションか作業指示者が流す |
+| **(b) 形を変える** | スクリプトファイルに書いて 1 コマンドで流す／定義の hook の通す形に合わせる／書く先を protected path の外にする |
+| **(c) 確認が出る前提で進める** | ask が避けられないとき。背景の担当の確認はメインに出る（L53172）。作業指示者に前もって伝える |
+| **(d) 狭い allow を足す** | 読み取り系など。§2.2 に従う。auto では狭い allow が分類器を飛ばす（§3.3）ので、書き込み系は範囲を絞る |
+| **(e) 定義の hook** | 引数の水準で絞る・止める。担当の中だけで発火する（§3.5）。deny・ask を覆す目的には使えない（L85106） |
+| **(f) 並列度を下げる** | 緊急時だけ。担当を 1 体ずつ動かし、確認にその場で答える。対話の端末で担当の終わりを待つには fork mode を切る（`CLAUDE_CODE_FORK_SUBAGENT=0`。L53179・L53185） |
 
-**どのモードでも自動承認されないもの**: 明示 `ask` ルールに合致したツール / `AskUserQuestion` 等のユーザー対話必須ツール / critical path を対象とする `rm`・`rmdir`。**`deny` ルールは `bypassPermissions` を含む全モードで有効**。
+## 2. 止まったときの復旧
 
-### 3.2 Bash の組み込み read-only 認識
+事前の確かめには限界があり、まれな事象は実行時に初めて出る。止まったら次の順で扱う。
 
-公式 `code.claude.com/docs/en/permissions` の「Read-only commands」節:
+### 2.1 手順
 
-> Claude Code recognizes a built-in set of Bash commands as read-only and runs them without a permission prompt **in every mode**.
+1. **何で止まったかを見分ける**（§0 の 5 つ）: 担当に届いた理由の文、hook の stderr、`/permissions` の **Recently blocked**（分類器のブロック。L83946）を見る
+2. **止まった担当・箇所だけをやり直す**。ほかの担当は起動し直さない
+3. **場合ごとの手を選ぶ**:
+   - 分類器: 同じ形で繰り返さない（3 回続くと確認に戻る。L83947）。スクリプトの docstring か依頼文に目的を書いて出し直す（探りで通った）。**Recently blocked** から承認して、やり直させることもできる（L83946）
+   - 定義の hook: stderr の「直し方」に合わせて形を変える
+   - ask: 確認を作業指示者に回す。要らない操作なら担当の作業から外す（§1.3 の (a)）
+   - deny: 担当では通せない。決まりで禁じた操作なので、やり方を変えるか、作業指示者に伺う
+   - protected path: 書く先を変える。auto では分類器のブロックとして扱う（上の分類器の行）。確認の出るモードでは作業指示者が承認でき、`.claude/` にはセッション限りの承認の選択肢がある（L84153・L84155）
+4. **やり直しは、依頼文を直して新しい担当に渡すのを基本にする**（同じ担当の再開で作業を積み増さない。`chunked-generation.md`）。小さな直しなら SendMessage で再開してよい
+5. **allow を足すのは最後の手**。足すなら §2.2 に従い、書き込み系は作業指示者に確かめる
+6. 再び起きうるものは、条件（コマンドの形・引数・モード・並列度）を具体的にして §3.6 に足す
 
-組み込み集合: `ls` / `cat` / `head` / `tail` / `grep` / `find` / `wc` / `diff` / `stat` / `du` / `cd` / read-only forms of `git`。設定変更不可（prompt 強制したい場合は `ask` / `deny` ルールで上書き）。
+### 2.2 settings に置くルールの基準
 
-> **保留事項（`afea8b8` 重複疑義、本格対処確定時に再検証）**: 上記組み込みに含まれる `cd` / `wc` / `git show` / `git blame` / `pwd` を 2026-05-06 commit `afea8b8` で `settings.json` に追加した。組み込み認識のはずだが実運用で prompt が発生した実績あり。**推定原因**: (a) ワンライナーで複数コマンド連結（`git show xxx | wc -l` 等）、(b) Bash ツール非経由の発行経路、(c) write-capable/exec-capable フラグを持つコマンド（`find`/`sort`/`sed`/`git`）と unquoted glob の組み合わせで read-only 判定から外れる挙動、(d) 引数パターン依存。クロージング時に当時の prompt 発生条件を特定し、追加した allow エントリの一部冗長性を整理する（重複削除可否の判断）。
+共有 `.claude/settings.json`（全員）と個人 `.claude/settings.local.json`（各自・未追跡）の今の置き方を、この表の実態とする（設定に合わせる。2026-11-23 の決定 P13）。
 
-### 3.3 process wrappers の自動 strip
+| 種類 | 置き場所 | 扱い |
+|---|---|---|
+| 読み取り系の Bash・MCP の読み取りと検索 | 共有か個人 | allow してよい |
+| WebFetch のドメイン | 共有（Anthropic の文書のドメインだけ） | **原則として足さない**。WebFetch は、Anthropic が認めた一部のドメインを除き、取得した内容を小さなモデルで要約・変換するので情報が欠ける（作業指示者の方針・2026-11-23）。GitHub のリポジトリは事前に clone し、リポジトリに無い wiki・issue などは GitHub の MCP で取る |
+| 作業フォルダの Edit（`.claude/` の外） | 共有か個人 | allow してよい。`.claude/` の下は allow しても前もって承認されない（L84153） |
+| 書き込み系の Bash の限定の allow（`git add *`・`git commit *` など） | 個人だけ | 置いてよい。auto では分類器を飛ばす（§3.3）ので、作業を捨てる形（`git checkout -- .`・`git clean -f`・`git stash drop` など）は個人の ask で止める（P5） |
+| push・reset・`rm`・`python -c` など、戻せない操作・外へ出る操作・決まりで避ける形 | push は共有（P2）、ほかは個人 | ask |
+| 決まりで禁じる操作（`reset --hard`、秘匿ファイルの Read など） | 共有 | deny |
+| `Bash`・`PowerShell` 丸ごとの allow | 個人（残す。P1） | auto では外れる。帰結は §3.4 |
 
-公式 permissions ページ「Process wrappers」節より、Bash ルールマッチ前に **自動 strip される** ラッパー: `timeout` / `time` / `nice` / `nohup` / `stdbuf`。**裸の `xargs`** も strip（`xargs -n1` 等フラグ付きは strip されない）。
+## 3. 落とし穴（公式の仕様の要点と既知の挙動）
 
-**自動 strip されない**（常に prompt するため `Bash(<wrapper> *)` 形式の prefix ルールでは承認できない）: `watch` / `setsid` / `ionice` / `flock`。`find -exec` / `find -delete` も `Bash(find *)` でカバーされない。承認したい場合は完全一致ルールを書く。`devbox run` / `npx` / `docker exec` 等は strip されないため `Bash(devbox run npm test)` のように内側コマンドを含めて記述する。
+原典は §4 の公式ドキュメント。版が上がると変わるので、設計の根拠にするときは断面の行を読み直す。
 
-### 3.4 Read & Edit の gitignore 仕様（パス指定パターン）
+### 3.1 permission modes（`code.claude.com/docs/en/permission-modes`）
 
-公式 permissions ページ「Read and Edit」節より、4 形式:
+| モード | 要点 | protected path への書き込み（L84139〜L84145） |
+|---|---|---|
+| `default`（表示名 **Manual**） | 確認の要るものを毎回確認する。`-p` では確認の代わりに拒否（L83485） | 確認 |
+| `acceptEdits` | 作業フォルダの中の編集と一般の FS コマンドを自動で承認 | 確認 |
+| `plan` | 読むだけ。auto が使えるときは分類器がシェルのコマンドを審査する（L83682） | 条件による |
+| `auto` | 当たるルールが無いものを分類器が審査する（§0） | 分類器 |
+| `dontAsk` | 前もって allow したもの以外は拒否 | 拒否 |
+| `bypassPermissions` | 確認をすべて飛ばす。隔離された環境のためのもの | 通る |
 
-| パターン | 意味 |
-|---|---|
-| `//path` | **絶対** パス（FS ルートから） |
-| `~/path` | ホームディレクトリ起点 |
-| `/path` | プロジェクトルート起点（**絶対パスではない点に注意**） |
-| `path` / `./path` | カレントディレクトリ起点 |
+### 3.2 ルールの当たり方（`code.claude.com/docs/en/permissions`）
 
-`*` は単一ディレクトリ内マッチ、`**` は再帰マッチ。Windows パスは POSIX 化（`C:\Users\alice` → `/c/Users/alice`）。**Read/Edit deny は Bash サブプロセスには適用されない**（`Read(./.env)` deny は Bash の `cat .env` を防げない、OS レベルで防ぎたければ sandbox 利用）。
+- **書いた形にしか当たらない**: `Bash(git push *)` は `git -C . push`・`git -c push.default=current push` に当たらない。`/usr/bin/curl`・`sh -c '…'` も同じ。セキュリティの境界ではない（L84716〜L84726）。**スクリプトファイルの中や、Python などの子プロセスはルールでは見えない**（L84823）。守りを固くするなら PreToolUse の hook（L84728）
+- **複合のコマンド**: deny・ask は部分のどれかに当たれば効き、auto でも確認が出る（L84689）。allow で通すには、すべての部分が allow か読み取りの集合に当たる必要がある（L84687）
+- **書式**: `Bash` と `Bash(*)` は同じ（L84562）。`Bash(x:*)` は `Bash(x *)` と同じで、末尾にだけ書ける（L84655・L84657）。末尾の ` *` は、それが唯一の `*` なら裸のコマンドにも当たる（L84652）
+- **ラッパー**: `timeout`・`time`・`nice`・`nohup`・`stdbuf`・`command`・`builtin`・`noglob`・フラグの無い `xargs` は外してから照らす（L84697・L84701）。`npx`・`docker exec`・`devbox run` などは外さないので、中のコマンドまで書く（L84703）。`watch`・`setsid`・`ionice`・`flock` と、`find` の `-exec`・`-delete` は前置きのルールでは承認できない（L84707〜L84712）
+- **先頭の環境変数**: allow は決まった安全な変数以外の代入の後ろには当たらない。deny・ask はどの代入の後ろにも当たる（L84699）
+- **読み取りの集合**: `ls`・`cat`・`echo`・`pwd`・`head`・`tail`・`grep`・`find`・`wc`・`which`・`diff`・`stat`・`du`・`cd`・読み取りの `git` は、どのモードでも確認が要らない。auto では分類器の審査を待つことがある（L84732）。ただし `cd` で別のフォルダに入ってから `git` を流す形は確認が出る（L84749）
+- **Read・Edit のパス**: `//path` は絶対パス、`~/path` はホーム、`/path` は設定ファイルの元からの相対（プロジェクトの設定ではルート。絶対パスではない）、`path`・`./path` はカレント。Windows のパスは POSIX の形（`C:\Users\alice` → `/c/Users/alice`）で照らす（L84838〜L84843・L84867）。Read・Edit の deny は、組み込みのファイルのツールと、解析できる Bash のファイルのコマンド（`cat` など）とリダイレクトに効くが、スクリプトの中の読み書きには効かない（L84821・L84823）
 
-### 3.5 sub-agent の permission 継承挙動
+### 3.3 auto mode 特有のこと
 
-公式 `code.claude.com/docs/en/sub-agents` の `permissionMode` 節 + `background` 節より:
+- **入るときに外される広い allow**: `Bash(*)`・`PowerShell(*)`（丸ごとの `Bash` も同じ）、`Bash(python*)` のようなインタープリタ、ラッパー＋ワイルドカード、ワイルドカードで始まる形、パッケージマネージャの run、`Agent`・`Monitor` の allow など。auto を出ると戻る（L83990〜L84001）
+- **狭い allow は分類器を飛ばす**: 外されない allow に当たったコマンドは分類器を通らないので、前置きが想定していない破壊的な引数も素通りする（L98808）。例: `Bash(git checkout *)` は `git checkout -- .` を通す。すべてのシェルのコマンドを分類器に回す `autoMode.classifyAllShell` は、ユーザーか managed の設定にだけ書ける（L98810）
+- **分類器が見るもの**: ユーザーの発言・読み取り以外のツールの呼び出し・CLAUDE.md。ツールの結果は見ない（L84007）
+- **外されるかどうかの境目**（`Bash(git -C:*)`・`Bash(claude plugin *)`・`Bash(python LLMs/scripts/*)` などが外されるか）は、例から推した範囲を出ず未確認（`/permissions` で確かめる必要がある）
 
-- subagent は **メインセッションの permission context を継承** し、frontmatter `permissionMode` で独自モードに上書き可能
-- 親優先となるケース: 親が `bypassPermissions` または `acceptEdits` の場合、これらは subagent frontmatter の `permissionMode` 指定より優先する
-- 親 auto モード時の特殊挙動: subagent は auto モードを継承し、frontmatter `permissionMode` は **無視される**。classifier が parent と同じ block/allow 規則で各 tool call を再評価。**§3.1 のとおり auto が既定になったため、これは例外ではなく通常ケース**。frontmatter で `permissionMode` を指定しても効かない前提で設計する
-- **`tools` フィールドに引数スコープは書けない**: 受け付けるのは**厳密なツール名**か **`mcp__<server>` / `mcp__<server>__*`** のみ。`Bash(git status:*)` のような書き方は「Unrecognized」として**無言で破棄**され、意図した絞り込みが効かない。**全エントリが解決不能な場合のみ起動拒否**（`would be spawned with zero tools`）となるため、部分不一致はエラーで気付けない。引数レベルの絞り込みは §1.3 の (a) `permissions.deny`/`ask` か (c) `PreToolUse` hook で行う
-- **background subagent の重要挙動（2026-08-29 更新）**: **v2.1.186 以降は、background subagent が prompt を要する tool call に達した時点で、メインセッション側に prompt が出る**（どの subagent の要求かが表示され、`Esc` はその 1 回の tool call だけを拒否し subagent は止まらない）。**「起動前に一括で事前承認し、未承認は auto-deny」は v2.1.186 未満の挙動**なので、この前提で運用設計しない
-- **ただし非対話（headless）では別**: prompt を出せないため hook が走り、**どの hook も判断を返さなければ拒否**される。無人パイプラインでは §1 の事前列挙が引き続き必須
-- background が permission 不足で失敗した場合、**同タスクの foreground subagent を新規起動して対話 prompt 経由でリトライ可能**（v2.1.186 以降は対話セッションなら通常この回避は不要）
-- plugin subagent では `permissionMode` / `hooks` / `mcpServers` 指定は無効
+### 3.4 Windows とシェルのツール
 
-### 3.6 既知の落とし穴
+- **PowerShell ツールに Bash のルールは効かない**。PowerShell には `PowerShell(...)` のルールを別に書く（L106986）
+- **Windows＋Git Bash で、Bash の deny（範囲つきでも）があると、PowerShell ツールが黙って切れる**。PowerShell の範囲つきのルールを置くか、`CLAUDE_CODE_USE_POWERSHELL_TOOL=1` で残せる（L106984〜L106993）
+- **`Bash`・`PowerShell` 丸ごとの allow の帰結**: Manual では deny・ask に当たらないシェルのコマンドがすべて確認なしに通り、ほかの狭い Bash の allow はあっても無くても同じになる（L84562 から。見直しの報告 §2.5）。auto では入るときに外れ、狭い allow だけが残る（L83992）。`claude -p` でも個人のファイルの丸ごとの allow が効き、`--allowedTools` で絞ったつもりでもシェルは何でも通る（推測。見直しの報告 §2.5）
+- Bash の sandbox は macOS・Linux・WSL2 のもので（L83439）、ネイティブの Windows では OS の層の守りに頼れない（推測）
 
-- **`afea8b8` 重複疑義**（§3.2 と連動、保留事項）: 組み込み read-only 既定認識のはずの `cd` / `wc` / `git show` 等が実運用で prompt を出した。本格対処時に発生条件を特定し、冗長 allow を整理する
-- ~~**利用プラン Pro での `auto` モード非適用**~~ → **解消済み（2026-08-29 確認）**: auto mode は全プランで利用可能になり、Pro / Max / Team では**新規セッションの既定**。本ルール §1 の事前列挙は「prompt で止まる」ことへの対処として設計されたが、**auto 下では classifier が大半を通すため事前列挙の主目的は「止まらないこと」ではなく「`deny`/`ask` ルールと衝突しないこと」の確認に移る**（`deny`/`ask` は classifier より先に評価され、auto でも必ず効く）
-- **`tools: Bash(git status:*)` 型の無言破棄**（§3.5）: 本リポジトリの `agents/code-reviewer.md` が実際にこの状態で、**Bash を持たないまま起動していた**（2026-08-29 修正）。subagent 定義を書いたら `tools` の各エントリが厳密なツール名かを確認する
-- **`/orchestrate` パターン A 並列実行時の長尾事象**: F02-001 §4.4 のとおり、Write（2026-05-03）→ Edit（2026-05-04 事前追加）→ Bash 読み取り系（`afea8b8`）と段階的に表面化した。事前列挙だけでは捕まらない長尾を §2 検出ベースで吸収する設計
-- **`bypassPermissions` の盲点**: `.git` / `.claude` / `.vscode` / `.idea` / `.husky` への書き込みも通過する。本プロジェクトの security 方針（deny 明示）と相性悪く非推奨
-- **fork mode 時の特殊挙動**: fork 時は `background` フィールドに関係なく全 spawn が background 化し、permission は事前承認フローに乗る。`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` で同期化可能
+### 3.5 サブエージェント（`code.claude.com/docs/en/sub-agents`）
 
-## 4. 関連バックログ・参照
+- **継承**: §0 のとおり。auto では、担当の各呼び出しを親と同じ順と規則で判定する（L84018）
+- **`tools` に引数つきの書き方はできない**: `Bash(git status:*)` は黙って捨てられ、全部が解決できないときだけ起動を拒む（2026-08-29 に確かめ。L30490〜L30496）。`Agent(<型>)` の型の一覧は `claude --agent` のメインでだけ効き、担当の定義では括弧の中が無視される（L52781）。引数の水準の絞り込みは deny・ask か hook で行う
+- **背景の担当の確認**: メインのセッションに、どの担当の要求かを示して出る（L53172）。古い版の「起動前に一括で承認し、未承認は拒否」の前提で設計しない
+- **定義の追加・書き換え**: 置いた応答の中では使えず、次の応答の区切りから使える（探り）
+- **定義の hook**（frontmatter の `hooks`）: その担当の中だけで発火し、メインのセッションでは発火しない（探り・L53017）。`command: python`＋`args` の形で動き、`${CLAUDE_PROJECT_DIR}` は置換される。入力には `agent_id`・`agent_type`（定義の `name`）・`cwd`・`permission_mode`・`tool_name`・`tool_input` などがある（探り）。プロジェクトの定義の hook は、フォルダの信頼が要る（L53023〜L53025）。plugin の担当では `hooks`・`permissionMode`・`mcpServers` は無視される（L52466）
+- **`SubagentStart` の hook**（設定ファイル）: `hookSpecificOutput.additionalContext` を返すと、すべての種類の担当の文脈の先頭に足される（L72594）。再起動なしで反映され、再開しても二重にならず、10,000 字まで（探り）。担当に共通の決まりを渡すのに使う
+- **path-scoped rule**: 担当が該当のファイルを Read したときにロードされる。セッションの途中で足した `paths` の無い rule は、そのセッションで起動した担当には入っていなかった（探り）
+- **入れ子と fork**: 担当は既定でメインから 3 階層下まで担当を起動できる（L53317。`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`）。fork mode は既定で有効（L53539）。同じ流し方のコストは、専用の定義（haiku・ツール 2 つ）約 9,400 トークン、汎用の haiku 約 54,600、fork 約 364,900（探り）。担当に fork を使わせない
 
-- F02-001（本要改善点、§5.2.2 採用案の中核実装）: `research-for-local-RAG-for-cc/improvements/F02-001_background_Agent_Write権限設定漏れ.md`
-- F02-013（なぜなぜ分析プロセス改善検討、F02-001 派生）
-- 関連する rule・skill: `.claude/rules/md-self-check.md`（`.md` の反復セルフチェック。チェックリストは `.claude/rule-assets/md-self-check/checklist.md`）／`.claude/skills/cross-review/SKILL.md`（クロスレビューの進行。担当の起動前に本ルール §1.3 を参照）
-- 公式ドキュメント: `code.claude.com/docs/en/permissions` / `code.claude.com/docs/en/permission-modes` / `code.claude.com/docs/en/sub-agents`
-- 既存 settings: `.claude/settings.json`（チーム共有）/ `.claude/settings.local.json`（個人ローカル、`.gitignore` 対象）
+### 3.6 既知の落とし穴（このリポジトリと流用元での経験）
 
-> **`paths:` 調整方針**: 初期版は「Agent を起動する計画段階のファイル」「Agent 関連スキル」「Agent 並列実行が記述される計画書」をカバー。実運用フィードバックで以下を判断する: (a) 報告書執筆段階で本ルールが必要となる作業が発生したら `**/reports/**/*.md` 系の追加検討、(b) 過剰ロード（不要シーンでの context 消費）が観測されたら `paths:` を絞る、(c) `md-self-check.md`（`**/*.md`）と paths が重なる領域の整理。
+- **`afea8b8` の重複の疑い**（流用元でのこと。このリポジトリの共有の allow には無い）: 読み取りの集合に入る `cd`・`wc`・`git show` などで確認が出たため、2026-05-06 に allow に足した。確認が出た条件は特定していない。`cd` で別のフォルダに入ってから `git` を流す形（L84749）や、解析できない複合のコマンド（L84745）が候補だが未確認
+- **`tools: Bash(git status:*)` の黙った破棄**: `agents/code-reviewer.md` が、Bash を持たないまま起動していた（2026-08-29 に直した）
+- **分類器の誤ったブロック**: 元のファイルを写すだけのスクリプトの Write が `[Destructive or Unwanted Actions]` で拒まれ、目的を docstring に書いて書き直すと通った（2026-11-23）
+- **`.claude/` の下への Edit の allow は効かない**: 個人の設定にある `Edit(.claude/**)` などは、protected path の確認を前もって消さない（L84153）
+- **`Write(path)` のルールは何にも当たらない**: `Edit(path)` で書く（L84825〜L84829）
+- **`bypassPermissions` の盲点**: protected path への書き込みも通る（L84145）。本リポジトリの方針（deny を明示する）と合わないので使わない
+
+## 4. 参照
+
+- 関連する rule・skill: `.claude/rules/md-self-check.md`（`.md` の反復セルフチェック。チェックリストは `.claude/rule-assets/md-self-check/checklist.md`）／`.claude/rules/chunked-generation.md`（生成と文脈を小分けにする）／`.claude/skills/cross-review/SKILL.md`（クロスレビューの進行。担当の起動前に本ルール §1.3 を参照）
+- 公式ドキュメント: `code.claude.com/docs/en/permissions` / `code.claude.com/docs/en/permission-modes` / `code.claude.com/docs/en/sub-agents` / `code.claude.com/docs/en/hooks`
+- 既存の settings: `.claude/settings.json`（チーム共有）/ `.claude/settings.local.json`（個人ローカル、`.gitignore` 対象）
+- 設定の見直しの記録（2026-11-23）: 作業 `202611-01_write-report-v3` の `10_interim-deliverables\permissionsの見直し.md`
+
+> **`paths:` の調整方針**: 今は「担当を起動する計画段階のファイル」「agent の定義」「SKILL.md」「作業計画書」を対象にする。(a) 報告書の執筆で本ルールが要る作業が出たら `**/reports/**/*.md` などの追加を検討する、(b) 要らない場面でのロードが目立ったら絞る、(c) `md-self-check.md`（`**/*.md`）と重なる領域を整理する。
 
 ## 変更履歴
 
 - 2026-05-07: 初版作成（Claude Opus 4.7、F02-001 §5.2.2 採用案の中核実装。案 1 + 案 2 + 案 5 を統合配置）
 - 2026-08-29: 公式ドキュメント最新版（2026-08-28 取込）との照合により失効記述を更新（判断事項 D-9 対応）。(1) §3.1 permission modes を全面改訂 —— **auto が Pro/Max/Team の既定開始モード**、`default` の表示名は **Manual**、`plan` の classifier 連動、`defaultMode: "auto"` が project settings では効かない点、どのモードでも自動承認されない集合を追記。(2) §1.1 #7 に **subagent の入れ子起動（既定 3 階層）** を追記。(3) §1.3 (b) の「Pro 非適用」を削除。(4) §3.5 に **`tools` フィールドは引数スコープを解釈しない**（無言破棄）を追記し、**background subagent の permission 挙動**を v2.1.186 以降（tool call 時点でメインセッションに prompt）へ更新。(5) §3.6 の落とし穴 2 件を差し替え
+- 2026-11-23: auto mode が既定の前提に全面改訂（断面 CLI 2.1.330 相当と、同日の探り）。§0 に止まる 5 つの場合を新設し、§1 を止まり方に沿った確かめに組み直し（8 種別の表は台帳との対応のため短くして残す）、§2 を広い allow を足さない復旧に改め、§2.2 を設定の実態（決定 P13）に合わせ、§3 の古い記述を直して足りない落とし穴を足した。経緯の記述を縮めた

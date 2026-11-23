@@ -56,4 +56,4 @@ claude-dir-sharing-governance/  # .claude チーム共有・統制の調査/設�
 - `main` ブランチにはまだコミットなし。`main` に対する git log 系の調査は空が返る
 - 新規 feature ブランチ命名時は `<X>` をフォルダ名そのものとする（`feature/LLMs` → `LLMs/` が活動フォルダ）
 - `work/*` ブランチは必ず対応する `feature/<X>` から分岐させ、マージ先も同じ `feature/<X>` にする
-- `.claude/workspace/` 配下を新規作成・編集する作業は `.claude/settings.local.json` で個別に allow されている。共有 `settings.json` には含めない
+- `.claude/workspace/` 配下は一時作業用で、未追跡。`.claude/` の下は protected path なので、`.claude/settings.local.json` に Edit の allow があっても前もって承認はされない（auto では分類器が判定し、確認の出るモードでは確認が出る）。共有 `settings.json` には allow を置かない。詳しくは `.claude/rules/agent-permission-runtime.md` §0・§2.2

@@ -27,7 +27,7 @@
 
 | Rule | 自動ロード条件 |
 |---|---|
-| `agent-permission-runtime.md` | `**/.claude/agents/*.md` / `**/作業計画書*.md` / `**/v3_作業計画書*.md` / `**/.claude/skills/*/SKILL.md` を読み書きするとき。sub-agent / background Agent 起動前の permission 事前列挙 8 種別チェックリスト（Write/Edit/Bash/PowerShell/MCP/WebFetch/Agent/Read-deny）と検出ベース復旧手順を規定 |
+| `agent-permission-runtime.md` | `**/.claude/agents/*.md` / `**/作業計画書*.md` / `**/v3_作業計画書*.md` / `**/.claude/skills/*/SKILL.md` を読み書きするとき。auto mode が既定の前提で、サブエージェントを起動する前に見ること（auto で止まる 5 つの場合・8 種別の照合）、止まったときの復旧、settings に置くルールの基準、公式の仕様の落とし穴を規定 |
 | `coding-standards.md` | `**/*.{js,ts,jsx,tsx,py,go,rs,java,rb,kt,swift,c,cpp,cs}` を編集するとき。命名規則・コメント方針・エラー処理・テスト方針 |
 | `md-self-check.md` | `**/*.md` を読み書きするとき（ほぼ常時）。`.md` を執筆・修正したら、完了の報告の前に `.claude/rule-assets/md-self-check/checklist.md` を Read で読んでセルフチェックする（機械的な直しは 1 回の見直し） |
 | `skill-creation-guide.md` | `**/.claude/skills/*/SKILL.md` を読み書きするとき。Skill の責務 3 層分離（README.md / SKILL.md / スクリプト）、SKILL.md 記述原則、allowed-tools 絞り込み方針、セルフレビュー観点 |
@@ -63,13 +63,15 @@
 
 ## permissions 運用方針
 
-`settings.json`（共有）に追加してよい / しないアクションが `rules/agent-permission-runtime.md` §2.2 で定義されている。要点:
+共有の `settings.json` と個人の `settings.local.json` に置くルールの基準は `rules/agent-permission-runtime.md` §2.2 が正（今の設定の置き方を実態とする）。要点:
 
-- **追加してよい**: 読み取り系 Bash（`git show:*` / `wc:*` 等）、Write/Edit（作業ディレクトリ配下）、MCP 読み取り系、参照頻度高い WebFetch ドメイン
-- **追加しない**（明示確認方針）: 書き込み系 Bash（`git push` / `git reset` / `git commit` / `rm` 等）
-- **個人検証用の限定 allow** は `settings.local.json`（gitignore 想定）に追加
+- **共有**: allow は、Anthropic の文書のドメインの WebFetch と、`git clone *`・`mkdir -p *` だけ。ask に push（`git push *`・`git -C * push*` など。PowerShell の形も）。deny に秘匿ファイルの Read と `reset --hard`（PowerShell の形も）
+- **個人**（未追跡）: 書き込み系の限定の allow（`git add *`・`git commit *` など）、ask（reset・`rm`・`python -c`・作業を捨てる形の git・`claude plugin`／`claude mcp`・リモートを変える GitHub の MCP）、deny（`~/.claude.json`・`~/.claude/` の設定と資産への Edit）
+- **WebFetch は原則として使わない**（一部のドメインを除き、内容が要約・変換されて欠ける）。GitHub のリポジトリは事前に clone し、wiki・issue は GitHub の MCP で取る
+- **`.claude/` の下は protected path** で、Edit の allow があっても前もって承認されない（auto では分類器が判定する）。`.claude/workspace/` もこの扱い
+- このリポジトリは LLMs リポジトリ（`C:\cc-workspace\LLMs`）を操作しない（公式情報の参照先として読むだけ）。そのための allow は置かない
 
-sub-agent / background Agent 起動を含む作業の着手前には **8 種別の permission 事前列挙**（Write / Edit / Bash / PowerShell / MCP / WebFetch / Agent / Read-deny 該当）を実施する。詳細は `rules/agent-permission-runtime.md` §1。
+サブエージェントの起動を含む作業の前には、`rules/agent-permission-runtime.md` §1 の確かめ（auto で止まる 5 つの場合に沿って見る。無人の `claude -p` では 8 種別を総当たりで照合する）を行う。
 
 ## クロスレビュー運用
 
@@ -86,7 +88,7 @@ skill `cross-review`（`/cross-review`）で進める。メインのセッショ
 
 `.claude/` 配下には流用元 `base-dev-kit-for-cc` の歴史的文脈が残っている。本リポジトリでは解決しない参照例:
 
-- `rules/agent-permission-runtime.md` §4 の F02-001 backlog 参照（`research-for-local-RAG-for-cc/improvements/F02-001_...`）
+- `rules/agent-permission-runtime.md` の冒頭の経緯と変更履歴にある F02-001（流用元の要改善点。参照先はこのリポジトリに無い）
 - `reports/design-base-kit/` 配下の調査 A〜G および計画書（`base-kit-構成プラン.md`）
 - `skills/review-skill-request/SKILL.md` の `C:\workspace\claude-doc-repositories\anthropics\claude-plugins-official\plugins\` パス
 
