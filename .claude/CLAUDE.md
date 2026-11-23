@@ -7,14 +7,14 @@
 ```
 .claude/
 ├── CLAUDE.md               # 本ファイル（.claude/ 配下作業時の追加ガイド）
-├── settings.json           # 共有設定（permissions + UserPromptSubmit・SessionStart・SubagentStart hook）
+├── settings.json           # 共有設定（permissions + UserPromptSubmit・SubagentStart hook）
 ├── settings.local.json     # 個人設定 ※gitignore 想定
 ├── agents/                 # code-reviewer.md / doc-summary-reviewer.md / cross-review-*.md（クロスレビューの担当 6 体）
 ├── hooks/                  # pre-task-reminder.sh / subagent-start-rules.py（SubagentStart の hook。全部のサブエージェントに共通の決まりを足す）
 ├── output-styles/          # code-review.md
 ├── rule-assets/            # rule と hook が読む資産（subagent-common-rules.md・md-self-check/checklist.md）。rule としては読み込まれない
 ├── rules/                  # path-scoped rule 4 種 ＋ 常時ロードの rule 1 種
-├── scripts/                # resolve-activity-dir.sh / statusline.ps1 / notify-bot-branch.sh / doc-summary bot の 3 本（run-doc-summary.ps1 など）
+├── scripts/                # resolve-activity-dir.sh / statusline.ps1 / doc-summary bot の旧版 3 本（run-doc-summary.ps1 など。資産は LLMs リポジトリへ移管済み）
 ├── skills/                 # 11 Skill
 ├── templates/              # inter-claude-communication / skill-request
 ├── workspace/              # 一時作業用（skill-request の作業フォルダ等）
@@ -80,9 +80,9 @@ skill `cross-review`（`/cross-review`）で進める。メインのセッショ
 - 担当のコマンドと書き込み先は、定義の frontmatter の hook（`skills/cross-review/scripts/hook_*.py`）が止める。hook の設定は、主担当が段階 0 で `.claude/workspace/cross-review-hook.json`（未追跡）に置く。無い・壊れている・雛型のままだと、担当は全部止まる
 - `.md` の反復セルフチェックは rule `md-self-check.md` とチェックリスト `rule-assets/md-self-check/checklist.md` による（クロスレビューの外でも効く）
 
-## settings.json の hook（UserPromptSubmit・SessionStart・SubagentStart）と個人通知 hook
+## settings.json の hook（UserPromptSubmit・SubagentStart）と個人通知 hook
 
-`settings.json`（共有）の `UserPromptSubmit` hook は `bash .claude/hooks/pre-task-reminder.sh` を実行し、メインのセッションで作業指示者がプロンプトを送るたびに、モデルの妥当性（skill `check-model`）と `/compact` の要否（skill `pre-compact`）の確認を促す文を足す（skill が無ければその分を出さない）。`SessionStart` hook は `bash .claude/scripts/notify-bot-branch.sh` を実行し、doc-summary-bot ブランチに未確定の自動生成サマリ（`feature/LLMs` へ未マージの bot コミット）が残っていれば通知する（OS 中立コマンドのみを使う方針）。`settings.json`（共有）の `SubagentStart` hook は `python -I -X utf8 ${CLAUDE_PROJECT_DIR}/.claude/hooks/subagent-start-rules.py` を実行し、全部の種類のサブエージェントの起動時に `.claude/rule-assets/subagent-common-rules.md` の全文を文脈の先頭に足す（再開しても二重には入らない。ファイルが無い・9,000 字を超えるときは何も足さない）。この hook は上の方針の例外で `python` を要する（`python` で起動できない環境では hook が失敗する）。`git status --short` を実行する SessionStart hook と、Notification / TaskCompleted / PostToolUseFailure / PermissionRequest / Stop の音声・効果音 hook は `settings.local.json` に個人用として配置されており、Windows の `SoundPlayer` + `SAPI.SpVoice` を使う。
+`settings.json`（共有）の `UserPromptSubmit` hook は `bash .claude/hooks/pre-task-reminder.sh` を実行し、メインのセッションで作業指示者がプロンプトを送るたびに、モデルの妥当性（skill `check-model`）と `/compact` の要否（skill `pre-compact`）の確認を促す文を足す（skill が無ければその分を出さない）。共有の hook は OS 中立のコマンドだけを使う方針。`settings.json`（共有）の `SubagentStart` hook は `python -I -X utf8 ${CLAUDE_PROJECT_DIR}/.claude/hooks/subagent-start-rules.py` を実行し、全部の種類のサブエージェントの起動時に `.claude/rule-assets/subagent-common-rules.md` の全文を文脈の先頭に足す（再開しても二重には入らない。ファイルが無い・9,000 字を超えるときは何も足さない）。この hook は上の方針の例外で `python` を要する（`python` で起動できない環境では hook が失敗する）。`git status --short` を実行する SessionStart hook と、Notification / TaskCompleted / PostToolUseFailure / PermissionRequest / Stop の音声・効果音 hook は `settings.local.json` に個人用として配置されており、Windows の `SoundPlayer` + `SAPI.SpVoice` を使う。
 
 ## 流用元由来の参照に関する注意
 
